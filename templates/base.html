@@ -41,6 +41,9 @@
         {% if funcionario_logado.role in ['admin', 'gerente'] %}
             <a href="{{ url_for('listar_funcionarios') }}" class="nav-link">Funcionários</a>
         {% endif %}
+        {% if funcionario_logado.role == 'admin' %}
+            <a href="{{ url_for('listar_acessos') }}" class="nav-link">Acessos</a>
+        {% endif %}
 
         <div class="nav-dropdown" style="margin-left: auto;">
             <button type="button" class="nav-dropdown-toggle" style="background-color: #667eea; color: white; font-weight: 600;">

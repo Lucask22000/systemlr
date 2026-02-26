@@ -95,13 +95,26 @@ class Caixa(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
+    funcionario_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'), nullable=True)
     saldo_inicial = db.Column(db.Float, default=0.0)
     saldo_atual = db.Column(db.Float, default=0.0)
-    aberto = db.Column(db.Boolean, default=True)
-    aberto_em = db.Column(db.DateTime, default=datetime.utcnow)
-    fechado_em = db.Column(db.DateTime)
+    saldo_fechamento = db.Column(db.Float, nullable=True)
+    aberto = db.Column(db.Boolean, default=False)
+    aberto_em = db.Column(db.DateTime, nullable=True)
+    fechado_em = db.Column(db.DateTime, nullable=True)
+    observacoes = db.Column(db.Text)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
 
     pedidos = db.relationship('Pedido', backref='caixa', lazy=True)
+    funcionario = db.relationship('Funcionario', backref='caixas_abertas')
+    movimentacoes_caixa = db.relationship('MovimentacaoCaixa', backref='caixa', lazy=True, cascade='all, delete-orphan')
+
+    @property
+    def diferenca(self):
+        """Calcul a diferença entre saldo de fechamento e saldo_atual"""
+        if self.saldo_fechamento is None:
+            return None
+        return self.saldo_fechamento - self.saldo_atual
 
     def __repr__(self):
         return f'<Caixa {self.nome} - {'aberto' if self.aberto else 'fechado'}>'
@@ -168,8 +181,10 @@ class Funcionario(db.Model):
     senha_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default='operador')  # admin, gerente, caixa, operador
     ativo = db.Column(db.Boolean, default=True)
+    controle_acesso_ativo = db.Column(db.Boolean, default=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    permissoes = db.relationship('PermissaoAcesso', backref='funcionario', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, senha):
         """Hash e armazena a senha."""
@@ -181,4 +196,39 @@ class Funcionario(db.Model):
 
     def __repr__(self):
         return f'<Funcionario {self.nome} - {self.role}>'
+
+
+class PermissaoAcesso(db.Model):
+    __tablename__ = 'permissoes_acesso'
+
+    id = db.Column(db.Integer, primary_key=True)
+    funcionario_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'), nullable=False)
+    pagina = db.Column(db.String(80), nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('funcionario_id', 'pagina', name='uq_funcionario_pagina'),
+    )
+
+    def __repr__(self):
+        return f'<PermissaoAcesso funcionario={self.funcionario_id} pagina={self.pagina}>'
+
+
+class MovimentacaoCaixa(db.Model):
+    __tablename__ = 'movimentacoes_caixa'
+
+    TIPO_ENTRADA = 'entrada'
+    TIPO_SAIDA = 'saida'
+    TIPOS = [TIPO_ENTRADA, TIPO_SAIDA]
+
+    id = db.Column(db.Integer, primary_key=True)
+    caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=False)
+    tipo = db.Column(db.String(20), nullable=False)  # entrada ou saida
+    valor = db.Column(db.Float, nullable=False)
+    descricao = db.Column(db.String(200), nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<MovimentacaoCaixa caixa={self.caixa_id} {self.tipo} {self.valor}>'
+
 

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Abrir Caixa - SystemLR{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 40px auto;">
+    <h1 style="color: #343a40; margin-bottom: 30px;">Abrir Caixa: {{ caixa.nome }}</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <form method="POST" action="{{ url_for('abrir_caixa', caixa_id=caixa.id) }}">
+            <div style="margin-bottom: 20px;">
+                <label for="funcionario_id" style="display: block; margin-bottom: 8px; color: #343a40; font-weight: 600;">
+                    👤 Funcionário <span style="color: #dc3545;">*</span>
+                </label>
+                <select id="funcionario_id" name="funcionario_id" required style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 5px; font-size: 16px;">
+                    <option value="">Selecione um funcionário</option>
+                    {% for func in funcionarios %}
+                        <option value="{{ func.id }}">{{ func.nome }} ({{ func.role.upper() }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="saldo_inicial" style="display: block; margin-bottom: 8px; color: #343a40; font-weight: 600;">
+                    💰 Saldo Inicial <span style="color: #dc3545;">*</span>
+                </label>
+                <input type="number" id="saldo_inicial" name="saldo_inicial" step="0.01" min="0" value="0" required 
+                       style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 5px; font-size: 16px;">
+                <small style="color: #6c757d;">Valor inicial que será colocado na caixa</small>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="observacoes" style="display: block; margin-bottom: 8px; color: #343a40; font-weight: 600;">
+                    📝 Observações (opcional)
+                </label>
+                <textarea id="observacoes" name="observacoes" rows="3" 
+                          style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 5px; font-size: 16px; font-family: inherit;">
+                </textarea>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 30px;">
+                <button type="submit" style="flex: 1; padding: 12px; background-color: #667eea; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 16px; transition: background-color 0.3s;">
+                    🔓 Abrir Caixa
+                </button>
+                <a href="{{ url_for('listar_caixas') }}" style="flex: 1; padding: 12px; background-color: #6c757d; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 16px; transition: background-color 0.3s; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">
+                    ✕ Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    select:focus, input:focus, textarea:focus {
+        outline: none;
+        border-color: #667eea !important;
+    }
+    
+    button:hover {
+        background-color: #5568d3 !important;
+    }
+    
+    a:hover {
+        background-color: #5a6268 !important;
+    }
+</style>
+{% endblock %}

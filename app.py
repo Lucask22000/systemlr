@@ -5,7 +5,7 @@ from flask import Flask, flash, redirect, render_template, request, session, url
 from sqlalchemy import inspect, text
 
 from config import config
-from models import Categoria, Funcionario, Movimentacao, Produto, db
+from models import Categoria, Funcionario, Movimentacao, Produto, PermissaoAcesso, Caixa, MovimentacaoCaixa, db
 from routes.estoque_routes import register_estoque_routes
 from routes.vendas_routes import register_vendas_routes
 
@@ -23,6 +23,39 @@ app.config['SESSION_TYPE'] = 'filesystem'
 db.init_app(app)
 
 TIPOS_MOVIMENTACAO_VALIDOS = {Movimentacao.TIPO_ENTRADA, Movimentacao.TIPO_SAIDA}
+PAGINAS_SISTEMA = {
+    'inicio': 'Inicio e Dashboard',
+    'produtos': 'Produtos',
+    'categorias': 'Categorias',
+    'fornecedores': 'Fornecedores',
+    'movimentacoes': 'Movimentacoes',
+    'relatorios': 'Relatorios',
+    'caixas': 'Caixas',
+    'mesas': 'Mesas',
+    'pedidos': 'Pedidos',
+    'vendas': 'Vendas',
+    'funcionarios': 'Funcionarios',
+    'acessos': 'Gestao de Acessos'
+}
+PAGINA_ENDPOINTS = {
+    'inicio': {'dashboard', 'boas_vindas'},
+    'produtos': {'listar_produtos', 'novo_produto', 'editar_produto', 'visualizar_produto', 'deletar_produto'},
+    'categorias': {'listar_categorias', 'nova_categoria', 'editar_categoria', 'deletar_categoria'},
+    'fornecedores': {'listar_fornecedores', 'novo_fornecedor', 'editar_fornecedor', 'deletar_fornecedor'},
+    'movimentacoes': {'listar_movimentacoes', 'nova_movimentacao', 'movimentacao_rapida'},
+    'relatorios': {'relatorios'},
+    'caixas': {'listar_caixas', 'nova_caixa', 'editar_caixa', 'deletar_caixa', 'abrir_caixa', 'fechar_caixa', 'historico_caixa'},
+    'mesas': {'listar_mesas', 'nova_mesa', 'editar_mesa', 'deletar_mesa'},
+    'pedidos': {'listar_pedidos', 'novo_pedido', 'editar_pedido', 'deletar_pedido'},
+    'vendas': {'listar_vendas'},
+    'funcionarios': {'listar_funcionarios', 'criar_funcionario', 'editar_funcionario', 'deletar_funcionario'},
+    'acessos': {'listar_acessos', 'salvar_acessos_funcionario'}
+}
+ENDPOINT_TO_PAGINA = {
+    endpoint: pagina
+    for pagina, endpoints in PAGINA_ENDPOINTS.items()
+    for endpoint in endpoints
+}
 
 # Criar tabelas e ajustes simples de schema
 with app.app_context():
@@ -31,6 +64,10 @@ with app.app_context():
     colunas_movimentacoes = {col['name'] for col in inspector.get_columns('movimentacoes')}
     if 'fornecedor_id' not in colunas_movimentacoes:
         db.session.execute(text('ALTER TABLE movimentacoes ADD COLUMN fornecedor_id INTEGER'))
+        db.session.commit()
+    colunas_funcionarios = {col['name'] for col in inspector.get_columns('funcionarios')}
+    if 'controle_acesso_ativo' not in colunas_funcionarios:
+        db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN controle_acesso_ativo BOOLEAN DEFAULT 0'))
         db.session.commit()
 
 
@@ -78,6 +115,20 @@ def get_funcionario_logado():
     if 'funcionario_id' in session:
         return Funcionario.query.get(session['funcionario_id'])
     return None
+
+
+def funcionario_tem_acesso(funcionario, endpoint):
+    if not funcionario:
+        return False
+    if funcionario.role == 'admin':
+        return True
+    pagina = ENDPOINT_TO_PAGINA.get(endpoint)
+    if not pagina:
+        return True
+    if not funcionario.controle_acesso_ativo:
+        return True
+
+    return PermissaoAcesso.query.filter_by(funcionario_id=funcionario.id, pagina=pagina).first() is not None
 
 
 def aplicar_movimentacao_estoque(produto, tipo, quantidade):
@@ -354,9 +405,71 @@ def deletar_funcionario(funcionario_id):
     return redirect(url_for('listar_funcionarios'))
 
 
+@app.route('/acessos')
+@require_role('admin')
+def listar_acessos():
+    funcionarios = Funcionario.query.order_by(Funcionario.nome.asc()).all()
+    permissoes = PermissaoAcesso.query.all()
+    permissoes_por_funcionario = {}
+    for permissao in permissoes:
+        permissoes_por_funcionario.setdefault(permissao.funcionario_id, set()).add(permissao.pagina)
+    return render_template(
+        'sistema/acessos.html',
+        funcionarios=funcionarios,
+        paginas_sistema=PAGINAS_SISTEMA,
+        permissoes_por_funcionario=permissoes_por_funcionario
+    )
+
+
+@app.route('/acessos/<int:funcionario_id>', methods=['POST'])
+@require_role('admin')
+def salvar_acessos_funcionario(funcionario_id):
+    funcionario = Funcionario.query.get_or_404(funcionario_id)
+    paginas_enviadas = set(request.form.getlist('paginas'))
+    paginas_validas = set(PAGINAS_SISTEMA.keys())
+    paginas_salvas = paginas_enviadas.intersection(paginas_validas)
+
+    try:
+        PermissaoAcesso.query.filter_by(funcionario_id=funcionario.id).delete()
+        for pagina in paginas_salvas:
+            db.session.add(PermissaoAcesso(funcionario_id=funcionario.id, pagina=pagina))
+        funcionario.controle_acesso_ativo = True
+        db.session.commit()
+        flash(f'Acessos de {funcionario.nome} atualizados com sucesso.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao salvar acessos: {str(e)}', 'danger')
+
+    return redirect(url_for('listar_acessos'))
+
+
 # ============ REGISTRO DE MODULOS DE DOMINIO ============
 register_estoque_routes(app, login_required, aplicar_movimentacao_estoque)
 register_vendas_routes(app, login_required)
+
+
+@app.before_request
+def validar_acesso_por_pagina():
+    endpoint = request.endpoint
+    if not endpoint:
+        return None
+    if endpoint == 'static' or endpoint.startswith('static'):
+        return None
+    if endpoint in {'login', 'logout', 'registro', 'index'}:
+        return None
+    if 'funcionario_id' not in session:
+        return None
+
+    funcionario = get_funcionario_logado()
+    if not funcionario or not funcionario.ativo:
+        session.clear()
+        flash('Sua sessao expirou. Faca login novamente.', 'warning')
+        return redirect(url_for('login'))
+
+    if not funcionario_tem_acesso(funcionario, endpoint):
+        flash('Acesso negado para esta pagina.', 'danger')
+        return redirect(url_for('boas_vindas'))
+    return None
 
 
 # ============ CONTEXT PROCESSORS ============

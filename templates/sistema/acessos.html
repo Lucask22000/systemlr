@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Gestao de Acessos - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Gestao de Acessos</h1>
+</div>
+
+<div class="section">
+    <p>Selecione as paginas que cada usuario pode acessar. Ao salvar, o controle de acesso e ativado para esse usuario.</p>
+</div>
+
+<div class="grid-container">
+    {% for funcionario in funcionarios %}
+    <div class="card-category">
+        <div class="card-category-header">
+            <h3>{{ funcionario.nome }}</h3>
+            <span class="badge">{{ funcionario.role }}</span>
+        </div>
+        <p class="card-category-desc">{{ funcionario.email }}</p>
+
+        <form method="POST" action="{{ url_for('salvar_acessos_funcionario', funcionario_id=funcionario.id) }}">
+            <div class="form-group" style="gap:8px;">
+                {% for chave, rotulo in paginas_sistema.items() %}
+                <label>
+                    <input
+                        type="checkbox"
+                        name="paginas"
+                        value="{{ chave }}"
+                        {% if funcionario.id in permissoes_por_funcionario and chave in permissoes_por_funcionario[funcionario.id] %}checked{% endif %}
+                        {% if funcionario.role == 'admin' %}disabled{% endif %}
+                    >
+                    {{ rotulo }}
+                </label>
+                {% endfor %}
+            </div>
+
+            {% if funcionario.role == 'admin' %}
+            <p class="text-center">Admin possui acesso total.</p>
+            {% else %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar acessos</button>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

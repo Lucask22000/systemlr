@@ -1,7 +1,7 @@
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash, session
 
-from models import db, Caixa, Mesa, Pedido, Produto, ItemPedido, Movimentacao
+from models import db, Caixa, Mesa, Pedido, Produto, ItemPedido, Movimentacao, MovimentacaoCaixa, Funcionario
 
 
 def register_vendas_routes(app, login_required):
@@ -60,6 +60,112 @@ def register_vendas_routes(app, login_required):
             db.session.rollback()
             flash(f'Erro ao deletar caixa: {str(e)}', 'error')
         return redirect(url_for('listar_caixas'))
+
+    @app.route('/caixas/<int:caixa_id>/abrir', methods=['GET', 'POST'])
+    @login_required
+    def abrir_caixa(caixa_id):
+        """Abre uma caixa e a atribui a um funcionário"""
+        caixa = Caixa.query.get_or_404(caixa_id)
+        
+        # Valida se caixa já está aberta
+        if caixa.aberto:
+            flash(f'Caixa "{caixa.nome}" já está aberta!', 'warning')
+            return redirect(url_for('listar_caixas'))
+        
+        if request.method == 'POST':
+            try:
+                funcionario_id = request.form.get('funcionario_id', type=int)
+                saldo_inicial = float(request.form.get('saldo_inicial', 0))
+                observacoes = request.form.get('observacoes', '')
+                
+                funcionario = Funcionario.query.get(funcionario_id)
+                if not funcionario:
+                    flash('Funcionário selecionado não existe!', 'danger')
+                    return redirect(url_for('abrir_caixa', caixa_id=caixa_id))
+                
+                # Abre a caixa
+                caixa.funcionario_id = funcionario_id
+                caixa.saldo_inicial = saldo_inicial
+                caixa.saldo_atual = saldo_inicial
+                caixa.aberto = True
+                caixa.aberto_em = datetime.utcnow()
+                caixa.observacoes = observacoes
+                
+                # Registra a movimentação de abertura
+                mov = MovimentacaoCaixa(
+                    caixa_id=caixa.id,
+                    tipo=MovimentacaoCaixa.TIPO_ENTRADA,
+                    valor=saldo_inicial,
+                    descricao=f'Abertura de caixa por {funcionario.nome}'
+                )
+                db.session.add(mov)
+                db.session.commit()
+                
+                flash(f'Caixa "{caixa.nome}" aberta com sucesso! Atribuída a {funcionario.nome}', 'success')
+                return redirect(url_for('listar_caixas'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao abrir caixa: {str(e)}', 'error')
+        
+        funcionarios = Funcionario.query.filter_by(ativo=True).all()
+        return render_template('caixas/abrir_caixa.html', caixa=caixa, funcionarios=funcionarios)
+
+    @app.route('/caixas/<int:caixa_id>/fechar', methods=['GET', 'POST'])
+    @login_required
+    def fechar_caixa(caixa_id):
+        """Fecha uma caixa com saldo de fechamento"""
+        caixa = Caixa.query.get_or_404(caixa_id)
+        
+        # Valida se caixa está fechada
+        if not caixa.aberto:
+            flash(f'Caixa "{caixa.nome}" já está fechada!', 'warning')
+            return redirect(url_for('listar_caixas'))
+        
+        if request.method == 'POST':
+            try:
+                saldo_fechamento = float(request.form.get('saldo_fechamento', 0))
+                observacoes = request.form.get('observacoes', '')
+                
+                # Calcula diferença
+                diferenca = saldo_fechamento - caixa.saldo_atual
+                
+                # Fecha a caixa
+                caixa.saldo_fechamento = saldo_fechamento
+                caixa.aberto = False
+                caixa.fechado_em = datetime.utcnow()
+                caixa.observacoes = observacoes
+                
+                # Registra a movimentação de fechamento
+                mov = MovimentacaoCaixa(
+                    caixa_id=caixa.id,
+                    tipo=MovimentacaoCaixa.TIPO_SAIDA if diferenca < 0 else MovimentacaoCaixa.TIPO_ENTRADA,
+                    valor=abs(diferenca),
+                    descricao=f'Fechamento de caixa - Diferença: R$ {diferenca:.2f}'
+                )
+                db.session.add(mov)
+                db.session.commit()
+                
+                msg = f'Caixa "{caixa.nome}" fechada com sucesso!'
+                if diferenca != 0:
+                    msg += f' Diferença: R$ {diferenca:.2f}'
+                flash(msg, 'success')
+                return redirect(url_for('listar_caixas'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao fechar caixa: {str(e)}', 'error')
+        
+        return render_template('caixas/fechar_caixa.html', caixa=caixa)
+
+    @app.route('/caixas/<int:caixa_id>/historico')
+    @login_required
+    def historico_caixa(caixa_id):
+        """Exibe histórico de movimentações da caixa"""
+        caixa = Caixa.query.get_or_404(caixa_id)
+        movimentacoes = MovimentacaoCaixa.query.filter_by(caixa_id=caixa_id).order_by(
+            MovimentacaoCaixa.criado_em.desc()
+        ).all()
+        
+        return render_template('caixas/historico_caixa.html', caixa=caixa, movimentacoes=movimentacoes)
 
     @app.route('/mesas')
     @login_required
