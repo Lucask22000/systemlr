@@ -10,6 +10,7 @@ class Categoria(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), unique=True, nullable=False)
     descricao = db.Column(db.Text)
+    imagem_path = db.Column(db.String(255))
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     
     produtos = db.relationship('Produto', backref='categoria', lazy=True, cascade='all, delete-orphan')
@@ -24,6 +25,7 @@ class Produto(db.Model):
     codigo = db.Column(db.String(50), unique=True, nullable=False)
     nome = db.Column(db.String(200), nullable=False)
     descricao = db.Column(db.Text)
+    imagem_path = db.Column(db.String(255))
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
     preco_custo = db.Column(db.Float, nullable=False)
     preco_venda = db.Column(db.Float, nullable=False)
@@ -64,6 +66,8 @@ class Movimentacao(db.Model):
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)
     tipo = db.Column(db.String(20), nullable=False)  # entrada ou saida
     quantidade = db.Column(db.Integer, nullable=False)
+    valor_compra = db.Column(db.Float, nullable=True)
+    info_nota = db.Column(db.String(255))
     motivo = db.Column(db.String(200))  # venda, compra, devolução, perda, etc
     observacoes = db.Column(db.Text)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
@@ -145,6 +149,8 @@ class Pedido(db.Model):
     total = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default='aberto')  # aberto, em_preparo, entregue, fechado, cancelado
     origem = db.Column(db.String(20), default='interno')  # interno, qr
+    metodo_pagamento = db.Column(db.String(50))
+    valor_pago = db.Column(db.Float, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     fechado_em = db.Column(db.DateTime)
     observacoes = db.Column(db.Text)

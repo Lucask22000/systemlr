@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h1>Mesas</h1>
-    <a href="{{ url_for('nova_mesa') }}" class="btn btn-primary">➕ Nova Mesa</a>
+    <a href="{{ url_for('nova_mesa') }}" class="btn btn-primary">Nova Mesa</a>
 </div>
 
 <div class="table-responsive">
@@ -15,6 +15,7 @@
                 <th>Número</th>
                 <th>Capacidade</th>
                 <th>Status</th>
+                <th>QR Code</th>
                 <th>Ações</th>
             </tr>
         </thead>
@@ -24,19 +25,39 @@
                 <td>{{ mesa.numero }}</td>
                 <td>{{ mesa.capacidade }}</td>
                 <td>{{ mesa.status }}</td>
+                <td>
+                    <input type="text" readonly class="form-control" value="{{ request.url_root.rstrip('/') }}/m/{{ mesa.qr_token }}" onclick="this.select();">
+                </td>
                 <td class="actions-cell">
-                    <a href="{{ url_for('editar_mesa', mesa_id=mesa.id) }}" class="btn-small btn-warning">✏️</a>
+                    <a href="{{ url_for('visualizar_qrcode_mesa', mesa_id=mesa.id) }}" class="btn-small btn-info" title="Ver QR Code">🔳 QR</a>
+                    <a href="{{ url_for('editar_mesa', mesa_id=mesa.id) }}" class="btn-small btn-warning">Editar</a>
                     <form method="POST" action="{{ url_for('deletar_mesa', mesa_id=mesa.id) }}" style="display:inline;">
-                        <button type="submit" class="btn-small btn-danger" onclick="return confirmarDelecao('Excluir mesa?')">🗑️</button>
+                        <button type="submit" class="btn-small btn-danger" onclick="return confirmarDelecao('Excluir mesa?')">Excluir</button>
                     </form>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="4" class="text-center">Nenhuma mesa encontrada</td>
+                <td colspan="5" class="text-center">Nenhuma mesa encontrada</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<style>
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    text-decoration: none;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+}
+</style>
 {% endblock %}

@@ -60,7 +60,12 @@
                 {% for prod in produtos_em_falta %}
                 <tr class="row-warning">
                     <td data-label="Produto">
-                        <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
+                        <div class="product-name-cell">
+                            {% if prod.imagem_path %}
+                            <img src="{{ url_for('static', filename=prod.imagem_path) }}" alt="{{ prod.nome }}" class="product-thumb product-thumb-sm">
+                            {% endif %}
+                            <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
+                        </div>
                     </td>
                     <td data-label="Categoria">{{ prod.categoria.nome }}</td>
                     <td data-label="Atual">{{ prod.quantidade_estoque }}</td>
@@ -91,7 +96,12 @@
                 {% for prod, valor in produtos_maior_valor %}
                 <tr>
                     <td data-label="Produto">
-                        <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
+                        <div class="product-name-cell">
+                            {% if prod.imagem_path %}
+                            <img src="{{ url_for('static', filename=prod.imagem_path) }}" alt="{{ prod.nome }}" class="product-thumb product-thumb-sm">
+                            {% endif %}
+                            <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
+                        </div>
                     </td>
                     <td data-label="Quantidade">{{ prod.quantidade_estoque }}</td>
                     <td data-label="Preço">R$ {{ "%.2f"|format(prod.preco_custo) }}</td>

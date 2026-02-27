@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Imprimir QR Code - Mesa {{ mesa.numero }} - SystemLR{% endblock %}
+
+{% block content %}
+<style>
+    @media print {
+        body, html {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .print-header {
+            display: none;
+        }
+        
+        .page-header {
+            display: none;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+        
+        .print-qrcode-container {
+            page-break-inside: avoid;
+            margin: 0;
+            padding: 0;
+        }
+    }
+    
+    @media screen {
+        .print-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+    }
+    
+    .print-qrcode-container {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    
+    .print-content {
+        display: inline-block;
+        page-break-inside: avoid;
+    }
+    
+    .mesa-info {
+        margin-bottom: 20px;
+        font-weight: bold;
+        font-size: 18px;
+    }
+    
+    #qrcode {
+        display: inline-block;
+        padding: 10px;
+        background: white;
+        border: 2px solid #333;
+    }
+    
+    .url-info {
+        margin-top: 15px;
+        font-size: 12px;
+        color: #666;
+        word-break: break-all;
+    }
+    
+    .print-options {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #999;
+    }
+</style>
+
+<div class="print-controls no-print">
+    <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir</button>
+    <button onclick="window.history.back()" class="btn btn-secondary">← Voltar</button>
+</div>
+
+<div class="print-qrcode-container">
+    <div class="print-content">
+        <div class="mesa-info">
+            Mesa {{ mesa.numero }}
+        </div>
+        
+        <div id="qrcode" style="display: inline-block;"></div>
+        
+        <div class="url-info">
+            {{ qr_url }}
+        </div>
+        
+        <div class="print-options">
+            <p>Capacidade: {{ mesa.capacidade }} pessoas</p>
+        </div>
+    </div>
+</div>
+
+<!-- Script QRCode.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gera o QR code dinamicamente
+    var qrcodeElement = document.getElementById('qrcode');
+    qrcodeElement.innerHTML = '';
+    
+    new QRCode(qrcodeElement, {
+        text: "{{ qr_url }}",
+        width: 400,
+        height: 400,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+});
+</script>
+{% endblock %}

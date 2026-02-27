@@ -1,0 +1,848 @@
+{% extends "base.html" %}
+
+{% block title %}PDV - Ponto de Venda - SystemLR{% endblock %}
+
+{% block content %}
+<style>
+    .pdv-container {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 20px;
+        height: calc(100vh - 150px);
+    }
+
+    .pdv-produtos {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        overflow-y: auto;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 8px;
+    }
+
+    .produto-card {
+        background: white;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .produto-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        transform: translateY(-2px);
+    }
+    .produto-card.added {
+        border-color: #28a745;
+        box-shadow: 0 0 8px rgba(40, 167, 69, 0.6);
+        animation: pulseAdd 0.8s ease-in-out;
+    }
+
+    @keyframes pulseAdd {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .produto-card.low-stock {
+        background-color: #fff3cd;
+        border-color: #ffc107;
+    }
+
+    .produto-nome {
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+        margin-bottom: 5px;
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .produto-preco {
+        font-size: 14px;
+        color: #667eea;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+
+    .produto-estoque {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 5px;
+    }
+
+    .btn-add-produto {
+        width: 100%;
+        padding: 6px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+
+    .btn-add-produto:hover {
+        background: #218838;
+    }
+
+    .pedido-panel {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .pedido-header {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .pedido-select {
+        flex: 1;
+        min-width: 150px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .itens-lista {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px;
+        min-height: 150px;
+        background: #fafafa;
+    }
+
+    .item-pedido {
+        background: white;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        border-left: 3px solid #667eea;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+    }
+    .item-pedido.highlight {
+        background: #fffbea;
+        animation: highlightPulse 0.6s ease-in-out;
+    }
+
+    @keyframes highlightPulse {
+        0% { background-color: #fffbea; }
+        50% { background-color: #ffffcc; }
+        100% { background-color: #fffbea; }
+    }
+
+    .item-info {
+        flex: 1;
+    }
+
+    .item-produto {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .item-qty {
+        color: #666;
+        font-size: 11px;
+    }
+
+    .item-preco {
+        font-weight: bold;
+        color: #28a745;
+        min-width: 60px;
+        text-align: right;
+    }
+
+    .btn-remove-item {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 11px;
+        margin-left: 8px;
+    }
+
+    .btn-remove-item:hover {
+        background: #c82333;
+    }
+
+    .pedido-resumo {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        border: 1px solid #ddd;
+    }
+
+    .resumo-linha {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 13px;
+    }
+
+    .resumo-total {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0;
+        font-size: 16px;
+        font-weight: bold;
+        color: #667eea;
+        border-top: 2px solid #ddd;
+        padding-top: 8px;
+    }
+
+    .pedido-acoes {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-pedido {
+        flex: 1;
+        min-width: 80px;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-nova-venda {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-nova-venda:hover {
+        background: #218838;
+    }
+
+    .btn-finalizar {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-finalizar:hover {
+        background: #5568d3;
+    }
+
+    .btn-pedido:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .alert {
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        animation: slideIn 0.3s ease-in;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .vazio {
+        text-align: center;
+        color: #999;
+        padding: 20px;
+        font-size: 13px;
+    }
+
+    .payment-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1200;
+        padding: 16px;
+    }
+
+    .payment-modal.open {
+        display: flex;
+    }
+
+    .payment-modal-content {
+        width: 100%;
+        max-width: 520px;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        padding: 18px;
+    }
+
+    .payment-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .payment-option {
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        padding: 10px;
+        cursor: pointer;
+        background: #f9fafc;
+    }
+
+    .payment-option input {
+        margin-right: 6px;
+    }
+
+    .payment-fields {
+        margin-top: 10px;
+        display: grid;
+        gap: 10px;
+    }
+
+    .payment-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .payment-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+    }
+
+    @media (max-width: 1024px) {
+        .pdv-container {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+    }
+</style>
+
+<div class="pdv-container">
+    <!-- Produtos -->
+    <div>
+        <h2 style="margin-top: 0; margin-bottom: 15px;">📦 Produtos</h2>
+        <div style="display:flex; gap:5px; align-items:center; margin-bottom:10px;">
+            <input type="text" id="filtroNome" placeholder="🔍 Filtrar produtos..." 
+                   style="flex:1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+            <button type="button" class="js-open-barcode-scanner" data-barcode-target="barcodeInput" 
+                    title="Ler código de barras" style="font-size:18px; padding:6px 10px;">
+                📷
+            </button>
+            <input type="text" id="barcodeInput" style="display:none;">
+        </div>
+        <div class="pdv-produtos" id="produtosGrid">
+            {% for produto in produtos %}
+            <div class="produto-card {% if produto.quantidade_estoque < produto.quantidade_minima %}low-stock{% endif %}" 
+                 data-id="{{ produto.id }}" data-codigo="{{ produto.codigo }}" data-preco="{{ produto.preco_venda }}" data-nome="{{ produto.nome }}">
+                {% if produto.imagem_path %}
+                <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" style="max-width:100%; max-height:80px; object-fit:contain; margin-bottom:8px;">
+            {% endif %}
+            <div class="produto-nome">{{ produto.nome }}</div>
+                <div class="produto-preco">R$ {{ '%.2f'|format(produto.preco_venda) }}</div>
+                <div class="produto-estoque">
+                    {% if produto.quantidade_estoque < produto.quantidade_minima %}
+                        ⚠️ {{ produto.quantidade_estoque }}
+                    {% else %}
+                        📦 {{ produto.quantidade_estoque }}
+                    {% endif %}
+                </div>
+                <button type="button" class="btn-add-produto" onclick="adicionarAoCarrinho({{ produto.id }}, '{{ produto.nome }}', {{ produto.preco_venda }})">
+                    Adicionar
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Carrinho/Pedido -->
+    <div class="pedido-panel">
+        <h2 style="margin-top: 0; margin-bottom: 15px;">🛒 Pedido</h2>
+        
+        <div id="alertas"></div>
+
+        <div class="pedido-header">
+            <select id="caixaSelect" class="pedido-select" required onchange="atualizarCaixa()">
+                <option value="">Selecione a Caixa</option>
+                {% for caixa in caixas_abertas %}
+                <option value="{{ caixa.id }}">{{ caixa.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <label style="font-size: 12px; color: #666; margin-bottom: 5px;">Mesa (opcional)</label>
+        <select id="mesaSelect" class="pedido-select" style="margin-bottom: 10px;">
+            <option value="">Sem mesa</option>
+            {% for mesa in mesas %}
+            <option value="{{ mesa.id }}">Mesa {{ mesa.numero }}</option>
+            {% endfor %}
+        </select>
+
+        <label style="font-size: 12px; color: #666; margin-bottom: 5px;">Itens do Pedido</label>
+        <div class="itens-lista" id="itensPedido">
+            <div class="vazio">Nenhum item adicionado</div>
+        </div>
+
+        <div class="pedido-resumo">
+            <div class="resumo-linha">
+                <span>Subtotal:</span>
+                <span id="subtotal">R$ 0.00</span>
+            </div>
+            <div class="resumo-total">
+                <span>Total:</span>
+                <span id="total">R$ 0.00</span>
+            </div>
+        </div>
+
+        <div class="pedido-acoes">
+            <button type="button" class="btn-pedido btn-nova-venda" onclick="novaVenda()" id="btnNovaVenda" disabled>
+                ➕ Nova Venda
+            </button>
+            <button type="button" class="btn-pedido btn-finalizar" onclick="finalizarVenda()" id="btnFinalizar" disabled>
+                ✓ Finalizar
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="payment-modal" id="paymentModal">
+    <div class="payment-modal-content">
+        <h3 style="margin-top:0; margin-bottom:10px;">Finalizar Pagamento</h3>
+        <p style="margin-bottom:12px; color:#555;">Total do pedido: <strong id="paymentTotalLabel">R$ 0.00</strong></p>
+
+        <div class="payment-grid">
+            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="dinheiro" checked>Dinheiro</label>
+            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="cartao">Cartao</label>
+            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="pix">Pix</label>
+            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="crediario">Crediario</label>
+            <label class="payment-option" style="grid-column:1 / -1;"><input type="radio" name="metodo_pagamento_pdv" value="dividido">Dividido (dinheiro + cartao)</label>
+        </div>
+
+        <div class="payment-fields" id="paymentDefaultFields">
+            <div>
+                <label for="paymentValor" style="font-size:12px; color:#666;">Valor recebido</label>
+                <input type="number" step="0.01" id="paymentValor" class="pedido-select" placeholder="Ex.: 100.00">
+            </div>
+        </div>
+
+        <div class="payment-fields" id="paymentSplitFields" style="display:none;">
+            <div class="payment-row">
+                <div>
+                    <label for="paymentDinheiro" style="font-size:12px; color:#666;">Dinheiro</label>
+                    <input type="number" step="0.01" id="paymentDinheiro" class="pedido-select" placeholder="0.00">
+                </div>
+                <div>
+                    <label for="paymentCartao" style="font-size:12px; color:#666;">Cartao</label>
+                    <input type="number" step="0.01" id="paymentCartao" class="pedido-select" placeholder="0.00">
+                </div>
+            </div>
+            <small id="splitTotalInfo" style="color:#555;">Total informado: R$ 0.00</small>
+        </div>
+
+        <div class="payment-fields" id="paymentCrediarioFields" style="display:none;">
+            <div>
+                <label for="paymentClienteCrediario" style="font-size:12px; color:#666;">Cliente (opcional)</label>
+                <input type="text" id="paymentClienteCrediario" class="pedido-select" placeholder="Nome do cliente">
+            </div>
+        </div>
+
+        <div class="payment-actions">
+            <button type="button" class="btn btn-secondary" onclick="fecharModalPagamento()">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="confirmarFinalizacaoPagamento()">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let carrinho = {};
+let carrinhoOriginal = {};
+let pedidoAtual = null;
+let caixaSelecionada = null;
+
+function adicionarAoCarrinho(produtoId, nome, preco) {
+    if (!document.getElementById('caixaSelect').value) {
+        mostrarAlerta('Selecione uma caixa primeiro!', 'error');
+        return;
+    }
+
+    const isNew = !carrinho[produtoId];
+    if (!carrinho[produtoId]) {
+        carrinho[produtoId] = { nome, preco, quantidade: 0 };
+    }
+    carrinho[produtoId].quantidade++;
+    
+    // highlight produto card briefly
+    const card = document.querySelector(`.produto-card[data-id="${produtoId}"]`);
+    if (card) {
+        card.classList.add('added');
+        setTimeout(() => card.classList.remove('added'), 900);
+    }
+
+    atualizarCarrinho(isNew ? produtoId : null);
+}
+
+function removerDoCarrinho(produtoId) {
+    delete carrinho[produtoId];
+    atualizarCarrinho();
+}
+
+function atualizarCarrinho(highlightId) {
+    const itensList = document.getElementById('itensPedido');
+    const itens = Object.entries(carrinho);
+
+    if (itens.length === 0) {
+        itensList.innerHTML = '<div class="vazio">Nenhum item adicionado</div>';
+        document.getElementById('btnNovaVenda').disabled = true;
+        document.getElementById('subtotal').textContent = 'R$ 0.00';
+        document.getElementById('total').textContent = 'R$ 0.00';
+        return;
+    }
+
+    let total = 0;
+    itensList.innerHTML = itens.map(([id, item]) => {
+        const subtotal = item.quantidade * item.preco;
+        total += subtotal;
+        return `
+            <div class="item-pedido" data-id="${id}">
+                <div class="item-info">
+                    <div class="item-produto">${item.nome}</div>
+                    <div class="item-qty">${item.quantidade}x R$ ${item.preco.toFixed(2)}</div>
+                </div>
+                <div class="item-preco">R$ ${subtotal.toFixed(2)}</div>
+                <button type="button" class="btn-remove-item" onclick="removerDoCarrinho(${id})">✕</button>
+            </div>
+        `;
+    }).join('');
+
+    if (highlightId) {
+        const elem = itensList.querySelector(`.item-pedido[data-id="${highlightId}"]`);
+        if (elem) {
+            elem.classList.add('highlight');
+            setTimeout(() => elem.classList.remove('highlight'), 1000);
+        }
+    }
+
+    document.getElementById('subtotal').textContent = `R$ ${total.toFixed(2)}`;
+    document.getElementById('total').textContent = `R$ ${total.toFixed(2)}`;
+    document.getElementById('btnNovaVenda').disabled = false;
+}
+
+function atualizarCaixa() {
+    caixaSelecionada = document.getElementById('caixaSelect').value;
+    if (!caixaSelecionada) {
+        if (Object.keys(carrinho).length > 0) {
+            mostrarAlerta('Selecione uma caixa para continuar', 'error');
+        }
+        carrinho = {};
+        pedidoAtual = null;
+        atualizarCarrinho();
+        document.getElementById('btnFinalizar').disabled = true;
+        atualizarBotaoNovaVenda();
+        return;
+    }
+    // consultar pedido aberto na caixa
+    fetch(`/api/pedidos/aberto/${caixaSelecionada}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.exists) {
+                pedidoAtual = data.pedido_id;
+                carrinho = {};
+                data.itens.forEach(i => {
+                    carrinho[i.produto_id] = { nome: i.nome, preco: i.preco, quantidade: i.quantidade };
+                });
+                // gravar cópia original
+                carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
+                atualizarCarrinho();
+                document.getElementById('btnFinalizar').disabled = false;
+            } else {
+                pedidoAtual = null;
+                carrinho = {};
+                carrinhoOriginal = {};
+                atualizarCarrinho();
+                document.getElementById('btnFinalizar').disabled = true;
+            }
+            atualizarBotaoNovaVenda();
+        })
+        .catch(e => console.error('Erro ao buscar pedido aberto', e));
+}
+
+function novaVenda() {
+    const caixaId = document.getElementById('caixaSelect').value;
+    const mesaId = document.getElementById('mesaSelect').value || null;
+
+    if (!caixaId) {
+        mostrarAlerta('Selecione uma caixa!', 'error');
+        return;
+    }
+
+    if (Object.keys(carrinho).length === 0) {
+        mostrarAlerta('Adicione produtos ao carrinho!', 'error');
+        return;
+    }
+
+    const itensTodos = Object.entries(carrinho).map(([id, item]) => ({
+        produto_id: parseInt(id),
+        quantidade: item.quantidade
+    }));
+
+    if (pedidoAtual) {
+        // calcular apenas diferença em relação ao carrinhoOriginal
+        const delta = [];
+        Object.entries(carrinho).forEach(([id, item]) => {
+            const origQty = carrinhoOriginal[id] ? carrinhoOriginal[id].quantidade : 0;
+            if (item.quantidade > origQty) {
+                delta.push({ produto_id: parseInt(id), quantidade: item.quantidade - origQty });
+            }
+        });
+        if (delta.length === 0) {
+            mostrarAlerta('Nenhum item novo para adicionar.', 'error');
+            return;
+        }
+        fetch(`/api/pedidos/${pedidoAtual}/adicionar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itens: delta })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                mostrarAlerta(`✓ ${data.message}`, 'success');
+                carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
+            } else {
+                mostrarAlerta(`❌ ${data.message}`, 'error');
+            }
+        })
+        .catch(e => mostrarAlerta('Erro ao atualizar pedido: ' + e, 'error'));
+    } else {
+        fetch('{{ url_for("criar_pedido_api") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ caixa_id: parseInt(caixaId), mesa_id: mesaId, itens: itensTodos })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                pedidoAtual = data.pedido_id;
+                mostrarAlerta(`✓ ${data.message}`, 'success');
+                document.getElementById('btnFinalizar').disabled = false;
+                // manter os itens no carrinho até o operador finalizar
+                atualizarBotaoNovaVenda();
+                carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
+            } else {
+                mostrarAlerta(`❌ ${data.message}`, 'error');
+            }
+        })
+        .catch(e => mostrarAlerta('Erro ao criar pedido: ' + e, 'error'));
+    }
+}
+
+function finalizarVenda() {
+    if (!pedidoAtual) {
+        mostrarAlerta('Nenhum pedido aberto!', 'error');
+        return;
+    }
+    abrirModalPagamento();
+}
+
+function obterTotalCarrinho() {
+    return Object.values(carrinho).reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+}
+
+function abrirModalPagamento() {
+    const total = obterTotalCarrinho();
+    document.getElementById('paymentTotalLabel').textContent = `R$ ${total.toFixed(2)}`;
+    document.getElementById('paymentValor').value = total.toFixed(2);
+    document.getElementById('paymentDinheiro').value = '';
+    document.getElementById('paymentCartao').value = '';
+    document.getElementById('paymentClienteCrediario').value = '';
+    document.querySelector('input[name="metodo_pagamento_pdv"][value="dinheiro"]').checked = true;
+    atualizarCamposPagamento();
+    atualizarInfoDividido();
+    document.getElementById('paymentModal').classList.add('open');
+}
+
+function fecharModalPagamento() {
+    document.getElementById('paymentModal').classList.remove('open');
+}
+
+function atualizarInfoDividido() {
+    const dinheiro = parseFloat((document.getElementById('paymentDinheiro').value || '0').replace(',', '.')) || 0;
+    const cartao = parseFloat((document.getElementById('paymentCartao').value || '0').replace(',', '.')) || 0;
+    document.getElementById('splitTotalInfo').textContent = `Total informado: R$ ${(dinheiro + cartao).toFixed(2)}`;
+}
+
+function atualizarCamposPagamento() {
+    const metodo = document.querySelector('input[name="metodo_pagamento_pdv"]:checked').value;
+    const splitFields = document.getElementById('paymentSplitFields');
+    const crediarioFields = document.getElementById('paymentCrediarioFields');
+    const defaultFields = document.getElementById('paymentDefaultFields');
+
+    if (metodo === 'dividido') {
+        splitFields.style.display = 'grid';
+        crediarioFields.style.display = 'none';
+        defaultFields.style.display = 'none';
+    } else if (metodo === 'crediario') {
+        splitFields.style.display = 'none';
+        crediarioFields.style.display = 'grid';
+        defaultFields.style.display = 'grid';
+        document.getElementById('paymentValor').value = '0.00';
+    } else {
+        splitFields.style.display = 'none';
+        crediarioFields.style.display = 'none';
+        defaultFields.style.display = 'grid';
+    }
+}
+
+function confirmarFinalizacaoPagamento() {
+    const metodo = document.querySelector('input[name="metodo_pagamento_pdv"]:checked').value;
+    const payload = { metodo_pagamento: metodo };
+
+    if (metodo === 'dividido') {
+        const dinheiro = parseFloat((document.getElementById('paymentDinheiro').value || '0').replace(',', '.')) || 0;
+        const cartao = parseFloat((document.getElementById('paymentCartao').value || '0').replace(',', '.')) || 0;
+        payload.split_pagamento = { dinheiro, cartao };
+    } else {
+        const valorPago = parseFloat((document.getElementById('paymentValor').value || '').replace(',', '.'));
+        if (!Number.isNaN(valorPago)) {
+            payload.valor_pago = valorPago;
+        }
+        if (metodo === 'crediario') {
+            payload.cliente_crediario = document.getElementById('paymentClienteCrediario').value || '';
+        }
+    }
+
+    fetch(`/api/pedidos/${pedidoAtual}/finalizar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            let msg = data.message;
+            if (data.metodo_pagamento) {
+                msg += ' (pagamento: ' + data.metodo_pagamento;
+                if (data.valor_pago !== null && data.valor_pago !== undefined) {
+                    msg += ' R$ ' + parseFloat(data.valor_pago).toFixed(2);
+                }
+                msg += ')';
+            }
+            mostrarAlerta(`OK ${msg}`, 'success');
+            fecharModalPagamento();
+            pedidoAtual = null;
+            carrinho = {};
+            carrinhoOriginal = {};
+            atualizarCarrinho();
+            document.getElementById('btnFinalizar').disabled = true;
+        } else {
+            mostrarAlerta(`Erro: ${data.message}`, 'error');
+        }
+    })
+    .catch(e => mostrarAlerta('Erro ao finalizar: ' + e, 'error'));
+}
+function mostrarAlerta(msg, tipo) {
+    const alertas = document.getElementById('alertas');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${tipo}`;
+    alert.textContent = msg;
+    alertas.appendChild(alert);
+    setTimeout(() => alert.remove(), 3000);
+}
+
+function atualizarBotaoNovaVenda() {
+    const btn = document.getElementById('btnNovaVenda');
+    if (pedidoAtual) {
+        btn.textContent = '➕ Adicionar';
+    } else {
+        btn.textContent = '➕ Nova Venda';
+    }
+}
+
+// Filtro de produtos
+
+    // quando scanner preencher o campo escondido, procurar e adicionar
+    const barcodeInput = document.getElementById('barcodeInput');
+    if (barcodeInput) {
+        barcodeInput.addEventListener('change', function(e) {
+            const code = e.target.value.trim();
+            if (code) {
+                const card = Array.from(document.querySelectorAll('.produto-card'))
+                    .find(c => c.dataset.codigo === code);
+                if (card) {
+                    adicionarAoCarrinho(card.dataset.id, card.dataset.nome, parseFloat(card.dataset.preco));
+                } else {
+                    mostrarAlerta('Produto não encontrado para o código: ' + code, 'error');
+                }
+                e.target.value = '';
+            }
+        });
+    }
+document.getElementById('filtroNome').addEventListener('input', (e) => {
+    const filtro = e.target.value.toLowerCase();
+    document.querySelectorAll('.produto-card').forEach(card => {
+        const nome = card.dataset.nome.toLowerCase();
+        card.style.display = nome.includes(filtro) ? '' : 'none';
+    });
+});
+
+document.querySelectorAll('input[name="metodo_pagamento_pdv"]').forEach((radio) => {
+    radio.addEventListener('change', atualizarCamposPagamento);
+});
+document.getElementById('paymentDinheiro').addEventListener('input', atualizarInfoDividido);
+document.getElementById('paymentCartao').addEventListener('input', atualizarInfoDividido);
+document.getElementById('paymentModal').addEventListener('click', (event) => {
+    if (event.target.id === 'paymentModal') {
+        fecharModalPagamento();
+    }
+});
+// ajustar texto inicial do botão de venda
+atualizarBotaoNovaVenda();
+</script>
+{% endblock %}
+
+

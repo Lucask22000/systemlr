@@ -1,10 +1,74 @@
 from datetime import datetime, timedelta
+import os
+from uuid import uuid4
+
 from flask import render_template, request, redirect, url_for, flash
+from werkzeug.utils import secure_filename
 
 from models import db, Categoria, Produto, Movimentacao, Fornecedor
 
+# pillow será usado para redimensionar/comprimir imagens
+from PIL import Image
+
+ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
+
 
 def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
+    def _is_allowed_image(filename):
+        _, ext = os.path.splitext(filename.lower())
+        return ext in ALLOWED_IMAGE_EXTENSIONS
+
+    def _delete_image_file(relative_path):
+        if not relative_path:
+            return
+
+        image_path = os.path.normpath(os.path.join(app.static_folder, relative_path))
+        static_root = os.path.normpath(app.static_folder)
+        if os.path.commonpath([image_path, static_root]) != static_root:
+            return
+
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+    def _save_product_image(file_storage):
+        if not file_storage or not file_storage.filename:
+            return None, None
+
+        if not _is_allowed_image(file_storage.filename):
+            return None, 'Formato de imagem invalido. Use PNG, JPG, JPEG, WEBP ou GIF.'
+
+        _, ext = os.path.splitext(file_storage.filename.lower())
+        safe_name = secure_filename(file_storage.filename)
+        if not safe_name:
+            return None, 'Nome do arquivo invalido.'
+
+        unique_name = f'{datetime.utcnow().strftime("%Y%m%d%H%M%S")}_{uuid4().hex}{ext}'
+        relative_dir = os.path.join('uploads', 'produtos')
+        absolute_dir = os.path.join(app.static_folder, relative_dir)
+        os.makedirs(absolute_dir, exist_ok=True)
+        relative_path = os.path.join(relative_dir, unique_name).replace('\\', '/')
+        absolute_path = os.path.join(app.static_folder, relative_path)
+
+        # salvar arquivo temporariamente para depois processar
+        file_storage.save(absolute_path)
+
+        # otimizar imagem: redimensionar e comprimir
+        try:
+            img = Image.open(absolute_path)
+            # limitar tamanho máximo (ex: 800x800) mantendo proporção
+            max_size = (800, 800)
+            img.thumbnail(max_size, Image.ANTIALIAS)
+            # sobrescrever no mesmo caminho, usando otimização
+            save_kwargs = {'optimize': True}
+            if img.format and img.format.lower() in ['jpeg', 'jpg']:
+                save_kwargs['quality'] = 85
+            img.save(absolute_path, **save_kwargs)
+        except Exception:
+            # se falhar, não é crítico; deixamos a imagem original
+            pass
+
+        return relative_path, None
+
     @app.route('/produtos')
     @login_required
     def listar_produtos():
@@ -36,6 +100,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     @login_required
     def novo_produto():
         if request.method == 'POST':
+            nova_imagem_path = None
             try:
                 categoria_id = request.form.get('categoria_id', type=int)
                 categoria = Categoria.query.get(categoria_id)
@@ -43,10 +108,16 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                     flash('Categoria invalida', 'error')
                     return redirect(url_for('novo_produto'))
 
+                nova_imagem_path, erro_imagem = _save_product_image(request.files.get('imagem'))
+                if erro_imagem:
+                    flash(erro_imagem, 'error')
+                    return redirect(url_for('novo_produto'))
+
                 produto = Produto(
                     codigo=request.form.get('codigo').upper(),
                     nome=request.form.get('nome'),
                     descricao=request.form.get('descricao'),
+                    imagem_path=nova_imagem_path,
                     categoria_id=categoria_id,
                     preco_custo=float(request.form.get('preco_custo', 0)),
                     preco_venda=float(request.form.get('preco_venda', 0)),
@@ -59,6 +130,8 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 return redirect(url_for('listar_produtos'))
             except Exception as e:
                 db.session.rollback()
+                if nova_imagem_path:
+                    _delete_image_file(nova_imagem_path)
                 flash(f'Erro ao criar produto: {str(e)}', 'error')
 
         categorias = Categoria.query.all()
@@ -69,6 +142,8 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     def editar_produto(produto_id):
         produto = Produto.query.get_or_404(produto_id)
         if request.method == 'POST':
+            nova_imagem_path = None
+            imagem_anterior = produto.imagem_path
             try:
                 produto.nome = request.form.get('nome')
                 produto.descricao = request.form.get('descricao')
@@ -76,11 +151,32 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 produto.preco_custo = float(request.form.get('preco_custo', 0))
                 produto.preco_venda = float(request.form.get('preco_venda', 0))
                 produto.quantidade_minima = int(request.form.get('quantidade_minima', 5))
+
+                remover_imagem = request.form.get('remover_imagem') == 'on'
+                arquivo_imagem = request.files.get('imagem')
+
+                if arquivo_imagem and arquivo_imagem.filename:
+                    nova_imagem_path, erro_imagem = _save_product_image(arquivo_imagem)
+                    if erro_imagem:
+                        flash(erro_imagem, 'error')
+                        return redirect(url_for('editar_produto', produto_id=produto_id))
+                    produto.imagem_path = nova_imagem_path
+                elif remover_imagem:
+                    produto.imagem_path = None
+
                 db.session.commit()
+
+                if nova_imagem_path and imagem_anterior and imagem_anterior != nova_imagem_path:
+                    _delete_image_file(imagem_anterior)
+                if remover_imagem and imagem_anterior:
+                    _delete_image_file(imagem_anterior)
+
                 flash(f'Produto "{produto.nome}" atualizado com sucesso!', 'success')
                 return redirect(url_for('listar_produtos'))
             except Exception as e:
                 db.session.rollback()
+                if nova_imagem_path:
+                    _delete_image_file(nova_imagem_path)
                 flash(f'Erro ao atualizar produto: {str(e)}', 'error')
 
         categorias = Categoria.query.all()
@@ -99,9 +195,12 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     @login_required
     def deletar_produto(produto_id):
         produto = Produto.query.get_or_404(produto_id)
+        imagem_produto = produto.imagem_path
         try:
             db.session.delete(produto)
             db.session.commit()
+            if imagem_produto:
+                _delete_image_file(imagem_produto)
             flash(f'Produto "{produto.nome}" deletado com sucesso!', 'success')
         except Exception as e:
             db.session.rollback()
@@ -251,6 +350,8 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                     fornecedor_id=(fornecedor.id if fornecedor else None),
                     tipo=tipo,
                     quantidade=quantidade,
+                    valor_compra=request.form.get('valor_compra', type=float),
+                    info_nota=request.form.get('info_nota'),
                     motivo=request.form.get('motivo'),
                     observacoes=request.form.get('observacoes')
                 )
@@ -325,6 +426,8 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                     fornecedor_id=(fornecedor.id if fornecedor else None),
                     tipo=tipo,
                     quantidade=quantidade,
+                    valor_compra=request.form.get('valor_compra', type=float),
+                    info_nota=request.form.get('info_nota'),
                     motivo=request.form.get('motivo'),
                     observacoes=request.form.get('observacoes')
                 )

@@ -22,6 +22,7 @@
         <div class="nav-dropdown">
             <button type="button" class="nav-dropdown-toggle">Vendas</button>
             <div class="nav-submenu">
+                <a href="{{ url_for('pdv') }}" class="nav-link nav-sublink">💳 PDV</a>
                 <a href="{{ url_for('listar_pedidos') }}" class="nav-link nav-sublink">Pedidos</a>
                 <a href="{{ url_for('listar_vendas') }}" class="nav-link nav-sublink">Vendas</a>
                 <a href="{{ url_for('listar_mesas') }}" class="nav-link nav-sublink">Mesas</a>
@@ -42,9 +43,6 @@
 
         {% if funcionario_logado.role in ['admin', 'gerente'] %}
             <a href="{{ url_for('listar_funcionarios') }}" class="nav-link">Funcionários</a>
-        {% endif %}
-        {% if funcionario_logado.role == 'admin' %}
-            <a href="{{ url_for('listar_acessos') }}" class="nav-link">Acessos</a>
         {% endif %}
 
         <div class="nav-dropdown" style="margin-left: auto;">

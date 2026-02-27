@@ -5,6 +5,7 @@
 {% block extra_js %}
 <script>
 let itemCount = {{ pedido.itens|length }};
+
 function adicionarItem() {
     const container = document.getElementById('itensContainer');
     const row = document.createElement('div');
@@ -17,12 +18,39 @@ function adicionarItem() {
             {% endfor %}
         </select>
         <input type="number" name="quantidade_${itemCount}" value="1" min="1" required class="form-control" style="width:80px; margin-left:8px;">
-        <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove();">✖</button>
+        <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove();">Remover</button>
     `;
     container.appendChild(row);
     itemCount++;
     document.getElementById('item_count').value = itemCount;
 }
+
+function togglePagamentoFields() {
+    const metodo = document.getElementById('metodo_pagamento').value;
+    const split = document.getElementById('splitPagamentoFields');
+    const crediario = document.getElementById('crediarioFields');
+    const valor = document.getElementById('valorPagoField');
+
+    if (metodo === 'dividido') {
+        split.style.display = 'grid';
+        crediario.style.display = 'none';
+        valor.style.display = 'none';
+    } else if (metodo === 'crediario') {
+        split.style.display = 'none';
+        crediario.style.display = 'block';
+        valor.style.display = 'block';
+    } else if (metodo) {
+        split.style.display = 'none';
+        crediario.style.display = 'none';
+        valor.style.display = 'block';
+    } else {
+        split.style.display = 'none';
+        crediario.style.display = 'none';
+        valor.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', togglePagamentoFields);
 </script>
 {% endblock %}
 
@@ -38,6 +66,7 @@ function adicionarItem() {
             {% endfor %}
         </select>
     </div>
+
     <div class="form-group">
         <label for="caixa_id">Caixa</label>
         <select name="caixa_id" id="caixa_id" class="form-control" required>
@@ -47,18 +76,56 @@ function adicionarItem() {
             {% endfor %}
         </select>
     </div>
+
+    <div class="form-group">
+        <label for="metodo_pagamento">Metodo de pagamento</label>
+        <select name="metodo_pagamento" id="metodo_pagamento" class="form-control" onchange="togglePagamentoFields()">
+            <option value="" {% if not pedido.metodo_pagamento %}selected{% endif %}>Nao informado</option>
+            <option value="dinheiro" {% if pedido.metodo_pagamento and 'dinheiro' in pedido.metodo_pagamento and 'dividido' not in pedido.metodo_pagamento %}selected{% endif %}>Dinheiro</option>
+            <option value="cartao" {% if pedido.metodo_pagamento and 'cartao' in pedido.metodo_pagamento and 'dividido' not in pedido.metodo_pagamento %}selected{% endif %}>Cartao</option>
+            <option value="pix" {% if pedido.metodo_pagamento and 'pix' in pedido.metodo_pagamento %}selected{% endif %}>Pix</option>
+            <option value="crediario" {% if pedido.metodo_pagamento and 'crediario' in pedido.metodo_pagamento %}selected{% endif %}>Crediario</option>
+            <option value="dividido" {% if pedido.metodo_pagamento and 'dividido' in pedido.metodo_pagamento %}selected{% endif %}>Dividido (dinheiro + cartao)</option>
+        </select>
+    </div>
+
+    <div class="form-group" id="valorPagoField">
+        <label for="valor_pago">Valor pago</label>
+        <input type="number" step="0.01" name="valor_pago" id="valor_pago" class="form-control" value="{% if pedido.valor_pago is not none %}{{ '%.2f'|format(pedido.valor_pago) }}{% endif %}">
+    </div>
+
+    <div class="form-group" id="crediarioFields" style="display:none;">
+        <label for="cliente_crediario">Cliente crediario (opcional)</label>
+        <input type="text" name="cliente_crediario" id="cliente_crediario" class="form-control" placeholder="Nome do cliente">
+    </div>
+
+    <div class="form-row" id="splitPagamentoFields" style="display:none;">
+        <div class="form-group">
+            <label for="valor_dinheiro">Valor em dinheiro</label>
+            <input type="number" step="0.01" name="valor_dinheiro" id="valor_dinheiro" class="form-control" placeholder="0.00">
+        </div>
+        <div class="form-group">
+            <label for="valor_cartao">Valor em cartao</label>
+            <input type="number" step="0.01" name="valor_cartao" id="valor_cartao" class="form-control" placeholder="0.00">
+        </div>
+    </div>
+
     <div class="form-group">
         <label for="status">Status</label>
         <select name="status" id="status" class="form-control" required>
             <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %}>Aberto</option>
+            <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %}>Em preparo</option>
+            <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %}>Entregue</option>
             <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %}>Fechado</option>
             <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %}>Cancelado</option>
         </select>
     </div>
+
     <div class="form-group">
-        <label for="observacoes">Observações</label>
+        <label for="observacoes">Observacoes</label>
         <textarea name="observacoes" id="observacoes" class="form-control">{{ pedido.observacoes }}</textarea>
     </div>
+
     <h3>Itens</h3>
     <div id="itensContainer">
         {% for item in pedido.itens %}
@@ -70,14 +137,15 @@ function adicionarItem() {
                 {% endfor %}
             </select>
             <input type="number" name="quantidade_{{ loop.index0 }}" value="{{ item.quantidade }}" min="1" required class="form-control" style="width:80px; margin-left:8px;">
-            <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove();">✖</button>
+            <button type="button" class="btn btn-secondary" onclick="this.parentElement.remove();">Remover</button>
         </div>
         {% endfor %}
     </div>
+
     <input type="hidden" name="item_count" id="item_count" value="{{ pedido.itens|length }}">
-    <button type="button" class="btn btn-secondary" onclick="adicionarItem()">➕ Adicionar Item</button>
+    <button type="button" class="btn btn-secondary" onclick="adicionarItem()">Adicionar Item</button>
     <br><br>
     <button type="submit" class="btn btn-primary">Salvar Pedido</button>
-    <a href="{{ url_for('listar_pedidos') }}" class="btn btn-secondary">✕ Cancelar</a>
+    <a href="{{ url_for('listar_pedidos') }}" class="btn btn-secondary">Cancelar</a>
 </form>
 {% endblock %}

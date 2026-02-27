@@ -11,6 +11,7 @@
     <table class="table">
         <thead>
             <tr>
+                <th>Foto</th>
                 <th>ID</th>
                 <th>Total</th>
                 <th>Caixa</th>
@@ -21,6 +22,13 @@
         <tbody>
             {% for venda in vendas %}
             <tr>
+                <td>
+                    {% if venda.itens and venda.itens[0].produto.imagem_path %}
+                    <img src="{{ url_for('static', filename=venda.itens[0].produto.imagem_path) }}" 
+                         alt="{{ venda.itens[0].produto.nome }}" 
+                         class="product-thumb-sm">
+                    {% endif %}
+                </td>
                 <td>{{ venda.id }}</td>
                 <td>R$ {{ '%.2f'|format(venda.total) }}</td>
                 <td>{{ venda.caixa.nome if venda.caixa else '' }}</td>

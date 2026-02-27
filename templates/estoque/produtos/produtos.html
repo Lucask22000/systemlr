@@ -48,7 +48,14 @@
             {% for produto in produtos %}
             <tr class="{% if produto.em_falta %}row-warning{% endif %}">
                 <td data-label="Codigo">{{ produto.codigo }}</td>
-                <td data-label="Nome">{{ produto.nome }}</td>
+                <td data-label="Nome">
+                    <div class="product-name-cell">
+                        {% if produto.imagem_path %}
+                        <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" class="product-thumb">
+                        {% endif %}
+                        <span>{{ produto.nome }}</span>
+                    </div>
+                </td>
                 <td data-label="Categoria">{{ produto.categoria.nome }}</td>
                 <td data-label="Preco">R$ {{ "%.2f"|format(produto.preco_venda) }}</td>
                 <td data-label="Estoque">

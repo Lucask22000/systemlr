@@ -45,15 +45,22 @@
                 <th>Tipo</th>
                 <th>Quantidade</th>
                 <th>Fornecedor</th>
+                <th>Valor compra</th>
+                <th>Nota</th>
                 <th>Motivo</th>
                 <th>Data</th>
             </tr>
         </thead>
         <tbody>
-            {% for mov in movimentacoes %}
+                {% for mov in movimentacoes %}
             <tr>
                 <td data-label="Produto">
-                    <a href="{{ url_for('visualizar_produto', produto_id=mov.produto_id) }}">{{ mov.produto.nome }}</a>
+                    <div class="product-name-cell">
+                        {% if mov.produto.imagem_path %}
+                        <img src="{{ url_for('static', filename=mov.produto.imagem_path) }}" alt="{{ mov.produto.nome }}" class="product-thumb product-thumb-sm">
+                        {% endif %}
+                        <a href="{{ url_for('visualizar_produto', produto_id=mov.produto_id) }}">{{ mov.produto.nome }}</a>
+                    </div>
                 </td>
                 <td data-label="Tipo">
                     <span class="badge {% if mov.tipo == 'entrada' %}badge-success{% else %}badge-danger{% endif %}">
@@ -62,6 +69,10 @@
                 </td>
                 <td data-label="Quantidade">{{ mov.quantidade }}</td>
                 <td data-label="Fornecedor">{{ mov.fornecedor.nome if mov.fornecedor else '-' }}</td>
+                <td data-label="Valor compra">
+                    {% if mov.valor_compra is not none %}R$ {{ '%.2f'|format(mov.valor_compra) }}{% else %}-{% endif %}
+                </td>
+                <td data-label="Nota">{{ mov.info_nota or '-' }}</td>
                 <td data-label="Motivo">{{ mov.motivo or '-' }}</td>
                 <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
             </tr>

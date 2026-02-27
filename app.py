@@ -8,6 +8,7 @@ from config import config
 from models import Categoria, Funcionario, Movimentacao, Produto, PermissaoAcesso, Caixa, MovimentacaoCaixa, db
 from routes.estoque_routes import register_estoque_routes
 from routes.vendas_routes import register_vendas_routes
+from routes.public_routes import register_public_routes
 
 # Informacoes do SystemLR
 APP_NAME = 'SystemLR'
@@ -34,8 +35,7 @@ PAGINAS_SISTEMA = {
     'mesas': 'Mesas',
     'pedidos': 'Pedidos',
     'vendas': 'Vendas',
-    'funcionarios': 'Funcionarios',
-    'acessos': 'Gestao de Acessos'
+    'funcionarios': 'Funcionarios'
 }
 PAGINA_ENDPOINTS = {
     'inicio': {'dashboard', 'boas_vindas'},
@@ -48,8 +48,7 @@ PAGINA_ENDPOINTS = {
     'mesas': {'listar_mesas', 'nova_mesa', 'editar_mesa', 'deletar_mesa'},
     'pedidos': {'listar_pedidos', 'novo_pedido', 'editar_pedido', 'deletar_pedido'},
     'vendas': {'listar_vendas'},
-    'funcionarios': {'listar_funcionarios', 'criar_funcionario', 'editar_funcionario', 'deletar_funcionario'},
-    'acessos': {'listar_acessos', 'salvar_acessos_funcionario'}
+    'funcionarios': {'listar_funcionarios', 'criar_funcionario', 'editar_funcionario', 'deletar_funcionario', 'editar_acessos_funcionario'}
 }
 ENDPOINT_TO_PAGINA = {
     endpoint: pagina
@@ -65,6 +64,17 @@ with app.app_context():
     if 'fornecedor_id' not in colunas_movimentacoes:
         db.session.execute(text('ALTER TABLE movimentacoes ADD COLUMN fornecedor_id INTEGER'))
         db.session.commit()
+    if 'valor_compra' not in colunas_movimentacoes:
+        db.session.execute(text('ALTER TABLE movimentacoes ADD COLUMN valor_compra FLOAT'))
+        db.session.commit()
+    if 'info_nota' not in colunas_movimentacoes:
+        db.session.execute(text('ALTER TABLE movimentacoes ADD COLUMN info_nota VARCHAR(255)'))
+        db.session.commit()
+    # categorias image
+    colunas_categorias = {col['name'] for col in inspector.get_columns('categorias')}
+    if 'imagem_path' not in colunas_categorias:
+        db.session.execute(text('ALTER TABLE categorias ADD COLUMN imagem_path VARCHAR(255)'))
+        db.session.commit()
     colunas_funcionarios = {col['name'] for col in inspector.get_columns('funcionarios')}
     if 'controle_acesso_ativo' not in colunas_funcionarios:
         db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN controle_acesso_ativo BOOLEAN DEFAULT 0'))
@@ -75,7 +85,17 @@ with app.app_context():
         db.session.commit()
     colunas_pedidos = {col['name'] for col in inspector.get_columns('pedidos')}
     if 'origem' not in colunas_pedidos:
-        db.session.execute(text(\"ALTER TABLE pedidos ADD COLUMN origem VARCHAR(20) DEFAULT 'interno'\"))
+        db.session.execute(text("ALTER TABLE pedidos ADD COLUMN origem VARCHAR(20) DEFAULT 'interno'"))
+        db.session.commit()
+    if 'metodo_pagamento' not in colunas_pedidos:
+        db.session.execute(text('ALTER TABLE pedidos ADD COLUMN metodo_pagamento VARCHAR(50)'))
+        db.session.commit()
+    if 'valor_pago' not in colunas_pedidos:
+        db.session.execute(text('ALTER TABLE pedidos ADD COLUMN valor_pago FLOAT'))
+        db.session.commit()
+    colunas_produtos = {col['name'] for col in inspector.get_columns('produtos')}
+    if 'imagem_path' not in colunas_produtos:
+        db.session.execute(text('ALTER TABLE produtos ADD COLUMN imagem_path VARCHAR(255)'))
         db.session.commit()
 
 
@@ -413,47 +433,43 @@ def deletar_funcionario(funcionario_id):
     return redirect(url_for('listar_funcionarios'))
 
 
-@app.route('/acessos')
+@app.route('/funcionarios/<int:funcionario_id>/acessos', methods=['GET', 'POST'])
 @require_role('admin')
-def listar_acessos():
-    funcionarios = Funcionario.query.order_by(Funcionario.nome.asc()).all()
-    permissoes = PermissaoAcesso.query.all()
-    permissoes_por_funcionario = {}
-    for permissao in permissoes:
-        permissoes_por_funcionario.setdefault(permissao.funcionario_id, set()).add(permissao.pagina)
-    return render_template(
-        'sistema/acessos.html',
-        funcionarios=funcionarios,
-        paginas_sistema=PAGINAS_SISTEMA,
-        permissoes_por_funcionario=permissoes_por_funcionario
-    )
-
-
-@app.route('/acessos/<int:funcionario_id>', methods=['POST'])
-@require_role('admin')
-def salvar_acessos_funcionario(funcionario_id):
+def editar_acessos_funcionario(funcionario_id):
     funcionario = Funcionario.query.get_or_404(funcionario_id)
-    paginas_enviadas = set(request.form.getlist('paginas'))
-    paginas_validas = set(PAGINAS_SISTEMA.keys())
-    paginas_salvas = paginas_enviadas.intersection(paginas_validas)
+    
+    if request.method == 'POST':
+        paginas_enviadas = set(request.form.getlist('paginas'))
+        paginas_validas = set(PAGINAS_SISTEMA.keys())
+        paginas_salvas = paginas_enviadas.intersection(paginas_validas)
 
-    try:
-        PermissaoAcesso.query.filter_by(funcionario_id=funcionario.id).delete()
-        for pagina in paginas_salvas:
-            db.session.add(PermissaoAcesso(funcionario_id=funcionario.id, pagina=pagina))
-        funcionario.controle_acesso_ativo = True
-        db.session.commit()
-        flash(f'Acessos de {funcionario.nome} atualizados com sucesso.', 'success')
-    except Exception as e:
-        db.session.rollback()
-        flash(f'Erro ao salvar acessos: {str(e)}', 'danger')
-
-    return redirect(url_for('listar_acessos'))
+        try:
+            PermissaoAcesso.query.filter_by(funcionario_id=funcionario.id).delete()
+            for pagina in paginas_salvas:
+                db.session.add(PermissaoAcesso(funcionario_id=funcionario.id, pagina=pagina))
+            funcionario.controle_acesso_ativo = True
+            db.session.commit()
+            flash(f'Acessos de {funcionario.nome} atualizados com sucesso.', 'success')
+            return redirect(url_for('listar_funcionarios'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao salvar acessos: {str(e)}', 'danger')
+    
+    # Obter permissões atuais do funcionário
+    permissoes_atuais = {p.pagina for p in PermissaoAcesso.query.filter_by(funcionario_id=funcionario.id).all()}
+    
+    return render_template(
+        'funcionarios/acessos.html',
+        funcionario=funcionario,
+        paginas_sistema=PAGINAS_SISTEMA,
+        permissoes_atuais=permissoes_atuais
+    )
 
 
 # ============ REGISTRO DE MODULOS DE DOMINIO ============
 register_estoque_routes(app, login_required, aplicar_movimentacao_estoque)
 register_vendas_routes(app, login_required)
+register_public_routes(app)
 
 
 @app.before_request
@@ -463,7 +479,7 @@ def validar_acesso_por_pagina():
         return None
     if endpoint == 'static' or endpoint.startswith('static'):
         return None
-    if endpoint in {'login', 'logout', 'registro', 'index'}:
+    if endpoint in {'login', 'logout', 'registro', 'index', 'public.cardapio_mesa', 'public.enviar_pedido_qr'}:
         return None
     if 'funcionario_id' not in session:
         return None

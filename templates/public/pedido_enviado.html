@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido enviado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="public-menu">
+    <div class="container narrow">
+        <h1>Pedido recebido!</h1>
+        <p>Seu pedido foi enviado para a equipe. Número da mesa: <strong>{{ mesa.numero }}</strong></p>
+        <p>Status inicial: <strong>{{ pedido.status }}</strong></p>
+        <p class="text-muted">Um garçom irá confirmar e iniciar o preparo.</p>
+    </div>
+</body>
+</html>

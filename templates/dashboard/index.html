@@ -67,7 +67,14 @@
             <tbody>
                 {% for mov in movimentacoes_recentes %}
                 <tr>
-                    <td data-label="Produto">{{ mov.produto.nome }}</td>
+                    <td data-label="Produto">
+                        <div class="product-name-cell">
+                            {% if mov.produto.imagem_path %}
+                            <img src="{{ url_for('static', filename=mov.produto.imagem_path) }}" alt="{{ mov.produto.nome }}" class="product-thumb product-thumb-sm">
+                            {% endif %}
+                            <span>{{ mov.produto.nome }}</span>
+                        </div>
+                    </td>
                     <td data-label="Tipo">
                         <span class="badge {% if mov.tipo == 'entrada' %}badge-success{% else %}badge-danger{% endif %}">
                             {% if mov.tipo == 'entrada' %}📥 Entrada{% else %}📤 Saída{% endif %}

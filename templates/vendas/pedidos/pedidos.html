@@ -5,7 +5,15 @@
 {% block content %}
 <div class="page-header">
     <h1>Pedidos</h1>
-    <a href="{{ url_for('novo_pedido') }}" class="btn btn-primary">➕ Novo Pedido</a>
+    <a href="{{ url_for('novo_pedido') }}" class="btn btn-primary">Novo Pedido</a>
+</div>
+
+<div class="card">
+    <div class="card-header">Alertas de Comandas (QR Code)</div>
+    <div class="card-body">
+        <p id="sse-status" class="text-muted">Aguardando novos pedidos...</p>
+        <ul id="alert-list" class="list-unstyled"></ul>
+    </div>
 </div>
 
 <div class="table-responsive">
@@ -16,6 +24,8 @@
                 <th>Mesa</th>
                 <th>Caixa</th>
                 <th>Total</th>
+                <th>Pagamento</th>
+                <th>Valor pago</th>
                 <th>Status</th>
                 <th>Ações</th>
             </tr>
@@ -27,20 +37,75 @@
                 <td>{{ pedido.mesa.numero if pedido.mesa else '' }}</td>
                 <td>{{ pedido.caixa.nome if pedido.caixa else '' }}</td>
                 <td>R$ {{ '%.2f'|format(pedido.total) }}</td>
+                <td>
+                    {% if pedido.metodo_pagamento %}
+                        {% set metodo = pedido.metodo_pagamento|lower %}
+                        {% if 'dividido' in metodo %}
+                            <span class="badge badge-info">Dividido</span>
+                        {% elif 'crediario' in metodo %}
+                            <span class="badge badge-warning">Crediario</span>
+                        {% elif 'dinheiro' in metodo %}
+                            <span class="badge badge-success">Dinheiro</span>
+                        {% elif 'cartao' in metodo %}
+                            <span class="badge badge-info">Cartao</span>
+                        {% elif 'pix' in metodo %}
+                            <span class="badge badge-success">Pix</span>
+                        {% else %}
+                            <span class="badge badge-info">{{ pedido.metodo_pagamento }}</span>
+                        {% endif %}
+                        <div style="font-size: 12px; color: #666;">{{ pedido.metodo_pagamento }}</div>
+                    {% endif %}
+                </td>
+                <td>{% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% endif %}</td>
                 <td>{{ pedido.status }}</td>
                 <td class="actions-cell">
-                    <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn-small btn-warning">✏️</a>
+                    <form method="POST" action="{{ url_for('alterar_status_pedido', pedido_id=pedido.id) }}" class="inline-form">
+                        <select name="status" class="form-control">
+                            <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %}>Aberto</option>
+                            <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %}>Em preparo</option>
+                            <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %}>Entregue</option>
+                            <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %}>Fechado</option>
+                            <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %}>Cancelado</option>
+                        </select>
+                        <button type="submit" class="btn-small btn-primary">Atualizar</button>
+                    </form>
+                    <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn-small btn-warning">Editar</a>
                     <form method="POST" action="{{ url_for('deletar_pedido', pedido_id=pedido.id) }}" style="display:inline;">
-                        <button type="submit" class="btn-small btn-danger" onclick="return confirmarDelecao('Excluir pedido?')">🗑️</button>
+                        <button type="submit" class="btn-small btn-danger" onclick="return confirmarDelecao('Excluir pedido?')">Excluir</button>
                     </form>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" class="text-center">Nenhum pedido cadastrado</td>
+                <td colspan="8" class="text-center">Nenhum pedido cadastrado</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const statusEl = document.getElementById('sse-status');
+    const listEl = document.getElementById('alert-list');
+    if (!window.EventSource) {
+        statusEl.textContent = 'Seu navegador não suporta atualizações em tempo real. Recarregue para ver novos pedidos.';
+        return;
+    }
+    const es = new EventSource('{{ url_for('sse_pedidos') }}');
+    es.addEventListener('open', () => statusEl.textContent = 'Conectado. Aguardando novos pedidos...');
+    es.addEventListener('pedido', (event) => {
+        const data = JSON.parse(event.data || '{}');
+        statusEl.textContent = 'Novo pedido recebido!';
+        const li = document.createElement('li');
+        li.className = 'alert alert-info';
+        li.innerHTML = `<strong>Mesa ${data.mesa || '?'}:</strong> Pedido #${data.pedido_id} às ${new Date(data.criado_em).toLocaleTimeString('pt-BR')}<br>` +
+            (data.itens ? data.itens.map(i => `${i.quantidade}x ${i.produto}`).join(', ') : '');
+        listEl.prepend(li);
+    });
+    es.addEventListener('error', () => statusEl.textContent = 'Conexão com alertas foi perdida. Tentando reconectar...');
+});
+</script>
 {% endblock %}

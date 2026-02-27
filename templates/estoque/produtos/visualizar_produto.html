@@ -6,15 +6,21 @@
 <div class="page-header">
     <h1>{{ produto.nome }}</h1>
     <div class="header-actions">
-        <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-warning">✏️ Editar</a>
-        <a href="{{ url_for('listar_produtos') }}" class="btn btn-secondary">← Voltar</a>
+        <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-warning">Editar</a>
+        <a href="{{ url_for('listar_produtos') }}" class="btn btn-secondary">Voltar</a>
     </div>
 </div>
 
-<!-- INFORMAÇÕES PRINCIPAIS -->
+{% if produto.imagem_path %}
+<div class="section">
+    <h2>Imagem do Produto</h2>
+    <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" class="product-detail-image">
+</div>
+{% endif %}
+
 <div class="info-cards-row">
     <div class="info-card">
-        <h3>Código</h3>
+        <h3>Codigo</h3>
         <p class="value">{{ produto.codigo }}</p>
     </div>
     <div class="info-card">
@@ -22,30 +28,29 @@
         <p class="value">{{ produto.categoria.nome }}</p>
     </div>
     <div class="info-card">
-        <h3>Preço de Custo</h3>
+        <h3>Preco de Custo</h3>
         <p class="value">R$ {{ "%.2f"|format(produto.preco_custo) }}</p>
     </div>
     <div class="info-card">
-        <h3>Preço de Venda</h3>
+        <h3>Preco de Venda</h3>
         <p class="value">R$ {{ "%.2f"|format(produto.preco_venda) }}</p>
     </div>
 </div>
 
-<!-- INFORMAÇÕES DE ESTOQUE -->
 <div class="info-cards-row">
     <div class="info-card {% if produto.em_falta %}card-warning{% endif %}">
         <h3>Estoque Atual</h3>
         <p class="value">{{ produto.quantidade_estoque }}</p>
         {% if produto.em_falta %}
-        <p class="alert-text">⚠️ Abaixo do mínimo!</p>
+        <p class="alert-text">Abaixo do minimo</p>
         {% endif %}
     </div>
     <div class="info-card">
-        <h3>Estoque Mínimo</h3>
+        <h3>Estoque Minimo</h3>
         <p class="value">{{ produto.quantidade_minima }}</p>
     </div>
     <div class="info-card">
-        <h3>Lucro Unitário</h3>
+        <h3>Lucro Unitario</h3>
         <p class="value">R$ {{ "%.2f"|format(produto.lucro_unitario) }}</p>
     </div>
     <div class="info-card">
@@ -54,17 +59,15 @@
     </div>
 </div>
 
-<!-- DESCRIÇÃO -->
 {% if produto.descricao %}
 <div class="section">
-    <h2>Descrição</h2>
+    <h2>Descricao</h2>
     <p>{{ produto.descricao }}</p>
 </div>
 {% endif %}
 
-<!-- ÚLTIMAS MOVIMENTAÇÕES -->
 <div class="section">
-    <h2>Últimas Movimentações</h2>
+    <h2>Ultimas Movimentacoes</h2>
     <div class="table-responsive">
         <table class="table">
             <thead>
@@ -80,7 +83,7 @@
                 <tr>
                     <td data-label="Tipo">
                         <span class="badge {% if mov.tipo == 'entrada' %}badge-success{% else %}badge-danger{% endif %}">
-                            {% if mov.tipo == 'entrada' %}📥 Entrada{% else %}📤 Saída{% endif %}
+                            {% if mov.tipo == 'entrada' %}Entrada{% else %}Saida{% endif %}
                         </span>
                     </td>
                     <td data-label="Quantidade">{{ mov.quantidade }}</td>
@@ -89,7 +92,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="text-center">Nenhuma movimentação encontrada</td>
+                    <td colspan="4" class="text-center">Nenhuma movimentacao encontrada</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -97,9 +100,8 @@
     </div>
 </div>
 
-<!-- AÇÕES -->
 <div class="action-buttons">
-    <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-warning">✏️ Editar Produto</a>
-    <a href="{{ url_for('listar_produtos') }}" class="btn btn-secondary">← Voltar para Produtos</a>
+    <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn btn-warning">Editar Produto</a>
+    <a href="{{ url_for('listar_produtos') }}" class="btn btn-secondary">Voltar para Produtos</a>
 </div>
 {% endblock %}

@@ -72,6 +72,12 @@
                                    style="display: inline-block; padding: 8px 12px; background-color: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: 12px; margin-right: 5px; transition: background-color 0.3s;">
                                     ✎ Editar
                                 </a>
+                                {% if funcionario_logado.role == 'admin' %}
+                                    <a href="{{ url_for('editar_acessos_funcionario', funcionario_id=func.id) }}" 
+                                       style="display: inline-block; padding: 8px 12px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 12px; margin-right: 5px; transition: background-color 0.3s;">
+                                        🔐 Acessos
+                                    </a>
+                                {% endif %}
                                 {% if func.id != funcionario_logado.id and funcionario_logado.role == 'admin' %}
                                     <form method="POST" 
                                           action="{{ url_for('deletar_funcionario', funcionario_id=func.id) }}"
