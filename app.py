@@ -69,6 +69,14 @@ with app.app_context():
     if 'controle_acesso_ativo' not in colunas_funcionarios:
         db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN controle_acesso_ativo BOOLEAN DEFAULT 0'))
         db.session.commit()
+    colunas_mesas = {col['name'] for col in inspector.get_columns('mesas')}
+    if 'qr_token' not in colunas_mesas:
+        db.session.execute(text('ALTER TABLE mesas ADD COLUMN qr_token VARCHAR(64)'))
+        db.session.commit()
+    colunas_pedidos = {col['name'] for col in inspector.get_columns('pedidos')}
+    if 'origem' not in colunas_pedidos:
+        db.session.execute(text(\"ALTER TABLE pedidos ADD COLUMN origem VARCHAR(20) DEFAULT 'interno'\"))
+        db.session.commit()
 
 
 # ============ DECORADORES DE AUTENTICACAO ============

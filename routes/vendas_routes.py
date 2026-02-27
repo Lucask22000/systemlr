@@ -9,7 +9,7 @@ def register_vendas_routes(app, login_required):
     @login_required
     def listar_caixas():
         caixas = Caixa.query.all()
-        return render_template('caixas/caixas.html', caixas=caixas)
+        return render_template('vendas/caixas/caixas.html', caixas=caixas)
 
     @app.route('/caixas/nova', methods=['GET', 'POST'])
     @login_required
@@ -26,7 +26,7 @@ def register_vendas_routes(app, login_required):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar caixa: {str(e)}', 'error')
-        return render_template('caixas/nova_caixa.html')
+        return render_template('vendas/caixas/nova_caixa.html')
 
     @app.route('/caixas/<int:caixa_id>/editar', methods=['GET', 'POST'])
     @login_required
@@ -46,7 +46,7 @@ def register_vendas_routes(app, login_required):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao atualizar caixa: {str(e)}', 'error')
-        return render_template('caixas/editar_caixa.html', caixa=caixa)
+        return render_template('vendas/caixas/editar_caixa.html', caixa=caixa)
 
     @app.route('/caixas/<int:caixa_id>/deletar', methods=['POST'])
     @login_required
@@ -108,7 +108,7 @@ def register_vendas_routes(app, login_required):
                 flash(f'Erro ao abrir caixa: {str(e)}', 'error')
         
         funcionarios = Funcionario.query.filter_by(ativo=True).all()
-        return render_template('caixas/abrir_caixa.html', caixa=caixa, funcionarios=funcionarios)
+        return render_template('vendas/caixas/abrir_caixa.html', caixa=caixa, funcionarios=funcionarios)
 
     @app.route('/caixas/<int:caixa_id>/fechar', methods=['GET', 'POST'])
     @login_required
@@ -154,7 +154,7 @@ def register_vendas_routes(app, login_required):
                 db.session.rollback()
                 flash(f'Erro ao fechar caixa: {str(e)}', 'error')
         
-        return render_template('caixas/fechar_caixa.html', caixa=caixa)
+        return render_template('vendas/caixas/fechar_caixa.html', caixa=caixa)
 
     @app.route('/caixas/<int:caixa_id>/historico')
     @login_required
@@ -165,13 +165,13 @@ def register_vendas_routes(app, login_required):
             MovimentacaoCaixa.criado_em.desc()
         ).all()
         
-        return render_template('caixas/historico_caixa.html', caixa=caixa, movimentacoes=movimentacoes)
+        return render_template('vendas/caixas/historico_caixa.html', caixa=caixa, movimentacoes=movimentacoes)
 
     @app.route('/mesas')
     @login_required
     def listar_mesas():
         mesas = Mesa.query.all()
-        return render_template('mesas/mesas.html', mesas=mesas)
+        return render_template('vendas/mesas/mesas.html', mesas=mesas)
 
     @app.route('/mesas/nova', methods=['GET', 'POST'])
     @login_required
@@ -188,7 +188,7 @@ def register_vendas_routes(app, login_required):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar mesa: {str(e)}', 'error')
-        return render_template('mesas/nova_mesa.html')
+        return render_template('vendas/mesas/nova_mesa.html')
 
     @app.route('/mesas/<int:mesa_id>/editar', methods=['GET', 'POST'])
     @login_required
@@ -205,7 +205,7 @@ def register_vendas_routes(app, login_required):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao atualizar mesa: {str(e)}', 'error')
-        return render_template('mesas/editar_mesa.html', mesa=mesa)
+        return render_template('vendas/mesas/editar_mesa.html', mesa=mesa)
 
     @app.route('/mesas/<int:mesa_id>/deletar', methods=['POST'])
     @login_required
@@ -224,7 +224,7 @@ def register_vendas_routes(app, login_required):
     @login_required
     def listar_pedidos():
         pedidos = Pedido.query.all()
-        return render_template('pedidos/pedidos.html', pedidos=pedidos)
+        return render_template('vendas/pedidos/pedidos.html', pedidos=pedidos)
 
     @app.route('/pedidos/novo', methods=['GET', 'POST'])
     @login_required
@@ -264,7 +264,7 @@ def register_vendas_routes(app, login_required):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar pedido: {str(e)}', 'error')
-        return render_template('pedidos/novo_pedido.html', produtos=produtos, mesas=mesas, caixas=caixas)
+        return render_template('vendas/pedidos/novo_pedido.html', produtos=produtos, mesas=mesas, caixas=caixas)
 
     @app.route('/pedidos/<int:pedido_id>/editar', methods=['GET', 'POST'])
     @login_required
@@ -320,7 +320,7 @@ def register_vendas_routes(app, login_required):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao atualizar pedido: {str(e)}', 'error')
-        return render_template('pedidos/editar_pedido.html', pedido=pedido, produtos=produtos, mesas=mesas, caixas=caixas)
+        return render_template('vendas/pedidos/editar_pedido.html', pedido=pedido, produtos=produtos, mesas=mesas, caixas=caixas)
 
     @app.route('/pedidos/<int:pedido_id>/deletar', methods=['POST'])
     @login_required

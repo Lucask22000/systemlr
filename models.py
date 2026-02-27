@@ -127,6 +127,7 @@ class Mesa(db.Model):
     numero = db.Column(db.String(20), unique=True, nullable=False)
     capacidade = db.Column(db.Integer, default=4)
     status = db.Column(db.String(20), default='livre')  # livre, ocupada
+    qr_token = db.Column(db.String(64), unique=True, nullable=True)
     descricao = db.Column(db.Text)
 
     pedidos = db.relationship('Pedido', backref='mesa', lazy=True)
@@ -142,7 +143,8 @@ class Pedido(db.Model):
     mesa_id = db.Column(db.Integer, db.ForeignKey('mesas.id'), nullable=True)
     caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=True)
     total = db.Column(db.Float, default=0.0)
-    status = db.Column(db.String(20), default='aberto')  # aberto, fechado, cancelado
+    status = db.Column(db.String(20), default='aberto')  # aberto, em_preparo, entregue, fechado, cancelado
+    origem = db.Column(db.String(20), default='interno')  # interno, qr
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     fechado_em = db.Column(db.DateTime)
     observacoes = db.Column(db.Text)

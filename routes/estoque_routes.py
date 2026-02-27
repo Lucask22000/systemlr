@@ -25,7 +25,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
         produtos = query.all()
         categorias = Categoria.query.all()
         return render_template(
-            'produtos/produtos.html',
+            'estoque/produtos/produtos.html',
             produtos=produtos,
             categorias=categorias,
             categoria_selecionada=categoria_id,
@@ -62,7 +62,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 flash(f'Erro ao criar produto: {str(e)}', 'error')
 
         categorias = Categoria.query.all()
-        return render_template('produtos/novo_produto.html', categorias=categorias)
+        return render_template('estoque/produtos/novo_produto.html', categorias=categorias)
 
     @app.route('/produtos/<int:produto_id>/editar', methods=['GET', 'POST'])
     @login_required
@@ -84,7 +84,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 flash(f'Erro ao atualizar produto: {str(e)}', 'error')
 
         categorias = Categoria.query.all()
-        return render_template('produtos/editar_produto.html', produto=produto, categorias=categorias)
+        return render_template('estoque/produtos/editar_produto.html', produto=produto, categorias=categorias)
 
     @app.route('/produtos/<int:produto_id>')
     @login_required
@@ -93,7 +93,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
         movimentacoes = Movimentacao.query.filter_by(produto_id=produto_id).order_by(
             Movimentacao.criado_em.desc()
         ).all()
-        return render_template('produtos/visualizar_produto.html', produto=produto, movimentacoes=movimentacoes)
+        return render_template('estoque/produtos/visualizar_produto.html', produto=produto, movimentacoes=movimentacoes)
 
     @app.route('/produtos/<int:produto_id>/deletar', methods=['POST'])
     @login_required
@@ -112,7 +112,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     @login_required
     def listar_categorias():
         categorias = Categoria.query.all()
-        return render_template('categorias/categorias.html', categorias=categorias)
+        return render_template('estoque/categorias/categorias.html', categorias=categorias)
 
     @app.route('/categorias/nova', methods=['GET', 'POST'])
     @login_required
@@ -127,7 +127,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar categoria: {str(e)}', 'error')
-        return render_template('categorias/nova_categoria.html')
+        return render_template('estoque/categorias/nova_categoria.html')
 
     @app.route('/categorias/<int:categoria_id>/editar', methods=['GET', 'POST'])
     @login_required
@@ -143,7 +143,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao atualizar categoria: {str(e)}', 'error')
-        return render_template('categorias/editar_categoria.html', categoria=categoria)
+        return render_template('estoque/categorias/editar_categoria.html', categoria=categoria)
 
     @app.route('/categorias/<int:categoria_id>/deletar', methods=['POST'])
     @login_required
@@ -162,7 +162,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     @login_required
     def listar_fornecedores():
         fornecedores = Fornecedor.query.order_by(Fornecedor.nome.asc()).all()
-        return render_template('fornecedores/fornecedores.html', fornecedores=fornecedores)
+        return render_template('estoque/fornecedores/fornecedores.html', fornecedores=fornecedores)
 
     @app.route('/fornecedores/novo', methods=['GET', 'POST'])
     @login_required
@@ -186,7 +186,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao cadastrar fornecedor: {str(e)}', 'error')
-        return render_template('fornecedores/novo_fornecedor.html')
+        return render_template('estoque/fornecedores/novo_fornecedor.html')
 
     @app.route('/fornecedores/<int:fornecedor_id>/editar', methods=['GET', 'POST'])
     @login_required
@@ -209,7 +209,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao atualizar fornecedor: {str(e)}', 'error')
-        return render_template('fornecedores/editar_fornecedor.html', fornecedor=fornecedor)
+        return render_template('estoque/fornecedores/editar_fornecedor.html', fornecedor=fornecedor)
 
     @app.route('/fornecedores/<int:fornecedor_id>/deletar', methods=['POST'])
     @login_required
@@ -263,7 +263,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 flash(f'Erro ao registrar movimentacao: {str(e)}', 'error')
 
         fornecedores = Fornecedor.query.filter_by(ativo=True).order_by(Fornecedor.nome.asc()).all()
-        return render_template('movimentacoes/movimentacao_rapida.html', produto=produto, fornecedores=fornecedores)
+        return render_template('estoque/movimentacoes/movimentacao_rapida.html', produto=produto, fornecedores=fornecedores)
 
     @app.route('/movimentacoes')
     @login_required
@@ -284,7 +284,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
         produtos = Produto.query.all()
         fornecedores = Fornecedor.query.filter_by(ativo=True).order_by(Fornecedor.nome.asc()).all()
         return render_template(
-            'movimentacoes/movimentacoes.html',
+            'estoque/movimentacoes/movimentacoes.html',
             movimentacoes=movimentacoes,
             produtos=produtos,
             fornecedores=fornecedores,
@@ -338,7 +338,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
 
         produtos = Produto.query.filter_by(ativo=True).all()
         fornecedores = Fornecedor.query.filter_by(ativo=True).order_by(Fornecedor.nome.asc()).all()
-        return render_template('movimentacoes/nova_movimentacao.html', produtos=produtos, fornecedores=fornecedores)
+        return render_template('estoque/movimentacoes/nova_movimentacao.html', produtos=produtos, fornecedores=fornecedores)
 
     @app.route('/relatorios')
     @login_required
@@ -365,7 +365,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
         movimentacoes_mes = Movimentacao.query.filter(Movimentacao.criado_em >= data_limite).count()
 
         return render_template(
-            'relatorios/relatorios.html',
+            'estoque/relatorios/relatorios.html',
             total_produtos=total_produtos,
             produtos_ativos=produtos_ativos,
             produtos_inativos=produtos_inativos,
