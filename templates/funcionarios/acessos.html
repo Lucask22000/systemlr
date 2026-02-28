@@ -48,17 +48,22 @@
                     </p>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
-                    {% for pagina_key, pagina_nome in paginas_sistema.items() %}
-                        <label style="display: flex; align-items: center; padding: 12px; background-color: #f8f9fa; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; border: 2px solid transparent;"
-                               onmouseover="this.style.backgroundColor='#e9ecef';" onmouseout="this.style.backgroundColor='#f8f9fa';">
-                            <input type="checkbox" name="paginas" value="{{ pagina_key }}"
-                                   {% if pagina_key in permissoes_atuais %}checked{% endif %}
-                                   style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
-                            <span style="flex: 1; color: #343a40; font-weight: 500;">{{ pagina_nome }}</span>
-                        </label>
-                    {% endfor %}
-                </div>
+                {% for secao_nome, secao_itens in paginas_ordenadas_menu %}
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin: 0 0 10px 0; color: #334155;">{{ secao_nome }}</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+                            {% for pagina_key, pagina_nome in secao_itens %}
+                                <label style="display: flex; align-items: center; padding: 12px; background-color: #f8f9fa; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; border: 2px solid transparent;"
+                                       onmouseover="this.style.backgroundColor='#e9ecef';" onmouseout="this.style.backgroundColor='#f8f9fa';">
+                                    <input type="checkbox" name="paginas" value="{{ pagina_key }}"
+                                           {% if pagina_key in permissoes_atuais %}checked{% endif %}
+                                           style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
+                                    <span style="flex: 1; color: #343a40; font-weight: 500;">{{ pagina_nome }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 30px;">

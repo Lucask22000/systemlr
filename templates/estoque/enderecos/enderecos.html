@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Enderecos de Estoque - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Enderecos de Estoque</h1>
+    <a href="{{ url_for('novo_endereco_estoque') }}" class="btn btn-primary">Novo Endereco</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Endereco</th>
+                <th>Cidade/UF</th>
+                <th>Status</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for endereco in enderecos %}
+            <tr>
+                <td data-label="Nome"><strong>{{ endereco.nome }}</strong></td>
+                <td data-label="Endereco">
+                    {{ endereco.rua or '-' }}
+                    {% if endereco.numero %}, {{ endereco.numero }}{% endif %}
+                    {% if endereco.bairro %} - {{ endereco.bairro }}{% endif %}
+                    {% if endereco.complemento %} ({{ endereco.complemento }}){% endif %}
+                </td>
+                <td data-label="Cidade/UF">
+                    {{ endereco.cidade or '-' }}
+                    {% if endereco.estado %}/{{ endereco.estado }}{% endif %}
+                    {% if endereco.cep %} - {{ endereco.cep }}{% endif %}
+                </td>
+                <td data-label="Status">
+                    {% if endereco.ativo %}
+                    <span class="badge badge-success">Ativo</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inativo</span>
+                    {% endif %}
+                </td>
+                <td data-label="Acoes" class="actions-cell">
+                    <a href="{{ url_for('editar_endereco_estoque', endereco_id=endereco.id) }}" class="btn-small btn-warning">Editar</a>
+                    <form method="POST" action="{{ url_for('deletar_endereco_estoque', endereco_id=endereco.id) }}" style="display:inline;" onsubmit="return confirm('Excluir endereco {{ endereco.nome }}?');">
+                        <button type="submit" class="btn-small btn-danger">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">Nenhum endereco cadastrado</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

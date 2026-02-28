@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Indicadores RH - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Indicadores RH</h1>
+</div>
+
+<div class="cards-container analytics-cards">
+    <div class="card card-primary">
+        <div class="card-content">
+            <h3>Total de Funcionarios</h3>
+            <p class="card-value">{{ total_funcionarios }}</p>
+            <p class="card-meta">{{ funcionarios_ativos }} ativos / {{ funcionarios_inativos }} inativos</p>
+        </div>
+    </div>
+    <div class="card card-success">
+        <div class="card-content">
+            <h3>Admissoes (30 dias)</h3>
+            <p class="card-value">{{ admissoes_30_dias }}</p>
+            <p class="card-meta">Novos cadastros de funcionarios</p>
+        </div>
+    </div>
+    <div class="card card-info">
+        <div class="card-content">
+            <h3>Funcoes RH</h3>
+            <p class="card-value">{{ funcoes_total }}</p>
+            <p class="card-meta">{{ funcoes_ativas }} funcoes ativas</p>
+        </div>
+    </div>
+    <div class="card card-warning">
+        <div class="card-content">
+            <h3>Controle de Acesso</h3>
+            <p class="card-value">{{ acessos_controlados }}</p>
+            <p class="card-meta">Funcionarios com acesso customizado</p>
+        </div>
+    </div>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Distribuicao por Perfil</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Perfil</th>
+                        <th>Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in distribuicao_roles %}
+                    <tr>
+                        <td data-label="Perfil">{{ item.role|upper }}</td>
+                        <td data-label="Quantidade">{{ item.quantidade }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" class="text-center">Sem dados de perfis.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Ultimos Funcionarios Cadastrados</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                        <th>Cadastro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for funcionario in funcionarios_recentes %}
+                    <tr>
+                        <td data-label="Nome">{{ funcionario.nome }}</td>
+                        <td data-label="Email">{{ funcionario.email }}</td>
+                        <td data-label="Perfil">{{ funcionario.role|upper }}</td>
+                        <td data-label="Status">
+                            {% if funcionario.ativo %}
+                            <span class="badge badge-success">Ativo</span>
+                            {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Cadastro">{{ funcionario.criado_em.strftime('%d/%m/%Y %H:%M') if funcionario.criado_em else '-' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">Nenhum funcionario cadastrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-primary">Funcionarios</a>
+    <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Funcoes RH</a>
+</div>
+{% endblock %}

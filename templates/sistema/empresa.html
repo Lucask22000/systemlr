@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Dados da Empresa - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Cadastro da Empresa</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" enctype="multipart/form-data" class="form">
+        <div class="form-group">
+            <label for="logo">Logo da Empresa</label>
+            <input type="file" id="logo" name="logo" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
+            {% if empresa and empresa.logo_path %}
+            <div class="product-image-preview">
+                <img src="{{ url_for('static', filename=empresa.logo_path) }}" alt="Logo da empresa">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="remover_logo">
+                    Remover logo atual
+                </label>
+            </div>
+            {% endif %}
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="razao_social">Razão Social</label>
+                <input type="text" id="razao_social" name="razao_social" value="{{ empresa.razao_social if empresa else '' }}" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="nome_fantasia">Nome Fantasia</label>
+                <input type="text" id="nome_fantasia" name="nome_fantasia" value="{{ empresa.nome_fantasia if empresa else '' }}" class="input-text">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cnpj">CNPJ</label>
+                <input type="text" id="cnpj" name="cnpj" value="{{ empresa.cnpj if empresa else '' }}" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="inscricao_estadual">Inscrição Estadual</label>
+                <input type="text" id="inscricao_estadual" name="inscricao_estadual" value="{{ empresa.inscricao_estadual if empresa else '' }}" class="input-text">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" name="telefone" value="{{ empresa.telefone if empresa else '' }}" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="{{ empresa.email if empresa else '' }}" class="input-text">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="endereco">Endereço</label>
+            <input type="text" id="endereco" name="endereco" value="{{ empresa.endereco if empresa else '' }}" class="input-text">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="cidade">Cidade</label>
+                <input type="text" id="cidade" name="cidade" value="{{ empresa.cidade if empresa else '' }}" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="estado">UF</label>
+                <input type="text" id="estado" name="estado" maxlength="2" value="{{ empresa.estado if empresa else '' }}" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="cep">CEP</label>
+                <input type="text" id="cep" name="cep" value="{{ empresa.cep if empresa else '' }}" class="input-text">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="mensagem_comprovante">Mensagem no Comprovante</label>
+            <textarea id="mensagem_comprovante" name="mensagem_comprovante" rows="3" class="input-textarea">{{ empresa.mensagem_comprovante if empresa else '' }}</textarea>
+        </div>
+
+        <div id="config-cardapio" class="section" style="margin: 0;">
+            <h2>Configuração da Comanda QR</h2>
+
+            <div class="form-group">
+                <label for="cardapio_titulo">Título da comanda</label>
+                <input type="text" id="cardapio_titulo" name="cardapio_titulo" value="{{ empresa.cardapio_titulo if empresa else '' }}" class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="cardapio_subtitulo">Subtítulo da comanda</label>
+                <input type="text" id="cardapio_subtitulo" name="cardapio_subtitulo" value="{{ empresa.cardapio_subtitulo if empresa else '' }}" class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="cardapio_mensagem">Mensagem após envio do pedido</label>
+                <input type="text" id="cardapio_mensagem" name="cardapio_mensagem" value="{{ empresa.cardapio_mensagem if empresa else '' }}" class="input-text">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cardapio_qtd_maxima">Quantidade máxima por item</label>
+                    <input type="number" id="cardapio_qtd_maxima" name="cardapio_qtd_maxima" min="1" max="999" value="{{ empresa.cardapio_qtd_maxima if empresa and empresa.cardapio_qtd_maxima else 20 }}" class="input-text">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="cardapio_mostrar_imagem" {% if not empresa or empresa.cardapio_mostrar_imagem != False %}checked{% endif %}>
+                    Mostrar imagem dos produtos na comanda
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="cardapio_mostrar_descricao" {% if not empresa or empresa.cardapio_mostrar_descricao != False %}checked{% endif %}>
+                    Mostrar descrição dos produtos na comanda
+                </label>
+            </div>
+
+            <div class="form-actions" style="margin-top: 12px;">
+                <a href="{{ url_for('preview_cardapio_empresa') }}" target="_blank" class="btn btn-secondary">Visualizar cardapio como cliente</a>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Salvar Dados</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

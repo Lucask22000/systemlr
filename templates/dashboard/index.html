@@ -4,94 +4,244 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>Dashboard</h1>
+    <h1>Dashboard Financeiro e Gestao</h1>
+    <form method="get" class="dashboard-filter-form">
+        <label for="data_inicial" class="dashboard-filter-label">De:</label>
+        <input type="date" id="data_inicial" name="data_inicial" value="{{ data_inicial }}" class="input-text dashboard-filter-select">
+        <label for="data_final" class="dashboard-filter-label">Ate:</label>
+        <input type="date" id="data_final" name="data_final" value="{{ data_final }}" class="input-text dashboard-filter-select">
+        <button type="submit" class="btn btn-primary dashboard-filter-button">Aplicar</button>
+    </form>
 </div>
 
-<!-- CARDS RESUMO -->
-<div class="cards-container">
+<div class="cards-container analytics-cards">
     <div class="card card-primary">
-        <div class="card-icon">📦</div>
         <div class="card-content">
-            <h3>Total de Produtos</h3>
-            <p class="card-value">{{ total_produtos }}</p>
+            <h3>Faturamento no Periodo</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(faturamento_periodo) }}</p>
+            <p class="card-meta">{{ pedidos_periodo_total }} pedidos fechados</p>
         </div>
     </div>
-
-    <div class="card card-warning">
-        <div class="card-icon">⚠️</div>
-        <div class="card-content">
-            <h3>Produtos em Falta</h3>
-            <p class="card-value">{{ produtos_em_falta }}</p>
-        </div>
-    </div>
-
     <div class="card card-success">
-        <div class="card-icon">💰</div>
         <div class="card-content">
-            <h3>Valor Total de Estoque</h3>
-            <p class="card-value">R$ {{ valor_total_estoque }}</p>
+            <h3>Ticket Medio</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(ticket_medio_periodo) }}</p>
+            <p class="card-meta">Media por pedido fechado</p>
         </div>
     </div>
-
     <div class="card card-info">
-        <div class="card-icon">🔔</div>
         <div class="card-content">
-            <h3>Alertas Ativos</h3>
-            <p class="card-value">{{ total_alertas }}</p>
+            <h3>Faturamento Hoje</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(faturamento_hoje) }}</p>
+            <p class="card-meta">Somente pedidos concluidos hoje</p>
+        </div>
+    </div>
+    <div class="card card-warning">
+        <div class="card-content">
+            <h3>Pedidos em Aberto</h3>
+            <p class="card-value">{{ pedidos_abertos }}</p>
+            <p class="card-meta">{{ pedidos_cancelados_periodo }} cancelados no periodo</p>
         </div>
     </div>
 </div>
 
-<!-- AÇÕES RÁPIDAS -->
-<div class="action-buttons">
-    <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">➕ Novo Produto</a>
-    <a href="{{ url_for('nova_categoria') }}" class="btn btn-secondary">➕ Nova Categoria</a>
-    <a href="{{ url_for('nova_movimentacao') }}" class="btn btn-success">➕ Nova Movimentação</a>
-    <a href="{{ url_for('relatorios') }}" class="btn btn-info">📊 Ver Relatórios</a>
+<div class="analytics-grid">
+    <section class="section analytics-trend-section">
+        <h2>Tendencia de Vendas - Ultimos {{ periodo_dias }} Dias</h2>
+        <div class="trend-list">
+            {% for dia in vendas_periodo %}
+            <div class="trend-row">
+                <div class="trend-day">
+                    <strong>{{ dia.data_curta }}</strong>
+                    <span>{{ dia.data_semana }}</span>
+                </div>
+                <div class="trend-bar-wrap">
+                    <div class="trend-bar" style="width: {{ '%.2f'|format(dia.faturamento_pct) }}%;"></div>
+                </div>
+                <div class="trend-values">
+                    <strong>R$ {{ '%.2f'|format(dia.faturamento) }}</strong>
+                    <span>{{ dia.pedidos }} pedidos</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="section analytics-summary-section">
+        <h2>Pedidos por Status</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedidos_por_status %}
+                    <tr>
+                        <td data-label="Status">{{ item.label }}</td>
+                        <td data-label="Quantidade">{{ item.quantidade }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" class="text-center">Sem pedidos no periodo selecionado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
 
-<!-- ÚLTIMAS MOVIMENTAÇÕES -->
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Top Produtos Vendidos</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Qtd Vendida</th>
+                        <th>Receita</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto, qtd, receita in top_produtos_vendidos %}
+                    <tr>
+                        <td data-label="Produto">{{ produto.nome }}</td>
+                        <td data-label="Qtd Vendida">{{ qtd or 0 }}</td>
+                        <td data-label="Receita">R$ {{ '%.2f'|format(receita or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center">Sem vendas fechadas no periodo selecionado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Top Clientes</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Pedidos</th>
+                        <th>Faturamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_clientes %}
+                    <tr>
+                        <td data-label="Cliente">{{ item.cliente_nome }}</td>
+                        <td data-label="Pedidos">{{ item.pedidos or 0 }}</td>
+                        <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center">Sem clientes identificados no periodo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Desempenho de Garcons</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Garcom</th>
+                        <th>Pedidos</th>
+                        <th>Faturamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in desempenho_garcons %}
+                    <tr>
+                        <td data-label="Garcom">{{ item.nome }}</td>
+                        <td data-label="Pedidos">{{ item.pedidos or 0 }}</td>
+                        <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center">Sem pedidos com garcom no periodo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Desempenho de Caixas</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Caixa</th>
+                        <th>Pedidos</th>
+                        <th>Faturamento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in desempenho_caixas %}
+                    <tr>
+                        <td data-label="Caixa">{{ item.nome }}</td>
+                        <td data-label="Pedidos">{{ item.pedidos or 0 }}</td>
+                        <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="text-center">Sem pedidos em caixa no periodo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
 <div class="section">
-    <h2>Últimas Movimentações</h2>
+    <h2>Formas de Pagamento</h2>
     <div class="table-responsive">
         <table class="table">
             <thead>
                 <tr>
-                    <th>Produto</th>
-                    <th>Tipo</th>
-                    <th>Qtd</th>
-                    <th>Motivo</th>
-                    <th>Data</th>
+                    <th>Metodo</th>
+                    <th>Quantidade de Pedidos</th>
                 </tr>
             </thead>
             <tbody>
-                {% for mov in movimentacoes_recentes %}
+                {% for item in metodos_pagamento %}
                 <tr>
-                    <td data-label="Produto">
-                        <div class="product-name-cell">
-                            {% if mov.produto.imagem_path %}
-                            <img src="{{ url_for('static', filename=mov.produto.imagem_path) }}" alt="{{ mov.produto.nome }}" class="product-thumb product-thumb-sm">
-                            {% endif %}
-                            <span>{{ mov.produto.nome }}</span>
-                        </div>
-                    </td>
-                    <td data-label="Tipo">
-                        <span class="badge {% if mov.tipo == 'entrada' %}badge-success{% else %}badge-danger{% endif %}">
-                            {% if mov.tipo == 'entrada' %}📥 Entrada{% else %}📤 Saída{% endif %}
-                        </span>
-                    </td>
-                    <td data-label="Qtd">{{ mov.quantidade }}</td>
-                    <td data-label="Motivo">{{ mov.motivo or '-' }}</td>
-                    <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td data-label="Metodo">{{ item.metodo|capitalize }}</td>
+                    <td data-label="Quantidade">{{ item.quantidade }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center">Nenhuma movimentação encontrada</td>
+                    <td colspan="2" class="text-center">Sem informacao de pagamento no periodo.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-outline">Ver Todas as Movimentações</a>
+</div>
+
+<div class="action-buttons">
+    <a href="{{ url_for('pdv') }}" class="btn btn-primary">Abrir PDV</a>
+    <a href="{{ url_for('listar_pedidos') }}" class="btn btn-secondary">Gerenciar Pedidos</a>
+    <a href="{{ url_for('relatorios') }}" class="btn btn-info">Relatorios de Estoque</a>
+    {% if funcionario_logado and funcionario_logado.role in ['admin', 'gerente'] %}
+    <a href="{{ url_for('indicadores_rh') }}" class="btn btn-success">Indicadores RH</a>
+    {% endif %}
 </div>
 {% endblock %}

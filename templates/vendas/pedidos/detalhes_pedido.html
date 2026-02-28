@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Pedido - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Detalhes da Venda #{{ pedido.id }}</h1>
+    <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Informacoes Gerais</div>
+    <div class="card-body p-0">
+        <div class="table-responsive m-0">
+            <table class="table table-striped table-sm m-0">
+                <tbody>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            {% if pedido.status == 'aberto' %}
+                                Aberto
+                            {% elif pedido.status == 'em_preparo' %}
+                                Em preparo
+                            {% elif pedido.status == 'entregue' %}
+                                Entregue
+                            {% elif pedido.status == 'fechado' %}
+                                Venda concluida
+                            {% elif pedido.status == 'cancelado' %}
+                                Cancelado
+                            {% else %}
+                                {{ pedido.status }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Horario do pedido</th>
+                        <td>{{ pedido.criado_em.strftime('%d/%m/%Y %H:%M:%S') if pedido.criado_em else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Horario de fechamento</th>
+                        <td>{{ pedido.fechado_em.strftime('%d/%m/%Y %H:%M:%S') if pedido.fechado_em else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Garcom</th>
+                        <td>{{ pedido.garcom.nome if pedido.garcom else 'Nao atribuido' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Caixa</th>
+                        <td>{{ pedido.caixa.nome if pedido.caixa else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Operador de caixa</th>
+                        <td>
+                            {% if pedido.caixa and pedido.caixa.funcionario %}
+                                {{ pedido.caixa.funcionario.nome }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Mesa</th>
+                        <td>{{ pedido.mesa.numero if pedido.mesa else '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Cliente</th>
+                        <td>{{ pedido.cliente_nome or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Celular</th>
+                        <td>{{ pedido.cliente_celular or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Pagamento</th>
+                        <td>{{ pedido.metodo_pagamento or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Valor pago</th>
+                        <td>{% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% else %}-{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Total</th>
+                        <td><strong>R$ {{ '%.2f'|format(pedido.total or 0) }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Observacoes</th>
+                        <td>{{ pedido.observacoes or '-' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Itens do Pedido</div>
+    <div class="card-body p-0">
+        <div class="table-responsive m-0">
+            <table class="table table-hover m-0">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th>Preco unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pedido.itens %}
+                    <tr>
+                        <td>{{ item.produto.nome if item.produto else '-' }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>R$ {{ '%.2f'|format(item.preco_unitario) }}</td>
+                        <td>R$ {{ '%.2f'|format(item.quantidade * item.preco_unitario) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">Nenhum item no pedido</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-end">Total</th>
+                        <th>R$ {{ '%.2f'|format(pedido.total or 0) }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

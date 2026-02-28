@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Funcao RH - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Editar Funcao RH</h1>
+    <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        <div class="form-group">
+            <label for="nome">Nome da Funcao *</label>
+            <input type="text" id="nome" name="nome" class="input-text" maxlength="100" required value="{{ funcao.nome }}">
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descricao</label>
+            <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" value="{{ funcao.descricao or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-inline">
+                <input type="checkbox" name="ativo" {% if funcao.ativo %}checked{% endif %}>
+                Funcao ativa
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Alteracoes</button>
+            <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

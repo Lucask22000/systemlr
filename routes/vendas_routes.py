@@ -4,11 +4,20 @@ import qrcode
 from io import BytesIO
 from flask import render_template, request, redirect, url_for, flash, session, Response, jsonify
 
-from models import db, Caixa, Mesa, Pedido, Produto, ItemPedido, Movimentacao, MovimentacaoCaixa, Funcionario
+from models import db, Caixa, Mesa, Pedido, Produto, ItemPedido, Movimentacao, MovimentacaoCaixa, Funcionario, Garcom, EmpresaConfig
 from realtime import publish_alert, sse_stream
 
 
 METODOS_PAGAMENTO = {'dinheiro', 'cartao', 'pix', 'crediario', 'dividido'}
+
+
+def _obter_empresa_config():
+    empresa = EmpresaConfig.query.first()
+    if not empresa:
+        empresa = EmpresaConfig()
+        db.session.add(empresa)
+        db.session.commit()
+    return empresa
 
 
 def _to_float(valor, default=None):
@@ -51,7 +60,104 @@ def _build_payment_data(metodo_raw, valor_raw, total_pedido, split_raw=None, cli
     return metodo_texto, valor_pago
 
 
+def _garcom_logado_id():
+    funcionario_id = session.get('funcionario_id')
+    if not funcionario_id:
+        return None
+    garcom = Garcom.query.filter_by(funcionario_id=funcionario_id, ativo=True).first()
+    return garcom.id if garcom else None
+
+
 def register_vendas_routes(app, login_required):
+    @app.route('/garcons')
+    @login_required
+    def listar_garcons():
+        garcons = Garcom.query.order_by(Garcom.nome.asc()).all()
+        pedidos_em_andamento = Pedido.query.filter(Pedido.status.in_(['aberto', 'em_preparo', 'entregue'])).order_by(Pedido.criado_em.desc()).all()
+        empresa = _obter_empresa_config()
+        return render_template(
+            'vendas/garcons/garcons.html',
+            garcons=garcons,
+            pedidos_em_andamento=pedidos_em_andamento,
+            empresa=empresa
+        )
+
+    @app.route('/garcons/novo', methods=['GET', 'POST'])
+    @login_required
+    def novo_garcom():
+        if request.method == 'POST':
+            try:
+                nome = (request.form.get('nome') or '').strip()
+                celular = (request.form.get('celular') or '').strip()
+                ativo = (request.form.get('ativo') == 'on')
+                if not nome:
+                    flash('Nome do garcom e obrigatorio.', 'error')
+                    return redirect(url_for('novo_garcom'))
+
+                garcom = Garcom(nome=nome, celular=celular or None, ativo=ativo)
+                db.session.add(garcom)
+                db.session.commit()
+                flash('Garcom cadastrado com sucesso.', 'success')
+                return redirect(url_for('listar_garcons'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao cadastrar garcom: {str(e)}', 'error')
+        return render_template('vendas/garcons/novo_garcom.html')
+
+    @app.route('/garcons/<int:garcom_id>/editar', methods=['GET', 'POST'])
+    @login_required
+    def editar_garcom(garcom_id):
+        garcom = Garcom.query.get_or_404(garcom_id)
+        if request.method == 'POST':
+            try:
+                nome = (request.form.get('nome') or '').strip()
+                if not nome:
+                    flash('Nome do garcom e obrigatorio.', 'error')
+                    return redirect(url_for('editar_garcom', garcom_id=garcom_id))
+                garcom.nome = nome
+                garcom.celular = (request.form.get('celular') or '').strip() or None
+                garcom.ativo = (request.form.get('ativo') == 'on')
+                db.session.commit()
+                flash('Garcom atualizado com sucesso.', 'success')
+                return redirect(url_for('listar_garcons'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao atualizar garcom: {str(e)}', 'error')
+        return render_template('vendas/garcons/editar_garcom.html', garcom=garcom)
+
+    @app.route('/garcons/<int:garcom_id>/deletar', methods=['POST'])
+    @login_required
+    def deletar_garcom(garcom_id):
+        garcom = Garcom.query.get_or_404(garcom_id)
+        try:
+            Pedido.query.filter_by(garcom_id=garcom.id).update({'garcom_id': None})
+            db.session.delete(garcom)
+            db.session.commit()
+            flash('Garcom removido com sucesso.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao remover garcom: {str(e)}', 'error')
+        return redirect(url_for('listar_garcons'))
+
+    @app.route('/garcons/config', methods=['GET', 'POST'])
+    @login_required
+    def configurar_distribuicao_garcons():
+        empresa = _obter_empresa_config()
+        if request.method == 'POST':
+            try:
+                empresa.distribuicao_ativa = (request.form.get('distribuicao_ativa') == 'on')
+                modo = (request.form.get('modo_distribuicao_pedidos') or 'round_robin').strip().lower()
+                if modo not in {'round_robin', 'menos_pedidos', 'manual'}:
+                    modo = 'round_robin'
+                empresa.modo_distribuicao_pedidos = modo
+                db.session.commit()
+                flash('Configuracao de distribuicao salva com sucesso.', 'success')
+                return redirect(url_for('configurar_distribuicao_garcons'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao salvar configuracao: {str(e)}', 'error')
+        return render_template('vendas/garcons/config_distribuicao.html', empresa=empresa)
+
     @app.route('/caixas')
     @login_required
     def listar_caixas():
@@ -285,9 +391,8 @@ def register_vendas_routes(app, login_required):
             mesa.qr_token = secrets.token_urlsafe(12)
             db.session.commit()
         
-        # URL do QR code (remonta do Flask)
-        app_url = request.host_url.rstrip('/')
-        qr_url = f"{app_url}/m/{mesa.qr_token}"
+        # URL publica da comanda (rota QR)
+        qr_url = url_for('public.cardapio_mesa', token=mesa.qr_token, _external=True)
         
         return render_template('vendas/mesas/qrcode_mesa.html', mesa=mesa, qr_url=qr_url)
 
@@ -302,9 +407,8 @@ def register_vendas_routes(app, login_required):
             return redirect(url_for('listar_mesas'))
         
         try:
-            # Gera o QR code
-            app_url = request.host_url.rstrip('/')
-            qr_url = f"{app_url}/m/{mesa.qr_token}"
+            # Gera o QR code com rota publica da comanda
+            qr_url = url_for('public.cardapio_mesa', token=mesa.qr_token, _external=True)
             
             qr = qrcode.QRCode(
                 version=1,
@@ -343,16 +447,39 @@ def register_vendas_routes(app, login_required):
             flash('QR code não disponível para esta mesa', 'error')
             return redirect(url_for('listar_mesas'))
         
-        app_url = request.host_url.rstrip('/')
-        qr_url = f"{app_url}/m/{mesa.qr_token}"
+        qr_url = url_for('public.cardapio_mesa', token=mesa.qr_token, _external=True)
         
         return render_template('vendas/mesas/print_qrcode_mesa.html', mesa=mesa, qr_url=qr_url)
 
     @app.route('/pedidos')
     @login_required
     def listar_pedidos():
-        pedidos = Pedido.query.order_by(Pedido.criado_em.desc()).all()
-        return render_template('vendas/pedidos/pedidos.html', pedidos=pedidos)
+        status_filtro = (request.args.get('status') or '').strip().lower()
+        busca = (request.args.get('busca') or '').strip()
+
+        query = Pedido.query
+        if status_filtro in {'aberto', 'em_preparo', 'entregue', 'fechado', 'cancelado'}:
+            query = query.filter(Pedido.status == status_filtro)
+
+        if busca:
+            termo = f'%{busca}%'
+            query = query.filter(
+                db.or_(
+                    db.cast(Pedido.id, db.String).ilike(termo),
+                    Pedido.cliente_nome.ilike(termo),
+                    Pedido.cliente_celular.ilike(termo),
+                    Pedido.mesa.has(Mesa.numero.ilike(termo)),
+                    Pedido.caixa.has(Caixa.nome.ilike(termo))
+                )
+            )
+
+        pedidos = query.order_by(Pedido.criado_em.desc()).all()
+        return render_template(
+            'vendas/pedidos/pedidos.html',
+            pedidos=pedidos,
+            status_filtro=status_filtro,
+            busca=busca
+        )
 
     @app.route('/pedidos/pendentes')
     @login_required
@@ -383,7 +510,8 @@ def register_vendas_routes(app, login_required):
             if pedido.mesa:
                 pedido.mesa.status = 'livre'
         db.session.commit()
-        flash(f'Pedido {pedido.id} atualizado para {novo_status}.', 'success')
+        status_label = 'venda concluida' if novo_status == 'fechado' else novo_status
+        flash(f'Pedido {pedido.id} atualizado para {status_label}.', 'success')
         return redirect(request.referrer or url_for('listar_pedidos'))
 
     @app.route('/pedidos/novo', methods=['GET', 'POST'])
@@ -397,7 +525,12 @@ def register_vendas_routes(app, login_required):
                 mesa_id = request.form.get('mesa_id') or None
                 caixa_id = request.form.get('caixa_id') or None
                 observacoes = request.form.get('observacoes')
-                pedido = Pedido(mesa_id=mesa_id, caixa_id=caixa_id, observacoes=observacoes)
+                pedido = Pedido(
+                    mesa_id=mesa_id,
+                    caixa_id=caixa_id,
+                    garcom_id=_garcom_logado_id(),
+                    observacoes=observacoes
+                )
                 db.session.add(pedido)
                 db.session.flush()
                 total = 0
@@ -513,11 +646,18 @@ def register_vendas_routes(app, login_required):
             flash(f'Erro ao excluir pedido: {str(e)}', 'error')
         return redirect(url_for('listar_pedidos'))
 
-    @app.route('/vendas')
+    @app.route('/pedidos/<int:pedido_id>/comprovante')
     @login_required
-    def listar_vendas():
-        vendas = Pedido.query.filter_by(status='fechado').all()
-        return render_template('vendas/vendas.html', vendas=vendas)
+    def visualizar_comprovante_pedido(pedido_id):
+        pedido = Pedido.query.get_or_404(pedido_id)
+        empresa = EmpresaConfig.query.first()
+        return render_template('vendas/pedidos/comprovante.html', pedido=pedido, empresa=empresa)
+
+    @app.route('/pedidos/<int:pedido_id>/detalhes')
+    @login_required
+    def detalhes_pedido(pedido_id):
+        pedido = Pedido.query.get_or_404(pedido_id)
+        return render_template('vendas/pedidos/detalhes_pedido.html', pedido=pedido)
 
     @app.route('/pdv')
     @login_required
@@ -526,11 +666,13 @@ def register_vendas_routes(app, login_required):
         produtos = Produto.query.filter_by(ativo=True).order_by(Produto.nome).all()
         caixas_abertas = Caixa.query.filter_by(aberto=True).all()
         mesas = Mesa.query.all()
+        garcons = Garcom.query.filter_by(ativo=True).order_by(Garcom.nome.asc()).all()
         return render_template(
             'vendas/pdv.html',
             produtos=produtos,
             caixas_abertas=caixas_abertas,
-            mesas=mesas
+            mesas=mesas,
+            garcons=garcons
         )
 
     @app.route('/api/pedidos/criar', methods=['POST'])
@@ -550,7 +692,12 @@ def register_vendas_routes(app, login_required):
             if not caixa or not caixa.aberto:
                 return jsonify({'success': False, 'message': 'Caixa não está aberta'}), 400
             
-            pedido = Pedido(mesa_id=mesa_id, caixa_id=caixa_id, status='aberto')
+            pedido = Pedido(
+                mesa_id=mesa_id,
+                caixa_id=caixa_id,
+                garcom_id=_garcom_logado_id(),
+                status='aberto'
+            )
             db.session.add(pedido)
             db.session.flush()
             
@@ -663,6 +810,124 @@ def register_vendas_routes(app, login_required):
             'pedido_id': pedido.id,
             'itens': itens,
             'total': pedido.total
+        })
+
+    @app.route('/api/pedidos/em-aberto')
+    @login_required
+    def listar_pedidos_em_aberto_pdv():
+        """Lista pedidos nao finalizados para selecao no PDV (todas as caixas ou filtrado)."""
+        status_filtro = (request.args.get('status') or '').strip().lower()
+        mesa_id = request.args.get('mesa_id', type=int)
+        garcom_id = request.args.get('garcom_id', type=int)
+        caixa_id = request.args.get('caixa_id', type=int)
+
+        query = Pedido.query.filter(
+            Pedido.status.in_(['aberto', 'em_preparo', 'entregue'])
+        )
+
+        if status_filtro in {'aberto', 'em_preparo', 'entregue'}:
+            query = query.filter(Pedido.status == status_filtro)
+        if caixa_id:
+            query = query.filter(Pedido.caixa_id == caixa_id)
+        if mesa_id:
+            query = query.filter(Pedido.mesa_id == mesa_id)
+        if garcom_id:
+            query = query.filter(Pedido.garcom_id == garcom_id)
+
+        pedidos = query.order_by(Pedido.criado_em.desc()).all()
+
+        return jsonify({
+            'success': True,
+            'pedidos': [
+                {
+                    'id': p.id,
+                    'status': p.status,
+                    'caixa_id': p.caixa_id,
+                    'caixa_nome': p.caixa.nome if p.caixa else None,
+                    'mesa_id': p.mesa_id,
+                    'mesa_numero': p.mesa.numero if p.mesa else None,
+                    'garcom_id': p.garcom_id,
+                    'garcom_nome': p.garcom.nome if p.garcom else None,
+                    'cliente_nome': p.cliente_nome,
+                    'origem': p.origem,
+                    'total': p.total or 0.0,
+                    'criado_em': p.criado_em.isoformat() if p.criado_em else None
+                }
+                for p in pedidos
+            ]
+        })
+
+    @app.route('/api/pedidos/caixa/<int:caixa_id>/em-aberto')
+    @login_required
+    def listar_pedidos_caixa_em_aberto(caixa_id):
+        """Compat: mantem endpoint legado por caixa."""
+        status_filtro = (request.args.get('status') or '').strip().lower()
+        mesa_id = request.args.get('mesa_id', type=int)
+        garcom_id = request.args.get('garcom_id', type=int)
+
+        query = Pedido.query.filter(
+            Pedido.caixa_id == caixa_id,
+            Pedido.status.in_(['aberto', 'em_preparo', 'entregue'])
+        )
+
+        if status_filtro in {'aberto', 'em_preparo', 'entregue'}:
+            query = query.filter(Pedido.status == status_filtro)
+        if mesa_id:
+            query = query.filter(Pedido.mesa_id == mesa_id)
+        if garcom_id:
+            query = query.filter(Pedido.garcom_id == garcom_id)
+
+        pedidos = query.order_by(Pedido.criado_em.desc()).all()
+        return jsonify({
+            'success': True,
+            'pedidos': [
+                {
+                    'id': p.id,
+                    'status': p.status,
+                    'caixa_id': p.caixa_id,
+                    'caixa_nome': p.caixa.nome if p.caixa else None,
+                    'mesa_id': p.mesa_id,
+                    'mesa_numero': p.mesa.numero if p.mesa else None,
+                    'garcom_id': p.garcom_id,
+                    'garcom_nome': p.garcom.nome if p.garcom else None,
+                    'cliente_nome': p.cliente_nome,
+                    'origem': p.origem,
+                    'total': p.total or 0.0,
+                    'criado_em': p.criado_em.isoformat() if p.criado_em else None
+                }
+                for p in pedidos
+            ]
+        })
+
+    @app.route('/api/pedidos/<int:pedido_id>/detalhes-json')
+    @login_required
+    def detalhes_pedido_api(pedido_id):
+        """Retorna detalhes do pedido para carregar no PDV."""
+        pedido = Pedido.query.get_or_404(pedido_id)
+
+        itens = []
+        for ip in pedido.itens:
+            nome_produto = ip.produto.nome if ip.produto else f'Produto {ip.produto_id}'
+            itens.append({
+                'produto_id': ip.produto_id,
+                'nome': nome_produto,
+                'quantidade': ip.quantidade,
+                'preco': ip.preco_unitario
+            })
+
+        return jsonify({
+            'success': True,
+            'pedido': {
+                'id': pedido.id,
+                'status': pedido.status,
+                'mesa_id': pedido.mesa_id,
+                'mesa_numero': pedido.mesa.numero if pedido.mesa else None,
+                'garcom_id': pedido.garcom_id,
+                'garcom_nome': pedido.garcom.nome if pedido.garcom else None,
+                'cliente_nome': pedido.cliente_nome,
+                'total': pedido.total or 0.0,
+                'itens': itens
+            }
         })
 
     @app.route('/api/pedidos/<int:pedido_id>/adicionar', methods=['POST'])

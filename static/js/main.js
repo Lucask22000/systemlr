@@ -2,18 +2,61 @@
     const menuToggle = document.getElementById('menuToggle');
     const navbarMenu = document.getElementById('navbarMenu');
     const dropdownToggles = document.querySelectorAll('.nav-dropdown-toggle');
+    const mobileBreakpoint = window.matchMedia('(max-width: 768px)');
 
     if (menuToggle && navbarMenu) {
+        const closeDropdowns = function () {
+            document.querySelectorAll('.nav-dropdown.open').forEach(function (drop) {
+                drop.classList.remove('open');
+            });
+        };
+
+        const setMenuState = function (isOpen) {
+            navbarMenu.classList.toggle('active', isOpen);
+            menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            menuToggle.setAttribute('aria-label', isOpen ? 'Fechar menu' : 'Abrir menu');
+        };
+
         menuToggle.addEventListener('click', function () {
-            navbarMenu.classList.toggle('active');
+            const isOpen = !navbarMenu.classList.contains('active');
+            setMenuState(isOpen);
         });
 
         const navLinks = document.querySelectorAll('.nav-link');
         navLinks.forEach(function (link) {
             link.addEventListener('click', function () {
-                navbarMenu.classList.remove('active');
+                setMenuState(false);
+                closeDropdowns();
             });
         });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+            setMenuState(false);
+            closeDropdowns();
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!mobileBreakpoint.matches) return;
+            const clickedInsideMenu = navbarMenu.contains(event.target);
+            const clickedToggle = menuToggle.contains(event.target);
+            if (!clickedInsideMenu && !clickedToggle) {
+                setMenuState(false);
+                closeDropdowns();
+            }
+        });
+
+        const handleBreakpoint = function (event) {
+            if (event.matches) return;
+            setMenuState(false);
+            closeDropdowns();
+        };
+
+        if (typeof mobileBreakpoint.addEventListener === 'function') {
+            mobileBreakpoint.addEventListener('change', handleBreakpoint);
+        } else {
+            mobileBreakpoint.addListener(handleBreakpoint);
+        }
     }
 
     dropdownToggles.forEach(function (toggle) {
@@ -95,6 +138,8 @@ function initBarcodeScannerButtons() {
         button.addEventListener('click', async function () {
             const targetId = this.getAttribute('data-barcode-target');
             const targetInput = document.getElementById(targetId);
+            const mode = (this.getAttribute('data-barcode-mode') || 'single').toLowerCase();
+            const continuous = mode === 'continuous' || mode === 'sequence';
 
             if (!targetInput) {
                 alert('Campo de codigo nao encontrado.');
@@ -112,10 +157,16 @@ function initBarcodeScannerButtons() {
             }
 
             try {
+                if (modalState && typeof modalState.close === 'function') {
+                    modalState.close();
+                }
+
                 const detector = new window.BarcodeDetector({
                     formats: ['ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e', 'code_39', 'codabar']
                 });
-                modalState = await openBarcodeScannerModal(targetInput, detector);
+                modalState = await openBarcodeScannerModal(targetInput, detector, {
+                    continuous: continuous
+                });
             } catch (error) {
                 console.error('Erro ao iniciar leitura de codigo:', error);
                 alert('Nao foi possivel iniciar a leitura. Verifique permissoes da camera.');
@@ -130,7 +181,13 @@ function initBarcodeScannerButtons() {
     });
 }
 
-async function openBarcodeScannerModal(targetInput, detector) {
+async function openBarcodeScannerModal(targetInput, detector, options) {
+    options = options || {};
+    const continuous = Boolean(options.continuous);
+    const scanIntervalMs = continuous ? 120 : 250;
+    const duplicateCooldownMs = continuous ? 350 : 0;
+    const lastReadByCode = {};
+
     const modal = document.createElement('div');
     modal.className = 'barcode-scanner-modal active';
     modal.innerHTML = [
@@ -141,7 +198,9 @@ async function openBarcodeScannerModal(targetInput, detector) {
         '  </div>',
         '  <div class="barcode-scanner-body">',
         '    <video class="barcode-scanner-video" autoplay playsinline muted></video>',
-        '    <p class="barcode-scanner-help">Aponte a camera para o codigo de barras.</p>',
+        continuous
+            ? '    <p class="barcode-scanner-help">Modo continuo ativo: aproxime e afaste os produtos para leitura em sequencia.</p>'
+            : '    <p class="barcode-scanner-help">Aponte a camera para o codigo de barras.</p>',
         '  </div>',
         '</div>'
     ].join('');
@@ -172,7 +231,9 @@ async function openBarcodeScannerModal(targetInput, detector) {
 
     stream = await navigator.mediaDevices.getUserMedia({
         video: {
-            facingMode: { ideal: 'environment' }
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
         },
         audio: false
     });
@@ -185,20 +246,47 @@ async function openBarcodeScannerModal(targetInput, detector) {
         try {
             const barcodes = await detector.detect(video);
             if (barcodes && barcodes.length > 0) {
-                const rawValue = (barcodes[0].rawValue || '').trim();
+                let rawValue = '';
+                for (let i = 0; i < barcodes.length; i++) {
+                    const candidate = (barcodes[i].rawValue || '').trim();
+                    if (candidate) {
+                        rawValue = candidate;
+                        break;
+                    }
+                }
+
                 if (rawValue) {
+                    const now = Date.now();
+                    const lastReadAt = lastReadByCode[rawValue] || 0;
+                    if (duplicateCooldownMs > 0 && (now - lastReadAt) < duplicateCooldownMs) {
+                        setTimeout(scanLoop, scanIntervalMs);
+                        return;
+                    }
+                    lastReadByCode[rawValue] = now;
+
                     targetInput.value = rawValue;
                     targetInput.dispatchEvent(new Event('input', { bubbles: true }));
                     targetInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    close();
-                    return;
+                    targetInput.dispatchEvent(new CustomEvent('barcode:detected', {
+                        bubbles: true,
+                        detail: { value: rawValue, continuous: continuous }
+                    }));
+
+                    if (continuous && navigator.vibrate) {
+                        navigator.vibrate(30);
+                    }
+
+                    if (!continuous) {
+                        close();
+                        return;
+                    }
                 }
             }
         } catch (error) {
             // Ignora falhas pontuais de detecção por frame.
         }
 
-        setTimeout(scanLoop, 250);
+        setTimeout(scanLoop, scanIntervalMs);
     };
 
     scanLoop();

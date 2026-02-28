@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Garçom - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Novo Garçom</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        <div class="form-group">
+            <label for="nome">Nome</label>
+            <input type="text" id="nome" name="nome" required class="input-text">
+        </div>
+
+        <div class="form-group">
+            <label for="celular">Celular</label>
+            <input type="text" id="celular" name="celular" class="input-text">
+        </div>
+
+        <label class="checkbox-inline">
+            <input type="checkbox" name="ativo" checked>
+            Garçom ativo
+        </label>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Salvar</button>
+            <a href="{{ url_for('listar_garcons') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

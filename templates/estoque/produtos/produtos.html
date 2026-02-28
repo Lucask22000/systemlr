@@ -38,6 +38,7 @@
                 <th>Codigo</th>
                 <th>Nome</th>
                 <th>Categoria</th>
+                <th>Endereco</th>
                 <th>Preco Venda</th>
                 <th>Estoque</th>
                 <th>Status</th>
@@ -57,6 +58,7 @@
                     </div>
                 </td>
                 <td data-label="Categoria">{{ produto.categoria.nome }}</td>
+                <td data-label="Endereco">{{ produto.endereco.nome if produto.endereco else '-' }}</td>
                 <td data-label="Preco">R$ {{ "%.2f"|format(produto.preco_venda) }}</td>
                 <td data-label="Estoque">
                     {{ produto.quantidade_estoque }}
@@ -79,7 +81,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="text-center">Nenhum produto encontrado</td>
+                <td colspan="8" class="text-center">Nenhum produto encontrado</td>
             </tr>
             {% endfor %}
         </tbody>

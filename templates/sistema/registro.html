@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -176,12 +176,12 @@
     <div class="container">
         <div class="registro-header">
             <h1>SystemLR</h1>
-            <p>{% if primeira_vez %}Criar Conta Admin{% else %}Registrar Novo Funcionário{% endif %}</p>
+            <p>{% if primeira_vez %}Criar Conta Admin{% else %}Registrar Novo FuncionÃ¡rio{% endif %}</p>
         </div>
         
         {% if primeira_vez %}
             <div class="info-text">
-                ℹ️ Esta é sua primeira vez. Crie a conta do administrador do sistema.
+                â„¹ï¸ Esta Ã© sua primeira vez. Crie a conta do administrador do sistema.
             </div>
         {% endif %}
         
@@ -210,7 +210,7 @@
             
             <div class="form-group">
                 <label for="senha">Senha</label>
-                <input type="password" id="senha" name="senha" required minlength="6" placeholder="Mínimo 6 caracteres">
+                <input type="password" id="senha" name="senha" required minlength="6" placeholder="MÃ­nimo 6 caracteres">
             </div>
             
             <div class="form-group">
@@ -220,12 +220,25 @@
             
             {% if not primeira_vez %}
                 <div class="form-group">
-                    <label for="role">Função</label>
+                    <label for="role">Perfil de Acesso</label>
                     <select id="role" name="role" required>
                         <option value="operador">Operador</option>
                         <option value="caixa">Caixa</option>
                         <option value="gerente">Gerente</option>
+                        <option value="garcom">Garcom</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="cargo">Cargo/Funcao (RH)</label>
+                    <select id="cargo" name="cargo" required>
+                        <option value="">Selecione um cargo</option>
+                        {% for funcao in funcoes_rh %}
+                            <option value="{{ funcao.nome }}">{{ funcao.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <small style="display:block; margin-top: 8px;">
+                        Nao encontrou o cargo? <a href="{{ url_for('nova_funcao_rh') }}">Criar nova funcao</a>.
+                    </small>
                 </div>
             {% endif %}
             
@@ -239,10 +252,11 @@
                 </a>
             {% else %}
                 <div class="registro-footer">
-                    <p>Já tem uma conta? <a href="{{ url_for('login') }}">Fazer login</a></p>
+                    <p>JÃ¡ tem uma conta? <a href="{{ url_for('login') }}">Fazer login</a></p>
                 </div>
             {% endif %}
         </form>
     </div>
 </body>
 </html>
+

@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
 import os
-from uuid import uuid4
 
 from flask import render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 
-from models import db, Categoria, Produto, Movimentacao, Fornecedor
+from models import db, Categoria, EnderecoEstoque, Produto, Movimentacao, Fornecedor
 
 # pillow será usado para redimensionar/comprimir imagens
 from PIL import Image
@@ -30,23 +29,24 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
         if os.path.exists(image_path):
             os.remove(image_path)
 
-    def _save_product_image(file_storage):
+    def _save_product_image(file_storage, product_name):
         if not file_storage or not file_storage.filename:
             return None, None
 
         if not _is_allowed_image(file_storage.filename):
             return None, 'Formato de imagem invalido. Use PNG, JPG, JPEG, WEBP ou GIF.'
 
-        _, ext = os.path.splitext(file_storage.filename.lower())
-        safe_name = secure_filename(file_storage.filename)
-        if not safe_name:
-            return None, 'Nome do arquivo invalido.'
+        safe_product_name = secure_filename((product_name or '').strip())
+        if not safe_product_name:
+            return None, 'Nome do produto invalido para nomear a imagem.'
 
-        unique_name = f'{datetime.utcnow().strftime("%Y%m%d%H%M%S")}_{uuid4().hex}{ext}'
+        _, ext = os.path.splitext(file_storage.filename.lower())
+
+        image_name = f'{safe_product_name}{ext}'
         relative_dir = os.path.join('uploads', 'produtos')
         absolute_dir = os.path.join(app.static_folder, relative_dir)
         os.makedirs(absolute_dir, exist_ok=True)
-        relative_path = os.path.join(relative_dir, unique_name).replace('\\', '/')
+        relative_path = os.path.join(relative_dir, image_name).replace('\\', '/')
         absolute_path = os.path.join(app.static_folder, relative_path)
 
         # salvar arquivo temporariamente para depois processar
@@ -65,6 +65,41 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
             img.save(absolute_path, **save_kwargs)
         except Exception:
             # se falhar, não é crítico; deixamos a imagem original
+            pass
+
+        return relative_path, None
+
+    def _save_category_image(file_storage, category_name):
+        if not file_storage or not file_storage.filename:
+            return None, None
+
+        if not _is_allowed_image(file_storage.filename):
+            return None, 'Formato de imagem invalido. Use PNG, JPG, JPEG, WEBP ou GIF.'
+
+        safe_category_name = secure_filename((category_name or '').strip())
+        if not safe_category_name:
+            return None, 'Nome da categoria invalido para nomear a imagem.'
+
+        _, ext = os.path.splitext(file_storage.filename.lower())
+
+        image_name = f'{safe_category_name}{ext}'
+        relative_dir = os.path.join('uploads', 'categorias')
+        absolute_dir = os.path.join(app.static_folder, relative_dir)
+        os.makedirs(absolute_dir, exist_ok=True)
+        relative_path = os.path.join(relative_dir, image_name).replace('\\', '/')
+        absolute_path = os.path.join(app.static_folder, relative_path)
+
+        file_storage.save(absolute_path)
+
+        try:
+            img = Image.open(absolute_path)
+            max_size = (800, 800)
+            img.thumbnail(max_size, Image.ANTIALIAS)
+            save_kwargs = {'optimize': True}
+            if img.format and img.format.lower() in ['jpeg', 'jpg']:
+                save_kwargs['quality'] = 85
+            img.save(absolute_path, **save_kwargs)
+        except Exception:
             pass
 
         return relative_path, None
@@ -88,10 +123,12 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
 
         produtos = query.all()
         categorias = Categoria.query.all()
+        enderecos = EnderecoEstoque.query.filter_by(ativo=True).order_by(EnderecoEstoque.nome.asc()).all()
         return render_template(
             'estoque/produtos/produtos.html',
             produtos=produtos,
             categorias=categorias,
+            enderecos=enderecos,
             categoria_selecionada=categoria_id,
             busca=busca
         )
@@ -108,7 +145,10 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                     flash('Categoria invalida', 'error')
                     return redirect(url_for('novo_produto'))
 
-                nova_imagem_path, erro_imagem = _save_product_image(request.files.get('imagem'))
+                nova_imagem_path, erro_imagem = _save_product_image(
+                    request.files.get('imagem'),
+                    request.form.get('nome')
+                )
                 if erro_imagem:
                     flash(erro_imagem, 'error')
                     return redirect(url_for('novo_produto'))
@@ -119,6 +159,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                     descricao=request.form.get('descricao'),
                     imagem_path=nova_imagem_path,
                     categoria_id=categoria_id,
+                    endereco_id=request.form.get('endereco_id', type=int) or None,
                     preco_custo=float(request.form.get('preco_custo', 0)),
                     preco_venda=float(request.form.get('preco_venda', 0)),
                     quantidade_estoque=int(request.form.get('quantidade_estoque', 0)),
@@ -135,7 +176,8 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 flash(f'Erro ao criar produto: {str(e)}', 'error')
 
         categorias = Categoria.query.all()
-        return render_template('estoque/produtos/novo_produto.html', categorias=categorias)
+        enderecos = EnderecoEstoque.query.filter_by(ativo=True).order_by(EnderecoEstoque.nome.asc()).all()
+        return render_template('estoque/produtos/novo_produto.html', categorias=categorias, enderecos=enderecos)
 
     @app.route('/produtos/<int:produto_id>/editar', methods=['GET', 'POST'])
     @login_required
@@ -148,6 +190,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 produto.nome = request.form.get('nome')
                 produto.descricao = request.form.get('descricao')
                 produto.categoria_id = int(request.form.get('categoria_id'))
+                produto.endereco_id = request.form.get('endereco_id', type=int) or None
                 produto.preco_custo = float(request.form.get('preco_custo', 0))
                 produto.preco_venda = float(request.form.get('preco_venda', 0))
                 produto.quantidade_minima = int(request.form.get('quantidade_minima', 5))
@@ -156,7 +199,7 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 arquivo_imagem = request.files.get('imagem')
 
                 if arquivo_imagem and arquivo_imagem.filename:
-                    nova_imagem_path, erro_imagem = _save_product_image(arquivo_imagem)
+                    nova_imagem_path, erro_imagem = _save_product_image(arquivo_imagem, produto.nome)
                     if erro_imagem:
                         flash(erro_imagem, 'error')
                         return redirect(url_for('editar_produto', produto_id=produto_id))
@@ -180,7 +223,8 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
                 flash(f'Erro ao atualizar produto: {str(e)}', 'error')
 
         categorias = Categoria.query.all()
-        return render_template('estoque/produtos/editar_produto.html', produto=produto, categorias=categorias)
+        enderecos = EnderecoEstoque.query.filter_by(ativo=True).order_by(EnderecoEstoque.nome.asc()).all()
+        return render_template('estoque/produtos/editar_produto.html', produto=produto, categorias=categorias, enderecos=enderecos)
 
     @app.route('/produtos/<int:produto_id>')
     @login_required
@@ -217,14 +261,30 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     @login_required
     def nova_categoria():
         if request.method == 'POST':
+            nova_imagem_path = None
             try:
-                categoria = Categoria(nome=request.form.get('nome'), descricao=request.form.get('descricao'))
+                nome_categoria = request.form.get('nome')
+                nova_imagem_path, erro_imagem = _save_category_image(
+                    request.files.get('imagem'),
+                    nome_categoria
+                )
+                if erro_imagem:
+                    flash(erro_imagem, 'error')
+                    return redirect(url_for('nova_categoria'))
+
+                categoria = Categoria(
+                    nome=nome_categoria,
+                    descricao=request.form.get('descricao'),
+                    imagem_path=nova_imagem_path
+                )
                 db.session.add(categoria)
                 db.session.commit()
                 flash(f'Categoria "{categoria.nome}" criada com sucesso!', 'success')
                 return redirect(url_for('listar_categorias'))
             except Exception as e:
                 db.session.rollback()
+                if nova_imagem_path:
+                    _delete_image_file(nova_imagem_path)
                 flash(f'Erro ao criar categoria: {str(e)}', 'error')
         return render_template('estoque/categorias/nova_categoria.html')
 
@@ -233,14 +293,36 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     def editar_categoria(categoria_id):
         categoria = Categoria.query.get_or_404(categoria_id)
         if request.method == 'POST':
+            nova_imagem_path = None
+            imagem_anterior = categoria.imagem_path
             try:
                 categoria.nome = request.form.get('nome')
                 categoria.descricao = request.form.get('descricao')
+                remover_imagem = request.form.get('remover_imagem') == 'on'
+                arquivo_imagem = request.files.get('imagem')
+
+                if arquivo_imagem and arquivo_imagem.filename:
+                    nova_imagem_path, erro_imagem = _save_category_image(arquivo_imagem, categoria.nome)
+                    if erro_imagem:
+                        flash(erro_imagem, 'error')
+                        return redirect(url_for('editar_categoria', categoria_id=categoria_id))
+                    categoria.imagem_path = nova_imagem_path
+                elif remover_imagem:
+                    categoria.imagem_path = None
+
                 db.session.commit()
+
+                if nova_imagem_path and imagem_anterior and imagem_anterior != nova_imagem_path:
+                    _delete_image_file(imagem_anterior)
+                if remover_imagem and imagem_anterior:
+                    _delete_image_file(imagem_anterior)
+
                 flash(f'Categoria "{categoria.nome}" atualizada com sucesso!', 'success')
                 return redirect(url_for('listar_categorias'))
             except Exception as e:
                 db.session.rollback()
+                if nova_imagem_path:
+                    _delete_image_file(nova_imagem_path)
                 flash(f'Erro ao atualizar categoria: {str(e)}', 'error')
         return render_template('estoque/categorias/editar_categoria.html', categoria=categoria)
 
@@ -248,9 +330,12 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
     @login_required
     def deletar_categoria(categoria_id):
         categoria = Categoria.query.get_or_404(categoria_id)
+        imagem_categoria = categoria.imagem_path
         try:
             db.session.delete(categoria)
             db.session.commit()
+            if imagem_categoria:
+                _delete_image_file(imagem_categoria)
             flash(f'Categoria "{categoria.nome}" deletada com sucesso!', 'success')
         except Exception as e:
             db.session.rollback()
@@ -322,6 +407,83 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
             db.session.rollback()
             flash(f'Erro ao remover fornecedor: {str(e)}', 'error')
         return redirect(url_for('listar_fornecedores'))
+
+    @app.route('/enderecos-estoque')
+    @login_required
+    def listar_enderecos_estoque():
+        enderecos = EnderecoEstoque.query.order_by(EnderecoEstoque.nome.asc()).all()
+        return render_template('estoque/enderecos/enderecos.html', enderecos=enderecos)
+
+    @app.route('/enderecos-estoque/novo', methods=['GET', 'POST'])
+    @login_required
+    def novo_endereco_estoque():
+        if request.method == 'POST':
+            try:
+                nome = (request.form.get('nome') or '').strip()
+                if not nome:
+                    flash('Nome do endereco e obrigatorio.', 'error')
+                    return redirect(url_for('novo_endereco_estoque'))
+
+                endereco = EnderecoEstoque(
+                    nome=nome,
+                    rua=(request.form.get('rua') or '').strip() or None,
+                    numero=(request.form.get('numero') or '').strip() or None,
+                    bairro=(request.form.get('bairro') or '').strip() or None,
+                    cidade=(request.form.get('cidade') or '').strip() or None,
+                    estado=((request.form.get('estado') or '').strip().upper() or None),
+                    cep=(request.form.get('cep') or '').strip() or None,
+                    complemento=(request.form.get('complemento') or '').strip() or None,
+                    ativo=(request.form.get('ativo') == 'on')
+                )
+                db.session.add(endereco)
+                db.session.commit()
+                flash(f'Endereco "{endereco.nome}" cadastrado com sucesso!', 'success')
+                return redirect(url_for('listar_enderecos_estoque'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao cadastrar endereco: {str(e)}', 'error')
+        return render_template('estoque/enderecos/novo_endereco.html')
+
+    @app.route('/enderecos-estoque/<int:endereco_id>/editar', methods=['GET', 'POST'])
+    @login_required
+    def editar_endereco_estoque(endereco_id):
+        endereco = EnderecoEstoque.query.get_or_404(endereco_id)
+        if request.method == 'POST':
+            try:
+                nome = (request.form.get('nome') or '').strip()
+                if not nome:
+                    flash('Nome do endereco e obrigatorio.', 'error')
+                    return redirect(url_for('editar_endereco_estoque', endereco_id=endereco_id))
+                endereco.nome = nome
+                endereco.rua = (request.form.get('rua') or '').strip() or None
+                endereco.numero = (request.form.get('numero') or '').strip() or None
+                endereco.bairro = (request.form.get('bairro') or '').strip() or None
+                endereco.cidade = (request.form.get('cidade') or '').strip() or None
+                endereco.estado = ((request.form.get('estado') or '').strip().upper() or None)
+                endereco.cep = (request.form.get('cep') or '').strip() or None
+                endereco.complemento = (request.form.get('complemento') or '').strip() or None
+                endereco.ativo = (request.form.get('ativo') == 'on')
+                db.session.commit()
+                flash('Endereco atualizado com sucesso!', 'success')
+                return redirect(url_for('listar_enderecos_estoque'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Erro ao atualizar endereco: {str(e)}', 'error')
+        return render_template('estoque/enderecos/editar_endereco.html', endereco=endereco)
+
+    @app.route('/enderecos-estoque/<int:endereco_id>/deletar', methods=['POST'])
+    @login_required
+    def deletar_endereco_estoque(endereco_id):
+        endereco = EnderecoEstoque.query.get_or_404(endereco_id)
+        try:
+            Produto.query.filter_by(endereco_id=endereco.id).update({'endereco_id': None})
+            db.session.delete(endereco)
+            db.session.commit()
+            flash('Endereco removido com sucesso!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao remover endereco: {str(e)}', 'error')
+        return redirect(url_for('listar_enderecos_estoque'))
 
     @app.route('/movimentacoes/rapido/<int:produto_id>', methods=['GET', 'POST'])
     @login_required
@@ -449,15 +611,21 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
         total_produtos = Produto.query.count()
         produtos_ativos = Produto.query.filter_by(ativo=True).count()
         produtos_inativos = Produto.query.filter_by(ativo=False).count()
+        total_unidades = db.session.query(db.func.sum(Produto.quantidade_estoque)).scalar() or 0
 
         produtos_em_falta = Produto.query.filter(
             Produto.quantidade_estoque < Produto.quantidade_minima,
             Produto.ativo == True
         ).all()
+        produtos_sem_estoque = Produto.query.filter(
+            Produto.ativo == True,
+            Produto.quantidade_estoque <= 0
+        ).count()
 
         valor_total = db.session.query(
             db.func.sum(Produto.quantidade_estoque * Produto.preco_custo)
         ).scalar() or 0
+        custo_medio_estoque = (valor_total / total_unidades) if total_unidades else 0
 
         produtos_maior_valor = db.session.query(
             Produto,
@@ -466,14 +634,58 @@ def register_estoque_routes(app, login_required, aplicar_movimentacao_estoque):
 
         data_limite = datetime.utcnow() - timedelta(days=30)
         movimentacoes_mes = Movimentacao.query.filter(Movimentacao.criado_em >= data_limite).count()
+        entradas_mes = Movimentacao.query.filter(
+            Movimentacao.criado_em >= data_limite,
+            Movimentacao.tipo == Movimentacao.TIPO_ENTRADA
+        ).count()
+        saidas_mes = Movimentacao.query.filter(
+            Movimentacao.criado_em >= data_limite,
+            Movimentacao.tipo == Movimentacao.TIPO_SAIDA
+        ).count()
+
+        data_sem_giro = datetime.utcnow() - timedelta(days=60)
+        produtos_sem_giro = Produto.query.filter(
+            Produto.ativo == True,
+            ~Produto.movimentacoes.any(Movimentacao.criado_em >= data_sem_giro)
+        ).order_by(Produto.nome.asc()).limit(10).all()
+
+        valor_por_categoria = db.session.query(
+            Categoria.nome.label('categoria_nome'),
+            db.func.sum(Produto.quantidade_estoque * Produto.preco_custo).label('valor_total'),
+            db.func.sum(Produto.quantidade_estoque).label('qtd_total'),
+            db.func.count(Produto.id).label('produtos')
+        ).join(Produto, Produto.categoria_id == Categoria.id).filter(
+            Produto.ativo == True
+        ).group_by(Categoria.id, Categoria.nome).order_by(
+            db.desc('valor_total')
+        ).all()
+
+        valor_por_endereco = db.session.query(
+            EnderecoEstoque.nome.label('endereco_nome'),
+            db.func.count(Produto.id).label('produtos'),
+            db.func.sum(Produto.quantidade_estoque).label('qtd_total'),
+            db.func.sum(Produto.quantidade_estoque * Produto.preco_custo).label('valor_total')
+        ).join(Produto, Produto.endereco_id == EnderecoEstoque.id).filter(
+            Produto.ativo == True
+        ).group_by(EnderecoEstoque.id, EnderecoEstoque.nome).order_by(
+            db.desc('valor_total')
+        ).all()
 
         return render_template(
             'estoque/relatorios/relatorios.html',
             total_produtos=total_produtos,
             produtos_ativos=produtos_ativos,
             produtos_inativos=produtos_inativos,
+            total_unidades=total_unidades,
             produtos_em_falta=produtos_em_falta,
+            produtos_sem_estoque=produtos_sem_estoque,
             valor_total_estoque=f'{valor_total:.2f}',
+            custo_medio_estoque=f'{custo_medio_estoque:.2f}',
             produtos_maior_valor=produtos_maior_valor,
-            movimentacoes_mes=movimentacoes_mes
+            movimentacoes_mes=movimentacoes_mes,
+            entradas_mes=entradas_mes,
+            saidas_mes=saidas_mes,
+            produtos_sem_giro=produtos_sem_giro,
+            valor_por_categoria=valor_por_categoria,
+            valor_por_endereco=valor_por_endereco
         )

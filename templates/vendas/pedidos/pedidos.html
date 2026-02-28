@@ -2,82 +2,237 @@
 
 {% block title %}Pedidos - SystemLR{% endblock %}
 
+{% block extra_css %}
+<style>
+    .pedido-filtros {
+        margin-bottom: 14px;
+    }
+
+    .pedido-filtros-form {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .pedido-filtros-form .form-control,
+    .pedido-filtros-form .form-select {
+        min-width: 180px;
+        flex: 1 1 220px;
+    }
+
+    .pedido-status-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .pedido-status-aberto {
+        background: #dbeafe;
+        color: #1e3a8a;
+    }
+
+    .pedido-status-em_preparo {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .pedido-status-entregue {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .pedido-status-fechado {
+        background: #ccfbf1;
+        color: #115e59;
+    }
+
+    .pedido-status-cancelado {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .pedido-pagamento-linha {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    .pedido-actions-cell {
+        min-width: 320px;
+    }
+
+    .pedido-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .pedido-status-form {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .pedido-status-form .form-select {
+        min-width: 150px;
+        flex: 1 1 150px;
+    }
+
+    .pedido-actions .btn {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .pedido-actions-cell {
+            min-width: 0;
+        }
+
+        .pedido-filtros-form .form-control,
+        .pedido-filtros-form .form-select {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .pedido-actions,
+        .pedido-status-form {
+            width: 100%;
+        }
+
+        .pedido-actions .btn,
+        .pedido-status-form .btn,
+        .pedido-status-form .form-select {
+            width: 100%;
+            min-width: 0;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1>Pedidos</h1>
     <a href="{{ url_for('novo_pedido') }}" class="btn btn-primary">Novo Pedido</a>
 </div>
 
-<div class="card">
+<div class="section pedido-filtros">
+    <form method="GET" class="pedido-filtros-form">
+        <input type="text" name="busca" class="form-control" placeholder="Buscar por pedido, cliente, celular, mesa ou caixa" value="{{ busca or '' }}">
+        <select name="status" class="form-select">
+            <option value="">Todos os status</option>
+            <option value="aberto" {% if status_filtro=='aberto' %}selected{% endif %}>Aberto</option>
+            <option value="em_preparo" {% if status_filtro=='em_preparo' %}selected{% endif %}>Em preparo</option>
+            <option value="entregue" {% if status_filtro=='entregue' %}selected{% endif %}>Entregue</option>
+            <option value="fechado" {% if status_filtro=='fechado' %}selected{% endif %}>Venda concluida</option>
+            <option value="cancelado" {% if status_filtro=='cancelado' %}selected{% endif %}>Cancelado</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Limpar</a>
+    </form>
+</div>
+
+<div class="card mb-3">
     <div class="card-header">Alertas de Comandas (QR Code)</div>
     <div class="card-body">
-        <p id="sse-status" class="text-muted">Aguardando novos pedidos...</p>
-        <ul id="alert-list" class="list-unstyled"></ul>
+        <p id="sse-status" class="text-muted mb-2">Aguardando novos pedidos...</p>
+        <ul id="alert-list" class="list-unstyled m-0"></ul>
     </div>
 </div>
 
 <div class="table-responsive">
-    <table class="table">
+    <table class="table table-hover align-middle">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Mesa</th>
                 <th>Caixa</th>
+                <th>Cliente</th>
+                <th>Celular</th>
+                <th>Garcom</th>
                 <th>Total</th>
                 <th>Pagamento</th>
                 <th>Valor pago</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th>Acoes</th>
             </tr>
         </thead>
         <tbody>
             {% for pedido in pedidos %}
             <tr>
-                <td>{{ pedido.id }}</td>
-                <td>{{ pedido.mesa.numero if pedido.mesa else '' }}</td>
-                <td>{{ pedido.caixa.nome if pedido.caixa else '' }}</td>
-                <td>R$ {{ '%.2f'|format(pedido.total) }}</td>
-                <td>
+                <td data-label="ID">{{ pedido.id }}</td>
+                <td data-label="Mesa">{{ pedido.mesa.numero if pedido.mesa else '' }}</td>
+                <td data-label="Caixa">{{ pedido.caixa.nome if pedido.caixa else '' }}</td>
+                <td data-label="Cliente">{{ pedido.cliente_nome or '-' }}</td>
+                <td data-label="Celular">{{ pedido.cliente_celular or '-' }}</td>
+                <td data-label="Garcom">{{ pedido.garcom.nome if pedido.garcom else 'Nao atribuido' }}</td>
+                <td data-label="Total">R$ {{ '%.2f'|format(pedido.total) }}</td>
+                <td data-label="Pagamento">
                     {% if pedido.metodo_pagamento %}
                         {% set metodo = pedido.metodo_pagamento|lower %}
                         {% if 'dividido' in metodo %}
-                            <span class="badge badge-info">Dividido</span>
+                            <span class="badge text-bg-info">Dividido</span>
                         {% elif 'crediario' in metodo %}
-                            <span class="badge badge-warning">Crediario</span>
+                            <span class="badge text-bg-warning">Crediario</span>
                         {% elif 'dinheiro' in metodo %}
-                            <span class="badge badge-success">Dinheiro</span>
+                            <span class="badge text-bg-success">Dinheiro</span>
                         {% elif 'cartao' in metodo %}
-                            <span class="badge badge-info">Cartao</span>
+                            <span class="badge text-bg-primary">Cartao</span>
                         {% elif 'pix' in metodo %}
-                            <span class="badge badge-success">Pix</span>
+                            <span class="badge text-bg-success">Pix</span>
                         {% else %}
-                            <span class="badge badge-info">{{ pedido.metodo_pagamento }}</span>
+                            <span class="badge text-bg-secondary">{{ pedido.metodo_pagamento }}</span>
                         {% endif %}
-                        <div style="font-size: 12px; color: #666;">{{ pedido.metodo_pagamento }}</div>
+                        <div class="pedido-pagamento-linha">{{ pedido.metodo_pagamento }}</div>
+                    {% else %}
+                        -
                     {% endif %}
                 </td>
-                <td>{% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% endif %}</td>
-                <td>{{ pedido.status }}</td>
-                <td class="actions-cell">
-                    <form method="POST" action="{{ url_for('alterar_status_pedido', pedido_id=pedido.id) }}" class="inline-form">
-                        <select name="status" class="form-control">
-                            <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %}>Aberto</option>
-                            <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %}>Em preparo</option>
-                            <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %}>Entregue</option>
-                            <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %}>Fechado</option>
-                            <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %}>Cancelado</option>
-                        </select>
-                        <button type="submit" class="btn-small btn-primary">Atualizar</button>
-                    </form>
-                    <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn-small btn-warning">Editar</a>
-                    <form method="POST" action="{{ url_for('deletar_pedido', pedido_id=pedido.id) }}" style="display:inline;">
-                        <button type="submit" class="btn-small btn-danger" onclick="return confirmarDelecao('Excluir pedido?')">Excluir</button>
-                    </form>
+                <td data-label="Valor pago">{% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% else %}-{% endif %}</td>
+                <td data-label="Status">
+                    {% if pedido.status == 'aberto' %}
+                        <span class="pedido-status-badge pedido-status-aberto">Aberto</span>
+                    {% elif pedido.status == 'em_preparo' %}
+                        <span class="pedido-status-badge pedido-status-em_preparo">Em preparo</span>
+                    {% elif pedido.status == 'entregue' %}
+                        <span class="pedido-status-badge pedido-status-entregue">Entregue</span>
+                    {% elif pedido.status == 'fechado' %}
+                        <span class="pedido-status-badge pedido-status-fechado">Venda concluida</span>
+                    {% elif pedido.status == 'cancelado' %}
+                        <span class="pedido-status-badge pedido-status-cancelado">Cancelado</span>
+                    {% else %}
+                        {{ pedido.status }}
+                    {% endif %}
+                </td>
+                <td data-label="Acoes" class="actions-cell pedido-actions-cell">
+                    <div class="pedido-actions">
+                        <form method="POST" action="{{ url_for('alterar_status_pedido', pedido_id=pedido.id) }}" class="pedido-status-form">
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %}>Aberto</option>
+                                <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %}>Em preparo</option>
+                                <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %}>Entregue</option>
+                                <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %}>Venda concluida</option>
+                                <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %}>Cancelado</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Atualizar</button>
+                        </form>
+                        <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-warning">Editar</a>
+                        <a href="{{ url_for('detalhes_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                        <a href="{{ url_for('visualizar_comprovante_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-info" target="_blank">Comprovante</a>
+                        <form method="POST" action="{{ url_for('deletar_pedido', pedido_id=pedido.id) }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirmarDelecao('Excluir pedido?')">Excluir</button>
+                        </form>
+                    </div>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="8" class="text-center">Nenhum pedido cadastrado</td>
+                <td colspan="11" class="text-center">Nenhum pedido cadastrado</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -91,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusEl = document.getElementById('sse-status');
     const listEl = document.getElementById('alert-list');
     if (!window.EventSource) {
-        statusEl.textContent = 'Seu navegador não suporta atualizações em tempo real. Recarregue para ver novos pedidos.';
+        statusEl.textContent = 'Seu navegador nao suporta atualizacoes em tempo real. Recarregue para ver novos pedidos.';
         return;
     }
     const es = new EventSource('{{ url_for('sse_pedidos') }}');
@@ -101,11 +256,11 @@ document.addEventListener('DOMContentLoaded', function () {
         statusEl.textContent = 'Novo pedido recebido!';
         const li = document.createElement('li');
         li.className = 'alert alert-info';
-        li.innerHTML = `<strong>Mesa ${data.mesa || '?'}:</strong> Pedido #${data.pedido_id} às ${new Date(data.criado_em).toLocaleTimeString('pt-BR')}<br>` +
+        li.innerHTML = `<strong>Mesa ${data.mesa || '?'}:</strong> Pedido #${data.pedido_id} as ${new Date(data.criado_em).toLocaleTimeString('pt-BR')}<br>` +
             (data.itens ? data.itens.map(i => `${i.quantidade}x ${i.produto}`).join(', ') : '');
         listEl.prepend(li);
     });
-    es.addEventListener('error', () => statusEl.textContent = 'Conexão com alertas foi perdida. Tentando reconectar...');
+    es.addEventListener('error', () => statusEl.textContent = 'Conexao com alertas foi perdida. Tentando reconectar...');
 });
 </script>
 {% endblock %}

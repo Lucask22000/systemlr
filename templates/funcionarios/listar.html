@@ -1,18 +1,16 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title %}Funcionários - SystemLR{% endblock %}
+{% block title %}Funcionarios - SystemLR{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h1>Funcionários</h1>
+        <h1>Funcionarios</h1>
         {% if funcionario_logado.role == 'admin' %}
-            <a href="{{ url_for('criar_funcionario') }}" class="btn btn-primary">
-                ➕ Novo Funcionário
-            </a>
+            <a href="{{ url_for('criar_funcionario') }}" class="btn btn-primary">Novo Funcionario</a>
         {% endif %}
     </div>
-    
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -23,7 +21,7 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    
+
     {% if funcionarios %}
         <div style="overflow-x: auto; border-radius: 8px; border: 1px solid #dee2e6;">
             <table style="width: 100%; border-collapse: collapse;">
@@ -31,62 +29,45 @@
                     <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
                         <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Nome</th>
                         <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Email</th>
-                        <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Função</th>
+                        <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Perfil</th>
+                        <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Cargo RH</th>
                         <th style="padding: 15px; text-align: center; color: #343a40; font-weight: 600;">Status</th>
-                        <th style="padding: 15px; text-align: center; color: #343a40; font-weight: 600;">Ações</th>
+                        <th style="padding: 15px; text-align: center; color: #343a40; font-weight: 600;">Acoes</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for func in funcionarios %}
                         <tr style="border-bottom: 1px solid #dee2e6; transition: background-color 0.2s;">
-                            <td style="padding: 15px; color: #343a40;">
-                                <strong>{{ func.nome }}</strong>
-                            </td>
+                            <td style="padding: 15px; color: #343a40;"><strong>{{ func.nome }}</strong></td>
+                            <td style="padding: 15px; color: #6c757d;">{{ func.email }}</td>
                             <td style="padding: 15px; color: #6c757d;">
-                                {{ func.email }}
-                            </td>
-                            <td style="padding: 15px; color: #6c757d;">
-                                <span style="background-color: 
+                                <span style="background-color:
                                     {% if func.role == 'admin' %}#dc3545
                                     {% elif func.role == 'gerente' %}#ffc107
                                     {% elif func.role == 'caixa' %}#17a2b8
+                                    {% elif func.role == 'garcom' %}#20c997
                                     {% else %}#6c757d
                                     {% endif %};
                                     color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">
                                     {{ func.role.upper() }}
                                 </span>
                             </td>
+                            <td style="padding: 15px; color: #6c757d;">{{ func.cargo or '-' }}</td>
                             <td style="padding: 15px; text-align: center;">
                                 {% if func.ativo %}
-                                    <span style="background-color: #28a745; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                        ATIVO
-                                    </span>
+                                    <span style="background-color: #28a745; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">ATIVO</span>
                                 {% else %}
-                                    <span style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                        INATIVO
-                                    </span>
+                                    <span style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">INATIVO</span>
                                 {% endif %}
                             </td>
                             <td style="padding: 15px; text-align: center;">
-                                <a href="{{ url_for('editar_funcionario', funcionario_id=func.id) }}" 
-                                   style="display: inline-block; padding: 8px 12px; background-color: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: 12px; margin-right: 5px; transition: background-color 0.3s;">
-                                    ✎ Editar
-                                </a>
+                                <a href="{{ url_for('editar_funcionario', funcionario_id=func.id) }}" style="display: inline-block; padding: 8px 12px; background-color: #667eea; color: white; text-decoration: none; border-radius: 4px; font-size: 12px; margin-right: 5px; transition: background-color 0.3s;">Editar</a>
                                 {% if funcionario_logado.role == 'admin' %}
-                                    <a href="{{ url_for('editar_acessos_funcionario', funcionario_id=func.id) }}" 
-                                       style="display: inline-block; padding: 8px 12px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 12px; margin-right: 5px; transition: background-color 0.3s;">
-                                        🔐 Acessos
-                                    </a>
+                                    <a href="{{ url_for('editar_acessos_funcionario', funcionario_id=func.id) }}" style="display: inline-block; padding: 8px 12px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 12px; margin-right: 5px; transition: background-color 0.3s;">Acessos</a>
                                 {% endif %}
                                 {% if func.id != funcionario_logado.id and funcionario_logado.role == 'admin' %}
-                                    <form method="POST" 
-                                          action="{{ url_for('deletar_funcionario', funcionario_id=func.id) }}"
-                                          style="display: inline;"
-                                          onsubmit="return confirm('Tem certeza que deseja deletar {{ func.nome }}?');">
-                                        <button type="submit" 
-                                                style="padding: 8px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; transition: background-color 0.3s;">
-                                            🗑️ Deletar
-                                        </button>
+                                    <form method="POST" action="{{ url_for('deletar_funcionario', funcionario_id=func.id) }}" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja deletar {{ func.nome }}?');">
+                                        <button type="submit" style="padding: 8px 12px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; transition: background-color 0.3s;">Deletar</button>
                                     </form>
                                 {% endif %}
                             </td>
@@ -97,74 +78,24 @@
         </div>
     {% else %}
         <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; color: #6c757d;">
-            <p style="font-size: 16px; margin: 0;">Nenhum funcionário cadastrado.</p>
+            <p style="font-size: 16px; margin: 0;">Nenhum funcionario cadastrado.</p>
             {% if funcionario_logado.role == 'admin' %}
-                <a href="{{ url_for('criar_funcionario') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">
-                    Criar o primeiro funcionário
-                </a>
+                <a href="{{ url_for('criar_funcionario') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">Criar o primeiro funcionario</a>
             {% endif %}
         </div>
     {% endif %}
 </div>
 
 <style>
-    .container {
-        max-width: 1000px;
-        margin: 0 auto;
-    }
-    
-    .btn {
-        padding: 10px 20px;
-        border-radius: 5px;
-        text-decoration: none;
-        font-weight: 600;
-        cursor: pointer;
-        border: none;
-        transition: all 0.3s;
-        display: inline-block;
-    }
-    
-    .btn-primary {
-        background-color: #667eea;
-        color: white;
-    }
-    
-    .btn-primary:hover {
-        background-color: #5568d3;
-    }
-    
-    .alert {
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-    }
-    
-    .alert-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-    }
-    
-    .alert-success {
-        background-color: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-    }
-    
-    .alert-warning {
-        background-color: #fff3cd;
-        color: #856404;
-        border: 1px solid #ffeeba;
-    }
-    
-    .alert-info {
-        background-color: #d1ecf1;
-        color: #334155;
-        border: 1px solid #bee5eb;
-    }
-    
-    .mt-5 {
-        margin-top: 50px;
-    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .btn { padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: 600; cursor: pointer; border: none; transition: all 0.3s; display: inline-block; }
+    .btn-primary { background-color: #667eea; color: white; }
+    .btn-primary:hover { background-color: #5568d3; }
+    .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .alert-warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    .alert-info { background-color: #d1ecf1; color: #334155; border: 1px solid #bee5eb; }
+    .mt-5 { margin-top: 50px; }
 </style>
 {% endblock %}

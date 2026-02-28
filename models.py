@@ -27,6 +27,7 @@ class Produto(db.Model):
     descricao = db.Column(db.Text)
     imagem_path = db.Column(db.String(255))
     categoria_id = db.Column(db.Integer, db.ForeignKey('categorias.id'), nullable=False)
+    endereco_id = db.Column(db.Integer, db.ForeignKey('enderecos_estoque.id'), nullable=True)
     preco_custo = db.Column(db.Float, nullable=False)
     preco_venda = db.Column(db.Float, nullable=False)
     quantidade_estoque = db.Column(db.Integer, default=0)
@@ -94,6 +95,27 @@ class Fornecedor(db.Model):
     def __repr__(self):
         return f'<Fornecedor {self.nome}>'
 
+
+class EnderecoEstoque(db.Model):
+    __tablename__ = 'enderecos_estoque'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False, unique=True)
+    rua = db.Column(db.String(160))
+    numero = db.Column(db.String(20))
+    bairro = db.Column(db.String(100))
+    cidade = db.Column(db.String(100))
+    estado = db.Column(db.String(2))
+    cep = db.Column(db.String(12))
+    complemento = db.Column(db.String(120))
+    ativo = db.Column(db.Boolean, default=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+    produtos = db.relationship('Produto', backref='endereco', lazy=True)
+
+    def __repr__(self):
+        return f'<EnderecoEstoque {self.nome}>'
+
 class Caixa(db.Model):
     __tablename__ = 'caixas'
 
@@ -146,6 +168,9 @@ class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     mesa_id = db.Column(db.Integer, db.ForeignKey('mesas.id'), nullable=True)
     caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=True)
+    garcom_id = db.Column(db.Integer, db.ForeignKey('garcons.id'), nullable=True)
+    cliente_nome = db.Column(db.String(120))
+    cliente_celular = db.Column(db.String(30))
     total = db.Column(db.Float, default=0.0)
     status = db.Column(db.String(20), default='aberto')  # aberto, em_preparo, entregue, fechado, cancelado
     origem = db.Column(db.String(20), default='interno')  # interno, qr
@@ -180,6 +205,23 @@ class ItemPedido(db.Model):
         return f'<ItemPedido {self.produto.nome} x{self.quantidade}>'
 
 
+class Garcom(db.Model):
+    __tablename__ = 'garcons'
+
+    id = db.Column(db.Integer, primary_key=True)
+    funcionario_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'), nullable=True)
+    nome = db.Column(db.String(120), nullable=False)
+    celular = db.Column(db.String(30))
+    ativo = db.Column(db.Boolean, default=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+    pedidos = db.relationship('Pedido', backref='garcom', lazy=True)
+    funcionario = db.relationship('Funcionario', backref=db.backref('garcom_perfil', uselist=False))
+
+    def __repr__(self):
+        return f'<Garcom {self.nome}>'
+
+
 class Funcionario(db.Model):
     __tablename__ = 'funcionarios'
 
@@ -188,6 +230,7 @@ class Funcionario(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default='operador')  # admin, gerente, caixa, operador
+    cargo = db.Column(db.String(100), nullable=True)
     ativo = db.Column(db.Boolean, default=True)
     controle_acesso_ativo = db.Column(db.Boolean, default=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
@@ -204,6 +247,20 @@ class Funcionario(db.Model):
 
     def __repr__(self):
         return f'<Funcionario {self.nome} - {self.role}>'
+
+
+class FuncaoRH(db.Model):
+    __tablename__ = 'funcoes_rh'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), unique=True, nullable=False)
+    descricao = db.Column(db.String(255))
+    ativo = db.Column(db.Boolean, default=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<FuncaoRH {self.nome}>'
 
 
 class PermissaoAcesso(db.Model):
@@ -238,5 +295,36 @@ class MovimentacaoCaixa(db.Model):
 
     def __repr__(self):
         return f'<MovimentacaoCaixa caixa={self.caixa_id} {self.tipo} {self.valor}>'
+
+
+class EmpresaConfig(db.Model):
+    __tablename__ = 'empresa_config'
+
+    id = db.Column(db.Integer, primary_key=True)
+    razao_social = db.Column(db.String(150))
+    nome_fantasia = db.Column(db.String(150))
+    cnpj = db.Column(db.String(20))
+    inscricao_estadual = db.Column(db.String(30))
+    telefone = db.Column(db.String(30))
+    email = db.Column(db.String(120))
+    endereco = db.Column(db.String(200))
+    cidade = db.Column(db.String(100))
+    estado = db.Column(db.String(2))
+    cep = db.Column(db.String(12))
+    logo_path = db.Column(db.String(255))
+    mensagem_comprovante = db.Column(db.String(255))
+    cardapio_titulo = db.Column(db.String(120))
+    cardapio_subtitulo = db.Column(db.String(255))
+    cardapio_mensagem = db.Column(db.String(255))
+    cardapio_mostrar_imagem = db.Column(db.Boolean, default=True)
+    cardapio_mostrar_descricao = db.Column(db.Boolean, default=True)
+    cardapio_qtd_maxima = db.Column(db.Integer, default=20)
+    distribuicao_ativa = db.Column(db.Boolean, default=True)
+    modo_distribuicao_pedidos = db.Column(db.String(30), default='round_robin')
+    ultimo_garcom_id = db.Column(db.Integer, db.ForeignKey('garcons.id'), nullable=True)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<EmpresaConfig {self.nome_fantasia or self.razao_social or self.id}>'
 
 

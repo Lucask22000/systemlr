@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Garçons - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Garçons</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('novo_garcom') }}" class="btn btn-primary">Novo Garçom</a>
+        <a href="{{ url_for('configurar_distribuicao_garcons') }}" class="btn btn-secondary">Configurar Distribuição</a>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Equipe de Garçons</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Celular</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for garcom in garcons %}
+                <tr>
+                    <td data-label="Nome">{{ garcom.nome }}</td>
+                    <td data-label="Celular">{{ garcom.celular or '-' }}</td>
+                    <td data-label="Status">
+                        <span class="badge {% if garcom.ativo %}badge-success{% else %}badge-danger{% endif %}">
+                            {% if garcom.ativo %}Ativo{% else %}Inativo{% endif %}
+                        </span>
+                    </td>
+                    <td data-label="Ações" class="actions-cell">
+                        <a href="{{ url_for('editar_garcom', garcom_id=garcom.id) }}" class="btn-small btn-warning">Editar</a>
+                        <form method="POST" action="{{ url_for('deletar_garcom', garcom_id=garcom.id) }}" style="display:inline;">
+                            <button type="submit" class="btn-small btn-danger" onclick="return confirmarDelecao('Remover garçom?')">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center">Nenhum garçom cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Pedidos e Etapas</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Pedido</th>
+                    <th>Cliente</th>
+                    <th>Mesa</th>
+                    <th>Garçom</th>
+                    <th>Etapa</th>
+                    <th>Origem</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos_em_andamento %}
+                <tr>
+                    <td data-label="Pedido">#{{ pedido.id }}</td>
+                    <td data-label="Cliente">{{ pedido.cliente_nome or '-' }}</td>
+                    <td data-label="Mesa">{{ pedido.mesa.numero if pedido.mesa else '-' }}</td>
+                    <td data-label="Garçom">{{ pedido.garcom.nome if pedido.garcom else 'Não atribuído' }}</td>
+                    <td data-label="Etapa">
+                        <span class="badge {% if pedido.status == 'entregue' %}badge-success{% elif pedido.status == 'em_preparo' %}badge-warning{% else %}badge-info{% endif %}">
+                            {{ pedido.status }}
+                        </span>
+                    </td>
+                    <td data-label="Origem">{{ pedido.origem or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Nenhum pedido em andamento.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

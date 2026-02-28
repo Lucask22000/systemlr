@@ -42,6 +42,16 @@
             </select>
         </div>
 
+        <div class="form-group">
+            <label for="endereco_id">Endereco de Estoque</label>
+            <select id="endereco_id" name="endereco_id" class="input-select">
+                <option value="">Nao definido</option>
+                {% for endereco in enderecos %}
+                <option value="{{ endereco.id }}">{{ endereco.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
         <div class="form-row">
             <div class="form-group">
                 <label for="preco_custo">Preco de Custo *</label>

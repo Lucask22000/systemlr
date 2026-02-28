@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Configuração de Distribuição - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Distribuição de Pedidos para Garçons</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        <label class="checkbox-inline">
+            <input type="checkbox" name="distribuicao_ativa" {% if empresa.distribuicao_ativa != False %}checked{% endif %}>
+            Ativar distribuição automática para pedidos QR
+        </label>
+
+        <div class="form-group">
+            <label for="modo_distribuicao_pedidos">Modo de separação</label>
+            <select id="modo_distribuicao_pedidos" name="modo_distribuicao_pedidos" class="input-select">
+                <option value="round_robin" {% if empresa.modo_distribuicao_pedidos == 'round_robin' %}selected{% endif %}>Rodízio (round-robin)</option>
+                <option value="menos_pedidos" {% if empresa.modo_distribuicao_pedidos == 'menos_pedidos' %}selected{% endif %}>Menor carga (menos pedidos em andamento)</option>
+                <option value="manual" {% if empresa.modo_distribuicao_pedidos == 'manual' %}selected{% endif %}>Manual (sem atribuição automática)</option>
+            </select>
+        </div>
+
+        <div class="info-box">
+            <p><strong>Rodízio:</strong> alterna automaticamente entre garçons ativos.</p>
+            <p><strong>Menor carga:</strong> envia para o garçom com menos pedidos em aberto/em preparo.</p>
+            <p><strong>Manual:</strong> pedido entra sem garçom atribuído.</p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Salvar Configuração</button>
+            <a href="{{ url_for('listar_garcons') }}" class="btn btn-secondary">Voltar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

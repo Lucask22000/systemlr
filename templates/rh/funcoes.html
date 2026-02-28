@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Funcoes RH - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Funcoes - Meu RH</h1>
+</div>
+
+<div class="card">
+    <div class="card-header">Nova Funcao</div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('nova_funcao_rh') }}" class="form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nome">Nome da Funcao *</label>
+                    <input type="text" id="nome" name="nome" class="input-text" maxlength="100" required placeholder="Ex: Atendente, Supervisor, Estoquista">
+                </div>
+                <div class="form-group">
+                    <label for="descricao">Descricao</label>
+                    <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" placeholder="Descricao resumida da funcao">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="ativo" checked>
+                    Funcao ativa
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar Funcao</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Funcoes Cadastradas</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Descricao</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for funcao in funcoes %}
+                <tr>
+                    <td data-label="Nome"><strong>{{ funcao.nome }}</strong></td>
+                    <td data-label="Descricao">{{ funcao.descricao or '-' }}</td>
+                    <td data-label="Status">
+                        {% if funcao.ativo %}
+                        <span class="badge badge-success">Ativa</span>
+                        {% else %}
+                        <span class="badge badge-danger">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Criado em">{{ funcao.criado_em.strftime('%d/%m/%Y %H:%M') if funcao.criado_em else '-' }}</td>
+                    <td data-label="Acoes" class="actions-cell">
+                        <a href="{{ url_for('editar_funcao_rh', funcao_id=funcao.id) }}" class="btn-small btn-warning">Editar</a>
+                        <form method="POST" action="{{ url_for('deletar_funcao_rh', funcao_id=funcao.id) }}" style="display:inline;" onsubmit="return confirm('Excluir funcao {{ funcao.nome }}?');">
+                            <button type="submit" class="btn-small btn-danger">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">Nenhuma funcao cadastrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

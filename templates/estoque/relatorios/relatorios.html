@@ -1,127 +1,207 @@
 {% extends "base.html" %}
 
-{% block title %}Relatórios - SystemLR{% endblock %}
+{% block title %}Relatorios de Estoque - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Relatórios</h1>
+    <h1>Relatorios de Estoque</h1>
 </div>
 
-<!-- RESUMO GERAL -->
-<div class="cards-container">
+<div class="cards-container analytics-cards">
     <div class="card card-primary">
-        <div class="card-icon">📦</div>
         <div class="card-content">
             <h3>Total de Produtos</h3>
             <p class="card-value">{{ total_produtos }}</p>
+            <p class="card-meta">{{ produtos_ativos }} ativos / {{ produtos_inativos }} inativos</p>
         </div>
     </div>
-
-    <div class="card card-success">
-        <div class="card-icon">✓</div>
-        <div class="card-content">
-            <h3>Produtos Ativos</h3>
-            <p class="card-value">{{ produtos_ativos }}</p>
-        </div>
-    </div>
-
-    <div class="card card-danger">
-        <div class="card-icon">✗</div>
-        <div class="card-content">
-            <h3>Produtos Inativos</h3>
-            <p class="card-value">{{ produtos_inativos }}</p>
-        </div>
-    </div>
-
     <div class="card card-info">
-        <div class="card-icon">💰</div>
         <div class="card-content">
-            <h3>Valor Total de Estoque</h3>
+            <h3>Unidades em Estoque</h3>
+            <p class="card-value">{{ total_unidades }}</p>
+            <p class="card-meta">{{ produtos_sem_estoque }} produtos com saldo zerado</p>
+        </div>
+    </div>
+    <div class="card card-success">
+        <div class="card-content">
+            <h3>Valor Total do Estoque</h3>
             <p class="card-value">R$ {{ valor_total_estoque }}</p>
+            <p class="card-meta">Custo medio unitario: R$ {{ custo_medio_estoque }}</p>
+        </div>
+    </div>
+    <div class="card card-warning">
+        <div class="card-content">
+            <h3>Movimentacoes (30 dias)</h3>
+            <p class="card-value">{{ movimentacoes_mes }}</p>
+            <p class="card-meta">{{ entradas_mes }} entradas / {{ saidas_mes }} saidas</p>
         </div>
     </div>
 </div>
 
-<!-- ALERTAS - PRODUTOS EM FALTA -->
-{% if produtos_em_falta %}
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Produtos em Falta</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th>Endereco</th>
+                        <th>Atual</th>
+                        <th>Minimo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod in produtos_em_falta %}
+                    <tr class="row-warning">
+                        <td data-label="Produto">
+                            <div class="product-name-cell">
+                                {% if prod.imagem_path %}
+                                <img src="{{ url_for('static', filename=prod.imagem_path) }}" alt="{{ prod.nome }}" class="product-thumb product-thumb-sm">
+                                {% endif %}
+                                <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
+                            </div>
+                        </td>
+                        <td data-label="Categoria">{{ prod.categoria.nome if prod.categoria else '-' }}</td>
+                        <td data-label="Endereco">{{ prod.endereco.nome if prod.endereco else '-' }}</td>
+                        <td data-label="Atual">{{ prod.quantidade_estoque }}</td>
+                        <td data-label="Minimo">{{ prod.quantidade_minima }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">Nenhum produto abaixo do estoque minimo.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Produtos com Maior Valor em Estoque</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Qtd</th>
+                        <th>Custo Unit.</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prod, valor in produtos_maior_valor %}
+                    <tr>
+                        <td data-label="Produto">{{ prod.nome }}</td>
+                        <td data-label="Qtd">{{ prod.quantidade_estoque }}</td>
+                        <td data-label="Custo Unit.">R$ {{ "%.2f"|format(prod.preco_custo) }}</td>
+                        <td data-label="Valor Total">R$ {{ "%.2f"|format(valor or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">Sem dados de valor em estoque.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Valor de Estoque por Categoria</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Produtos</th>
+                        <th>Unidades</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in valor_por_categoria %}
+                    <tr>
+                        <td data-label="Categoria">{{ item.categoria_nome }}</td>
+                        <td data-label="Produtos">{{ item.produtos or 0 }}</td>
+                        <td data-label="Unidades">{{ item.qtd_total or 0 }}</td>
+                        <td data-label="Valor">R$ {{ "%.2f"|format(item.valor_total or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">Sem dados por categoria.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Distribuicao por Endereco</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Endereco</th>
+                        <th>Produtos</th>
+                        <th>Unidades</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in valor_por_endereco %}
+                    <tr>
+                        <td data-label="Endereco">{{ item.endereco_nome }}</td>
+                        <td data-label="Produtos">{{ item.produtos or 0 }}</td>
+                        <td data-label="Unidades">{{ item.qtd_total or 0 }}</td>
+                        <td data-label="Valor">R$ {{ "%.2f"|format(item.valor_total or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">Nenhum endereco vinculado a produtos.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
 <div class="section">
-    <h2>⚠️ Produtos em Falta</h2>
+    <h2>Produtos sem Giro (60 dias)</h2>
     <div class="table-responsive">
         <table class="table">
             <thead>
                 <tr>
                     <th>Produto</th>
                     <th>Categoria</th>
-                    <th>Estoque Atual</th>
-                    <th>Estoque Mínimo</th>
+                    <th>Endereco</th>
+                    <th>Estoque</th>
+                    <th>Acao</th>
                 </tr>
             </thead>
             <tbody>
-                {% for prod in produtos_em_falta %}
-                <tr class="row-warning">
-                    <td data-label="Produto">
-                        <div class="product-name-cell">
-                            {% if prod.imagem_path %}
-                            <img src="{{ url_for('static', filename=prod.imagem_path) }}" alt="{{ prod.nome }}" class="product-thumb product-thumb-sm">
-                            {% endif %}
-                            <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
-                        </div>
+                {% for prod in produtos_sem_giro %}
+                <tr>
+                    <td data-label="Produto">{{ prod.nome }}</td>
+                    <td data-label="Categoria">{{ prod.categoria.nome if prod.categoria else '-' }}</td>
+                    <td data-label="Endereco">{{ prod.endereco.nome if prod.endereco else '-' }}</td>
+                    <td data-label="Estoque">{{ prod.quantidade_estoque }}</td>
+                    <td data-label="Acao">
+                        <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}" class="btn-small btn-info">Ver Produto</a>
                     </td>
-                    <td data-label="Categoria">{{ prod.categoria.nome }}</td>
-                    <td data-label="Atual">{{ prod.quantidade_estoque }}</td>
-                    <td data-label="Mínimo">{{ prod.quantidade_minima }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">Todos os produtos tiveram movimentacao recente.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-</div>
-{% endif %}
-
-<!-- PRODUTOS COM MAIOR VALOR EM ESTOQUE -->
-{% if produtos_maior_valor %}
-<div class="section">
-    <h2>💰 Produtos com Maior Valor em Estoque</h2>
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Produto</th>
-                    <th>Quantidade</th>
-                    <th>Preço Unit.</th>
-                    <th>Valor Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prod, valor in produtos_maior_valor %}
-                <tr>
-                    <td data-label="Produto">
-                        <div class="product-name-cell">
-                            {% if prod.imagem_path %}
-                            <img src="{{ url_for('static', filename=prod.imagem_path) }}" alt="{{ prod.nome }}" class="product-thumb product-thumb-sm">
-                            {% endif %}
-                            <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
-                        </div>
-                    </td>
-                    <td data-label="Quantidade">{{ prod.quantidade_estoque }}</td>
-                    <td data-label="Preço">R$ {{ "%.2f"|format(prod.preco_custo) }}</td>
-                    <td data-label="Total">R$ {{ "%.2f"|format(valor) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% endif %}
-
-<!-- ESTATÍSTICAS -->
-<div class="section">
-    <h2>Estatísticas</h2>
-    <div class="stats-grid">
-        <div class="stat-box">
-            <h4>Movimentações no Mês</h4>
-            <p class="stat-value">{{ movimentacoes_mes }}</p>
-        </div>
     </div>
 </div>
 {% endblock %}

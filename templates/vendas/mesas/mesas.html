@@ -12,11 +12,11 @@
     <table class="table">
         <thead>
             <tr>
-                <th>Número</th>
+                <th>Numero</th>
                 <th>Capacidade</th>
                 <th>Status</th>
-                <th>QR Code</th>
-                <th>Ações</th>
+                <th>Link da Comanda</th>
+                <th>Acoes</th>
             </tr>
         </thead>
         <tbody>
@@ -26,10 +26,17 @@
                 <td>{{ mesa.capacidade }}</td>
                 <td>{{ mesa.status }}</td>
                 <td>
-                    <input type="text" readonly class="form-control" value="{{ request.url_root.rstrip('/') }}/m/{{ mesa.qr_token }}" onclick="this.select();">
+                    <input
+                        type="text"
+                        readonly
+                        class="form-control"
+                        value="{{ url_for('public.cardapio_mesa', token=mesa.qr_token, _external=True) }}"
+                        onclick="this.select();"
+                    >
                 </td>
                 <td class="actions-cell">
-                    <a href="{{ url_for('visualizar_qrcode_mesa', mesa_id=mesa.id) }}" class="btn-small btn-info" title="Ver QR Code">🔳 QR</a>
+                    <a href="{{ url_for('public.cardapio_mesa', token=mesa.qr_token) }}" class="btn-small btn-secondary" target="_blank" title="Abrir link da mesa">Abrir link</a>
+                    <a href="{{ url_for('visualizar_qrcode_mesa', mesa_id=mesa.id) }}" class="btn-small btn-info" title="Ver QR Code">QR</a>
                     <a href="{{ url_for('editar_mesa', mesa_id=mesa.id) }}" class="btn-small btn-warning">Editar</a>
                     <form method="POST" action="{{ url_for('deletar_mesa', mesa_id=mesa.id) }}" style="display:inline;">
                         <button type="submit" class="btn-small btn-danger" onclick="return confirmarDelecao('Excluir mesa?')">Excluir</button>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
@@ -8,10 +8,15 @@
 </head>
 <body class="public-menu">
     <div class="container narrow">
+        {% if empresa and empresa.logo_path %}
+        <div style="text-align:center; margin-bottom:10px;">
+            <img src="{{ url_for('static', filename=empresa.logo_path) }}" alt="Logo da empresa" style="max-height:72px; width:auto;">
+        </div>
+        {% endif %}
         <h1>Pedido recebido!</h1>
-        <p>Seu pedido foi enviado para a equipe. Número da mesa: <strong>{{ mesa.numero }}</strong></p>
+        <p>Seu pedido foi enviado para a equipe. Numero da mesa: <strong>{{ mesa.numero }}</strong></p>
         <p>Status inicial: <strong>{{ pedido.status }}</strong></p>
-        <p class="text-muted">Um garçom irá confirmar e iniciar o preparo.</p>
+        <p class="text-muted">{{ (empresa.cardapio_mensagem if empresa and empresa.cardapio_mensagem else 'Um garcom ira confirmar e iniciar o preparo.') }}</p>
     </div>
 </body>
 </html>
