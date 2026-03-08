@@ -3,7 +3,6 @@ Script para popular o banco de dados com dados de teste.
 Execute: python seed_data.py
 """
 import sys
-from datetime import datetime, timedelta
 import secrets
 
 from app import app, db

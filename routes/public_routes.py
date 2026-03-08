@@ -1,13 +1,33 @@
+import json
 import re
 import unicodedata
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
+from sqlalchemy import or_
 
-from models import Categoria, EmpresaConfig, Garcom, ItemPedido, Mesa, Pedido, Produto, db
+from models import Categoria, ClientePublico, EmpresaConfig, Garcom, ItemPedido, Mesa, Pedido, Produto, db
 from realtime import publish_alert
 
 
 CLIENTE_SESSION_KEY = 'qr_clientes'
+SITE_CART_SESSION_KEY = 'site_carrinho'
+SITE_CUSTOMER_SESSION_KEY = 'site_cliente_cadastro'
+
+SITE_PAYMENT_METHODS = {
+    'pix': 'Pix',
+    'cartao_credito': 'Cartao de credito',
+    'cartao_debito': 'Cartao de debito',
+    'dinheiro': 'Dinheiro',
+    'vale_alimentacao': 'Vale-alimentacao',
+}
+
+SITE_PAYMENT_OPTIONS = [
+    {'id': 'pix', 'label': 'Pix', 'descricao': 'Confirmacao imediata da compra.'},
+    {'id': 'cartao_credito', 'label': 'Cartao de credito', 'descricao': 'Pagamento em credito na retirada/entrega.'},
+    {'id': 'cartao_debito', 'label': 'Cartao de debito', 'descricao': 'Pagamento em debito na retirada/entrega.'},
+    {'id': 'dinheiro', 'label': 'Dinheiro', 'descricao': 'Informe o valor para troco.'},
+    {'id': 'vale_alimentacao', 'label': 'Vale-alimentacao', 'descricao': 'Aceitamos principais bandeiras.'},
+]
 
 
 def _obter_empresa_config():
@@ -26,6 +46,11 @@ def _slugify(texto):
     return ascii_texto or 'cliente'
 
 
+def _atendimento_mesas_ativo():
+    empresa = _obter_empresa_config()
+    return empresa.atendimento_mesas_ativo is not False
+
+
 def _status_legivel(status):
     labels = {
         'aberto': 'Aberto',
@@ -38,7 +63,7 @@ def _status_legivel(status):
 
 
 def _atribuir_garcom_automatico(empresa):
-    if not empresa or not empresa.distribuicao_ativa:
+    if not empresa or empresa.atendimento_mesas_ativo is False or not empresa.distribuicao_ativa:
         return None
 
     garcons_ativos = Garcom.query.filter_by(ativo=True).order_by(Garcom.nome.asc()).all()
@@ -147,11 +172,493 @@ def _listar_pedidos_cliente(mesa_id, cliente):
     return pedidos
 
 
+def _to_float(valor, default=0.0):
+    if valor is None or valor == '':
+        return default
+    if isinstance(valor, str):
+        valor = valor.replace(',', '.').strip()
+    return float(valor)
+
+
+def _normalizar_quantidade(valor, minimo=1, maximo=99, default=1):
+    try:
+        quantidade = int(valor)
+    except (TypeError, ValueError):
+        quantidade = int(default)
+    if quantidade < minimo:
+        return minimo
+    if quantidade > maximo:
+        return maximo
+    return quantidade
+
+
+def _normalizar_contato(valor):
+    return re.sub(r'[^0-9]+', '', (valor or '').strip())
+
+
+def _obter_carrinho_site():
+    carrinho_bruto = session.get(SITE_CART_SESSION_KEY, {})
+    if not isinstance(carrinho_bruto, dict):
+        carrinho_bruto = {}
+
+    carrinho = {}
+    for produto_id, quantidade in carrinho_bruto.items():
+        try:
+            produto_int = int(produto_id)
+            quantidade_int = int(quantidade)
+        except (TypeError, ValueError):
+            continue
+        if quantidade_int <= 0:
+            continue
+        carrinho[str(produto_int)] = min(quantidade_int, 99)
+
+    if carrinho != carrinho_bruto:
+        session[SITE_CART_SESSION_KEY] = carrinho
+        session.modified = True
+
+    return carrinho
+
+
+def _salvar_carrinho_site(carrinho):
+    normalizado = {}
+    for produto_id, quantidade in (carrinho or {}).items():
+        try:
+            produto_int = int(produto_id)
+            quantidade_int = int(quantidade)
+        except (TypeError, ValueError):
+            continue
+        if quantidade_int <= 0:
+            continue
+        normalizado[str(produto_int)] = min(quantidade_int, 99)
+
+    session[SITE_CART_SESSION_KEY] = normalizado
+    session.modified = True
+
+
+def _dados_cliente_padrao():
+    return {
+        'nome': '',
+        'email': '',
+        'celular': '',
+        'cpf_cnpj': '',
+        'cep': '',
+        'endereco': '',
+        'numero': '',
+        'complemento': '',
+        'bairro': '',
+        'cidade': '',
+        'estado': '',
+        'referencia': '',
+        'observacoes': '',
+        'recebe_ofertas': False,
+    }
+
+
+def _obter_cliente_site_sessao():
+    dados = session.get(SITE_CUSTOMER_SESSION_KEY, {})
+    defaults = _dados_cliente_padrao()
+    if not isinstance(dados, dict):
+        return defaults
+
+    resultado = dict(defaults)
+    for chave in defaults:
+        if chave not in dados:
+            continue
+        if chave == 'recebe_ofertas':
+            resultado[chave] = bool(dados.get(chave))
+        else:
+            resultado[chave] = (dados.get(chave) or '').strip()
+    return resultado
+
+
+def _salvar_cliente_site_sessao(dados):
+    defaults = _dados_cliente_padrao()
+    payload = {}
+    for chave in defaults:
+        if chave == 'recebe_ofertas':
+            payload[chave] = bool(dados.get(chave))
+        else:
+            payload[chave] = (dados.get(chave) or '').strip()
+    session[SITE_CUSTOMER_SESSION_KEY] = payload
+    session.modified = True
+
+
+def _coletar_dados_cliente_form(form_data):
+    dados = {
+        'nome': (form_data.get('nome') or '').strip(),
+        'email': (form_data.get('email') or '').strip().lower(),
+        'celular': (form_data.get('celular') or '').strip(),
+        'cpf_cnpj': (form_data.get('cpf_cnpj') or '').strip(),
+        'cep': (form_data.get('cep') or '').strip(),
+        'endereco': (form_data.get('endereco') or '').strip(),
+        'numero': (form_data.get('numero') or '').strip(),
+        'complemento': (form_data.get('complemento') or '').strip(),
+        'bairro': (form_data.get('bairro') or '').strip(),
+        'cidade': (form_data.get('cidade') or '').strip(),
+        'estado': (form_data.get('estado') or '').strip().upper(),
+        'referencia': (form_data.get('referencia') or '').strip(),
+        'observacoes': (form_data.get('observacoes') or '').strip(),
+        'recebe_ofertas': (form_data.get('recebe_ofertas') == 'on'),
+    }
+
+    erros = []
+    if not dados['nome']:
+        erros.append('Informe o nome completo.')
+    if not dados['email'] or '@' not in dados['email']:
+        erros.append('Informe um e-mail valido.')
+    if len(_normalizar_contato(dados['celular'])) < 10:
+        erros.append('Informe um celular valido com DDD.')
+    if not dados['cep']:
+        erros.append('Informe o CEP.')
+    if not dados['endereco']:
+        erros.append('Informe o endereco.')
+    if not dados['numero']:
+        erros.append('Informe o numero do endereco.')
+    if not dados['bairro']:
+        erros.append('Informe o bairro.')
+    if not dados['cidade']:
+        erros.append('Informe a cidade.')
+    if len(dados['estado']) != 2:
+        erros.append('Informe o estado com 2 letras.')
+
+    return dados, erros
+
+
+def _upsert_cliente_publico(dados):
+    filtros = []
+    email = (dados.get('email') or '').strip().lower()
+    celular = _normalizar_contato(dados.get('celular'))
+    cpf_cnpj = _normalizar_contato(dados.get('cpf_cnpj'))
+
+    if email:
+        filtros.append(db.func.lower(ClientePublico.email) == email)
+    if celular:
+        filtros.append(ClientePublico.celular == celular)
+    if cpf_cnpj:
+        filtros.append(ClientePublico.cpf_cnpj == cpf_cnpj)
+
+    cliente = None
+    if filtros:
+        cliente = ClientePublico.query.filter(or_(*filtros)).order_by(ClientePublico.atualizado_em.desc()).first()
+
+    if not cliente:
+        cliente = ClientePublico()
+        db.session.add(cliente)
+
+    cliente.nome = dados.get('nome')
+    cliente.email = email
+    cliente.celular = celular or (dados.get('celular') or '').strip()
+    cliente.cpf_cnpj = cpf_cnpj or None
+    cliente.cep = dados.get('cep') or None
+    cliente.endereco = dados.get('endereco') or None
+    cliente.numero = dados.get('numero') or None
+    cliente.complemento = dados.get('complemento') or None
+    cliente.bairro = dados.get('bairro') or None
+    cliente.cidade = dados.get('cidade') or None
+    cliente.estado = dados.get('estado') or None
+    cliente.referencia = dados.get('referencia') or None
+    cliente.observacoes = dados.get('observacoes') or None
+    cliente.recebe_ofertas = bool(dados.get('recebe_ofertas'))
+    return cliente
+
+
+def obter_resumo_carrinho_site():
+    carrinho = _obter_carrinho_site()
+    if not carrinho:
+        return {'itens': [], 'subtotal': 0.0, 'quantidade_itens': 0}
+
+    produto_ids = [int(produto_id) for produto_id in carrinho.keys()]
+    produtos = Produto.query.filter(Produto.id.in_(produto_ids)).all()
+    produtos_por_id = {produto.id: produto for produto in produtos}
+
+    itens = []
+    subtotal = 0.0
+    mudou = False
+    for produto_id, quantidade in list(carrinho.items()):
+        produto = produtos_por_id.get(int(produto_id))
+        if not produto or not produto.ativo or not produto.disponivel_para_venda:
+            carrinho.pop(produto_id, None)
+            mudou = True
+            continue
+
+        quantidade_int = _normalizar_quantidade(quantidade, minimo=1, maximo=99, default=1)
+        if quantidade_int != quantidade:
+            carrinho[produto_id] = quantidade_int
+            mudou = True
+
+        total_item = float(produto.preco_venda or 0.0) * quantidade_int
+        subtotal += total_item
+        itens.append({
+            'produto': produto,
+            'quantidade': quantidade_int,
+            'total_item': total_item,
+        })
+
+    if mudou:
+        _salvar_carrinho_site(carrinho)
+
+    return {
+        'itens': itens,
+        'subtotal': round(subtotal, 2),
+        'quantidade_itens': sum(item['quantidade'] for item in itens),
+    }
+
+
+def _coletar_pagamento_checkout(form_data, total_pedido):
+    metodo = (form_data.get('metodo_pagamento') or '').strip().lower()
+    if metodo not in SITE_PAYMENT_METHODS:
+        raise ValueError('Selecione um metodo de pagamento valido.')
+
+    total = float(total_pedido or 0.0)
+    valor_pago = total
+    troco = 0.0
+    detalhes = {}
+    if metodo == 'dinheiro':
+        valor_recebido = _to_float(form_data.get('valor_recebido'), 0.0)
+        if valor_recebido < total:
+            raise ValueError('Valor recebido em dinheiro e menor que o total do pedido.')
+        valor_pago = valor_recebido
+        troco = max(valor_recebido - total, 0.0)
+        detalhes['valor_recebido'] = round(valor_recebido, 2)
+
+    return {
+        'metodo': metodo,
+        'metodo_label': SITE_PAYMENT_METHODS[metodo],
+        'valor_pago': round(valor_pago, 2),
+        'troco': round(troco, 2),
+        'detalhes': detalhes,
+    }
+
+
 def register_public_routes(app):
     bp = Blueprint('public', __name__)
 
+    @bp.route('/cliente/cadastro', methods=['GET', 'POST'])
+    def cadastro_cliente_site():
+        empresa = _obter_empresa_config()
+        resumo_carrinho = obter_resumo_carrinho_site()
+        cliente_dados = _obter_cliente_site_sessao()
+
+        if request.method == 'POST':
+            cliente_dados, erros = _coletar_dados_cliente_form(request.form)
+            if erros:
+                for erro in erros:
+                    flash(erro, 'warning')
+            else:
+                try:
+                    _upsert_cliente_publico(cliente_dados)
+                    db.session.commit()
+                    _salvar_cliente_site_sessao(cliente_dados)
+                    flash('Cadastro do cliente salvo com sucesso.', 'success')
+                    proximo = (request.form.get('proximo') or '').strip()
+                    if proximo:
+                        return redirect(proximo)
+                    return redirect(url_for('public.checkout_site'))
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Nao foi possivel salvar o cadastro: {str(e)}', 'danger')
+
+        return render_template(
+            'public/cadastro_cliente.html',
+            empresa=empresa,
+            resumo_carrinho=resumo_carrinho,
+            cliente_dados=cliente_dados,
+        )
+
+    @bp.route('/carrinho', methods=['GET'])
+    def carrinho_site():
+        empresa = _obter_empresa_config()
+        resumo_carrinho = obter_resumo_carrinho_site()
+        ids_no_carrinho = {item['produto'].id for item in resumo_carrinho['itens']}
+        query_destaque = Produto.query.filter(
+            Produto.ativo.is_(True),
+            Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES)
+        )
+        if ids_no_carrinho:
+            query_destaque = query_destaque.filter(~Produto.id.in_(list(ids_no_carrinho)))
+        produtos_destaque = query_destaque.order_by(Produto.atualizado_em.desc()).limit(6).all()
+
+        return render_template(
+            'public/carrinho.html',
+            empresa=empresa,
+            resumo_carrinho=resumo_carrinho,
+            produtos_destaque=produtos_destaque,
+        )
+
+    @bp.route('/carrinho/adicionar', methods=['POST'])
+    def adicionar_item_carrinho_site():
+        destino = (request.form.get('next') or request.referrer or url_for('index')).strip()
+        produto_id = request.form.get('produto_id', type=int)
+        quantidade = _normalizar_quantidade(request.form.get('quantidade'), minimo=1, maximo=99, default=1)
+
+        produto = Produto.query.get(produto_id) if produto_id else None
+        if not produto or not produto.ativo or not produto.disponivel_para_venda:
+            flash('Produto indisponivel para venda no momento.', 'warning')
+            return redirect(destino)
+
+        carrinho = _obter_carrinho_site()
+        qtd_atual = int(carrinho.get(str(produto.id), 0))
+        carrinho[str(produto.id)] = min(qtd_atual + quantidade, 99)
+        _salvar_carrinho_site(carrinho)
+        flash(f'"{produto.nome}" adicionado ao carrinho.', 'success')
+        return redirect(destino)
+
+    @bp.route('/carrinho/atualizar', methods=['POST'])
+    def atualizar_carrinho_site():
+        carrinho = _obter_carrinho_site()
+        if not carrinho:
+            flash('Seu carrinho esta vazio.', 'warning')
+            return redirect(url_for('public.carrinho_site'))
+
+        for produto_id in list(carrinho.keys()):
+            campo = f'quantidade_{produto_id}'
+            if campo not in request.form:
+                continue
+            quantidade_raw = request.form.get(campo)
+            try:
+                quantidade = int(quantidade_raw)
+            except (TypeError, ValueError):
+                quantidade = 1
+
+            if quantidade <= 0:
+                carrinho.pop(produto_id, None)
+            else:
+                carrinho[produto_id] = _normalizar_quantidade(quantidade, minimo=1, maximo=99, default=1)
+
+        _salvar_carrinho_site(carrinho)
+        flash('Carrinho atualizado.', 'success')
+        return redirect(url_for('public.carrinho_site'))
+
+    @bp.route('/carrinho/remover', methods=['POST'])
+    def remover_item_carrinho_site():
+        produto_id = request.form.get('produto_id', type=int)
+        carrinho = _obter_carrinho_site()
+        if produto_id and str(produto_id) in carrinho:
+            carrinho.pop(str(produto_id), None)
+            _salvar_carrinho_site(carrinho)
+            flash('Item removido do carrinho.', 'success')
+        else:
+            flash('Item nao encontrado no carrinho.', 'warning')
+        return redirect(url_for('public.carrinho_site'))
+
+    @bp.route('/checkout', methods=['GET', 'POST'])
+    def checkout_site():
+        empresa = _obter_empresa_config()
+        resumo_carrinho = obter_resumo_carrinho_site()
+        if not resumo_carrinho['itens']:
+            flash('Adicione itens ao carrinho antes de finalizar.', 'warning')
+            return redirect(url_for('public.carrinho_site'))
+
+        cliente_dados = _obter_cliente_site_sessao()
+        pagamento_selecionado = (request.form.get('metodo_pagamento') or 'pix').strip().lower() if request.method == 'POST' else 'pix'
+        valor_recebido = (request.form.get('valor_recebido') or '').strip() if request.method == 'POST' else ''
+
+        if request.method == 'POST':
+            cliente_dados, erros = _coletar_dados_cliente_form(request.form)
+            if erros:
+                for erro in erros:
+                    flash(erro, 'warning')
+            else:
+                try:
+                    pagamento = _coletar_pagamento_checkout(request.form, resumo_carrinho['subtotal'])
+                    cliente_db = _upsert_cliente_publico(cliente_dados)
+                    db.session.flush()
+
+                    pedido = Pedido(
+                        cliente_nome=cliente_dados.get('nome'),
+                        cliente_celular=cliente_dados.get('celular'),
+                        status='aberto',
+                        origem='site',
+                        total=float(resumo_carrinho['subtotal'] or 0.0),
+                        metodo_pagamento=pagamento['metodo_label'],
+                        valor_pago=pagamento['valor_pago'],
+                        estoque_processado=False,
+                        financeiro_processado=False,
+                    )
+                    db.session.add(pedido)
+                    db.session.flush()
+
+                    for item in resumo_carrinho['itens']:
+                        produto = item['produto']
+                        db.session.add(ItemPedido(
+                            pedido_id=pedido.id,
+                            produto_id=produto.id,
+                            quantidade=item['quantidade'],
+                            preco_unitario=produto.preco_venda
+                        ))
+
+                    pedido.observacoes = json.dumps({
+                        'cliente_publico_id': cliente_db.id,
+                        'cliente_cadastro': cliente_dados,
+                        'pagamento': {
+                            'metodo': pagamento['metodo'],
+                            'metodo_label': pagamento['metodo_label'],
+                            'troco': pagamento['troco'],
+                            'detalhes': pagamento['detalhes'],
+                        },
+                        'origem_checkout': 'home_varejo',
+                    }, ensure_ascii=False)
+
+                    db.session.commit()
+                    try:
+                        publish_alert({
+                            'pedido_id': pedido.id,
+                            'origem': 'site',
+                            'cliente_nome': pedido.cliente_nome,
+                            'itens': [
+                                {'produto': item['produto'].nome, 'quantidade': item['quantidade']}
+                                for item in resumo_carrinho['itens']
+                            ],
+                            'criado_em': pedido.criado_em.isoformat() if pedido.criado_em else None
+                        })
+                    except Exception:
+                        pass
+
+                    _salvar_cliente_site_sessao(cliente_dados)
+                    _salvar_carrinho_site({})
+
+                    flash(f'Pedido #{pedido.id} recebido com sucesso.', 'success')
+                    return redirect(url_for('public.pedido_confirmado_site', pedido_id=pedido.id))
+                except ValueError as e:
+                    db.session.rollback()
+                    flash(str(e), 'warning')
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Nao foi possivel concluir seu pedido: {str(e)}', 'danger')
+
+        return render_template(
+            'public/checkout.html',
+            empresa=empresa,
+            resumo_carrinho=resumo_carrinho,
+            cliente_dados=cliente_dados,
+            payment_options=SITE_PAYMENT_OPTIONS,
+            pagamento_selecionado=pagamento_selecionado,
+            valor_recebido=valor_recebido,
+        )
+
+    @bp.route('/pedido/<int:pedido_id>/confirmado', methods=['GET'])
+    def pedido_confirmado_site(pedido_id):
+        empresa = _obter_empresa_config()
+        pedido = Pedido.query.filter_by(id=pedido_id, origem='site').first_or_404()
+        detalhes = {}
+        if pedido.observacoes:
+            try:
+                detalhes = json.loads(pedido.observacoes)
+            except Exception:
+                detalhes = {}
+
+        return render_template(
+            'public/pedido_confirmado.html',
+            empresa=empresa,
+            pedido=pedido,
+            detalhes=detalhes,
+            resumo_carrinho=obter_resumo_carrinho_site(),
+        )
+
     @bp.route('/m/<token>', methods=['GET'])
     def cardapio_mesa(token):
+        if not _atendimento_mesas_ativo():
+            abort(404)
         mesa = Mesa.query.filter_by(qr_token=token).first_or_404()
         empresa = _obter_empresa_config()
         cliente = _obter_cliente_qr(token)
@@ -180,6 +687,8 @@ def register_public_routes(app):
 
     @bp.route('/m/<token>/abrir-comanda', methods=['POST'])
     def abrir_comanda_qr(token):
+        if not _atendimento_mesas_ativo():
+            abort(404)
         mesa = Mesa.query.filter_by(qr_token=token).first_or_404()
         nome = (request.form.get('cliente_nome') or '').strip()
         celular = (request.form.get('cliente_celular') or '').strip()
@@ -194,6 +703,8 @@ def register_public_routes(app):
 
     @bp.route('/comanda/<mesa_numero>/<cliente_slug>', methods=['GET'])
     def comanda_cliente(mesa_numero, cliente_slug):
+        if not _atendimento_mesas_ativo():
+            abort(404)
         mesa = Mesa.query.filter_by(numero=mesa_numero).first_or_404()
         empresa = _obter_empresa_config()
         cliente = _obter_cliente_por_mesa_slug(mesa, cliente_slug)
@@ -224,6 +735,8 @@ def register_public_routes(app):
 
     @bp.route('/comanda/<mesa_numero>/<cliente_slug>/pedido', methods=['POST'])
     def enviar_pedido_qr(mesa_numero, cliente_slug):
+        if not _atendimento_mesas_ativo():
+            abort(404)
         mesa = Mesa.query.filter_by(numero=mesa_numero).first_or_404()
         empresa = _obter_empresa_config()
         cliente = _obter_cliente_por_mesa_slug(mesa, cliente_slug)
@@ -260,7 +773,9 @@ def register_public_routes(app):
             status='aberto',
             origem='qr',
             cliente_nome=cliente.get('nome'),
-            cliente_celular=cliente.get('celular')
+            cliente_celular=cliente.get('celular'),
+            estoque_processado=False,
+            financeiro_processado=False
         )
         db.session.add(pedido)
 

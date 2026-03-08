@@ -1,124 +1,20 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Pedidos - SystemLR{% endblock %}
 
 {% block extra_css %}
-<style>
-    .pedido-filtros {
-        margin-bottom: 14px;
-    }
-
-    .pedido-filtros-form {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .pedido-filtros-form .form-control,
-    .pedido-filtros-form .form-select {
-        min-width: 180px;
-        flex: 1 1 220px;
-    }
-
-    .pedido-status-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        line-height: 1.2;
-    }
-
-    .pedido-status-aberto {
-        background: #dbeafe;
-        color: #1e3a8a;
-    }
-
-    .pedido-status-em_preparo {
-        background: #fef3c7;
-        color: #92400e;
-    }
-
-    .pedido-status-entregue {
-        background: #dcfce7;
-        color: #166534;
-    }
-
-    .pedido-status-fechado {
-        background: #ccfbf1;
-        color: #115e59;
-    }
-
-    .pedido-status-cancelado {
-        background: #fee2e2;
-        color: #991b1b;
-    }
-
-    .pedido-pagamento-linha {
-        font-size: 12px;
-        color: #64748b;
-        margin-top: 4px;
-    }
-
-    .pedido-actions-cell {
-        min-width: 320px;
-    }
-
-    .pedido-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        align-items: flex-start;
-    }
-
-    .pedido-status-form {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-        flex-wrap: wrap;
-        width: 100%;
-    }
-
-    .pedido-status-form .form-select {
-        min-width: 150px;
-        flex: 1 1 150px;
-    }
-
-    .pedido-actions .btn {
-        white-space: nowrap;
-    }
-
-    @media (max-width: 768px) {
-        .pedido-actions-cell {
-            min-width: 0;
-        }
-
-        .pedido-filtros-form .form-control,
-        .pedido-filtros-form .form-select {
-            width: 100%;
-            min-width: 0;
-        }
-
-        .pedido-actions,
-        .pedido-status-form {
-            width: 100%;
-        }
-
-        .pedido-actions .btn,
-        .pedido-status-form .btn,
-        .pedido-status-form .form-select {
-            width: 100%;
-            min-width: 0;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/pedidos.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1>Pedidos</h1>
-    <a href="{{ url_for('novo_pedido') }}" class="btn btn-primary">Novo Pedido</a>
+    <div class="header-actions">
+        {% if not empresa or empresa.separacao_entrega_ativa != False %}
+        <a href="{{ url_for('listar_separacao_entrega') }}" class="btn btn-outline-primary">Separação Entrega</a>
+        {% endif %}
+        <a href="{{ url_for('novo_pedido') }}" class="btn btn-primary">Novo Pedido</a>
+    </div>
 </div>
 
 <div class="section pedido-filtros">
@@ -153,26 +49,31 @@
                 <th>Mesa</th>
                 <th>Caixa</th>
                 <th>Cliente</th>
-                <th>Celular</th>
-                <th>Garcom</th>
+                <th class="col-celular">Celular</th>
+                <th class="col-garcom">Garcom</th>
                 <th>Total</th>
-                <th>Pagamento</th>
-                <th>Valor pago</th>
+                <th class="col-pagamento">Pagamento</th>
+                <th class="col-valor-pago">Valor pago</th>
                 <th>Status</th>
+                <th class="col-separacao">Separação</th>
                 <th>Acoes</th>
             </tr>
         </thead>
         <tbody>
             {% for pedido in pedidos %}
+            {% set separacao_ativa = (not empresa or empresa.separacao_entrega_ativa != False) %}
+            {% set etiqueta_ativa = separacao_ativa and (not empresa or empresa.emissao_etiqueta_entrega_ativa != False) %}
+            {% set unir_off = (empresa and empresa.separacao_entrega_unir_vendas_off) %}
+            {% set origem_elegivel_separacao = (pedido.origem == 'site') or (unir_off and pedido.origem == 'interno') %}
             <tr>
                 <td data-label="ID">{{ pedido.id }}</td>
                 <td data-label="Mesa">{{ pedido.mesa.numero if pedido.mesa else '' }}</td>
                 <td data-label="Caixa">{{ pedido.caixa.nome if pedido.caixa else '' }}</td>
                 <td data-label="Cliente">{{ pedido.cliente_nome or '-' }}</td>
-                <td data-label="Celular">{{ pedido.cliente_celular or '-' }}</td>
-                <td data-label="Garcom">{{ pedido.garcom.nome if pedido.garcom else 'Nao atribuido' }}</td>
+                <td data-label="Celular" class="col-celular">{{ pedido.cliente_celular or '-' }}</td>
+                <td data-label="Garcom" class="col-garcom">{{ pedido.garcom.nome if pedido.garcom else 'Nao atribuido' }}</td>
                 <td data-label="Total">R$ {{ '%.2f'|format(pedido.total) }}</td>
-                <td data-label="Pagamento">
+                <td data-label="Pagamento" class="col-pagamento">
                     {% if pedido.metodo_pagamento %}
                         {% set metodo = pedido.metodo_pagamento|lower %}
                         {% if 'dividido' in metodo %}
@@ -193,7 +94,7 @@
                         -
                     {% endif %}
                 </td>
-                <td data-label="Valor pago">{% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% else %}-{% endif %}</td>
+                <td data-label="Valor pago" class="col-valor-pago">{% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% else %}-{% endif %}</td>
                 <td data-label="Status">
                     {% if pedido.status == 'aberto' %}
                         <span class="pedido-status-badge pedido-status-aberto">Aberto</span>
@@ -209,35 +110,84 @@
                         {{ pedido.status }}
                     {% endif %}
                 </td>
+                <td data-label="Separação" class="col-separacao">
+                    {% if separacao_ativa and origem_elegivel_separacao %}
+                        {% if pedido.separacao_entrega_concluida %}
+                        <span class="badge text-bg-success">Separado</span>
+                        {% else %}
+                        <span class="badge text-bg-warning">Pendente</span>
+                        {% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
                 <td data-label="Acoes" class="actions-cell pedido-actions-cell">
                     <div class="pedido-actions">
                         <form method="POST" action="{{ url_for('alterar_status_pedido', pedido_id=pedido.id) }}" class="pedido-status-form">
+                            {{ csrf_input|safe }}
+                            {% set permitidos = status_transitions.get(pedido.status, []) %}
                             <select name="status" class="form-select form-select-sm">
-                                <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %}>Aberto</option>
-                                <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %}>Em preparo</option>
-                                <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %}>Entregue</option>
-                                <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %}>Venda concluida</option>
-                                <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %}>Cancelado</option>
+                                <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %} {% if pedido.status!='aberto' and 'aberto' not in permitidos %}disabled{% endif %}>Aberto</option>
+                                <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %} {% if pedido.status!='em_preparo' and 'em_preparo' not in permitidos %}disabled{% endif %}>Em preparo</option>
+                                <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %} {% if pedido.status!='entregue' and 'entregue' not in permitidos %}disabled{% endif %}>Entregue</option>
+                                <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %} {% if pedido.status!='fechado' and 'fechado' not in permitidos %}disabled{% endif %}>Venda concluida</option>
+                                <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %} {% if pedido.status!='cancelado' and 'cancelado' not in permitidos %}disabled{% endif %}>Cancelado</option>
                             </select>
                             <button type="submit" class="btn btn-sm btn-primary">Atualizar</button>
                         </form>
                         <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-warning">Editar</a>
                         <a href="{{ url_for('detalhes_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
+                        {% if separacao_ativa and origem_elegivel_separacao %}
+                        <form method="POST" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}" class="inline-form">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="acao" value="{% if pedido.separacao_entrega_concluida %}reabrir{% else %}concluir{% endif %}">
+                            <button type="submit" class="btn btn-sm {% if pedido.separacao_entrega_concluida %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
+                                {% if pedido.separacao_entrega_concluida %}Reabrir separacao{% else %}Marcar separado{% endif %}
+                            </button>
+                        </form>
+                        {% if etiqueta_ativa %}
+                        <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-dark" target="_blank">Etiqueta</a>
+                        {% endif %}
+                        {% endif %}
                         <a href="{{ url_for('visualizar_comprovante_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-info" target="_blank">Comprovante</a>
-                        <form method="POST" action="{{ url_for('deletar_pedido', pedido_id=pedido.id) }}">
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirmarDelecao('Excluir pedido?')">Excluir</button>
+                        <form method="POST" action="{{ url_for('deletar_pedido', pedido_id=pedido.id) }}" data-confirm-message="Excluir pedido #{{ pedido.id }}?">
+                            {{ csrf_input|safe }}
+                            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
                         </form>
                     </div>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="11" class="text-center">Nenhum pedido cadastrado</td>
+                <td colspan="12" class="text-center">Nenhum pedido cadastrado</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_pedidos', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_pedidos', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -246,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const statusEl = document.getElementById('sse-status');
     const listEl = document.getElementById('alert-list');
     if (!window.EventSource) {
-        statusEl.textContent = 'Seu navegador nao suporta atualizacoes em tempo real. Recarregue para ver novos pedidos.';
+        statusEl.textContent = 'Seu navegador não suporta atualizações em tempo real. Recarregue para ver novos pedidos.';
         return;
     }
     const es = new EventSource('{{ url_for('sse_pedidos') }}');
@@ -264,3 +214,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 {% endblock %}
+
+

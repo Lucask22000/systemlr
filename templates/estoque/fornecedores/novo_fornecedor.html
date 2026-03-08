@@ -9,9 +9,15 @@
 
 <div class="form-container">
     <form method="POST" class="form">
+        {{ csrf_input|safe }}
         <div class="form-group">
-            <label for="nome">Nome *</label>
-            <input type="text" id="nome" name="nome" required class="input-text" placeholder="Nome do fornecedor">
+            <label for="nome">Nome / Razao Social *</label>
+            <input type="text" id="nome" name="nome" required class="input-text" placeholder="Nome da empresa ou pessoa fornecedora">
+        </div>
+
+        <div class="form-group">
+            <label for="documento">CNPJ ou CPF</label>
+            <input type="text" id="documento" name="documento" class="input-text" placeholder="00.000.000/0000-00 ou 000.000.000-00">
         </div>
 
         <div class="form-group">
@@ -29,6 +35,38 @@
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" class="input-text" placeholder="contato@fornecedor.com">
             </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="endereco_rua">Endereco - Rua</label>
+                <input type="text" id="endereco_rua" name="endereco_rua" class="input-text" placeholder="Rua, avenida, travessa...">
+            </div>
+            <div class="form-group">
+                <label for="endereco_numero">Numero</label>
+                <input type="text" id="endereco_numero" name="endereco_numero" class="input-text" placeholder="Numero">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="endereco_bairro">Bairro</label>
+                <input type="text" id="endereco_bairro" name="endereco_bairro" class="input-text" placeholder="Bairro">
+            </div>
+            <div class="form-group">
+                <label for="endereco_cidade">Cidade</label>
+                <input type="text" id="endereco_cidade" name="endereco_cidade" class="input-text" placeholder="Cidade">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="tipo_produtos_fornece">Tipo de produtos que fornece</label>
+            <input type="text" id="tipo_produtos_fornece" name="tipo_produtos_fornece" class="input-text" placeholder="Ex: graos, bebidas, limpeza, frios...">
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes_gerais">Observacoes gerais</label>
+            <textarea id="observacoes_gerais" name="observacoes_gerais" class="input-textarea" rows="4" placeholder="Pontualidade, restricoes, qualidade, condicoes comerciais, etc."></textarea>
         </div>
 
         <div class="form-group">

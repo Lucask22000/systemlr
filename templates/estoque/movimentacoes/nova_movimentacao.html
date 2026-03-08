@@ -5,16 +5,20 @@
 {% block content %}
 <div class="page-header">
     <h1>Nova Movimentacao</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('novo_recebimento_fornecedor') }}" class="btn btn-secondary">Recebimento do fornecedor</a>
+    </div>
 </div>
 
 <div class="form-container">
     <form method="POST" class="form">
+        {{ csrf_input|safe }}
         <div class="form-group">
             <label for="produto_id">Produto *</label>
             <select id="produto_id" name="produto_id" required class="input-select">
                 <option value="">Selecione um produto</option>
                 {% for prod in produtos %}
-                <option value="{{ prod.id }}">{{ prod.nome }} (Estoque: {{ prod.quantidade_estoque }})</option>
+                <option value="{{ prod.id }}">{{ prod.código }} - {{ prod.nome }} (Estoque: {{ prod.quantidade_estoque }})</option>
                 {% endfor %}
             </select>
         </div>
@@ -36,6 +40,13 @@
                 <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
                 {% endfor %}
             </select>
+        </div>
+
+        <div class="form-group" id="recebimento-fornecedor-wrapper" style="display:none;">
+            <label class="checkbox-inline">
+                <input type="checkbox" id="recebimento_fornecedor" name="recebimento_fornecedor">
+                Recebimento de produtos do fornecedor
+            </label>
         </div>
 
         <div class="form-group" id="valor-compra-wrapper" style="display:none;">
@@ -75,25 +86,45 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const tipo = document.getElementById('tipo');
+    const recebimentoWrapper = document.getElementById('recebimento-fornecedor-wrapper');
+    const recebimentoCheckbox = document.getElementById('recebimento_fornecedor');
     const fornecedorWrapper = document.getElementById('fornecedor-wrapper');
     const fornecedorSelect = document.getElementById('fornecedor_id');
     const valorCompraWrapper = document.getElementById('valor-compra-wrapper');
     const notaWrapper = document.getElementById('nota-wrapper');
+    const valorCompraInput = document.getElementById('valor_compra');
+    const notaInput = document.getElementById('info_nota');
+    const motivoInput = document.getElementById('motivo');
+
+    function atualizarObrigatoriedadeFornecedor() {
+        const exigirFornecedor = tipo.value === 'entrada' && recebimentoCheckbox.checked;
+        fornecedorSelect.required = exigirFornecedor;
+    }
 
     function atualizarFornecedor() {
         const entrada = tipo.value === 'entrada';
+        recebimentoWrapper.style.display = entrada ? 'block' : 'none';
         fornecedorWrapper.style.display = entrada ? 'block' : 'none';
         valorCompraWrapper.style.display = entrada ? 'block' : 'none';
         notaWrapper.style.display = entrada ? 'block' : 'none';
         if (!entrada) {
+            recebimentoCheckbox.checked = false;
             fornecedorSelect.value = '';
-            document.getElementById('valor_compra').value = '';
-            document.getElementById('info_nota').value = '';
+            valorCompraInput.value = '';
+            notaInput.value = '';
         }
+        atualizarObrigatoriedadeFornecedor();
     }
 
     tipo.addEventListener('change', atualizarFornecedor);
+    recebimentoCheckbox.addEventListener('change', function () {
+        atualizarObrigatoriedadeFornecedor();
+        if (this.checked && !motivoInput.value.trim()) {
+            motivoInput.value = 'recebimento_fornecedor';
+        }
+    });
     atualizarFornecedor();
 });
 </script>
 {% endblock %}
+

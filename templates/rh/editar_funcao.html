@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Editar Funcao RH - SystemLR{% endblock %}
 
@@ -10,6 +10,7 @@
 
 <div class="form-container">
     <form method="POST" class="form">
+        {{ csrf_input|safe }}
         <div class="form-group">
             <label for="nome">Nome da Funcao *</label>
             <input type="text" id="nome" name="nome" class="input-text" maxlength="100" required value="{{ funcao.nome }}">
@@ -34,3 +35,5 @@
     </form>
 </div>
 {% endblock %}
+
+

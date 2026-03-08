@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Documentacao da API{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Documentacao da API</h1>
+    <p class="text-muted">Endpoints principais em JSON. Todos exigem CSRF/credenciais conforme configuracao.</p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h3>Pedidos</h3>
+        <ul>
+            <li><code>POST /api/pedidos/criar</code> – cria pedido rápido. Body: <code>{itens:[{produto_id, quantidade}]}</code>. Resposta: <code>{success, pedido_id}</code></li>
+            <li><code>POST /api/pedidos/&lt;id&gt;/finalizar</code> – finaliza com pagamento. Body: <code>{metodo_pagamento, valor_recebido}</code>. Resposta: <code>{success, total}</code></li>
+            <li><code>GET /api/pedidos/em-aberto</code> – lista pedidos abertos.</li>
+            <li><code>GET /api/pedidos/&lt;id&gt;/detalhes-json</code> – detalhes completos do pedido.</li>
+            <li><code>POST /api/pedidos/&lt;id&gt;/adicionar</code> – adiciona itens. Body: <code>{itens:[...]}</code>.</li>
+        </ul>
+
+        <h3>Estoque</h3>
+        <ul>
+            <li><code>GET /api/estoque/analytics</code> – métricas de estoque.</li>
+            <li><code>POST /movimentacoes/nova</code> – movimentação manual (form-data); ver telas internas.</li>
+        </ul>
+
+        <h3>Dashboard / RH</h3>
+        <ul>
+            <li><code>GET /api/dashboard/analytics?inicio=YYYY-MM-DD&amp;fim=YYYY-MM-DD</code> – métricas de vendas.</li>
+            <li><code>GET /api/rh/analytics</code> – indicadores de RH.</li>
+        </ul>
+
+        <p class="text-muted mt-3">Estrutura de resposta padrão: <code>{ success: bool, message: str, data?: any, code?: str }</code>.</p>
+    </div>
+</div>
+{% endblock %}

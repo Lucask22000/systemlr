@@ -1,0 +1,141 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Recebimentos de Fornecedor - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Recebimentos de Fornecedor</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Ver Movimentações</a>
+        <a href="{{ url_for('novo_recebimento_fornecedor') }}" class="btn btn-primary">Novo Recebimento</a>
+    </div>
+</div>
+
+<div class="filters-section">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <label for="busca">Busca</label>
+            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="ID, nota, fornecedor, código ou nome do produto">
+        </div>
+        <div class="filter-group">
+            <label for="fornecedor_id">Fornecedor</label>
+            <select id="fornecedor_id" name="fornecedor_id" class="input-select">
+                <option value="">Todos</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id }}" {% if filtros and filtros.fornecedor_id == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="input-select">
+                <option value="">Todos</option>
+                {% for st in status_labels.keys() %}
+                <option value="{{ st }}" {% if filtros and filtros.status == st %}selected{% endif %}>{{ status_labels[st] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="data_inicio">De</label>
+            <input type="date" id="data_inicio" name="data_inicio" class="input-search" value="{{ filtros.data_inicio if filtros else '' }}">
+        </div>
+        <div class="filter-group">
+            <label for="data_fim">Ate</label>
+            <input type="date" id="data_fim" name="data_fim" class="input-search" value="{{ filtros.data_fim if filtros else '' }}">
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fornecedor</th>
+                <th>Nota</th>
+                <th>Itens</th>
+                <th>Codigos Produtos</th>
+                <th>Status</th>
+                <th>Criado em</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recebimento in recebimentos %}
+            <tr>
+                <td data-label="ID">#{{ recebimento.id }}</td>
+                <td data-label="Fornecedor">{{ recebimento.fornecedor.nome if recebimento.fornecedor else '-' }}</td>
+                <td data-label="Nota">{{ recebimento.info_nota or '-' }}</td>
+                <td data-label="Itens">{{ recebimento.itens|length }}</td>
+                <td data-label="Codigos Produtos">
+                    {% set códigos = [] %}
+                    {% for item in recebimento.itens %}
+                        {% if item.produto and item.produto.código %}
+                            {% set _ = códigos.append(item.produto.código) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if códigos %}
+                        {{ códigos|join(', ') }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td data-label="Status">
+                    {% set st = recebimento.status %}
+                    <span class="badge {% if st == 'concluido' %}badge-success{% elif st == 'cancelado' %}badge-danger{% elif st == 'aguardando_armazenagem' %}badge-warning{% else %}badge-info{% endif %}">
+                        {{ status_labels.get(st, st|title) }}
+                    </span>
+                </td>
+                <td data-label="Criado em">{{ recebimento.criado_em.strftime('%d/%m/%Y %H:%M') if recebimento.criado_em else '-' }}</td>
+                <td data-label="Acoes" class="actions-cell">
+                    {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
+                    <a href="{{ url_for('conferir_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-warning">Conferir</a>
+                    {% endif %}
+                    {% if recebimento.status == 'aguardando_armazenagem' %}
+                    <a href="{{ url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-primary">Armazenar</a>
+                    {% endif %}
+                    {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
+                    <form method="POST" action="{{ url_for('cancelar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="inline-form" data-confirm-message="Cancelar recebimento #{{ recebimento.id }}?">
+                        {{ csrf_input|safe }}
+                        <button type="submit" class="btn-small btn-danger">Cancelar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">Nenhum recebimento encontrado</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_recebimentos_fornecedor', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_recebimentos_fornecedor', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+

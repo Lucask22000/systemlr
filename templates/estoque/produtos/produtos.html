@@ -12,9 +12,9 @@
     <form method="GET" class="filters-form">
         <div class="filter-group">
             <div class="barcode-input-group">
-                <input type="text" id="busca" name="busca" placeholder="Buscar por nome ou codigo..."
+                <input type="text" id="busca" name="busca" placeholder="Buscar por nome ou código..."
                        value="{{ busca }}" class="input-search">
-                <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="busca">Camera</button>
+                <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="busca">Câmera</button>
             </div>
         </div>
         <div class="filter-group">
@@ -27,19 +27,53 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="filter-group">
+            <select name="status_disponibilidade" class="input-select">
+                <option value="">Todas as disponibilidades</option>
+                {% for chave, label in status_disponibilidade_labels.items() %}
+                <option value="{{ chave }}" {% if filtros and filtros.status_disponibilidade == chave %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="estoque_id" class="input-select">
+                <option value="">Todos os estoques</option>
+                {% for estoque in estoques %}
+                <option value="{{ estoque.id }}" {% if filtros and filtros.estoque_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="endereco_id" class="input-select">
+                <option value="">Todos os enderecos</option>
+                {% for endereco in enderecos %}
+                <option value="{{ endereco.id }}" {% if filtros and filtros.endereco_id == endereco.id %}selected{% endif %}>{{ endereco.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="fornecedor_id" class="input-select">
+                <option value="">Todos os fornecedores</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id }}" {% if filtros and filtros.fornecedor_id == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <button type="submit" class="btn btn-secondary">Filtrar</button>
     </form>
 </div>
 
-<div class="table-responsive">
-    <table class="table">
+<div class="table-responsive table-scroll-sticky">
+    <table class="table table-produtos">
         <thead>
             <tr>
                 <th>Codigo</th>
                 <th>Nome</th>
                 <th>Categoria</th>
+                <th>Fornecedor</th>
                 <th>Endereco</th>
-                <th>Preco Venda</th>
+                <th class="col-disponibilidade">Disponibilidade</th>
+                <th class="col-preco-venda">Preco Venda</th>
                 <th>Estoque</th>
                 <th>Status</th>
                 <th>Acoes</th>
@@ -48,7 +82,7 @@
         <tbody>
             {% for produto in produtos %}
             <tr class="{% if produto.em_falta %}row-warning{% endif %}">
-                <td data-label="Codigo">{{ produto.codigo }}</td>
+                <td data-label="Codigo">{{ produto.código }}</td>
                 <td data-label="Nome">
                     <div class="product-name-cell">
                         {% if produto.imagem_path %}
@@ -58,8 +92,16 @@
                     </div>
                 </td>
                 <td data-label="Categoria">{{ produto.categoria.nome }}</td>
+                <td data-label="Fornecedor">{{ produto.fornecedor.nome if produto.fornecedor else '-' }}</td>
                 <td data-label="Endereco">{{ produto.endereco.nome if produto.endereco else '-' }}</td>
-                <td data-label="Preco">R$ {{ "%.2f"|format(produto.preco_venda) }}</td>
+                <td data-label="Disponibilidade" class="col-disponibilidade">
+                    {% if produto.status_disponibilidade_label == 'Online' %}
+                    <span class="badge badge-success">Online</span>
+                    {% else %}
+                    <span class="badge badge-danger">Off</span>
+                    {% endif %}
+                </td>
+                <td data-label="Preco" class="col-preco-venda">R$ {{ "%.2f"|format(produto.preco_venda) }}</td>
                 <td data-label="Estoque">
                     {{ produto.quantidade_estoque }}
                     {% if produto.em_falta %}<span class="icon-warning">!</span>{% endif %}
@@ -74,17 +116,43 @@
                 <td data-label="Acoes" class="actions-cell">
                     <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Ver</a>
                     <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn-small btn-warning">Editar</a>
-                    <form method="POST" action="{{ url_for('deletar_produto', produto_id=produto.id) }}" style="display:inline;">
-                        <button type="submit" class="btn-small btn-danger" onclick="return confirm('Tem certeza?')">Excluir</button>
+                    <form method="POST" action="{{ url_for('deletar_produto', produto_id=produto.id) }}" class="inline-form" data-confirm-message="Excluir produto {{ produto.nome }}?">
+                        {{ csrf_input|safe }}
+                        <button type="submit" class="btn-small btn-danger">Excluir</button>
                     </form>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="8" class="text-center">Nenhum produto encontrado</td>
+                <td colspan="10" class="text-center">Nenhum produto encontrado</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_produtos', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_produtos', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}
+
+

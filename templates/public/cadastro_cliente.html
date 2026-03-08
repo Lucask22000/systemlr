@@ -1,0 +1,166 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    {% if favicon_path %}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
+    {% endif %}
+    <title>Cadastro do cliente | {{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home-varejo.css') }}">
+</head>
+<body class="retail-home">
+    <header class="retail-topbar">
+        <div class="retail-topbar-inner">
+            <a class="brand" href="{{ url_for('index') }}">
+                {% if empresa and empresa.logo_path %}
+                <img src="{{ url_for('static', filename=empresa.logo_path) }}" alt="Logo da empresa">
+                {% endif %}
+                <span>{{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</span>
+            </a>
+            <nav class="top-links" aria-label="Navegação">
+                <a href="{{ url_for('index') }}">Vitrine</a>
+                <a href="{{ url_for('public.carrinho_site') }}" class="cart-link">
+                    Carrinho <span>{{ resumo_carrinho.quantidade_itens }}</span>
+                </a>
+                <a href="{{ url_for('public.checkout_site') }}">Checkout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="commerce-shell">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-stack">
+                {% for category, message in messages %}
+                <div class="flash-item {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="commerce-header">
+            <h1>Cadastro completo do cliente</h1>
+            <p>Salve seus dados para agilizar pedidos, carrinho e pagamentos.</p>
+        </section>
+
+        <section class="commerce-grid">
+            <article class="commerce-card">
+                <h2>Seus dados</h2>
+                <form method="POST" action="{{ url_for('public.cadastro_cliente_site') }}">
+                    {{ csrf_input|safe }}
+                    {% if request.args.get('proximo') %}
+                    <input type="hidden" name="proximo" value="{{ request.args.get('proximo') }}">
+                    {% endif %}
+
+                    <div class="form-grid">
+                        <div class="field-group">
+                            <label for="nome">Nome completo</label>
+                            <input id="nome" name="nome" type="text" value="{{ cliente_dados.nome }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="email">E-mail</label>
+                            <input id="email" name="email" type="email" value="{{ cliente_dados.email }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="celular">Celular</label>
+                            <input id="celular" name="celular" type="text" value="{{ cliente_dados.celular }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="cpf_cnpj">CPF ou CNPJ</label>
+                            <input id="cpf_cnpj" name="cpf_cnpj" type="text" value="{{ cliente_dados.cpf_cnpj }}">
+                        </div>
+                        <div class="field-group">
+                            <label for="cep">CEP</label>
+                            <input id="cep" name="cep" type="text" value="{{ cliente_dados.cep }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="estado">Estado (UF)</label>
+                            <input id="estado" name="estado" type="text" maxlength="2" value="{{ cliente_dados.estado }}" required>
+                        </div>
+                        <div class="field-group full">
+                            <label for="endereco">Endereco</label>
+                            <input id="endereco" name="endereco" type="text" value="{{ cliente_dados.endereco }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="numero">Numero</label>
+                            <input id="numero" name="numero" type="text" value="{{ cliente_dados.numero }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="complemento">Complemento</label>
+                            <input id="complemento" name="complemento" type="text" value="{{ cliente_dados.complemento }}">
+                        </div>
+                        <div class="field-group">
+                            <label for="bairro">Bairro</label>
+                            <input id="bairro" name="bairro" type="text" value="{{ cliente_dados.bairro }}" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="cidade">Cidade</label>
+                            <input id="cidade" name="cidade" type="text" value="{{ cliente_dados.cidade }}" required>
+                        </div>
+                        <div class="field-group full">
+                            <label for="referencia">Referencia</label>
+                            <input id="referencia" name="referencia" type="text" value="{{ cliente_dados.referencia }}">
+                        </div>
+                        <div class="field-group full">
+                            <label for="observacoes">Observacoes</label>
+                            <textarea id="observacoes" name="observacoes" rows="3">{{ cliente_dados.observacoes }}</textarea>
+                        </div>
+                        <div class="field-group full">
+                            <label>
+                                <input type="checkbox" name="recebe_ofertas" {% if cliente_dados.recebe_ofertas %}checked{% endif %}>
+                                Aceito receber ofertas e comunicados.
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 12px; display:grid; gap:8px;">
+                        <button type="submit" class="btn-action primary">Salvar cadastro</button>
+                        <a href="{{ url_for('public.checkout_site') }}" class="btn-action secondary" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">Ir para checkout</a>
+                    </div>
+                </form>
+            </article>
+
+            <aside class="commerce-card">
+                <h2>Resumo rápido</h2>
+                <div class="summary-list">
+                    <div class="summary-line">
+                        <span>Itens no carrinho</span>
+                        <strong>{{ resumo_carrinho.quantidade_itens }}</strong>
+                    </div>
+                    <div class="summary-line total">
+                        <span>Subtotal atual</span>
+                        <strong>R$ {{ '%.2f'|format(resumo_carrinho.subtotal)|replace('.', ',') }}</strong>
+                    </div>
+                </div>
+                <div class="note-box">
+                    Com o cadastro salvo, o checkout ja vem preenchido com seus dados.
+                </div>
+            </aside>
+        </section>
+    </main>
+
+    <footer class="retail-footer" style="background: {{ empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#1f2b38' }};">
+        <div class="retail-footer-inner">
+            <div>
+                <p>&copy; {{ ano_atual }} {{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}.</p>
+                <p>{{ empresa_config.ecom_footer_texto if empresa_config and empresa_config.ecom_footer_texto else 'Loja oficial com pedidos online.' }}</p>
+                <p>{{ empresa_config.ecom_footer_contato if empresa_config and empresa_config.ecom_footer_contato else 'Contato: suporte@systemlr.com' }}</p>
+                <p>{{ empresa_config.ecom_footer_creditos if empresa_config and empresa_config.ecom_footer_creditos else 'Créditos: SystemLR' }}</p>
+            </div>
+            {% if funcionario_logado %}
+            <a href="{{ url_for('dashboard') }}" class="quiet-login">painel interno</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="quiet-login">acesso interno</a>
+            {% endif %}
+        </div>
+    </footer>
+    <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+</body>
+</html>
+
+

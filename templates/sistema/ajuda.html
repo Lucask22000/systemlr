@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Ajuda e Treinamento - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Ajuda e Treinamento</h1>
+    <p class="text-muted mb-0">Selecione um item da lista para abrir o passo a passo detalhado.</p>
+</div>
+
+<div class="section">
+    <h2>Guias disponiveis</h2>
+    <ol class="mb-0">
+        {% for topico in topicos_ajuda %}
+        <li style="margin-bottom: 10px;">
+            <a href="{{ url_for('detalhe_ajuda', topico_slug=topico.slug) }}"><strong>{{ topico.titulo }}</strong></a>
+            <div class="text-muted">{{ topico.resumo }}</div>
+        </li>
+        {% endfor %}
+    </ol>
+</div>
+
+<div class="section">
+    <h2>Uso recomendado</h2>
+    <ul class="mb-0">
+        <li>Comece por "Primeiros passos".</li>
+        <li>Depois avance para Estoque, Vendas e RH.</li>
+        <li>Finalize com o guia de configuracao do e-commerce.</li>
+    </ul>
+</div>
+{% endblock %}

@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% from "components/list_macros.html" import post_action_button %}
 
 {% block title %}Caixas - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1>Caixas</h1>
-    <a href="{{ url_for('nova_caixa') }}" class="btn btn-primary">➕ Novo Caixa</a>
+    <a href="{{ url_for('nova_caixa') }}" class="btn btn-primary">Novo Caixa</a>
 </div>
 
 <div class="table-responsive">
@@ -13,57 +14,49 @@
         <thead>
             <tr>
                 <th>Nome</th>
-                <th>Funcionário</th>
+                <th>Funcionario</th>
                 <th>Saldo Inicial</th>
                 <th>Saldo Atual</th>
                 <th>Abertura</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th>Acoes</th>
             </tr>
         </thead>
         <tbody>
             {% for caixa in caixas %}
             <tr>
-                <td><strong>{{ caixa.nome }}</strong></td>
-                <td>
-                    {% if caixa.funcionario %}
-                        {{ caixa.funcionario.nome }}
-                    {% else %}
-                        <span style="color: #6c757d;">-</span>
-                    {% endif %}
-                </td>
-                <td>R$ {{ '%.2f'|format(caixa.saldo_inicial) }}</td>
-                <td>R$ {{ '%.2f'|format(caixa.saldo_atual) }}</td>
-                <td>
+                <td data-label="Nome"><strong>{{ caixa.nome }}</strong></td>
+                <td data-label="Funcionario">{{ caixa.funcionario.nome if caixa.funcionario else '-' }}</td>
+                <td data-label="Saldo Inicial">R$ {{ '%.2f'|format(caixa.saldo_inicial) }}</td>
+                <td data-label="Saldo Atual">R$ {{ '%.2f'|format(caixa.saldo_atual) }}</td>
+                <td data-label="Abertura">
                     {% if caixa.aberto_em %}
-                        {{ caixa.aberto_em.strftime('%d/%m/%Y %H:%M') }}
+                    {{ caixa.aberto_em.strftime('%d/%m/%Y %H:%M') }}
                     {% else %}
-                        -
+                    -
                     {% endif %}
                 </td>
-                <td>
+                <td data-label="Status">
                     {% if caixa.aberto %}
-                        <span class="badge badge-success">Aberto</span>
+                    <span class="badge badge-success">Aberto</span>
                     {% else %}
-                        <span class="badge badge-secondary">Fechado</span>
+                    <span class="badge bg-secondary">Fechado</span>
                     {% endif %}
                 </td>
-                <td class="actions-cell" style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <td data-label="Acoes" class="actions-cell">
                     {% if not caixa.aberto %}
-                        <a href="{{ url_for('abrir_caixa', caixa_id=caixa.id) }}" class="btn-small btn-success" title="Abrir caixa">🔓</a>
+                    <a href="{{ url_for('abrir_caixa', caixa_id=caixa.id) }}" class="btn-small btn-success" title="Abrir caixa">Abrir</a>
                     {% else %}
-                        <a href="{{ url_for('fechar_caixa', caixa_id=caixa.id) }}" class="btn-small btn-warning" title="Fechar caixa">🔒</a>
-                        <a href="{{ url_for('historico_caixa', caixa_id=caixa.id) }}" class="btn-small btn-info" title="Histórico">📋</a>
+                    <a href="{{ url_for('fechar_caixa', caixa_id=caixa.id) }}" class="btn-small btn-warning" title="Fechar caixa">Fechar</a>
+                    <a href="{{ url_for('historico_caixa', caixa_id=caixa.id) }}" class="btn-small btn-info" title="Historico">Historico</a>
                     {% endif %}
-                    <a href="{{ url_for('editar_caixa', caixa_id=caixa.id) }}" class="btn-small btn-primary" title="Editar">✏️</a>
-                    <form method="POST" action="{{ url_for('deletar_caixa', caixa_id=caixa.id) }}" style="display:inline;">
-                        <button type="submit" class="btn-small btn-danger" onclick="return confirm('Tem certeza que deseja excluir este caixa?')" title="Deletar">🗑️</button>
-                    </form>
+                    <a href="{{ url_for('editar_caixa', caixa_id=caixa.id) }}" class="btn-small btn-primary" title="Editar">Editar</a>
+                    {{ post_action_button(url_for('deletar_caixa', caixa_id=caixa.id), 'Excluir', 'btn-small btn-danger', 'Tem certeza que deseja excluir este caixa?') }}
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="text-center">Nenhum caixa encontrado</td>
+                <td colspan="7" class="text-center">Nenhum caixa encontrado.</td>
             </tr>
             {% endfor %}
         </tbody>

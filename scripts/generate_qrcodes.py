@@ -7,9 +7,8 @@ import argparse
 import os
 
 import qrcode
-from flask import Flask
 
-from app import app, db
+from app import app
 from models import Mesa
 
 

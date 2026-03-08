@@ -1,0 +1,129 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Detalhes do Fornecedor - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Detalhes do Fornecedor</h1>
+    <a href="{{ url_for('listar_fornecedores') }}" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="form-container">
+    <div class="form">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Nome / Razao Social</label>
+                <div>{{ fornecedor.nome }}</div>
+            </div>
+            <div class="form-group">
+                <label>CNPJ ou CPF</label>
+                <div>{{ fornecedor.documento or '-' }}</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Contato</label>
+                <div>{{ fornecedor.contato or '-' }}</div>
+            </div>
+            <div class="form-group">
+                <label>Telefone</label>
+                <div>{{ fornecedor.telefone or '-' }}</div>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <div>{{ fornecedor.email or '-' }}</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Endereco</label>
+                <div>
+                    {% set endereco = [fornecedor.endereco_rua, fornecedor.endereco_numero, fornecedor.endereco_bairro, fornecedor.endereco_cidade] | select | list %}
+                    {{ endereco | join(', ') if endereco else '-' }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <div>
+                    {% if fornecedor.ativo %}
+                    <span class="badge badge-success">Ativo</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inativo</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Tipo de produtos que fornece</label>
+            <div>{{ fornecedor.tipo_produtos_fornece or '-' }}</div>
+        </div>
+
+        <div class="form-group">
+            <label>Observacoes gerais</label>
+            <div>{{ fornecedor.observacoes_gerais or '-' }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive table-scroll-sticky">
+    <h3>Recebimentos recentes</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nota</th>
+                <th>Status</th>
+                <th>Criado em</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recebimento in recebimentos %}
+            <tr>
+                <td data-label="ID">{{ recebimento.id }}</td>
+                <td data-label="Nota">{{ recebimento.info_nota or '-' }}</td>
+                <td data-label="Status">{{ recebimento.status }}</td>
+                <td data-label="Criado em">{{ recebimento.criado_em.strftime('%d/%m/%Y %H:%M') if recebimento.criado_em else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="text-center">Nenhum recebimento encontrado</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="table-responsive table-scroll-sticky">
+    <h3>Movimentações recentes</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th>Quantidade</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mov in movimentacoes %}
+            <tr>
+                <td data-label="ID">{{ mov.id }}</td>
+                <td data-label="Produto">{{ mov.produto.nome if mov.produto else '-' }}</td>
+                <td data-label="Tipo">{{ mov.tipo }}</td>
+                <td data-label="Quantidade">{{ mov.quantidade }}</td>
+                <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') if mov.criado_em else '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">Nenhuma movimentacao encontrada</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

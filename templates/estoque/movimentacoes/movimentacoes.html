@@ -1,65 +1,78 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Movimentacoes - SystemLR{% endblock %}
+{% block title %}Movimentações - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Movimentacoes</h1>
-    <a href="{{ url_for('nova_movimentacao') }}" class="btn btn-primary">Nova Movimentacao</a>
+    <h1>Movimentações</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="btn btn-secondary">Recebimentos</a>
+        <a href="{{ url_for('nova_movimentacao') }}" class="btn btn-primary">Nova Movimentacao</a>
+    </div>
 </div>
 
 <div class="filters-section">
     <form method="GET" class="filters-form">
         <div class="filter-group">
+            <input type="text" name="busca" class="input-search" value="{{ busca or '' }}" placeholder="Buscar por código/nome do produto, nota, motivo ou fornecedor">
+        </div>
+        <div class="filter-group">
             <select name="produto_id" class="input-select">
                 <option value="">Todos os produtos</option>
                 {% for prod in produtos %}
-                <option value="{{ prod.id }}" {% if produto_selecionado == prod.id %}selected{% endif %}>{{ prod.nome }}</option>
+                <option value="{{ prod.id }}" {% if produto_selecionado == prod.id %}selected{% endif %}>{{ prod.código }} - {{ prod.nome }}</option>
                 {% endfor %}
-            </select>
-        </div>
-        <div class="filter-group">
-            <select name="tipo" class="input-select">
-                <option value="">Todos os tipos</option>
-                <option value="entrada" {% if tipo_selecionado == 'entrada' %}selected{% endif %}>Entrada</option>
-                <option value="saida" {% if tipo_selecionado == 'saida' %}selected{% endif %}>Saida</option>
             </select>
         </div>
         <div class="filter-group">
             <select name="fornecedor_id" class="input-select">
                 <option value="">Todos os fornecedores</option>
-                {% for forn in fornecedores %}
-                <option value="{{ forn.id }}" {% if fornecedor_selecionado == forn.id %}selected{% endif %}>{{ forn.nome }}</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id }}" {% if fornecedor_selecionado == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
                 {% endfor %}
             </select>
         </div>
+        <div class="filter-group">
+            <select name="status" class="input-select">
+                <option value="">Todos os status</option>
+                <option value="entrada" {% if status_selecionado == 'entrada' %}selected{% endif %}>Entrada</option>
+                <option value="saida" {% if status_selecionado == 'saida' %}selected{% endif %}>Saida</option>
+                <option value="transferencia" {% if status_selecionado == 'transferencia' %}selected{% endif %}>Transferencia</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <input type="date" name="data_inicio" class="input-search" value="{{ data_inicio or '' }}" title="Data inicial">
+        </div>
+        <div class="filter-group">
+            <input type="date" name="data_fim" class="input-search" value="{{ data_fim or '' }}" title="Data final">
+        </div>
         <button type="submit" class="btn btn-secondary">Filtrar</button>
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Limpar</a>
     </form>
 </div>
 
-<div class="table-responsive">
+<div class="table-responsive table-scroll-sticky">
     <table class="table">
         <thead>
             <tr>
+                <th>Codigo</th>
                 <th>Produto</th>
-                <th>Tipo</th>
+                <th>Movimentacao</th>
                 <th>Quantidade</th>
-                <th>Fornecedor</th>
-                <th>Valor compra</th>
-                <th>Nota</th>
-                <th>Motivo</th>
+                <th>Status</th>
                 <th>Data</th>
             </tr>
         </thead>
         <tbody>
                 {% for mov in movimentacoes %}
             <tr>
+                <td data-label="Codigo"><code>{{ mov.produto.código if mov.produto else '-' }}</code></td>
                 <td data-label="Produto">
                     <div class="product-name-cell">
-                        {% if mov.produto.imagem_path %}
+                        {% if mov.produto and mov.produto.imagem_path %}
                         <img src="{{ url_for('static', filename=mov.produto.imagem_path) }}" alt="{{ mov.produto.nome }}" class="product-thumb product-thumb-sm">
                         {% endif %}
-                        <a href="{{ url_for('visualizar_produto', produto_id=mov.produto_id) }}">{{ mov.produto.nome }}</a>
+                        <a href="{{ url_for('visualizar_produto', produto_id=mov.produto_id) }}">{{ mov.produto.nome if mov.produto else 'Produto removido' }}</a>
                     </div>
                 </td>
                 <td data-label="Tipo">
@@ -68,12 +81,9 @@
                     </span>
                 </td>
                 <td data-label="Quantidade">{{ mov.quantidade }}</td>
-                <td data-label="Fornecedor">{{ mov.fornecedor.nome if mov.fornecedor else '-' }}</td>
-                <td data-label="Valor compra">
-                    {% if mov.valor_compra is not none %}R$ {{ '%.2f'|format(mov.valor_compra) }}{% else %}-{% endif %}
+                <td data-label="Status">
+                    <span class="badge badge-info">Registrada</span>
                 </td>
-                <td data-label="Nota">{{ mov.info_nota or '-' }}</td>
-                <td data-label="Motivo">{{ mov.motivo or '-' }}</td>
                 <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
             </tr>
             {% else %}
@@ -84,4 +94,28 @@
         </tbody>
     </table>
 </div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_movimentacoes', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_movimentacoes', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}
+

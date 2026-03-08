@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title %}Gestao de Acessos - SystemLR{% endblock %}
+{% block title %}Gestão de Acessos - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Gestao de Acessos</h1>
+    <h1>Gestão de Acessos</h1>
 </div>
 
 <div class="section">
@@ -21,6 +21,7 @@
         <p class="card-category-desc">{{ funcionario.email }}</p>
 
         <form method="POST" action="{{ url_for('salvar_acessos_funcionario', funcionario_id=funcionario.id) }}">
+            {{ csrf_input|safe }}
             <div class="form-group" style="gap:8px;">
                 {% for chave, rotulo in paginas_sistema.items() %}
                 <label>
@@ -48,3 +49,4 @@
     {% endfor %}
 </div>
 {% endblock %}
+

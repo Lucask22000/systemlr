@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Editar Produto - SystemLR{% endblock %}
 
@@ -9,9 +9,10 @@
 
 <div class="form-container">
     <form method="POST" enctype="multipart/form-data" class="form">
+        {{ csrf_input|safe }}
         <div class="form-group">
-            <label for="codigo">Codigo</label>
-            <input type="text" id="codigo" value="{{ produto.codigo }}" disabled class="input-text">
+            <label for="código">Codigo</label>
+            <input type="text" id="código" value="{{ produto.código }}" disabled class="input-text">
         </div>
 
         <div class="form-group">
@@ -50,6 +51,18 @@
         </div>
 
         <div class="form-group">
+            <label for="fornecedor_id">Fornecedor *</label>
+            <select id="fornecedor_id" name="fornecedor_id" required class="input-select">
+                <option value="">Selecione um fornecedor</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id }}" {% if produto.fornecedor_id == fornecedor.id %}selected{% endif %}>
+                    {{ fornecedor.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="endereco_id">Endereco de Estoque</label>
             <select id="endereco_id" name="endereco_id" class="input-select">
                 <option value="">Nao definido</option>
@@ -70,6 +83,16 @@
             <div class="form-group">
                 <label for="preco_venda">Preco de Venda *</label>
                 <input type="number" id="preco_venda" name="preco_venda" step="0.01" required value="{{ produto.preco_venda }}" class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="status_disponibilidade">Disponibilidade operacional</label>
+                <select id="status_disponibilidade" name="status_disponibilidade" class="input-select">
+                    {% set status_atual_normalizado = produto.status_disponibilidade_label|lower %}
+                    {% for chave, label in status_disponibilidade_labels.items() %}
+                    <option value="{{ chave }}" {% if status_atual_normalizado == chave %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
 
@@ -97,3 +120,4 @@
     </form>
 </div>
 {% endblock %}
+

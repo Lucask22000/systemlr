@@ -1,527 +1,15 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}PDV - Ponto de Venda - SystemLR{% endblock %}
 
 {% block extra_css %}
-<style>
-    .pdv-container {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 360px;
-        gap: 16px;
-        align-items: start;
-    }
-
-    .pdv-panel {
-        background: #fff;
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        box-shadow: var(--shadow);
-        overflow: hidden;
-    }
-
-    .pdv-panel-head {
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--border);
-        background: #f8fafc;
-        font-weight: 700;
-        color: #0f172a;
-    }
-
-    .pdv-panel-body {
-        padding: 14px;
-    }
-
-    .pdv-toolbar {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .pdv-produtos {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(152px, 1fr));
-        gap: 10px;
-        max-height: 72vh;
-        overflow-y: auto;
-        padding: 2px;
-    }
-
-    .produto-card {
-        background: #fff;
-        border: 1px solid #d7dee6;
-        border-radius: 10px;
-        padding: 10px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-    }
-
-    .produto-card:hover {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
-        transform: translateY(-1px);
-    }
-
-    .produto-card.added {
-        border-color: #198754;
-        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.15);
-        animation: pulseAdd 0.8s ease-in-out;
-    }
-
-    .produto-card.low-stock {
-        background-color: #fff8e1;
-        border-color: #ffcf66;
-    }
-
-    @keyframes pulseAdd {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.03); }
-        100% { transform: scale(1); }
-    }
-
-    .produto-imagem {
-        width: 100%;
-        height: 84px;
-        object-fit: contain;
-    }
-
-    .produto-nome {
-        font-weight: 700;
-        font-size: 0.86rem;
-        color: #1f2937;
-        min-height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .produto-preco {
-        font-size: 0.95rem;
-        color: var(--primary);
-        font-weight: 700;
-    }
-
-    .produto-estoque {
-        font-size: 0.75rem;
-        color: #64748b;
-    }
-
-    .btn-add-produto {
-        width: 100%;
-        padding: 6px 8px;
-        border: none;
-        border-radius: 8px;
-        background: #198754;
-        color: #fff;
-        font-size: 0.8rem;
-        font-weight: 700;
-    }
-
-    .btn-add-produto:hover {
-        background: #157347;
-    }
-
-    .field-label {
-        display: block;
-        font-size: 0.75rem;
-        color: #64748b;
-        font-weight: 600;
-        margin-bottom: 5px;
-    }
-
-    .pedido-header {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-    }
-
-    .pedido-select {
-        width: 100%;
-        min-height: 40px;
-        border: 1px solid #ced5dd;
-        border-radius: 8px;
-        padding: 8px 10px;
-        font-size: 0.9rem;
-    }
-
-    .pedido-filtros {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        margin-bottom: 10px;
-    }
-
-    .pedido-select-hidden {
-        display: none;
-    }
-
-    .open-orders-panel {
-        border: 1px solid #dbe2ea;
-        border-radius: 10px;
-        padding: 8px;
-        margin-bottom: 12px;
-        background: #f9fbfe;
-    }
-
-    .open-orders-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        margin-bottom: 8px;
-        align-items: center;
-    }
-
-    .open-orders-title {
-        font-size: 0.76rem;
-        font-weight: 700;
-        color: #475569;
-    }
-
-    .open-orders-count {
-        font-size: 0.75rem;
-        color: var(--primary);
-        font-weight: 700;
-    }
-
-    .open-orders-list {
-        max-height: 240px;
-        overflow-y: auto;
-        display: grid;
-        gap: 8px;
-    }
-
-    .open-order-item {
-        width: 100%;
-        text-align: left;
-        border: 1px solid #d8e2ef;
-        border-radius: 10px;
-        background: #fff;
-        padding: 10px;
-        cursor: pointer;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .open-order-item:hover {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.1);
-    }
-
-    .open-order-item.active {
-        border-color: var(--primary);
-        background: #eef8f7;
-        box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.16);
-    }
-
-    .open-order-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 4px;
-    }
-
-    .open-order-meta {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        color: #64748b;
-        font-size: 0.72rem;
-    }
-
-    .itens-lista {
-        min-height: 190px;
-        max-height: 260px;
-        overflow-y: auto;
-        border: 1px solid #dbe2ea;
-        border-radius: 10px;
-        padding: 10px;
-        background: #fafcff;
-        margin-bottom: 12px;
-    }
-
-    .item-pedido {
-        background: #fff;
-        border-radius: 8px;
-        border-left: 3px solid var(--primary);
-        padding: 10px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        align-items: center;
-        font-size: 0.8rem;
-    }
-
-    .item-pedido.highlight {
-        background: #fff7db;
-        animation: highlightPulse 0.6s ease-in-out;
-    }
-
-    @keyframes highlightPulse {
-        0% { background-color: #fff7db; }
-        50% { background-color: #fff2bf; }
-        100% { background-color: #fff7db; }
-    }
-
-    .item-info {
-        flex: 1;
-    }
-
-    .item-produto {
-        font-weight: 700;
-        color: #1f2937;
-    }
-
-    .item-qty {
-        color: #64748b;
-        font-size: 0.72rem;
-    }
-
-    .item-preco {
-        color: #047857;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .btn-remove-item {
-        border: none;
-        border-radius: 7px;
-        background: #dc3545;
-        color: #fff;
-        padding: 5px 9px;
-        font-size: 0.72rem;
-    }
-
-    .btn-remove-item:hover {
-        background: #bb2d3b;
-    }
-
-    .pedido-resumo {
-        background: #f8fafc;
-        border: 1px solid #dbe2ea;
-        border-radius: 10px;
-        padding: 11px;
-        margin-bottom: 12px;
-    }
-
-    .resumo-linha,
-    .resumo-total {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-    }
-
-    .resumo-linha {
-        font-size: 0.83rem;
-        margin-bottom: 7px;
-    }
-
-    .resumo-total {
-        font-size: 1rem;
-        color: var(--primary);
-        font-weight: 800;
-        border-top: 2px solid #d3dce6;
-        padding-top: 8px;
-    }
-
-    .pedido-acoes {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-
-    .btn-pedido {
-        flex: 1;
-        min-height: 44px;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.84rem;
-        font-weight: 700;
-    }
-
-    .btn-nova-venda {
-        background: #198754;
-        color: #fff;
-    }
-
-    .btn-finalizar {
-        background: var(--primary);
-        color: #fff;
-    }
-
-    .btn-pedido:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-
-    .vazio {
-        text-align: center;
-        color: #94a3b8;
-        padding: 20px 10px;
-        font-size: 0.8rem;
-    }
-
-    .payment-modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.55);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        padding: 16px;
-        z-index: 1200;
-    }
-
-    .payment-modal.open {
-        display: flex;
-    }
-
-    .payment-modal-content {
-        width: 100%;
-        max-width: 560px;
-        background: #fff;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        box-shadow: 0 16px 36px rgba(2, 6, 23, 0.3);
-        padding: 18px;
-    }
-
-    .payment-title {
-        margin-top: 0;
-        margin-bottom: 8px;
-        font-size: 1.2rem;
-    }
-
-    .payment-subtitle {
-        margin-bottom: 12px;
-        color: #475569;
-    }
-
-    .payment-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-        margin-bottom: 10px;
-    }
-
-    .payment-option {
-        border: 1px solid #d4dce5;
-        border-radius: 8px;
-        padding: 9px 10px;
-        cursor: pointer;
-        background: #f8fafc;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
-
-    .payment-option-row {
-        grid-column: 1 / -1;
-    }
-
-    .payment-fields {
-        margin-top: 10px;
-        display: grid;
-        gap: 10px;
-    }
-
-    .payment-row {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-    }
-
-    .payment-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 14px;
-    }
-
-    .payment-actions .btn {
-        flex: 1;
-    }
-
-    @media (max-width: 1100px) {
-        .pdv-container {
-            grid-template-columns: 1fr;
-        }
-
-        .pedido-panel {
-            position: static;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .pdv-toolbar {
-            flex-wrap: wrap;
-        }
-
-        .pdv-toolbar > * {
-            width: 100%;
-        }
-
-        .pdv-produtos {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            max-height: 56vh;
-        }
-
-        .pedido-filtros {
-            grid-template-columns: 1fr;
-        }
-
-        .pedido-acoes {
-            flex-direction: column;
-            position: sticky;
-            bottom: 0;
-            background: #fff;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 8px;
-            z-index: 5;
-        }
-
-        .btn-pedido {
-            width: 100%;
-        }
-
-        .payment-grid,
-        .payment-row {
-            grid-template-columns: 1fr;
-        }
-
-        .payment-actions {
-            flex-direction: column;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .pdv-produtos {
-            grid-template-columns: 1fr;
-            max-height: 46vh;
-        }
-
-        .item-pedido {
-            flex-wrap: wrap;
-        }
-
-        .item-preco {
-            width: 100%;
-        }
-    }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/pdv.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1>PDV</h1>
-    <div class="text-muted">Fluxo rapido de vendas e pagamento</div>
+    <div class="text-muted">Fluxo rápido de vendas e pagamento</div>
 </div>
 
 <div class="pdv-container">
@@ -530,7 +18,7 @@
         <div class="pdv-panel-body">
             <div class="pdv-toolbar">
                 <input type="text" id="filtroNome" class="form-control" placeholder="Filtrar produtos...">
-                <button type="button" class="btn btn-outline-secondary js-open-barcode-scanner" data-barcode-target="barcodeInput" data-barcode-mode="continuous" title="Ler codigo de barras">
+                <button type="button" class="btn btn-outline-secondary js-open-barcode-scanner" data-barcode-target="barcodeInput" data-barcode-mode="continuous" title="Ler código de barras">
                     Scanner
                 </button>
                 <input type="text" id="barcodeInput" class="d-none">
@@ -539,7 +27,7 @@
             <div class="pdv-produtos" id="produtosGrid">
                 {% for produto in produtos %}
                 <div class="produto-card {% if produto.quantidade_estoque < produto.quantidade_minima %}low-stock{% endif %}"
-                    data-id="{{ produto.id }}" data-codigo="{{ produto.codigo }}" data-preco="{{ produto.preco_venda }}" data-nome="{{ produto.nome }}" data-categoria="{{ produto.categoria.nome if produto.categoria else '' }}">
+                    data-id="{{ produto.id }}" data-código="{{ produto.código }}" data-preco="{{ produto.preco_venda }}" data-nome="{{ produto.nome }}" data-categoria="{{ produto.categoria.nome if produto.categoria else '' }}" data-detalhe-url="{{ url_for('visualizar_produto', produto_id=produto.id) }}" data-estoque="{{ produto.quantidade_estoque }}">
                     {% if produto.imagem_path %}
                     <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" class="produto-imagem">
                     {% endif %}
@@ -552,8 +40,8 @@
                             Estoque: {{ produto.quantidade_estoque }}
                         {% endif %}
                     </div>
-                    <button type="button" class="btn-add-produto" onclick="adicionarAoCarrinho({{ produto.id }}, '{{ produto.nome }}', {{ produto.preco_venda }})">
-                        Adicionar
+                    <button type="button" class="btn-add-produto" aria-label="Adicionar {{ produto.nome }} ao pedido" onclick="adicionarAoCarrinho({{ produto.id }}, '{{ produto.nome }}', {{ produto.preco_venda }})" {% if produto.quantidade_estoque <= 0 %}disabled title="Sem estoque"{% endif %}>
+                        {% if produto.quantidade_estoque <= 0 %}Indisponível{% else %}Adicionar{% endif %}
                     </button>
                 </div>
                 {% endfor %}
@@ -578,6 +66,7 @@
                 </div>
             </div>
 
+            {% if atendimento_mesas_ativo %}
             <div class="mb-2">
                 <label for="mesaSelect" class="field-label">Mesa (opcional)</label>
                 <select id="mesaSelect" class="pedido-select">
@@ -587,9 +76,11 @@
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
 
             <label class="field-label">Pedidos em andamento (todas as caixas)</label>
             <div class="pedido-filtros">
+                {% if atendimento_mesas_ativo %}
                 <select id="filtroPedidoMesa" class="pedido-select" onchange="carregarPedidosEmAberto()">
                     <option value="">Todas as mesas</option>
                     {% for mesa in mesas %}
@@ -602,6 +93,7 @@
                     <option value="{{ garcom.id }}">{{ garcom.nome }}</option>
                     {% endfor %}
                 </select>
+                {% endif %}
                 <select id="filtroPedidoStatus" class="pedido-select" onchange="carregarPedidosEmAberto()">
                     <option value="">Todos os status</option>
                     <option value="aberto">Aberto</option>
@@ -638,6 +130,7 @@
                     <span>Total:</span>
                     <span id="total">R$ 0.00</span>
                 </div>
+                <div class="resumo-itens" id="itemCount">0 itens</div>
             </div>
 
             <div class="pedido-acoes">
@@ -652,9 +145,9 @@
     </section>
 </div>
 
-<div class="payment-modal" id="paymentModal">
-    <div class="payment-modal-content">
-        <h3 class="payment-title">Finalizar pagamento</h3>
+<div class="payment-modal" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
+    <div class="payment-modal-content" tabindex="-1">
+        <h3 class="payment-title" id="paymentModalTitle">Finalizar pagamento</h3>
         <p class="payment-subtitle">Total do pedido: <strong id="paymentTotalLabel">R$ 0.00</strong></p>
 
         <div class="payment-grid">
@@ -670,9 +163,10 @@
                 <label for="paymentValor" class="field-label">Valor recebido</label>
                 <input type="number" step="0.01" id="paymentValor" class="pedido-select" placeholder="Ex.: 100.00">
             </div>
+            <small id="trocoInfo" class="text-muted">Troco: R$ 0.00</small>
         </div>
 
-        <div class="payment-fields" id="paymentSplitFields" style="display:none;">
+        <div class="payment-fields is-hidden" id="paymentSplitFields">
             <div class="payment-row">
                 <div>
                     <label for="paymentDinheiro" class="field-label">Dinheiro</label>
@@ -686,16 +180,23 @@
             <small id="splitTotalInfo" class="text-muted">Total informado: R$ 0.00</small>
         </div>
 
-        <div class="payment-fields" id="paymentCrediarioFields" style="display:none;">
+        <div class="payment-fields is-hidden" id="paymentCrediarioFields">
             <div>
                 <label for="paymentClienteCrediario" class="field-label">Cliente (opcional)</label>
                 <input type="text" id="paymentClienteCrediario" class="pedido-select" placeholder="Nome do cliente">
             </div>
         </div>
 
+        <div class="payment-receipt-option">
+            <label class="checkbox-inline">
+                <input type="checkbox" id="paymentEmitirComprovante" checked>
+                Emitir comprovante do cliente apos finalizar
+            </label>
+        </div>
+
         <div class="payment-actions">
             <button type="button" class="btn btn-outline-secondary" onclick="fecharModalPagamento()">Cancelar</button>
-            <button type="button" class="btn btn-primary" onclick="confirmarFinalizacaoPagamento()">Confirmar</button>
+            <button type="button" class="btn btn-primary" id="btnConfirmarPagamento" onclick="confirmarFinalizacaoPagamento()">Confirmar</button>
         </div>
     </div>
 </div>
@@ -706,11 +207,35 @@ let carrinhoOriginal = {};
 let pedidoAtual = null;
 let pedidoStatusAtual = null;
 let caixaSelecionada = null;
+let ultimoElementoComFoco = null;
+
+function setButtonLoading(buttonEl, isLoading, loadingText, idleText) {
+    if (!buttonEl) return;
+    if (isLoading) {
+        if (!buttonEl.dataset.idleText) {
+            buttonEl.dataset.idleText = idleText || buttonEl.textContent.trim();
+        }
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>${loadingText || 'Processando...'}`;
+        return;
+    }
+    const textoPadrao = buttonEl.dataset.idleText || idleText || buttonEl.textContent.trim();
+    buttonEl.textContent = textoPadrao;
+    delete buttonEl.dataset.idleText;
+}
 
 function adicionarAoCarrinho(produtoId, nome, preco) {
     if (!document.getElementById('caixaSelect').value && !pedidoAtual) {
         mostrarAlerta('Selecione uma caixa para iniciar nova venda.', 'error');
         return;
+    }
+    const card = document.querySelector(`.produto-card[data-id="${produtoId}"]`);
+    if (card) {
+        const estoque = parseInt(card.dataset.estoque || '0', 10);
+        if (estoque <= 0) {
+            mostrarAlerta('Produto sem estoque disponível.', 'warning');
+            return;
+        }
     }
 
     const isNew = !carrinho[produtoId];
@@ -720,7 +245,6 @@ function adicionarAoCarrinho(produtoId, nome, preco) {
     carrinho[produtoId].quantidade++;
     
     // highlight produto card briefly
-    const card = document.querySelector(`.produto-card[data-id="${produtoId}"]`);
     if (card) {
         card.classList.add('added');
         setTimeout(() => card.classList.remove('added'), 900);
@@ -742,14 +266,17 @@ function atualizarCarrinho(highlightId) {
         itensList.innerHTML = '<div class="vazio">Nenhum item adicionado</div>';
         document.getElementById('subtotal').textContent = 'R$ 0.00';
         document.getElementById('total').textContent = 'R$ 0.00';
+        document.getElementById('itemCount').textContent = '0 itens';
         atualizarEstadoAcoes();
         return;
     }
 
     let total = 0;
+    let totalItens = 0;
     itensList.innerHTML = itens.map(([id, item]) => {
         const subtotal = item.quantidade * item.preco;
         total += subtotal;
+        totalItens += item.quantidade;
         return `
             <div class="item-pedido" data-id="${id}">
                 <div class="item-info">
@@ -772,6 +299,7 @@ function atualizarCarrinho(highlightId) {
 
     document.getElementById('subtotal').textContent = `R$ ${total.toFixed(2)}`;
     document.getElementById('total').textContent = `R$ ${total.toFixed(2)}`;
+    document.getElementById('itemCount').textContent = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
     atualizarEstadoAcoes();
 }
 
@@ -841,9 +369,11 @@ function carregarPedidosEmAberto() {
     const pedidoSelect = document.getElementById('pedidoAbertoSelect');
     const pedidoLista = document.getElementById('pedidoAbertoLista');
     const openOrdersCount = document.getElementById('openOrdersCount');
+    const filtroMesaEl = document.getElementById('filtroPedidoMesa');
+    const filtroGarcomEl = document.getElementById('filtroPedidoGarcom');
 
-    const mesaId = document.getElementById('filtroPedidoMesa').value || '';
-    const garcomId = document.getElementById('filtroPedidoGarcom').value || '';
+    const mesaId = filtroMesaEl ? (filtroMesaEl.value || '') : '';
+    const garcomId = filtroGarcomEl ? (filtroGarcomEl.value || '') : '';
     const status = document.getElementById('filtroPedidoStatus').value || '';
     const params = new URLSearchParams();
     if (caixaId) params.append('caixa_id', caixaId);
@@ -881,7 +411,7 @@ function carregarPedidoPorId(pedidoId) {
         .then(r => r.json())
         .then(data => {
             if (!data.success || !data.pedido) {
-                mostrarAlerta('Pedido nao encontrado.', 'error');
+                mostrarAlerta('Pedido não encontrado.', 'error');
                 return;
             }
             const pedido = data.pedido;
@@ -896,8 +426,9 @@ function carregarPedidoPorId(pedidoId) {
                 };
             });
             carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
-            if (pedido.mesa_id) {
-                document.getElementById('mesaSelect').value = String(pedido.mesa_id);
+            const mesaSelect = document.getElementById('mesaSelect');
+            if (mesaSelect && pedido.mesa_id) {
+                mesaSelect.value = String(pedido.mesa_id);
             }
             document.getElementById('pedidoAbertoSelect').value = String(pedido.id);
             atualizarListaSelecaoAtiva();
@@ -934,7 +465,7 @@ function renderPedidosEmAberto(pedidos) {
         const mesaTxt = pedido.mesa_numero ? `Mesa ${pedido.mesa_numero}` : 'Sem mesa';
         const garcomTxt = pedido.garcom_nome || 'Sem garcom';
         const caixaTxt = pedido.caixa_nome || 'Sem caixa';
-        const clienteTxt = pedido.cliente_nome || 'Cliente nao informado';
+        const clienteTxt = pedido.cliente_nome || 'Cliente não informado';
         const statusTxt = formatStatusPedido(pedido.status);
         const activeClass = pedidoAtual === pedido.id ? 'active' : '';
         return `
@@ -993,8 +524,18 @@ function atualizarCaixa() {
 }
 
 function novaVenda() {
+    const btnNovaVenda = document.getElementById('btnNovaVenda');
+    if (btnNovaVenda && btnNovaVenda.dataset.loading === '1') {
+        return;
+    }
+    if (btnNovaVenda) {
+        btnNovaVenda.dataset.loading = '1';
+        setButtonLoading(btnNovaVenda, true, 'Processando...', '+ Adicionar Produtos');
+    }
+
     const caixaId = document.getElementById('caixaSelect').value;
-    const mesaId = document.getElementById('mesaSelect').value || null;
+    const mesaSelect = document.getElementById('mesaSelect');
+    const mesaId = mesaSelect ? (mesaSelect.value || null) : null;
 
     const itensTodos = Object.entries(carrinho).map(([id, item]) => ({
         produto_id: parseInt(id),
@@ -1004,6 +545,11 @@ function novaVenda() {
     if (pedidoAtual) {
         if (pedidoStatusAtual !== 'aberto') {
             mostrarAlerta('Somente pedidos com status "aberto" podem receber novos itens.', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
             return;
         }
         // calcular apenas diferenca em relacao ao carrinhoOriginal
@@ -1016,6 +562,11 @@ function novaVenda() {
         });
         if (delta.length === 0) {
             mostrarAlerta('Nenhum item novo para adicionar.', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
             return;
         }
         fetch(`/api/pedidos/${pedidoAtual}/adicionar`, {
@@ -1025,22 +576,43 @@ function novaVenda() {
         })
         .then(r => r.json())
         .then(data => {
+            const payload = data.data || {};
             if (data.success) {
                 mostrarAlerta(`${data.message}`, 'success');
                 carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
+                if (payload.total !== undefined) {
+                    document.getElementById('total').textContent = `R$ ${parseFloat(payload.total || 0).toFixed(2)}`;
+                }
                 carregarPedidosEmAberto();
             } else {
                 mostrarAlerta(`${data.message}`, 'error');
             }
         })
-        .catch(e => mostrarAlerta('Erro ao atualizar pedido: ' + e, 'error'));
+        .catch(e => mostrarAlerta('Erro ao atualizar pedido: ' + e, 'error'))
+        .finally(() => {
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+        });
     } else {
         if (!caixaId) {
             mostrarAlerta('Selecione uma caixa para iniciar nova venda.', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
             return;
         }
         if (Object.keys(carrinho).length === 0) {
             mostrarAlerta('Adicione produtos ao carrinho!', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
             return;
         }
         fetch('{{ url_for("criar_pedido_api") }}', {
@@ -1050,21 +622,29 @@ function novaVenda() {
         })
         .then(r => r.json())
         .then(data => {
+            const payload = data.data || {};
             if (data.success) {
-                pedidoAtual = data.pedido_id;
+                pedidoAtual = data.pedido_id || payload.pedido_id;
                 pedidoStatusAtual = 'aberto';
                 mostrarAlerta(`${data.message}`, 'success');
                 // manter os itens no carrinho ate o operador finalizar
                 atualizarBotaoNovaVenda();
                 carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
                 carregarPedidosEmAberto();
-                document.getElementById('pedidoAbertoSelect').value = String(data.pedido_id);
+                document.getElementById('pedidoAbertoSelect').value = String(pedidoAtual);
                 atualizarEstadoAcoes();
             } else {
                 mostrarAlerta(`${data.message}`, 'error');
             }
         })
-        .catch(e => mostrarAlerta('Erro ao criar pedido: ' + e, 'error'));
+        .catch(e => mostrarAlerta('Erro ao criar pedido: ' + e, 'error'))
+        .finally(() => {
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+        });
     }
 }
 
@@ -1081,26 +661,70 @@ function obterTotalCarrinho() {
 }
 
 function abrirModalPagamento() {
+    ultimoElementoComFoco = document.activeElement;
     const total = obterTotalCarrinho();
     document.getElementById('paymentTotalLabel').textContent = `R$ ${total.toFixed(2)}`;
     document.getElementById('paymentValor').value = total.toFixed(2);
     document.getElementById('paymentDinheiro').value = '';
     document.getElementById('paymentCartao').value = '';
     document.getElementById('paymentClienteCrediario').value = '';
+    document.getElementById('paymentEmitirComprovante').checked = true;
     document.querySelector('input[name="metodo_pagamento_pdv"][value="dinheiro"]').checked = true;
     atualizarCamposPagamento();
     atualizarInfoDividido();
-    document.getElementById('paymentModal').classList.add('open');
+    const modal = document.getElementById('paymentModal');
+    modal.classList.add('open');
+    const focusTarget = document.getElementById('btnConfirmarPagamento');
+    if (focusTarget) {
+        focusTarget.focus();
+    }
 }
 
 function fecharModalPagamento() {
-    document.getElementById('paymentModal').classList.remove('open');
+    const modal = document.getElementById('paymentModal');
+    modal.classList.remove('open');
+    if (ultimoElementoComFoco && typeof ultimoElementoComFoco.focus === 'function') {
+        ultimoElementoComFoco.focus();
+    }
 }
 
 function atualizarInfoDividido() {
     const dinheiro = parseFloat((document.getElementById('paymentDinheiro').value || '0').replace(',', '.')) || 0;
     const cartao = parseFloat((document.getElementById('paymentCartao').value || '0').replace(',', '.')) || 0;
-    document.getElementById('splitTotalInfo').textContent = `Total informado: R$ ${(dinheiro + cartao).toFixed(2)}`;
+    const total = obterTotalCarrinho();
+    const totalInformado = dinheiro + cartao;
+    const diferenca = totalInformado - total;
+    if (diferenca >= 0) {
+        document.getElementById('splitTotalInfo').textContent = `Total informado: R$ ${totalInformado.toFixed(2)} | Troco: R$ ${diferenca.toFixed(2)}`;
+    } else {
+        document.getElementById('splitTotalInfo').textContent = `Total informado: R$ ${totalInformado.toFixed(2)} | Falta: R$ ${Math.abs(diferenca).toFixed(2)}`;
+    }
+}
+
+function atualizarInfoTroco() {
+    const metodo = document.querySelector('input[name="metodo_pagamento_pdv"]:checked').value;
+    const trocoInfo = document.getElementById('trocoInfo');
+    if (!trocoInfo) return;
+
+    const total = obterTotalCarrinho();
+    const valorPago = parseFloat((document.getElementById('paymentValor').value || '0').replace(',', '.')) || 0;
+    const diferenca = valorPago - total;
+
+    if (metodo === 'dinheiro') {
+        if (diferenca >= 0) {
+            trocoInfo.textContent = `Troco: R$ ${diferenca.toFixed(2)}`;
+        } else {
+            trocoInfo.textContent = `Falta: R$ ${Math.abs(diferenca).toFixed(2)}`;
+        }
+        return;
+    }
+
+    if (metodo === 'pix' || metodo === 'cartao') {
+        trocoInfo.textContent = `Valor informado: R$ ${valorPago.toFixed(2)}`;
+        return;
+    }
+
+    trocoInfo.textContent = 'Troco: R$ 0.00';
 }
 
 function atualizarCamposPagamento() {
@@ -1123,19 +747,56 @@ function atualizarCamposPagamento() {
         crediarioFields.style.display = 'none';
         defaultFields.style.display = 'grid';
     }
+    atualizarInfoTroco();
+    atualizarInfoDividido();
 }
 
 function confirmarFinalizacaoPagamento() {
+    const btnConfirmar = document.getElementById('btnConfirmarPagamento');
+    if (btnConfirmar && btnConfirmar.dataset.loading === '1') {
+        return;
+    }
+    if (btnConfirmar) {
+        btnConfirmar.dataset.loading = '1';
+        setButtonLoading(btnConfirmar, true, 'Processando...', 'Confirmar');
+    }
+
     const metodo = document.querySelector('input[name="metodo_pagamento_pdv"]:checked').value;
+    const emitirComprovante = document.getElementById('paymentEmitirComprovante').checked;
+    let janelaComprovante = null;
+    if (emitirComprovante) {
+        janelaComprovante = window.open('', '_blank');
+    }
+
     const payload = { metodo_pagamento: metodo };
 
     if (metodo === 'dividido') {
         const dinheiro = parseFloat((document.getElementById('paymentDinheiro').value || '0').replace(',', '.')) || 0;
         const cartao = parseFloat((document.getElementById('paymentCartao').value || '0').replace(',', '.')) || 0;
+        const totalPedido = obterTotalCarrinho();
+        if ((dinheiro + cartao) < totalPedido) {
+            mostrarAlerta(`Valor informado insuficiente. Falta R$ ${(totalPedido - (dinheiro + cartao)).toFixed(2)}.`, 'error');
+            if (btnConfirmar) {
+                btnConfirmar.dataset.loading = '0';
+                setButtonLoading(btnConfirmar, false, '', 'Confirmar');
+            }
+            return;
+        }
         payload.split_pagamento = { dinheiro, cartao };
     } else {
         const valorPago = parseFloat((document.getElementById('paymentValor').value || '').replace(',', '.'));
         if (!Number.isNaN(valorPago)) {
+            if (metodo === 'dinheiro') {
+                const totalPedido = obterTotalCarrinho();
+                if (valorPago < totalPedido) {
+                    mostrarAlerta(`Valor recebido insuficiente. Falta R$ ${(totalPedido - valorPago).toFixed(2)}.`, 'error');
+                    if (btnConfirmar) {
+                        btnConfirmar.dataset.loading = '0';
+                        setButtonLoading(btnConfirmar, false, '', 'Confirmar');
+                    }
+                    return;
+                }
+            }
             payload.valor_pago = valorPago;
         }
         if (metodo === 'crediario') {
@@ -1150,24 +811,48 @@ function confirmarFinalizacaoPagamento() {
     })
     .then(r => r.json())
     .then(data => {
+        const payload = data.data || {};
         if (data.success) {
+            const pedidoIdComprovante = payload.pedido_id || pedidoAtual;
             let msg = data.message;
-            if (data.metodo_pagamento) {
-                msg += ' (pagamento: ' + data.metodo_pagamento;
-                if (data.valor_pago !== null && data.valor_pago !== undefined) {
-                    msg += ' R$ ' + parseFloat(data.valor_pago).toFixed(2);
+            const metodoPagamento = data.metodo_pagamento || payload.metodo_pagamento;
+            const valorPago = (data.valor_pago !== undefined ? data.valor_pago : payload.valor_pago);
+            if (metodoPagamento) {
+                msg += ' (pagamento: ' + metodoPagamento;
+                if (valorPago !== null && valorPago !== undefined) {
+                    msg += ' R$ ' + parseFloat(valorPago).toFixed(2);
                 }
                 msg += ')';
             }
             mostrarAlerta(`OK ${msg}`, 'success');
             fecharModalPagamento();
+            if (emitirComprovante && pedidoIdComprovante) {
+                const comprovanteUrl = `/pedidos/${pedidoIdComprovante}/comprovante`;
+                if (janelaComprovante) {
+                    janelaComprovante.location.href = comprovanteUrl;
+                } else {
+                    window.open(comprovanteUrl, '_blank');
+                }
+            } else if (janelaComprovante) {
+                janelaComprovante.close();
+            }
             limparPedidoAtual();
             carregarPedidosEmAberto();
         } else {
+            if (janelaComprovante) janelaComprovante.close();
             mostrarAlerta(`Erro: ${data.message}`, 'error');
         }
     })
-    .catch(e => mostrarAlerta('Erro ao finalizar: ' + e, 'error'));
+    .catch(e => {
+        if (janelaComprovante) janelaComprovante.close();
+        mostrarAlerta('Erro ao finalizar: ' + e, 'error');
+    })
+    .finally(() => {
+        if (btnConfirmar) {
+            btnConfirmar.dataset.loading = '0';
+            setButtonLoading(btnConfirmar, false, '', 'Confirmar');
+        }
+    });
 }
 function mostrarAlerta(msg, tipo) {
     const alertas = document.getElementById('alertas');
@@ -1211,14 +896,33 @@ function getProductCards() {
     return Array.from(document.querySelectorAll('.produto-card'));
 }
 
+function initProdutoDetalhesNoPdv() {
+    getProductCards().forEach((card) => {
+        card.addEventListener('click', (event) => {
+            if (event.target.closest('.btn-add-produto')) {
+                return;
+            }
+
+            const detalheUrl = card.dataset.detalheUrl;
+            if (!detalheUrl) return;
+            window.location.href = detalheUrl;
+        });
+    });
+}
+
 function findProductCardByCodeExact(codeValue) {
     const normalizedCode = normalizeCode(codeValue);
     if (!normalizedCode) return null;
-    return getProductCards().find((card) => normalizeCode(card.dataset.codigo) === normalizedCode) || null;
+    return getProductCards().find((card) => normalizeCode(card.dataset.código) === normalizedCode) || null;
 }
 
 function addProductFromCard(card) {
     if (!card) return false;
+    const estoque = parseInt(card.dataset.estoque || '0', 10);
+    if (estoque <= 0) {
+        mostrarAlerta('Produto sem estoque disponível.', 'warning');
+        return false;
+    }
     adicionarAoCarrinho(parseInt(card.dataset.id, 10), card.dataset.nome, parseFloat(card.dataset.preco));
     return true;
 }
@@ -1234,13 +938,13 @@ function applyProductFilter(queryText) {
         }
 
         const nome = normalizeSearchText(card.dataset.nome);
-        const codigo = normalizeSearchText(card.dataset.codigo);
-        const codigoNormalizado = normalizeCode(card.dataset.codigo);
+        const código = normalizeSearchText(card.dataset.código);
+        const códigoNormalizado = normalizeCode(card.dataset.código);
         const categoria = normalizeSearchText(card.dataset.categoria);
 
         const matchNome = nome.includes(query);
         const matchCategoria = categoria.includes(query);
-        const matchCodigo = codigo.includes(query) || (queryCode && codigoNormalizado.includes(queryCode));
+        const matchCodigo = código.includes(query) || (queryCode && códigoNormalizado.includes(queryCode));
 
         card.style.display = (matchNome || matchCategoria || matchCodigo) ? '' : 'none';
     });
@@ -1254,12 +958,12 @@ if (barcodeInput) {
         if (code) {
             const card = findProductCardByCodeExact(code);
             if (addProductFromCard(card)) {
-                mostrarAlertaTemporario(`Produto "${card.dataset.nome}" adicionado pelo codigo ${code}.`, 'success', 1700);
+                mostrarAlertaTemporario(`Produto "${card.dataset.nome}" adicionado pelo código ${code}.`, 'success', 1700);
                 const filtroInput = document.getElementById('filtroNome');
                 if (filtroInput) filtroInput.value = '';
                 applyProductFilter('');
             } else {
-                mostrarAlerta('Produto nao encontrado para o codigo: ' + code, 'error');
+                mostrarAlerta('Produto não encontrado para o código: ' + code, 'error');
             }
             e.target.value = '';
         }
@@ -1272,7 +976,7 @@ document.getElementById('filtroNome').addEventListener('input', (e) => {
 
     if (cardCodigoExato) {
         addProductFromCard(cardCodigoExato);
-        mostrarAlertaTemporario(`Produto "${cardCodigoExato.dataset.nome}" adicionado pelo codigo ${valorDigitado}.`, 'success', 1700);
+        mostrarAlertaTemporario(`Produto "${cardCodigoExato.dataset.nome}" adicionado pelo código ${valorDigitado}.`, 'success', 1700);
         e.target.value = '';
         applyProductFilter('');
         return;
@@ -1281,9 +985,24 @@ document.getElementById('filtroNome').addEventListener('input', (e) => {
     applyProductFilter(valorDigitado);
 });
 
+document.getElementById('filtroNome').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const cardDisponivel = getProductCards().find((card) => {
+        const estoque = parseInt(card.dataset.estoque || '0', 10);
+        return card.style.display !== 'none' && estoque > 0;
+    });
+    if (cardDisponivel) {
+        addProductFromCard(cardDisponivel);
+    } else {
+        mostrarAlerta('Nenhum produto disponível para adicionar.', 'warning');
+    }
+});
+
 document.querySelectorAll('input[name="metodo_pagamento_pdv"]').forEach((radio) => {
     radio.addEventListener('change', atualizarCamposPagamento);
 });
+document.getElementById('paymentValor').addEventListener('input', atualizarInfoTroco);
 document.getElementById('paymentDinheiro').addEventListener('input', atualizarInfoDividido);
 document.getElementById('paymentCartao').addEventListener('input', atualizarInfoDividido);
 document.getElementById('paymentModal').addEventListener('click', (event) => {
@@ -1291,11 +1010,62 @@ document.getElementById('paymentModal').addEventListener('click', (event) => {
         fecharModalPagamento();
     }
 });
+document.addEventListener('keydown', (event) => {
+    const modal = document.getElementById('paymentModal');
+    if (!modal.classList.contains('open')) return;
+    if (event.key === 'Escape') {
+        fecharModalPagamento();
+        return;
+    }
+    if (event.key !== 'Tab') return;
+    const focaveis = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])'))
+        .filter((el) => !el.disabled && el.offsetParent !== null);
+    if (!focaveis.length) return;
+    const primeiro = focaveis[0];
+    const ultimo = focaveis[focaveis.length - 1];
+    if (event.shiftKey && document.activeElement === primeiro) {
+        event.preventDefault();
+        ultimo.focus();
+    } else if (!event.shiftKey && document.activeElement === ultimo) {
+        event.preventDefault();
+        primeiro.focus();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    const filtroInput = document.getElementById('filtroNome');
+    if (event.ctrlKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        if (filtroInput) {
+            filtroInput.focus();
+            filtroInput.select();
+        }
+        return;
+    }
+    if (event.key === 'F4') {
+        const btnNova = document.getElementById('btnNovaVenda');
+        if (btnNova && !btnNova.disabled) {
+            event.preventDefault();
+            novaVenda();
+        }
+        return;
+    }
+    if (event.key === 'F2') {
+        const btnFin = document.getElementById('btnFinalizar');
+        if (btnFin && !btnFin.disabled) {
+            event.preventDefault();
+            finalizarVenda();
+        }
+    }
+});
 // ajustar texto inicial do botao de venda
 atualizarEstadoAcoes();
 carregarPedidosEmAberto();
+initProdutoDetalhesNoPdv();
 </script>
 {% endblock %}
+
+
 
 
 

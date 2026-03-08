@@ -1,16 +1,18 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title %}Histórico da Caixa - SystemLR{% endblock %}
+{% block title %}Historico da Caixa - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 1000px; margin: 40px auto;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-        <h1 style="color: #343a40; margin: 0;">Histórico: {{ caixa.nome }}</h1>
-        <a href="{{ url_for('listar_caixas') }}" style="padding: 10px 20px; background-color: #667eea; color: white; text-decoration: none; border-radius: 5px; font-weight: 600;">
-            ← Voltar
-        </a>
+<div class="caixa-history-page">
+    <div class="caixa-history-header">
+        <h1>Historico: {{ caixa.nome }}</h1>
+        <a href="{{ url_for('listar_caixas') }}" class="btn btn-primary">Voltar</a>
     </div>
-    
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -20,88 +22,71 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    
-    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-            <div style="padding: 15px; border-left: 4px solid #667eea;">
-                <small style="color: #6c757d; display: block;">Funcionário</small>
-                <strong style="font-size: 18px;">{{ caixa.funcionario.nome if caixa.funcionario else '-' }}</strong>
+
+    <section class="caixa-card">
+        <div class="caixa-summary-grid">
+            <div class="caixa-summary-item summary-func">
+                <small>Funcionario</small>
+                <strong>{{ caixa.funcionario.nome if caixa.funcionario else '-' }}</strong>
             </div>
-            <div style="padding: 15px; border-left: 4px solid #28a745;">
-                <small style="color: #6c757d; display: block;">Saldo Inicial</small>
-                <strong style="font-size: 18px;">R$ {{ '%.2f'|format(caixa.saldo_inicial) }}</strong>
+            <div class="caixa-summary-item summary-inicial">
+                <small>Saldo Inicial</small>
+                <strong>R$ {{ '%.2f'|format(caixa.saldo_inicial) }}</strong>
             </div>
-            <div style="padding: 15px; border-left: 4px solid #17a2b8;">
-                <small style="color: #6c757d; display: block;">Saldo Atual</small>
-                <strong style="font-size: 18px;">R$ {{ '%.2f'|format(caixa.saldo_atual) }}</strong>
+            <div class="caixa-summary-item summary-atual">
+                <small>Saldo Atual</small>
+                <strong>R$ {{ '%.2f'|format(caixa.saldo_atual) }}</strong>
             </div>
             {% if caixa.saldo_fechamento is not none %}
-                <div style="padding: 15px; border-left: 4px solid #ffc107;">
-                    <small style="color: #6c757d; display: block;">Saldo Fechamento</small>
-                    <strong style="font-size: 18px;">R$ {{ '%.2f'|format(caixa.saldo_fechamento) }}</strong>
+                <div class="caixa-summary-item summary-fechamento">
+                    <small>Saldo Fechamento</small>
+                    <strong>R$ {{ '%.2f'|format(caixa.saldo_fechamento) }}</strong>
                 </div>
             {% endif %}
         </div>
-    </div>
-    
-    <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-        <h2 style="color: #343a40; margin-bottom: 20px; font-size: 20px;">📋 Movimentações</h2>
-        
+    </section>
+
+    <section class="caixa-card">
+        <h2>Movimentações</h2>
+
         {% if movimentacoes %}
-            <div style="overflow-x: auto;">
-                <table style="width: 100%; border-collapse: collapse;">
+            <div class="table-responsive">
+                <table class="table caixa-history-table">
                     <thead>
-                        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
-                            <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Data/Hora</th>
-                            <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Tipo</th>
-                            <th style="padding: 15px; text-align: right; color: #343a40; font-weight: 600;">Valor</th>
-                            <th style="padding: 15px; text-align: left; color: #343a40; font-weight: 600;">Descrição</th>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Tipo</th>
+                            <th class="text-right">Valor</th>
+                            <th>Descricao</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for mov in movimentacoes %}
-                            <tr style="border-bottom: 1px solid #dee2e6; transition: background-color 0.2s;">
-                                <td style="padding: 15px; color: #343a40;">
-                                    {{ mov.criado_em.strftime('%d/%m/%Y %H:%M:%S') }}
-                                </td>
-                                <td style="padding: 15px;">
-                                    {% if mov.tipo == 'entrada' %}
-                                        <span style="background-color: #28a745; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                            ⬆️ ENTRADA
-                                        </span>
-                                    {% else %}
-                                        <span style="background-color: #dc3545; color: white; padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">
-                                            ⬇️ SAÍDA
-                                        </span>
-                                    {% endif %}
-                                </td>
-                                <td style="padding: 15px; text-align: right; color: #343a40; font-weight: 600;">
-                                    <span style="color: 
-                                        {% if mov.tipo == 'entrada' %}#28a745{% else %}#dc3545{% endif %};
-                                        font-size: 16px;">
-                                        {% if mov.tipo == 'entrada' %}+{% else %}-{% endif %}
-                                        R$ {{ '%.2f'|format(mov.valor) }}
+                            <tr>
+                                <td data-label="Data/Hora">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                                <td data-label="Tipo">
+                                    <span class="mov-badge mov-badge-{{ mov.tipo }}">
+                                        {{ 'ENTRADA' if mov.tipo == 'entrada' else 'SAIDA' }}
                                     </span>
                                 </td>
-                                <td style="padding: 15px; color: #6c757d;">
-                                    {{ mov.descricao }}
+                                <td data-label="Valor" class="text-right">
+                                    <span class="mov-valor mov-valor-{{ mov.tipo }}">
+                                        {{ '+' if mov.tipo == 'entrada' else '-' }} R$ {{ '%.2f'|format(mov.valor) }}
+                                    </span>
                                 </td>
+                                <td data-label="Descricao" class="mov-desc">{{ mov.descricao }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         {% else %}
-            <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; color: #6c757d;">
-                <p style="font-size: 16px; margin: 0;">Nenhuma movimentação registrada para esta caixa.</p>
+            <div class="caixa-empty-box">
+                <p>Nenhuma movimentacao registrada para esta caixa.</p>
             </div>
         {% endif %}
-    </div>
+    </section>
 </div>
 
-<style>
-    table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-</style>
 {% endblock %}
+

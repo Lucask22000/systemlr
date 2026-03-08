@@ -1,105 +1,8 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Comprovante Pedido #{{ pedido.id }}{% endblock %}
 
 {% block extra_css %}
-<style>
-    .receipt-wrap {
-        max-width: 780px;
-        margin: 0 auto;
-    }
-
-    .receipt-card {
-        background: #fff;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: var(--shadow);
-    }
-
-    .receipt-header {
-        text-align: center;
-        padding-bottom: 12px;
-        margin-bottom: 16px;
-        border-bottom: 1px dashed #9ca3af;
-    }
-
-    .receipt-logo-wrap {
-        margin-bottom: 8px;
-    }
-
-    .receipt-logo {
-        max-height: 72px;
-        width: auto;
-    }
-
-    .receipt-header h2 {
-        margin: 0 0 6px;
-        font-size: 1.2rem;
-    }
-
-    .receipt-muted {
-        color: #64748b;
-        font-size: 0.9rem;
-    }
-
-    .receipt-meta {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-        margin-bottom: 14px;
-    }
-
-    .receipt-items {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 16px;
-    }
-
-    .receipt-items th,
-    .receipt-items td {
-        border-bottom: 1px solid #e5e7eb;
-        padding: 8px 4px;
-        text-align: left;
-        font-size: 0.95rem;
-    }
-
-    .receipt-total {
-        text-align: right;
-        font-size: 1.1rem;
-        font-weight: 700;
-    }
-
-    .receipt-actions {
-        margin-top: 16px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    @media print {
-        .navbar,
-        .footer,
-        .receipt-actions {
-            display: none !important;
-        }
-
-        .main-content {
-            padding: 0;
-        }
-
-        .receipt-card {
-            border: none;
-            box-shadow: none;
-        }
-    }
-
-    @media (max-width: 640px) {
-        .receipt-meta {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
 {% endblock %}
 
 {% block content %}
@@ -115,7 +18,7 @@
                 <img src="{{ url_for('static', filename=empresa.logo_path) }}" alt="Logo da empresa" class="receipt-logo">
             </div>
             {% endif %}
-            <h2>{{ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else (empresa.razao_social if empresa and empresa.razao_social else 'Empresa nao cadastrada')) }}</h2>
+            <h2>{{ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else (empresa.razao_social if empresa and empresa.razao_social else 'Empresa não cadastrada')) }}</h2>
             {% if empresa and empresa.razao_social and empresa.nome_fantasia and empresa.razao_social != empresa.nome_fantasia %}
             <div class="receipt-muted">{{ empresa.razao_social }}</div>
             {% endif %}
@@ -134,13 +37,13 @@
 
         <div class="receipt-meta">
             <div><strong>Pedido:</strong> #{{ pedido.id }}</div>
-            <div><strong>Status:</strong> {{ pedido.status }}</div>
             <div><strong>Mesa:</strong> {{ pedido.mesa.numero if pedido.mesa else '-' }}</div>
             <div><strong>Caixa:</strong> {{ pedido.caixa.nome if pedido.caixa else '-' }}</div>
             <div><strong>Criado em:</strong> {{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</div>
             <div><strong>Fechado em:</strong> {{ pedido.fechado_em.strftime('%d/%m/%Y %H:%M') if pedido.fechado_em else '-' }}</div>
             <div><strong>Pagamento:</strong> {{ pedido.metodo_pagamento or '-' }}</div>
             <div><strong>Valor pago:</strong> {% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% else %}-{% endif %}</div>
+            <div><strong>Troco repassado:</strong> {% if troco_repassado is not none %}R$ {{ '%.2f'|format(troco_repassado) }}{% else %}-{% endif %}</div>
         </div>
 
         <table class="receipt-items">
@@ -155,10 +58,10 @@
             <tbody>
                 {% for item in pedido.itens %}
                 <tr>
-                    <td>{{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</td>
-                    <td>{{ item.quantidade }}</td>
-                    <td>R$ {{ '%.2f'|format(item.preco_unitario) }}</td>
-                    <td>R$ {{ '%.2f'|format(item.quantidade * item.preco_unitario) }}</td>
+                    <td data-label="Item">{{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</td>
+                    <td data-label="Qtd">{{ item.quantidade }}</td>
+                    <td data-label="Unitario">R$ {{ '%.2f'|format(item.preco_unitario) }}</td>
+                    <td data-label="Total">R$ {{ '%.2f'|format(item.quantidade * item.preco_unitario) }}</td>
                 </tr>
                 {% else %}
                 <tr>
@@ -181,3 +84,4 @@
     </div>
 </div>
 {% endblock %}
+

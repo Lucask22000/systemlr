@@ -1,10 +1,10 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title %}Relatorios de Estoque - SystemLR{% endblock %}
+{% block title %}Relatórios de Estoque - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Relatorios de Estoque</h1>
+    <h1>Relatórios de Estoque</h1>
 </div>
 
 <div class="cards-container analytics-cards">
@@ -31,10 +31,37 @@
     </div>
     <div class="card card-warning">
         <div class="card-content">
-            <h3>Movimentacoes (30 dias)</h3>
+            <h3>Movimentações (30 dias)</h3>
             <p class="card-value">{{ movimentacoes_mes }}</p>
             <p class="card-meta">{{ entradas_mes }} entradas / {{ saidas_mes }} saidas</p>
         </div>
+    </div>
+</div>
+
+<div class="section">
+    <div class="page-header">
+        <h2>Graficos Dinamicos de Estoque</h2>
+        <div class="header-actions">
+            <select id="estoquePeriodo" class="input-select">
+                <option value="7">Ultimos 7 dias</option>
+                <option value="30" selected>Ultimos 30 dias</option>
+                <option value="90">Ultimos 90 dias</option>
+            </select>
+        </div>
+    </div>
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Movimentações Diarias</h2>
+            <div class="chart-container">
+                <canvas id="chartMovimentaçõesEstoque"></canvas>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Valor por Categoria</h2>
+            <div class="chart-container">
+                <canvas id="chartValorCategoriaEstoque"></canvas>
+            </div>
+        </section>
     </div>
 </div>
 
@@ -45,6 +72,7 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <th>Codigo</th>
                         <th>Produto</th>
                         <th>Categoria</th>
                         <th>Endereco</th>
@@ -55,6 +83,7 @@
                 <tbody>
                     {% for prod in produtos_em_falta %}
                     <tr class="row-warning">
+                        <td data-label="Codigo"><code>{{ prod.código }}</code></td>
                         <td data-label="Produto">
                             <div class="product-name-cell">
                                 {% if prod.imagem_path %}
@@ -70,7 +99,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="text-center">Nenhum produto abaixo do estoque minimo.</td>
+                        <td colspan="6" class="text-center">Nenhum produto abaixo do estoque minimo.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -84,6 +113,7 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <th>Codigo</th>
                         <th>Produto</th>
                         <th>Qtd</th>
                         <th>Custo Unit.</th>
@@ -93,6 +123,7 @@
                 <tbody>
                     {% for prod, valor in produtos_maior_valor %}
                     <tr>
+                        <td data-label="Codigo"><code>{{ prod.código }}</code></td>
                         <td data-label="Produto">{{ prod.nome }}</td>
                         <td data-label="Qtd">{{ prod.quantidade_estoque }}</td>
                         <td data-label="Custo Unit.">R$ {{ "%.2f"|format(prod.preco_custo) }}</td>
@@ -100,7 +131,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="text-center">Sem dados de valor em estoque.</td>
+                        <td colspan="5" class="text-center">Sem dados de valor em estoque.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -177,27 +208,29 @@
         <table class="table">
             <thead>
                 <tr>
+                    <th>Codigo</th>
                     <th>Produto</th>
                     <th>Categoria</th>
                     <th>Endereco</th>
                     <th>Estoque</th>
-                    <th>Acao</th>
+                    <th>Ação</th>
                 </tr>
             </thead>
             <tbody>
                 {% for prod in produtos_sem_giro %}
                 <tr>
+                    <td data-label="Codigo"><code>{{ prod.código }}</code></td>
                     <td data-label="Produto">{{ prod.nome }}</td>
                     <td data-label="Categoria">{{ prod.categoria.nome if prod.categoria else '-' }}</td>
                     <td data-label="Endereco">{{ prod.endereco.nome if prod.endereco else '-' }}</td>
                     <td data-label="Estoque">{{ prod.quantidade_estoque }}</td>
-                    <td data-label="Acao">
+                    <td data-label="Ação">
                         <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}" class="btn-small btn-info">Ver Produto</a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center">Todos os produtos tiveram movimentacao recente.</td>
+                    <td colspan="6" class="text-center">Todos os produtos tiveram movimentacao recente.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -205,3 +238,9 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/estoque_analytics.js') }}"></script>
+{% endblock %}
+

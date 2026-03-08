@@ -1,0 +1,1287 @@
+/*
+ * Estilos espec?ficos das p?ginas (extra?dos dos templates).
+ * Mantidos aqui para centralizar o CSS e facilitar o novo visual.
+ */
+
+
+/* templates/funcionarios/acessos.html */
+.funcionario-access-page {
+        max-width: 700px;
+        margin: 40px auto;
+    }
+
+    .funcionario-access-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .funcionario-access-header h1 {
+        margin: 0;
+        color: #343a40;
+    }
+
+    .funcionario-back-link {
+        font-size: 24px;
+        color: #0f766e;
+        text-decoration: none;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .funcionario-access-card {
+        background: #fff;
+        padding: 24px;
+        border-radius: 10px;
+        border: 1px solid #dbe3e8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .funcionario-access-summary {
+        background-color: #f8f9fa;
+        padding: 14px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .funcionario-access-summary p {
+        margin: 0;
+        color: #343a40;
+    }
+
+    .funcionario-role {
+        display: inline-block;
+        margin-top: 6px;
+        color: #fff;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .role-admin {
+        background-color: #dc3545;
+    }
+
+    .role-gerente {
+        background-color: #f59e0b;
+        color: #111827;
+    }
+
+    .role-caixa {
+        background-color: #0ea5e9;
+    }
+
+    .role-operador,
+    .role-garcom {
+        background-color: #64748b;
+    }
+
+    .funcionario-access-title {
+        color: #343a40;
+        margin-bottom: 14px;
+        margin-top: 0;
+    }
+
+    .funcionario-access-tip {
+        background-color: #f0f7ff;
+        padding: 14px;
+        border-left: 4px solid #0f766e;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        color: #0f4c81;
+        font-size: 14px;
+    }
+
+    .funcionario-access-section {
+        margin-bottom: 18px;
+    }
+
+    .funcionario-access-section h4 {
+        margin: 0 0 10px;
+        color: #334155;
+        font-size: 1rem;
+    }
+
+    .funcionario-access-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 10px;
+    }
+
+    .funcionario-access-option {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .funcionario-access-option:hover {
+        background-color: #eef3f8;
+    }
+
+    .funcionario-access-option:has(input:checked) {
+        border-color: #0f766e;
+        background-color: #edf9f7;
+    }
+
+    .funcionario-access-option input {
+        width: 18px;
+        height: 18px;
+        margin-right: 12px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .funcionario-access-option span {
+        color: #343a40;
+        font-weight: 500;
+    }
+
+    .funcionario-access-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 28px;
+    }
+
+    .funcionario-access-actions > * {
+        flex: 1;
+        text-align: center;
+    }
+
+    .btn {
+        display: inline-block;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+    .btn-primary:hover {
+        background-color: #218838;
+        border-color: #218838;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .alert {
+        padding: 12px 14px;
+        border-radius: 5px;
+        border: 1px solid;
+        margin-bottom: 14px;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #c3e6cb;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #f5c6cb;
+    }
+
+    @media (max-width: 700px) {
+        .funcionario-access-page {
+            margin: 20px auto;
+        }
+
+        .funcionario-access-card {
+            padding: 16px;
+        }
+
+        .funcionario-access-actions {
+            flex-direction: column;
+        }
+
+        .funcionario-access-actions > * {
+            width: 100%;
+        }
+    }
+
+
+/* templates/funcionarios/criar.html */
+.funcionario-form-page {
+        padding: 40px 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .funcionario-form-wrap {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .funcionario-form-page h1 {
+        color: #343a40;
+        margin-bottom: 30px;
+        font-size: 28px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #343a40;
+        font-weight: 600;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #dee2e6;
+        border-radius: 5px;
+        font-size: 16px;
+        font-family: inherit;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+        font-size: 16px;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .funcionario-form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .funcionario-form-actions > * {
+        flex: 1;
+        text-align: center;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    @media (max-width: 640px) {
+        .funcionario-form-page {
+            padding: 28px 12px;
+        }
+
+        .funcionario-form-page h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .funcionario-form-actions {
+            flex-direction: column;
+            margin-top: 20px;
+        }
+
+        .funcionario-form-actions > * {
+            width: 100%;
+        }
+    }
+
+
+/* templates/funcionarios/editar.html */
+.funcionario-form-page {
+        padding: 40px 20px;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .funcionario-form-wrap {
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    .funcionario-form-page h1 {
+        color: #343a40;
+        margin-bottom: 30px;
+        font-size: 28px;
+    }
+
+    .funcionario-subtitle {
+        color: #343a40;
+        margin-bottom: 20px;
+        font-size: 16px;
+    }
+
+    .funcionario-divider {
+        margin: 30px 0;
+        border: none;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #343a40;
+        font-weight: 600;
+    }
+
+    .form-group input[type="checkbox"] {
+        margin-right: 8px;
+        cursor: pointer;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .hint {
+        color: #6c757d;
+        font-size: 12px;
+        font-weight: normal;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #dee2e6;
+        border-radius: 5px;
+        font-size: 16px;
+        font-family: inherit;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+    }
+
+    .form-control:disabled {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+
+    .btn {
+        padding: 12px 20px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+        font-size: 16px;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+
+    .funcionario-form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .funcionario-form-actions > * {
+        flex: 1;
+        text-align: center;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    @media (max-width: 640px) {
+        .funcionario-form-page {
+            padding: 28px 12px;
+        }
+
+        .funcionario-form-page h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .funcionario-form-actions {
+            flex-direction: column;
+            margin-top: 20px;
+        }
+
+        .funcionario-form-actions > * {
+            width: 100%;
+        }
+    }
+
+
+/* templates/funcionarios/listar.html */
+.funcionarios-list-page {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .funcionarios-table th,
+    .funcionarios-table td {
+        vertical-align: middle;
+    }
+
+    .funcionario-email {
+        overflow-wrap: anywhere;
+    }
+
+    .funcionario-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.3;
+    }
+
+    .role-admin {
+        background-color: #dc3545;
+    }
+
+    .role-gerente {
+        background-color: #f59e0b;
+        color: #111827;
+    }
+
+    .role-caixa {
+        background-color: #0ea5e9;
+    }
+
+    .role-garcom {
+        background-color: #14b8a6;
+    }
+
+    .role-operador {
+        background-color: #64748b;
+    }
+
+    .status-ativo {
+        background-color: #16a34a;
+    }
+
+    .status-inativo {
+        background-color: #dc3545;
+    }
+
+    .funcionario-actions {
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .funcionario-inline-form {
+        display: inline;
+        margin: 0;
+    }
+
+    .funcionario-empty {
+        background-color: #f8f9fa;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .funcionario-empty p {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .funcionario-empty a {
+        display: inline-block;
+        margin-top: 10px;
+        color: #0f766e;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .funcionario-empty a:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .funcionarios-list-page {
+            margin-top: 0;
+        }
+
+        .funcionarios-table td[data-label="Acoes"] {
+            text-align: left;
+        }
+    }
+
+
+
+/* templates/vendas/caixas/historico_caixa.html */
+.caixa-history-page {
+        max-width: 1000px;
+        margin: 40px auto;
+        display: grid;
+        gap: 16px;
+    }
+
+    .caixa-history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .caixa-history-header h1 {
+        margin: 0;
+        color: #343a40;
+    }
+
+    .caixa-card {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #dbe3e8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .caixa-card h2 {
+        margin-top: 0;
+        margin-bottom: 16px;
+        color: #343a40;
+        font-size: 1.2rem;
+    }
+
+    .caixa-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+    }
+
+    .caixa-summary-item {
+        border-left: 4px solid #0f766e;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 6px;
+    }
+
+    .summary-inicial {
+        border-left-color: #16a34a;
+    }
+
+    .summary-atual {
+        border-left-color: #0ea5e9;
+    }
+
+    .summary-fechamento {
+        border-left-color: #f59e0b;
+    }
+
+    .caixa-summary-item small {
+        display: block;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+
+    .caixa-summary-item strong {
+        font-size: 1rem;
+    }
+
+    .caixa-history-table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .mov-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .mov-badge-entrada {
+        background-color: #16a34a;
+    }
+
+    .mov-badge-saida {
+        background-color: #dc3545;
+    }
+
+    .mov-valor {
+        font-weight: 700;
+    }
+
+    .mov-valor-entrada {
+        color: #16a34a;
+    }
+
+    .mov-valor-saida {
+        color: #dc3545;
+    }
+
+    .mov-desc {
+        overflow-wrap: anywhere;
+    }
+
+    .caixa-empty-box {
+        background-color: #f8f9fa;
+        padding: 30px;
+        border-radius: 8px;
+        text-align: center;
+        color: #6c757d;
+    }
+
+    .caixa-empty-box p {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    @media (max-width: 768px) {
+        .caixa-history-page {
+            margin: 20px auto;
+            gap: 12px;
+        }
+
+        .caixa-history-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .caixa-history-header .btn {
+            width: 100%;
+        }
+
+        .caixa-card {
+            padding: 16px;
+        }
+    }
+
+
+/* templates/vendas/pedidos/comprovante.html */
+.receipt-wrap {
+        max-width: 780px;
+        margin: 0 auto;
+    }
+
+    .receipt-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+    }
+
+    .receipt-header {
+        text-align: center;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+        border-bottom: 1px dashed #9ca3af;
+    }
+
+    .receipt-logo-wrap {
+        margin-bottom: 8px;
+    }
+
+    .receipt-logo {
+        max-height: 72px;
+        width: auto;
+    }
+
+    .receipt-header h2 {
+        margin: 0 0 6px;
+        font-size: 1.2rem;
+    }
+
+    .receipt-muted {
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .receipt-meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .receipt-items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+    }
+
+    .receipt-items th,
+    .receipt-items td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 8px 4px;
+        text-align: left;
+        font-size: 0.95rem;
+    }
+
+    .receipt-total {
+        text-align: right;
+        font-size: 1.1rem;
+        font-weight: 700;
+    }
+
+    .receipt-actions {
+        margin-top: 16px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    @media print {
+        .navbar,
+        .footer,
+        .receipt-actions {
+            display: none !important;
+        }
+
+        .main-content {
+            padding: 0;
+        }
+
+        .receipt-card {
+            border: none;
+            box-shadow: none;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .receipt-meta {
+            grid-template-columns: 1fr;
+        }
+    }
+
+
+/* templates/vendas/mesas/print_qrcode_mesa.html */
+@media print {
+        body, html {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .print-header {
+            display: none;
+        }
+        
+        .page-header {
+            display: none;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+        
+        .print-qrcode-container {
+            page-break-inside: avoid;
+            margin: 0;
+            padding: 0;
+        }
+    }
+    
+    @media screen {
+        .print-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+    }
+    
+    .print-qrcode-container {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    
+    .print-content {
+        display: inline-block;
+        page-break-inside: avoid;
+    }
+    
+    .mesa-info {
+        margin-bottom: 20px;
+        font-weight: bold;
+        font-size: 18px;
+    }
+    
+    #qrcode {
+        display: inline-block;
+        padding: 10px;
+        background: white;
+        border: 2px solid #333;
+    }
+    
+    .url-info {
+        margin-top: 15px;
+        font-size: 12px;
+        color: #666;
+        word-break: break-all;
+    }
+    
+    .print-options {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #999;
+    }
+
+
+/* templates/vendas/mesas/mesas.html */
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    text-decoration: none;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+}
+
+.mesa-link-input {
+    min-width: 220px;
+}
+
+@media (max-width: 768px) {
+    .mesa-link-input {
+        min-width: 180px;
+        font-size: 0.85rem;
+    }
+}
+
+
+/* templates/vendas/mesas/qrcode_mesa.html */
+.qrcode-container {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.actions {
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+.info-box ul li {
+    margin: 5px 0;
+}
+
+@media (max-width: 768px) {
+    .qrcode-container {
+        padding: 15px;
+    }
+    
+    #qrcode {
+        transform: scale(0.8);
+    }
+}
+
+
+/* templates/vendas/caixas/fechar_caixa.html */
+.caixa-close-page {
+        max-width: 700px;
+        margin: 40px auto;
+        display: grid;
+        gap: 16px;
+    }
+
+    .caixa-close-page h1 {
+        margin-bottom: 0;
+        color: #343a40;
+    }
+
+    .caixa-card {
+        background: #fff;
+        padding: 22px;
+        border-radius: 10px;
+        border: 1px solid #dbe3e8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .caixa-card h3 {
+        margin-top: 0;
+        margin-bottom: 14px;
+        color: #0f766e;
+        font-size: 1.1rem;
+    }
+
+    .caixa-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .caixa-info-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    .caixa-info-item small {
+        display: block;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+
+    .caixa-info-item strong {
+        color: #1f2937;
+        font-size: 1rem;
+    }
+
+    .caixa-field {
+        margin-bottom: 16px;
+    }
+
+    .caixa-field label {
+        display: block;
+        margin-bottom: 8px;
+        color: #343a40;
+        font-weight: 600;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .caixa-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 16px;
+        font-family: inherit;
+    }
+
+    .caixa-input:focus {
+        outline: none;
+        border-color: #0f766e;
+    }
+
+    .caixa-field small {
+        display: block;
+        margin-top: 6px;
+        color: #6c757d;
+    }
+
+    .diferenca-info {
+        display: none;
+        padding: 14px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .diferenca-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .diferenca-info small {
+        display: block;
+        margin-top: 6px;
+    }
+
+    .caixa-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 22px;
+    }
+
+    .caixa-actions > * {
+        flex: 1;
+        text-align: center;
+    }
+
+    @media (max-width: 640px) {
+        .caixa-close-page {
+            margin: 20px auto;
+            gap: 12px;
+        }
+
+        .caixa-card {
+            padding: 16px;
+        }
+
+        .caixa-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .diferenca-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .caixa-actions {
+            flex-direction: column;
+        }
+
+        .caixa-actions > * {
+            width: 100%;
+        }
+    }
+
+
+/* templates/vendas/pedidos/editar_pedido.html */
+.pedido-form-wrap {
+        max-width: 980px;
+        margin: 0 auto;
+    }
+
+    .pedido-item-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 130px auto;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .pedido-item-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+
+/* templates/vendas/pedidos/novo_pedido.html */
+.pedido-form-wrap {
+        max-width: 980px;
+        margin: 0 auto;
+    }
+
+    .pedido-item-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 130px auto;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .pedido-item-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+
+/* templates/vendas/caixas/abrir_caixa.html */
+.caixa-form-page {
+        max-width: 600px;
+        margin: 40px auto;
+    }
+
+    .caixa-form-page h1 {
+        color: #343a40;
+        margin-bottom: 24px;
+    }
+
+    .caixa-card {
+        background: #fff;
+        padding: 24px;
+        border-radius: 10px;
+        border: 1px solid #dbe3e8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .caixa-field {
+        margin-bottom: 18px;
+    }
+
+    .caixa-field label {
+        display: block;
+        margin-bottom: 8px;
+        color: #343a40;
+        font-weight: 600;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .caixa-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 16px;
+        font-family: inherit;
+    }
+
+    .caixa-input:focus {
+        outline: none;
+        border-color: #0f766e;
+    }
+
+    .caixa-field small {
+        display: block;
+        margin-top: 6px;
+        color: #6c757d;
+    }
+
+    .caixa-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 24px;
+    }
+
+    .caixa-actions > * {
+        flex: 1;
+        text-align: center;
+    }
+
+    @media (max-width: 640px) {
+        .caixa-form-page {
+            margin: 20px auto;
+        }
+
+        .caixa-card {
+            padding: 16px;
+        }
+
+        .caixa-actions {
+            flex-direction: column;
+        }
+
+        .caixa-actions > * {
+            width: 100%;
+        }
+    }

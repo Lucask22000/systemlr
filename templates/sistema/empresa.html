@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Dados da Empresa - SystemLR{% endblock %}
 
@@ -9,6 +9,7 @@
 
 <div class="form-container">
     <form method="POST" enctype="multipart/form-data" class="form">
+        {{ csrf_input|safe }}
         <div class="form-group">
             <label for="logo">Logo da Empresa</label>
             <input type="file" id="logo" name="logo" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
@@ -80,8 +81,51 @@
             <textarea id="mensagem_comprovante" name="mensagem_comprovante" rows="3" class="input-textarea">{{ empresa.mensagem_comprovante if empresa else '' }}</textarea>
         </div>
 
+        <div id="config-operacao" class="section" style="margin: 0 0 16px;">
+            <h2>Configuração de operação (varejo e e-commerce)</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="tipo_negocio">Tipo de varejo</label>
+                    {% set tipo_negocio_atual = empresa.tipo_negocio if empresa and empresa.tipo_negocio else 'conveniência' %}
+                    <select id="tipo_negocio" name="tipo_negocio" class="input-text">
+                        {% for valor, label in tipos_negocio %}
+                        <option value="{{ valor }}" {% if tipo_negocio_atual == valor %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="canal_operacao">Canal de operação</label>
+                    {% set canal_operacao_atual = empresa.canal_operacao if empresa and empresa.canal_operacao else 'hibrido' %}
+                    <select id="canal_operacao" name="canal_operacao" class="input-text">
+                        {% for valor, label in canais_operacao %}
+                        <option value="{{ valor }}" {% if canal_operacao_atual == valor %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="ecommerce_ativo" {% if not empresa or empresa.ecommerce_ativo != False %}checked{% endif %}>
+                    Ativar vitrine/catálogo online
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="aplicar_preset_operacao">
+                    Aplicar preset automático para este tipo/canal
+                </label>
+            </div>
+        </div>
+
         <div id="config-cardapio" class="section" style="margin: 0;">
             <h2>Configuração da Comanda QR</h2>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="atendimento_mesas_ativo" {% if not empresa or empresa.atendimento_mesas_ativo != False %}checked{% endif %}>
+                    Ativar atendimento por mesas e garcons (comanda QR)
+                </label>
+            </div>
 
             <div class="form-group">
                 <label for="cardapio_titulo">Título da comanda</label>
@@ -121,10 +165,37 @@
             </div>
         </div>
 
+        <div id="config-entrega" class="section" style="margin: 16px 0 0;">
+            <h2>Configuração de entrega e etiquetas</h2>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="separação_entrega_ativa" {% if not empresa or empresa.separação_entrega_ativa != False %}checked{% endif %}>
+                    Ativar separação de pedidos para entrega
+                </label>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="emissão_etiqueta_entrega_ativa" {% if not empresa or empresa.emissão_etiqueta_entrega_ativa != False %}checked{% endif %}>
+                    Ativar emissão de etiquetas de entrega
+                </label>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="separação_entrega_unir_vendas_off" {% if empresa and empresa.separação_entrega_unir_vendas_off %}checked{% endif %}>
+                    Unir fila de separação com vendas off (internas)
+                </label>
+            </div>
+        </div>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-success">Salvar Dados</button>
         </div>
     </form>
 </div>
 {% endblock %}
+
+
 

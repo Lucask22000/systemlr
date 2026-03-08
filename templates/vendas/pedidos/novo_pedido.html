@@ -3,26 +3,6 @@
 {% block title %}Novo Pedido - SystemLR{% endblock %}
 
 {% block extra_css %}
-<style>
-    .pedido-form-wrap {
-        max-width: 980px;
-        margin: 0 auto;
-    }
-
-    .pedido-item-row {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 130px auto;
-        gap: 8px;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-
-    @media (max-width: 768px) {
-        .pedido-item-row {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -60,6 +40,7 @@ function adicionarItem() {
     <div class="form-container">
         <form method="POST" id="formPedido" class="form" onsubmit="return validarFormulario('formPedido')">
             <div class="form-row">
+                {% if atendimento_mesas_ativo %}
                 <div class="form-group">
                     <label for="mesa_id">Mesa (opcional)</label>
                     <select name="mesa_id" id="mesa_id" class="form-select">
@@ -69,6 +50,7 @@ function adicionarItem() {
                         {% endfor %}
                     </select>
                 </div>
+                {% endif %}
 
                 <div class="form-group">
                     <label for="caixa_id">Caixa</label>

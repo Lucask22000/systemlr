@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Categorias - SystemLR{% endblock %}
 
@@ -21,8 +21,8 @@
         <p class="card-category-desc">{{ categoria.descricao or 'Sem descricao' }}</p>
         <div class="card-category-actions">
             <a href="{{ url_for('editar_categoria', categoria_id=categoria.id) }}" class="btn-small btn-warning">Editar</a>
-            <form method="POST" action="{{ url_for('deletar_categoria', categoria_id=categoria.id) }}" style="display:inline;">
-                <button type="submit" class="btn-small btn-danger" onclick="return confirm('Tem certeza? Todos os produtos desta categoria serao removidos!')">Deletar</button>
+            <form method="POST" action="{{ url_for('deletar_categoria', categoria_id=categoria.id) }}" class="inline-form" data-confirm-message="Tem certeza? Todos os produtos desta categoria serao removidos!">
+                <button type="submit" class="btn-small btn-danger">Deletar</button>
             </form>
         </div>
     </div>
@@ -33,3 +33,4 @@
     {% endfor %}
 </div>
 {% endblock %}
+

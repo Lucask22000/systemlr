@@ -1,0 +1,83 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Auditoria do Sistema - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Auditoria do Sistema</h1>
+</div>
+
+<section class="section">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <label for="funcionario_id">Usuário</label>
+            <select id="funcionario_id" name="funcionario_id" class="input-select">
+                <option value="">Todos</option>
+                {% for funcionario in funcionarios %}
+                <option value="{{ funcionario.id }}" {% if filtros.funcionario_id == funcionario.id %}selected{% endif %}>
+                    {{ funcionario.nome }} ({{ funcionario.role }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="metodo">Metodo</label>
+            <select id="metodo" name="metodo" class="input-select">
+                <option value="">Todos</option>
+                {% for metodo in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] %}
+                <option value="{{ metodo }}" {% if filtros.metodo == metodo %}selected{% endif %}>{{ metodo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="entidade">Entidade</label>
+            <input type="text" id="entidade" name="entidade" class="input-text" value="{{ filtros.entidade }}">
+        </div>
+        <div class="filter-group">
+            <label for="acao">Ação</label>
+            <input type="text" id="acao" name="acao" class="input-text" value="{{ filtros.acao }}">
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('auditoria_sistema') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Data/Hora</th>
+                <th>Usuário</th>
+                <th>Metodo</th>
+                <th>Rota</th>
+                <th>Ação</th>
+                <th>Status</th>
+                <th>Detalhes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for evento in eventos %}
+            <tr>
+                <td data-label="Data/Hora">{{ evento.criado_em.strftime('%d/%m/%Y %H:%M:%S') if evento.criado_em else '-' }}</td>
+                <td data-label="Usuário">
+                    {{ evento.funcionario_nome or 'Nao identificado' }}
+                    {% if evento.funcionario_role %}<br><small>{{ evento.funcionario_role }}</small>{% endif %}
+                </td>
+                <td data-label="Metodo">{{ evento.metodo }}</td>
+                <td data-label="Rota">{{ evento.rota }}</td>
+                <td data-label="Ação">{{ evento.acao }}</td>
+                <td data-label="Status">{{ evento.status_code or '-' }}</td>
+                <td data-label="Detalhes">{{ evento.detalhes or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center">Nenhum evento de auditoria encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

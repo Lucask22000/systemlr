@@ -1,10 +1,14 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Dashboard - SystemLR{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard-mobile.css') }}">
+{% endblock %}
 
 {% block content %}
+<div class="dashboard-page">
 <div class="page-header">
-    <h1>Dashboard Financeiro e Gestao</h1>
+    <h1>Dashboard Financeiro e Gestão</h1>
     <form method="get" class="dashboard-filter-form">
         <label for="data_inicial" class="dashboard-filter-label">De:</label>
         <input type="date" id="data_inicial" name="data_inicial" value="{{ data_inicial }}" class="input-text dashboard-filter-select">
@@ -18,31 +22,61 @@
     <div class="card card-primary">
         <div class="card-content">
             <h3>Faturamento no Periodo</h3>
-            <p class="card-value">R$ {{ '%.2f'|format(faturamento_periodo) }}</p>
-            <p class="card-meta">{{ pedidos_periodo_total }} pedidos fechados</p>
+            <p class="card-value" id="kpiFaturamentoPeriodo">R$ {{ '%.2f'|format(faturamento_periodo) }}</p>
+            <p class="card-meta" id="kpiPedidosPeriodo">{{ pedidos_periodo_total }} pedidos fechados</p>
         </div>
     </div>
     <div class="card card-success">
         <div class="card-content">
             <h3>Ticket Medio</h3>
-            <p class="card-value">R$ {{ '%.2f'|format(ticket_medio_periodo) }}</p>
+            <p class="card-value" id="kpiTicketMedio">R$ {{ '%.2f'|format(ticket_medio_periodo) }}</p>
             <p class="card-meta">Media por pedido fechado</p>
         </div>
     </div>
     <div class="card card-info">
         <div class="card-content">
             <h3>Faturamento Hoje</h3>
-            <p class="card-value">R$ {{ '%.2f'|format(faturamento_hoje) }}</p>
+            <p class="card-value" id="kpiFaturamentoHoje">R$ {{ '%.2f'|format(faturamento_hoje) }}</p>
             <p class="card-meta">Somente pedidos concluidos hoje</p>
         </div>
     </div>
     <div class="card card-warning">
         <div class="card-content">
-            <h3>Pedidos em Aberto</h3>
-            <p class="card-value">{{ pedidos_abertos }}</p>
-            <p class="card-meta">{{ pedidos_cancelados_periodo }} cancelados no periodo</p>
+            <h3>Pedidos em Aberto / Cancelados</h3>
+            <p class="card-value"><span id="kpiPedidosAbertos">{{ pedidos_abertos }}</span> / <span id="kpiPedidosCancelados">{{ pedidos_cancelados_periodo }}</span></p>
+            <p class="card-meta">Abertos agora / cancelados no periodo</p>
         </div>
     </div>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Grafico - Faturamento Diario</h2>
+        <div class="chart-container">
+            <canvas id="chartFaturamento"></canvas>
+        </div>
+    </section>
+    <section class="section">
+        <h2>Grafico - Status de Pedidos</h2>
+        <div class="chart-container">
+            <canvas id="chartStatus"></canvas>
+        </div>
+    </section>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Grafico - Metodos de Pagamento</h2>
+        <div class="chart-container">
+            <canvas id="chartPagamento"></canvas>
+        </div>
+    </section>
+    <section class="section">
+        <h2>Grafico - Top Produtos (Receita)</h2>
+        <div class="chart-container">
+            <canvas id="chartTopProdutos"></canvas>
+        </div>
+    </section>
 </div>
 
 <div class="analytics-grid">
@@ -107,11 +141,11 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for produto, qtd, receita in top_produtos_vendidos %}
+                    {% for item in top_produtos_vendidos %}
                     <tr>
-                        <td data-label="Produto">{{ produto.nome }}</td>
-                        <td data-label="Qtd Vendida">{{ qtd or 0 }}</td>
-                        <td data-label="Receita">R$ {{ '%.2f'|format(receita or 0) }}</td>
+                        <td data-label="Produto">{{ item.nome }}</td>
+                        <td data-label="Qtd Vendida">{{ item.quantidade or 0 }}</td>
+                        <td data-label="Receita">R$ {{ '%.2f'|format(item.receita or 0) }}</td>
                     </tr>
                     {% else %}
                     <tr>
@@ -154,7 +188,10 @@
 
 <div class="analytics-grid">
     <section class="section">
-        <h2>Desempenho de Garcons</h2>
+        <h2>Desempenho de Garçons</h2>
+        <div class="chart-container performance-chart-container">
+            <canvas id="chartDesempenhoGarcons"></canvas>
+        </div>
         <div class="table-responsive">
             <table class="table">
                 <thead>
@@ -183,6 +220,9 @@
 
     <section class="section">
         <h2>Desempenho de Caixas</h2>
+        <div class="chart-container performance-chart-container">
+            <canvas id="chartDesempenhoCaixas"></canvas>
+        </div>
         <div class="table-responsive">
             <table class="table">
                 <thead>
@@ -239,9 +279,16 @@
 <div class="action-buttons">
     <a href="{{ url_for('pdv') }}" class="btn btn-primary">Abrir PDV</a>
     <a href="{{ url_for('listar_pedidos') }}" class="btn btn-secondary">Gerenciar Pedidos</a>
-    <a href="{{ url_for('relatorios') }}" class="btn btn-info">Relatorios de Estoque</a>
+    <a href="{{ url_for('relatorios') }}" class="btn btn-info">Relatórios de Estoque</a>
     {% if funcionario_logado and funcionario_logado.role in ['admin', 'gerente'] %}
     <a href="{{ url_for('indicadores_rh') }}" class="btn btn-success">Indicadores RH</a>
     {% endif %}
 </div>
+</div>
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/dashboard_analytics.js') }}"></script>
+{% endblock %}
+

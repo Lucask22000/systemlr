@@ -1,0 +1,117 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Cargos/Perfis RH - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Cargos / Perfis (RH)</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Ver Funções</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Criar novo perfil</div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('nova_funcao_rh') }}" class="form">
+            {{ csrf_input|safe }}
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nome">Nome do Perfil *</label>
+                    <input type="text" id="nome" name="nome" class="input-text" maxlength="100" required placeholder="Ex: Atendente, Supervisor, Estoquista">
+                </div>
+                <div class="form-group">
+                    <label for="descricao">Descrição</label>
+                    <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" placeholder="Breve resumo das responsabilidades">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="ativo" checked>
+                    Perfil ativo
+                </label>
+            </div>
+            <div class="section">
+                <h3>Acessos padrão do perfil</h3>
+                <div class="filters-section">
+                    {% for secao_nome, itens in paginas_ordenadas_menu %}
+                    <div class="form-group">
+                        <label class="strong">{{ secao_nome }}</label>
+                        <div class="form-row">
+                            {% for pagina_key, pagina_label in itens %}
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="paginas" value="{{ pagina_key }}">
+                                {{ pagina_label }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar perfil</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Perfis cadastrados</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Descrição</th>
+                    <th>Acessos padrão</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for funcao, acessos in funcoes_permissoes %}
+                <tr>
+                    <td data-label="Nome"><strong>{{ funcao.nome }}</strong></td>
+                    <td data-label="Descrição">{{ funcao.descricao or '-' }}</td>
+                    <td data-label="Acessos padrão">
+                        {% if acessos %}
+                        <ul class="inline-list">
+                            {% for pagina in acessos %}
+                            <li>{{ paginas_sistema[pagina] or pagina }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <span>-</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Status">
+                        {% if funcao.ativo %}
+                        <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                        <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Criado em">{{ funcao.criado_em.strftime('%d/%m/%Y %H:%M') if funcao.criado_em else '-' }}</td>
+                    <td data-label="Ações" class="actions-cell">
+                        <a href="{{ url_for('editar_funcao_rh', funcao_id=funcao.id) }}" class="btn-small btn-warning">Editar</a>
+                        <form method="POST" action="{{ url_for('deletar_funcao_rh', funcao_id=funcao.id) }}" class="inline-form" data-confirm-message="Excluir perfil {{ funcao.nome }}?">
+                            {{ csrf_input|safe }}
+                            <button type="submit" class="btn-small btn-danger">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">Nenhum perfil cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+
+

@@ -1,21 +1,70 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
 {% block title %}Enderecos de Estoque - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1>Enderecos de Estoque</h1>
-    <a href="{{ url_for('novo_endereco_estoque') }}" class="btn btn-primary">Novo Endereco</a>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_estoques') }}" class="btn btn-secondary">Ver Estoques</a>
+        <a href="{{ url_for('novo_endereco_estoque') }}" class="btn btn-primary">Novo Endereco</a>
+    </div>
 </div>
 
-<div class="table-responsive">
+<section class="filters-section">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <label for="estoque_id">Estoque</label>
+            <select id="estoque_id" name="estoque_id" class="input-select">
+                <option value="">Todos os estoques</option>
+                {% for estoque in estoques %}
+                <option value="{{ estoque.id }}" {% if filtros and filtros.estoque_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="busca">Busca</label>
+            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="Nome, rua, bairro ou cidade">
+        </div>
+        <div class="filter-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="input-select">
+                <option value="" {% if not filtros or not filtros.status %}selected{% endif %}>Todos</option>
+                {% for item in status_endereco_validos %}
+                <option value="{{ item }}" {% if filtros and filtros.status == item %}selected{% endif %}>{{ item|title }}</option>
+                {% endfor %}
+                <option value="inativo" {% if filtros and filtros.status == 'inativo' %}selected{% endif %}>Inativo (legado)</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="setor_zona">Setor/Zona</label>
+            <select id="setor_zona" name="setor_zona" class="input-select">
+                <option value="">Todos</option>
+                {% for item in setores_zona_validos %}
+                <option value="{{ item }}" {% if filtros and filtros.setor_zona == item %}selected{% endif %}>{{ item.replace('_', ' ')|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('listar_enderecos_estoque') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<div class="table-responsive table-scroll-sticky">
     <table class="table">
         <thead>
             <tr>
                 <th>Nome</th>
-                <th>Endereco</th>
-                <th>Cidade/UF</th>
+                <th>Loja/CD</th>
+                <th>Setor/Zona</th>
+                <th>Tipo Area</th>
+                <th>Estrutura</th>
+                <th>Reservado Para</th>
+                <th>Codigo</th>
                 <th>Status</th>
+                <th>Descricao</th>
                 <th>Acoes</th>
             </tr>
         </thead>
@@ -23,37 +72,49 @@
             {% for endereco in enderecos %}
             <tr>
                 <td data-label="Nome"><strong>{{ endereco.nome }}</strong></td>
-                <td data-label="Endereco">
-                    {{ endereco.rua or '-' }}
-                    {% if endereco.numero %}, {{ endereco.numero }}{% endif %}
-                    {% if endereco.bairro %} - {{ endereco.bairro }}{% endif %}
-                    {% if endereco.complemento %} ({{ endereco.complemento }}){% endif %}
-                </td>
-                <td data-label="Cidade/UF">
-                    {{ endereco.cidade or '-' }}
-                    {% if endereco.estado %}/{{ endereco.estado }}{% endif %}
-                    {% if endereco.cep %} - {{ endereco.cep }}{% endif %}
-                </td>
+                <td data-label="Loja/CD">{{ endereco.loja_cd or endereco.código_armazem or '-' }}</td>
+                <td data-label="Setor/Zona">{{ (endereco.setor_zona or '-')|replace('_', ' ')|title }}</td>
+                <td data-label="Tipo Area">{{ (endereco.tipo_area or '-')|replace('_', ' ')|title }}</td>
+                <td data-label="Estrutura">{{ (endereco.tipo_estrutura or '-')|replace('_', ' ')|title }}</td>
+                <td data-label="Reservado Para">{{ endereco.tipo_produto_reservado or '-' }}</td>
+                <td data-label="Codigo"><code>{{ endereco.código_localizacao or '-' }}</code></td>
                 <td data-label="Status">
-                    {% if endereco.ativo %}
-                    <span class="badge badge-success">Ativo</span>
-                    {% else %}
-                    <span class="badge badge-danger">Inativo</span>
-                    {% endif %}
+                    {% set st = (endereco.status or ('ativo' if endereco.ativo else 'bloqueado')) %}
+                    <span class="badge {% if st == 'ativo' %}badge-success{% elif st == 'inventario' %}badge-warning{% else %}badge-danger{% endif %}">{{ st|title }}</span>
                 </td>
+                <td data-label="Descricao">{{ endereco.descricao or '-' }}</td>
                 <td data-label="Acoes" class="actions-cell">
+                    <a href="{{ url_for('detalhes_endereco_estoque', endereco_id=endereco.id) }}" class="btn-small btn-info">Produtos</a>
                     <a href="{{ url_for('editar_endereco_estoque', endereco_id=endereco.id) }}" class="btn-small btn-warning">Editar</a>
-                    <form method="POST" action="{{ url_for('deletar_endereco_estoque', endereco_id=endereco.id) }}" style="display:inline;" onsubmit="return confirm('Excluir endereco {{ endereco.nome }}?');">
+                    <form method="POST" action="{{ url_for('deletar_endereco_estoque', endereco_id=endereco.id) }}" class="inline-form" data-confirm-message="Excluir endereco {{ endereco.nome }}?">
+                        {{ csrf_input|safe }}
                         <button type="submit" class="btn-small btn-danger">Excluir</button>
                     </form>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" class="text-center">Nenhum endereco cadastrado</td>
+                <td colspan="10" class="text-center">Nenhum endereco cadastrado</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination-wrap">
+    <nav aria-label="Paginacao de enderecos">
+        <ul class="pagination">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('listar_enderecos_estoque', page=pagination.prev_num, per_page=per_page, estoque_id=filtros.estoque_id if filtros else '', busca=filtros.busca if filtros else '', status=filtros.status if filtros else '', setor_zona=filtros.setor_zona if filtros else '') if pagination.has_prev else '#' }}">Anterior</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">Pagina {{ pagination.page }} de {{ pagination.pages }}</span></li>
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('listar_enderecos_estoque', page=pagination.next_num, per_page=per_page, estoque_id=filtros.estoque_id if filtros else '', busca=filtros.busca if filtros else '', status=filtros.status if filtros else '', setor_zona=filtros.setor_zona if filtros else '') if pagination.has_next else '#' }}">Proxima</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endif %}
 {% endblock %}
+
+

@@ -343,3 +343,42 @@ Este projeto é fornecido como está para uso educacional e comercial.
 ---
 
 **Desenvolvido com ❤️ em Flask | SystemLR - Sua Gestão Simplificada**
+
+## Atualizacoes 2026-03-01 (Seguranca, Coerencia e Analytics)
+
+### Seguranca
+
+- CSRF global habilitado para formularios e requisicoes de escrita (`POST/PUT/PATCH/DELETE`).
+- Cookies de sessao endurecidos (`HttpOnly`, `SameSite=Lax`, `Secure` em producao).
+- Validacao de `SECRET_KEY` em ambiente de producao (fallback de desenvolvimento nao permitido).
+- Respostas JSON padronizadas em APIs de escrita: `{ success, message, data?, code? }`.
+
+### Coerencia de Pedidos
+
+- Regra de ciclo de vida consolidada:
+  - `aberto -> em_preparo -> entregue -> fechado` ou `cancelado`
+  - `fechado` e `cancelado` sao imutaveis
+- Fechamento do pedido agora processa estoque e financeiro uma unica vez.
+- Baixa de estoque registrada em movimentacao de saida no fechamento.
+- Caixa recebe entrada financeira no fechamento (nao mais na criacao).
+
+### Novos Endpoints de Analytics
+
+- `GET /api/dashboard/analytics?data_inicial=YYYY-MM-DD&data_final=YYYY-MM-DD`
+- `GET /api/estoque/analytics?periodo=7|30|90`
+- `GET /api/rh/analytics?periodo=30|90|365`
+
+### Frontend Dinamico
+
+- Dashboard com graficos Chart.js (faturamento diario, status, pagamentos, top produtos).
+- Relatorios de estoque com graficos dinamicos por periodo.
+- Indicadores RH com graficos por perfil e admissoes no periodo.
+
+### Testes Automatizados Minimos
+
+- Arquivo: `tests/test_system_flows.py`
+- Cobertura inicial:
+  - autenticacao obrigatoria em API
+  - CSRF obrigatorio para escrita
+  - fechamento imutavel de pedido
+  - impacto de fechamento em estoque e caixa

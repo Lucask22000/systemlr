@@ -85,7 +85,10 @@
         }, 5000);
     });
 
+    initConfirmActionModal();
     initBarcodeScannerButtons();
+    initFormFieldTooltips();
+    initCollapsiblePanels();
 });
 
 function formatarMoeda(valor) {
@@ -124,8 +127,49 @@ function validarFormulario(formId) {
     return valido;
 }
 
-function confirmarDelecao(mensagem) {
-    return confirm(mensagem || 'Tem certeza que deseja deletar este item?');
+function initConfirmActionModal() {
+    const modalEl = document.getElementById('confirmActionModal');
+    const messageEl = document.getElementById('confirmActionModalMessage');
+    const okBtn = document.getElementById('confirmActionModalOk');
+    if (!modalEl || !messageEl || !okBtn || typeof bootstrap === 'undefined') return;
+
+    const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: true });
+    let pendingForm = null;
+
+    document.addEventListener('submit', function (event) {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        const confirmMessage = form.getAttribute('data-confirm-message');
+        if (!confirmMessage) return;
+        if (form.dataset.confirmedSubmit === '1') {
+            delete form.dataset.confirmedSubmit;
+            return;
+        }
+        event.preventDefault();
+        pendingForm = form;
+        messageEl.textContent = confirmMessage;
+        modal.show();
+    });
+
+    okBtn.addEventListener('click', function () {
+        if (!pendingForm) {
+            modal.hide();
+            return;
+        }
+        pendingForm.dataset.confirmedSubmit = '1';
+        const form = pendingForm;
+        pendingForm = null;
+        modal.hide();
+        if (typeof form.requestSubmit === 'function') {
+            form.requestSubmit();
+        } else {
+            form.submit();
+        }
+    });
+
+    modalEl.addEventListener('hidden.bs.modal', function () {
+        pendingForm = null;
+    });
 }
 
 function initBarcodeScannerButtons() {
@@ -179,6 +223,47 @@ function initBarcodeScannerButtons() {
             modalState.close();
         }
     });
+}
+
+function initFormFieldTooltips() {
+    if (typeof bootstrap === 'undefined' || typeof bootstrap.Tooltip === 'undefined') return;
+
+    const controls = document.querySelectorAll('form input, form select, form textarea');
+    controls.forEach(function (field) {
+        if (!field || field.dataset.tooltipReady === '1') return;
+        if (field.type === 'hidden') return;
+        if (field.disabled) return;
+
+        const explicit = (field.getAttribute('data-tooltip') || '').trim();
+        const label = getFieldLabelText(field);
+        const placeholder = (field.getAttribute('placeholder') || '').trim();
+        const requiredText = field.required ? 'Campo obrigatorio.' : '';
+
+        let tooltipText = explicit;
+        if (!tooltipText) {
+            const parts = [];
+            if (label) parts.push(label + '.');
+            if (placeholder) parts.push('Exemplo: ' + placeholder + '.');
+            if (requiredText) parts.push(requiredText);
+            tooltipText = parts.join(' ').trim();
+        }
+
+        if (!tooltipText) return;
+
+        field.setAttribute('data-bs-toggle', 'tooltip');
+        field.setAttribute('data-bs-placement', 'top');
+        field.setAttribute('data-bs-trigger', 'hover focus');
+        field.setAttribute('title', tooltipText);
+        field.dataset.tooltipReady = '1';
+        bootstrap.Tooltip.getOrCreateInstance(field);
+    });
+}
+
+function getFieldLabelText(field) {
+    if (!field || !field.id) return '';
+    const label = document.querySelector('label[for="' + field.id + '"]');
+    if (!label) return '';
+    return (label.textContent || '').replace(/\s+/g, ' ').replace(/\*/g, '').trim();
 }
 
 async function openBarcodeScannerModal(targetInput, detector, options) {
@@ -292,4 +377,92 @@ async function openBarcodeScannerModal(targetInput, detector, options) {
     scanLoop();
 
     return { close: close };
+}
+
+function initCollapsiblePanels() {
+    const panels = [];
+
+    document.querySelectorAll('.pdv-panel').forEach(function (panel) {
+        const header = panel.querySelector(':scope > .pdv-panel-head') || panel.querySelector('.pdv-panel-head');
+        const body = panel.querySelector(':scope > .pdv-panel-body') || panel.querySelector('.pdv-panel-body');
+        if (!header || !body) return;
+        panels.push({ panel: panel, header: header, contentNodes: [body], idHint: 'pdv-' + header.textContent.trim() });
+    });
+
+    document.querySelectorAll('.card').forEach(function (panel) {
+        const header = panel.querySelector(':scope > .card-header') || panel.querySelector('.card-header');
+        if (!header) return;
+        const body = panel.querySelector(':scope > .card-body') || panel.querySelector('.card-body');
+        const contentNodes = body ? [body] : Array.from(panel.children).filter(function (child) { return child !== header; });
+        if (!contentNodes.length) return;
+        panels.push({ panel: panel, header: header, contentNodes: contentNodes, idHint: 'card-' + header.textContent.trim() });
+    });
+
+    document.querySelectorAll('.section').forEach(function (panel) {
+        if (panel.closest('.card')) return;
+        const title = panel.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4');
+        if (!title) return;
+        const contentNodes = Array.from(panel.children).filter(function (child) { return child !== title; });
+        if (!contentNodes.length) return;
+
+        let headerWrap = panel.querySelector(':scope > .panel-toggle-head');
+        if (!headerWrap) {
+            headerWrap = document.createElement('div');
+            headerWrap.className = 'panel-toggle-head';
+            panel.insertBefore(headerWrap, title);
+            headerWrap.appendChild(title);
+        }
+
+        panels.push({ panel: panel, header: headerWrap, contentNodes: contentNodes, idHint: 'section-' + title.textContent.trim() });
+    });
+
+    const seen = new WeakSet();
+    panels.forEach(function (item, index) {
+        if (!item.panel || !item.header || seen.has(item.panel)) return;
+        seen.add(item.panel);
+
+        item.panel.classList.add('panel-collapsible');
+        item.contentNodes.forEach(function (node) {
+            if (node && node.classList) node.classList.add('panel-collapsible-content');
+        });
+
+        let btn = item.header.querySelector('.panel-toggle-btn');
+        if (!btn) {
+            btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-sm btn-outline-secondary panel-toggle-btn';
+            item.header.appendChild(btn);
+        }
+
+        const storageKey = 'panel-collapse:' + window.location.pathname + ':' + slugifyPanelId(item.idHint || String(index));
+        const stored = window.localStorage ? localStorage.getItem(storageKey) : null;
+        let collapsed = stored === '1';
+
+        const applyState = function () {
+            item.panel.classList.toggle('panel-collapsed', collapsed);
+            btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            btn.textContent = collapsed ? 'Expandir' : 'Minimizar';
+        };
+
+        btn.addEventListener('click', function () {
+            collapsed = !collapsed;
+            if (window.localStorage) {
+                localStorage.setItem(storageKey, collapsed ? '1' : '0');
+            }
+            applyState();
+        });
+
+        applyState();
+    });
+}
+
+function slugifyPanelId(value) {
+    return (value || 'panel')
+        .toString()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        .slice(0, 80) || 'panel';
 }

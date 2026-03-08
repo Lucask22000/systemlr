@@ -2,10 +2,14 @@
 
 {% block title %}Fechar Caixa - SystemLR{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
+
 {% block content %}
-<div style="max-width: 600px; margin: 40px auto;">
-    <h1 style="color: #343a40; margin-bottom: 30px;">Fechar Caixa: {{ caixa.nome }}</h1>
-    
+<div class="caixa-close-page">
+    <h1>Fechar Caixa: {{ caixa.nome }}</h1>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -15,114 +19,87 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
-    
-    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
-        <h3 style="color: #667eea; margin-bottom: 15px;">📊 Informações da Caixa</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-                <small style="color: #6c757d; display: block; margin-bottom: 5px;">Funcionário</small>
-                <strong style="font-size: 18px;">{{ caixa.funcionario.nome if caixa.funcionario else '-' }}</strong>
+
+    <section class="caixa-card">
+        <h3>Informacoes da Caixa</h3>
+        <div class="caixa-info-grid">
+            <div class="caixa-info-item">
+                <small>Funcionario</small>
+                <strong>{{ caixa.funcionario.nome if caixa.funcionario else '-' }}</strong>
             </div>
-            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-                <small style="color: #6c757d; display: block; margin-bottom: 5px;">Saldo Inicial</small>
-                <strong style="font-size: 18px;">R$ {{ '%.2f'|format(caixa.saldo_inicial) }}</strong>
+            <div class="caixa-info-item">
+                <small>Saldo Inicial</small>
+                <strong>R$ {{ '%.2f'|format(caixa.saldo_inicial) }}</strong>
             </div>
-            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-                <small style="color: #6c757d; display: block; margin-bottom: 5px;">Saldo Atual</small>
-                <strong style="font-size: 18px;">R$ {{ '%.2f'|format(caixa.saldo_atual) }}</strong>
+            <div class="caixa-info-item">
+                <small>Saldo Atual</small>
+                <strong>R$ {{ '%.2f'|format(caixa.saldo_atual) }}</strong>
             </div>
-            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
-                <small style="color: #6c757d; display: block; margin-bottom: 5px;">Aberto em</small>
-                <strong style="font-size: 16px;">{{ caixa.aberto_em.strftime('%d/%m/%Y %H:%M') if caixa.aberto_em else '-' }}</strong>
+            <div class="caixa-info-item">
+                <small>Aberto em</small>
+                <strong>{{ caixa.aberto_em.strftime('%d/%m/%Y %H:%M') if caixa.aberto_em else '-' }}</strong>
             </div>
         </div>
-    </div>
-    
-    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    </section>
+
+    <section class="caixa-card">
         <form method="POST" action="{{ url_for('fechar_caixa', caixa_id=caixa.id) }}">
-            <div style="margin-bottom: 20px;">
-                <label for="saldo_fechamento" style="display: block; margin-bottom: 8px; color: #343a40; font-weight: 600;">
-                    💰 Saldo de Fechamento <span style="color: #dc3545;">*</span>
-                </label>
-                <input type="number" id="saldo_fechamento" name="saldo_fechamento" step="0.01" min="0" 
-                       value="{{ caixa.saldo_atual }}" required 
-                       style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 5px; font-size: 16px;">
-                <small style="color: #6c757d;">Valor total contado no caixa físico</small>
+            <div class="caixa-field">
+                <label for="saldo_fechamento">Saldo de Fechamento <span class="required">*</span></label>
+                <input type="number" id="saldo_fechamento" name="saldo_fechamento" step="0.01" min="0" value="{{ caixa.saldo_atual }}" required class="caixa-input">
+                <small>Valor total contado no caixa fisico.</small>
             </div>
-            
-            <div id="diferenca-info" style="padding: 15px; background-color: #f8f9fa; border-radius: 5px; margin-bottom: 20px; display: none;">
-                <div style="display: flex; justify-content: space-between;">
-                    <strong>Diferença:</strong>
-                    <strong id="diferenca-valor" style="font-size: 18px;">R$ 0,00</strong>
+
+            <div id="diferenca-info" class="diferenca-info">
+                <div class="diferenca-head">
+                    <strong>Diferenca:</strong>
+                    <strong id="diferenca-valor">R$ 0,00</strong>
                 </div>
-                <small style="color: #6c757d; display: block; margin-top: 5px;" id="diferenca-texto"></small>
+                <small id="diferenca-texto"></small>
             </div>
-            
-            <div style="margin-bottom: 20px;">
-                <label for="observacoes" style="display: block; margin-bottom: 8px; color: #343a40; font-weight: 600;">
-                    📝 Observações (opcional)
-                </label>
-                <textarea id="observacoes" name="observacoes" rows="3" 
-                          style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 5px; font-size: 16px; font-family: inherit;">
-                </textarea>
+
+            <div class="caixa-field">
+                <label for="observacoes">Observacoes (opcional)</label>
+                <textarea id="observacoes" name="observacoes" rows="3" class="caixa-input"></textarea>
             </div>
-            
-            <div style="display: flex; gap: 10px; margin-top: 30px;">
-                <button type="submit" style="flex: 1; padding: 12px; background-color: #dc3545; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 16px; transition: background-color 0.3s;">
-                    🔒 Fechar Caixa
-                </button>
-                <a href="{{ url_for('listar_caixas') }}" style="flex: 1; padding: 12px; background-color: #6c757d; color: white; border: none; border-radius: 5px; font-weight: 600; cursor: pointer; font-size: 16px; transition: background-color 0.3s; text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center;">
-                    ✕ Cancelar
-                </a>
+
+            <div class="caixa-actions">
+                <button type="submit" class="btn btn-danger">Fechar Caixa</button>
+                <a href="{{ url_for('listar_caixas') }}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
-    </div>
+    </section>
 </div>
 
 <script>
-document.getElementById('saldo_fechamento').addEventListener('change', function() {
+document.getElementById('saldo_fechamento').addEventListener('input', function () {
     const saldoFechamento = parseFloat(this.value) || 0;
     const saldoAtual = {{ caixa.saldo_atual }};
     const diferenca = saldoFechamento - saldoAtual;
-    
+
     const infoDiv = document.getElementById('diferenca-info');
     const valorDiv = document.getElementById('diferenca-valor');
     const textoDiv = document.getElementById('diferenca-texto');
-    
+
     infoDiv.style.display = 'block';
     valorDiv.textContent = 'R$ ' + Math.abs(diferenca).toFixed(2).replace('.', ',');
-    
+
     if (diferenca > 0) {
         infoDiv.style.backgroundColor = '#d4edda';
-        textoDiv.textContent = '✓ Sobra no caixa de R$ ' + Math.abs(diferenca).toFixed(2);
+        textoDiv.textContent = 'Sobra no caixa de R$ ' + Math.abs(diferenca).toFixed(2).replace('.', ',');
         textoDiv.style.color = '#155724';
     } else if (diferenca < 0) {
         infoDiv.style.backgroundColor = '#f8d7da';
-        textoDiv.textContent = '⚠ Falta no caixa de R$ ' + Math.abs(diferenca).toFixed(2);
+        textoDiv.textContent = 'Falta no caixa de R$ ' + Math.abs(diferenca).toFixed(2).replace('.', ',');
         textoDiv.style.color = '#721c24';
     } else {
         infoDiv.style.backgroundColor = '#fff3cd';
-        textoDiv.textContent = '✓ Caixa fechado sem diferença';
+        textoDiv.textContent = 'Caixa fechado sem diferenca';
         textoDiv.style.color = '#856404';
     }
 });
 
-// Mostrar diferença ao carregar a página
-document.getElementById('saldo_fechamento').dispatchEvent(new Event('change'));
+document.getElementById('saldo_fechamento').dispatchEvent(new Event('input'));
 </script>
 
-<style>
-    input:focus, textarea:focus {
-        outline: none;
-        border-color: #667eea !important;
-    }
-    
-    button:hover {
-        background-color: #c82333 !important;
-    }
-    
-    a:hover {
-        background-color: #5a6268 !important;
-    }
-</style>
 {% endblock %}

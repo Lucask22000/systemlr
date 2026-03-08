@@ -2,35 +2,31 @@
 
 {% block title %}Editar Acessos - {{ funcionario.nome }} - SystemLR{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
+
 {% block content %}
-<div style="max-width: 700px; margin: 40px auto;">
-    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 30px;">
-        <a href="{{ url_for('listar_funcionarios') }}" style="font-size: 24px; text-decoration: none; color: #667eea;">←</a>
-        <h1 style="margin: 0; color: #343a40;">Editar Acessos</h1>
+<div class="funcionario-access-page">
+    <div class="funcionario-access-header">
+        <a href="{{ url_for('listar_funcionarios') }}" class="funcionario-back-link" aria-label="Voltar para funcionarios">&larr;</a>
+        <h1>Editar Acessos</h1>
     </div>
 
-    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 25px;">
-            <p style="margin: 0; color: #343a40;">
-                <strong>Funcionário:</strong> {{ funcionario.nome }}<br>
+    <div class="funcionario-access-card">
+        <div class="funcionario-access-summary">
+            <p>
+                <strong>Funcionario:</strong> {{ funcionario.nome }}<br>
                 <strong>Email:</strong> {{ funcionario.email }}<br>
-                <strong>Função:</strong> 
-                <span style="background-color: 
-                    {% if funcionario.role == 'admin' %}#dc3545
-                    {% elif funcionario.role == 'gerente' %}#ffc107
-                    {% elif funcionario.role == 'caixa' %}#17a2b8
-                    {% else %}#6c757d
-                    {% endif %};
-                    color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">
-                    {{ funcionario.role.upper() }}
-                </span>
+                <strong>Funcao:</strong>
+                <span class="funcionario-role role-{{ funcionario.role }}">{{ funcionario.role.upper() }}</span>
             </p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                     </div>
@@ -39,90 +35,36 @@
         {% endwith %}
 
         <form method="POST" action="{{ url_for('editar_acessos_funcionario', funcionario_id=funcionario.id) }}">
+            {{ csrf_input|safe }}
             <div>
-                <h3 style="color: #343a40; margin-bottom: 20px; margin-top: 0;">Permissões de Acesso</h3>
-                
-                <div style="background-color: #f0f7ff; padding: 15px; border-left: 4px solid #667eea; border-radius: 4px; margin-bottom: 25px;">
-                    <p style="margin: 0; color: #667eea; font-size: 14px;">
-                        ℹ️ Selecione as páginas que este funcionário terá acesso no sistema.
-                    </p>
+                <h3 class="funcionario-access-title">Permissoes de Acesso</h3>
+
+                <div class="funcionario-access-tip">
+                    Selecione as paginas que este funcionario tera acesso no sistema.
                 </div>
 
                 {% for secao_nome, secao_itens in paginas_ordenadas_menu %}
-                    <div style="margin-bottom: 20px;">
-                        <h4 style="margin: 0 0 10px 0; color: #334155;">{{ secao_nome }}</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+                    <section class="funcionario-access-section">
+                        <h4>{{ secao_nome }}</h4>
+                        <div class="funcionario-access-grid">
                             {% for pagina_key, pagina_nome in secao_itens %}
-                                <label style="display: flex; align-items: center; padding: 12px; background-color: #f8f9fa; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; border: 2px solid transparent;"
-                                       onmouseover="this.style.backgroundColor='#e9ecef';" onmouseout="this.style.backgroundColor='#f8f9fa';">
+                                <label class="funcionario-access-option">
                                     <input type="checkbox" name="paginas" value="{{ pagina_key }}"
-                                           {% if pagina_key in permissoes_atuais %}checked{% endif %}
-                                           style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
-                                    <span style="flex: 1; color: #343a40; font-weight: 500;">{{ pagina_nome }}</span>
+                                           {% if pagina_key in permissoes_atuais %}checked{% endif %}>
+                                    <span>{{ pagina_nome }}</span>
                                 </label>
                             {% endfor %}
                         </div>
-                    </div>
+                    </section>
                 {% endfor %}
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 30px;">
-                <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.3s;">
-                    ✓ Salvar Acessos
-                </button>
-                <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-secondary" style="flex: 1; padding: 12px; background-color: #6c757d; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: 600; text-decoration: none; text-align: center; transition: background-color 0.3s;">
-                    ✕ Cancelar
-                </a>
+            <div class="funcionario-access-actions">
+                <button type="submit" class="btn btn-primary">Salvar Acessos</button>
+                <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
 </div>
 
-<style>
-    .btn {
-        display: inline-block;
-        text-decoration: none;
-    }
-
-    .btn:hover {
-        opacity: 0.9;
-    }
-
-    .btn-primary:hover {
-        background-color: #218838 !important;
-    }
-
-    .btn-secondary:hover {
-        background-color: #5a6268 !important;
-    }
-
-    .alert {
-        padding: 15px;
-        border-radius: 5px;
-        border: 1px solid;
-    }
-
-    .alert-success {
-        background-color: #d4edda;
-        color: #155724;
-        border-color: #c3e6cb;
-    }
-
-    .alert-danger {
-        background-color: #f8d7da;
-        color: #721c24;
-        border-color: #f5c6cb;
-    }
-
-    .alert-dismissible .close {
-        position: absolute;
-        right: 15px;
-        top: 15px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: inherit;
-        font-size: 20px;
-    }
-</style>
 {% endblock %}

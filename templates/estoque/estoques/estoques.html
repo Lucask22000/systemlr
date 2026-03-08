@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Estoques - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Estoques</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_enderecos_estoque') }}" class="btn btn-secondary">Ver Enderecos</a>
+        <a href="{{ url_for('novo_estoque') }}" class="btn btn-primary">Novo Estoque</a>
+    </div>
+</div>
+
+<section class="filters-section">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <label for="busca">Busca</label>
+            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="Nome ou descricao do estoque">
+        </div>
+        <div class="filter-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="input-select">
+                <option value="" {% if not filtros or not filtros.status %}selected{% endif %}>Todos</option>
+                <option value="ativo" {% if filtros and filtros.status == 'ativo' %}selected{% endif %}>Ativos</option>
+                <option value="inativo" {% if filtros and filtros.status == 'inativo' %}selected{% endif %}>Inativos</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('listar_estoques') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Descricao</th>
+                <th>Enderecos</th>
+                <th>Status</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for estoque in estoques %}
+            <tr>
+                <td data-label="Nome"><strong>{{ estoque.nome }}</strong></td>
+                <td data-label="Descricao">{{ estoque.descricao or '-' }}</td>
+                <td data-label="Enderecos">{{ estoque.enderecos|length }}</td>
+                <td data-label="Status">
+                    {% if estoque.ativo %}
+                    <span class="badge badge-success">Ativo</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inativo</span>
+                    {% endif %}
+                </td>
+                <td data-label="Acoes" class="actions-cell">
+                    <a href="{{ url_for('listar_enderecos_estoque', estoque_id=estoque.id) }}" class="btn-small btn-info">Enderecos</a>
+                    <a href="{{ url_for('editar_estoque', estoque_id=estoque.id) }}" class="btn-small btn-warning">Editar</a>
+                    <form method="POST" action="{{ url_for('deletar_estoque', estoque_id=estoque.id) }}" class="inline-form" data-confirm-message="Excluir estoque {{ estoque.nome }}?">
+                        {{ csrf_input|safe }}
+                        <button type="submit" class="btn-small btn-danger">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">Nenhum estoque cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination-wrap">
+    <nav aria-label="Paginacao de estoques">
+        <ul class="pagination">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('listar_estoques', page=pagination.prev_num, per_page=per_page, busca=filtros.busca if filtros else '', status=filtros.status if filtros else '') if pagination.has_prev else '#' }}">Anterior</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">Pagina {{ pagination.page }} de {{ pagination.pages }}</span></li>
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('listar_estoques', page=pagination.next_num, per_page=per_page, busca=filtros.busca if filtros else '', status=filtros.status if filtros else '') if pagination.has_next else '#' }}">Proxima</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,291 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Configuração E-commerce - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Configuração de E-commerce</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" enctype="multipart/form-data" class="form">
+        {{ csrf_input|safe }}
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Tema da vitrine</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ecom_cor_primária">Cor primária</label>
+                    <input
+                        type="color"
+                        id="ecom_cor_primária"
+                        name="ecom_cor_primária"
+                        value="{{ empresa.ecom_cor_primária if empresa and empresa.ecom_cor_primária else '#ff7848' }}"
+                        class="input-text">
+                </div>
+                <div class="form-group">
+                    <label for="ecom_cor_secundária">Cor secundária</label>
+                    <input
+                        type="color"
+                        id="ecom_cor_secundária"
+                        name="ecom_cor_secundária"
+                        value="{{ empresa.ecom_cor_secundária if empresa and empresa.ecom_cor_secundária else '#ff5a2a' }}"
+                        class="input-text">
+                </div>
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Promoções e mensagem principal</h2>
+            <div class="form-group">
+                <label for="ecom_titulo_banner">Título do banner</label>
+                <input
+                    type="text"
+                    id="ecom_titulo_banner"
+                    name="ecom_titulo_banner"
+                    value="{{ empresa.ecom_titulo_banner if empresa else '' }}"
+                    class="input-text"
+                    placeholder="Ex.: Ofertas imperdiveis da semana">
+            </div>
+            <div class="form-group">
+                <label for="ecom_subtitulo_banner">Subtítulo do banner</label>
+                <input
+                    type="text"
+                    id="ecom_subtitulo_banner"
+                    name="ecom_subtitulo_banner"
+                    value="{{ empresa.ecom_subtitulo_banner if empresa else '' }}"
+                    class="input-text"
+                    placeholder="Ex.: Aproveite cupons e frete promocional">
+            </div>
+            <div class="form-group">
+                <label for="ecom_texto_promocao">Texto de promocao</label>
+                <input
+                    type="text"
+                    id="ecom_texto_promocao"
+                    name="ecom_texto_promocao"
+                    value="{{ empresa.ecom_texto_promocao if empresa else '' }}"
+                    class="input-text"
+                    placeholder="Ex.: 20% OFF em itens selecionados">
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Banner principal</h2>
+            <div class="form-group">
+                <label for="ecom_banner">Imagem do banner</label>
+                <input type="file" id="ecom_banner" name="ecom_banner" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
+            </div>
+            {% if empresa and empresa.ecom_banner_path %}
+            <div class="product-image-preview">
+                <img src="{{ url_for('static', filename=empresa.ecom_banner_path) }}" alt="Banner e-commerce">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="remover_ecom_banner">
+                    Remover banner atual
+                </label>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Identidade visual (favicon e imagem padrão)</h2>
+            <div class="form-group">
+                <label for="ecom_favicon">Favicon da loja</label>
+                <input type="file" id="ecom_favicon" name="ecom_favicon" accept=".ico,.png,.svg,.jpg,.jpeg,.webp" class="input-text">
+            </div>
+            {% if empresa and empresa.ecom_favicon_path %}
+            <div class="product-image-preview">
+                <img src="{{ url_for('static', filename=empresa.ecom_favicon_path) }}" alt="Favicon da loja" style="max-width:48px;max-height:48px;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="remover_ecom_favicon">
+                    Remover favicon atual
+                </label>
+            </div>
+            {% endif %}
+
+            <div class="form-group" style="margin-top: 10px;">
+                <label for="ecom_produto_placeholder">Imagem padrão para produtos sem foto</label>
+                <input type="file" id="ecom_produto_placeholder" name="ecom_produto_placeholder" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
+            </div>
+            {% if empresa and empresa.ecom_produto_placeholder_path %}
+            <div class="product-image-preview">
+                <img src="{{ url_for('static', filename=empresa.ecom_produto_placeholder_path) }}" alt="Imagem padrão de produto">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="remover_ecom_produto_placeholder">
+                    Remover imagem padrão atual
+                </label>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Multiplos banners com carrossel (ate 5)</h2>
+            {% for banner in banners_config %}
+            <div style="border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin-bottom:10px;">
+                <h3 style="margin:0 0 10px;">Banner {{ loop.index }}</h3>
+                <input type="hidden" name="banner_path_{{ loop.index0 }}" value="{{ banner.image_path }}">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="banner_titulo_{{ loop.index0 }}">Título</label>
+                        <input type="text" id="banner_titulo_{{ loop.index0 }}" name="banner_titulo_{{ loop.index0 }}" value="{{ banner.titulo }}" class="input-text">
+                    </div>
+                    <div class="form-group">
+                        <label for="banner_subtitulo_{{ loop.index0 }}">Subtítulo</label>
+                        <input type="text" id="banner_subtitulo_{{ loop.index0 }}" name="banner_subtitulo_{{ loop.index0 }}" value="{{ banner.subtitulo }}" class="input-text">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="banner_inicio_{{ loop.index0 }}">Inicio da vigência</label>
+                        <input type="datetime-local" id="banner_inicio_{{ loop.index0 }}" name="banner_inicio_{{ loop.index0 }}" value="{{ banner.inicio_em }}" class="input-text">
+                    </div>
+                    <div class="form-group">
+                        <label for="banner_fim_{{ loop.index0 }}">Fim da vigência</label>
+                        <input type="datetime-local" id="banner_fim_{{ loop.index0 }}" name="banner_fim_{{ loop.index0 }}" value="{{ banner.fim_em }}" class="input-text">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="banner_imagem_{{ loop.index0 }}">Imagem do banner</label>
+                    <input type="file" id="banner_imagem_{{ loop.index0 }}" name="banner_imagem_{{ loop.index0 }}" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
+                </div>
+                {% if banner.image_path %}
+                <div class="product-image-preview">
+                    <img src="{{ url_for('static', filename=banner.image_path) }}" alt="Banner {{ loop.index }}">
+                </div>
+                {% endif %}
+                <div class="form-row">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="banner_ativo_{{ loop.index0 }}" {% if banner.ativo %}checked{% endif %}>
+                        Banner ativo
+                    </label>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="remover_banner_{{ loop.index0 }}">
+                        Remover imagem deste slot
+                    </label>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Campanhas programadas (agendamento automático)</h2>
+            {% for campanha in campanhas_config %}
+            <div style="border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin-bottom:10px;">
+                <h3 style="margin:0 0 10px;">Campanha {{ loop.index }}</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="campanha_nome_{{ loop.index0 }}">Nome da campanha</label>
+                        <input type="text" id="campanha_nome_{{ loop.index0 }}" name="campanha_nome_{{ loop.index0 }}" value="{{ campanha.nome }}" class="input-text">
+                    </div>
+                    <div class="form-group">
+                        <label for="campanha_texto_{{ loop.index0 }}">Texto promocional</label>
+                        <input type="text" id="campanha_texto_{{ loop.index0 }}" name="campanha_texto_{{ loop.index0 }}" value="{{ campanha.texto }}" class="input-text">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="campanha_inicio_{{ loop.index0 }}">Inicio da vigência</label>
+                        <input type="date" id="campanha_inicio_{{ loop.index0 }}" name="campanha_inicio_{{ loop.index0 }}" value="{{ campanha.inicio_em }}" class="input-text">
+                    </div>
+                    <div class="form-group">
+                        <label for="campanha_fim_{{ loop.index0 }}">Fim da vigência</label>
+                        <input type="date" id="campanha_fim_{{ loop.index0 }}" name="campanha_fim_{{ loop.index0 }}" value="{{ campanha.fim_em }}" class="input-text">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="campanha_ativa_{{ loop.index0 }}" {% if campanha.ativo %}checked{% endif %}>
+                        Campanha ativa
+                    </label>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Rodapé da loja</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ecom_footer_bg">Cor do rodapé</label>
+                    <input
+                        type="color"
+                        id="ecom_footer_bg"
+                        name="ecom_footer_bg"
+                        value="{{ empresa.ecom_footer_bg if empresa and empresa.ecom_footer_bg else '#1f2b38' }}"
+                        class="input-text">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ecom_footer_texto">Texto geral do rodapé</label>
+                <input
+                    type="text"
+                    id="ecom_footer_texto"
+                    name="ecom_footer_texto"
+                    value="{{ empresa.ecom_footer_texto if empresa else '' }}"
+                    class="input-text"
+                    placeholder="Ex.: Loja oficial com entrega para toda a região">
+            </div>
+            <div class="form-group">
+                <label for="ecom_footer_contato">Contato</label>
+                <input
+                    type="text"
+                    id="ecom_footer_contato"
+                    name="ecom_footer_contato"
+                    value="{{ empresa.ecom_footer_contato if empresa else '' }}"
+                    class="input-text"
+                    placeholder="Ex.: WhatsApp (65) 99999-9999 | atendimento@loja.com">
+            </div>
+            <div class="form-group">
+                <label for="ecom_footer_creditos">Créditos</label>
+                <input
+                    type="text"
+                    id="ecom_footer_creditos"
+                    name="ecom_footer_creditos"
+                    value="{{ empresa.ecom_footer_creditos if empresa else '' }}"
+                    class="input-text"
+                    placeholder="Ex.: Desenvolvido por SuaEmpresa Digital">
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Preview rápido</h2>
+            <div style="
+                border-radius: 12px;
+                padding: 14px;
+                background: linear-gradient(90deg, {{ empresa.ecom_cor_primária if empresa and empresa.ecom_cor_primária else '#ff7848' }} 0%, {{ empresa.ecom_cor_secundária if empresa and empresa.ecom_cor_secundária else '#ff5a2a' }} 100%);
+                color: #fff;
+            ">
+                <strong style="display:block;font-size:1.1rem;">
+                    {{ empresa.ecom_titulo_banner if empresa and empresa.ecom_titulo_banner else 'Título do banner da sua loja' }}
+                </strong>
+                <span style="display:block;opacity:.9;margin-top:4px;">
+                    {{ empresa.ecom_subtitulo_banner if empresa and empresa.ecom_subtitulo_banner else 'Subtítulo promocional para chamar atenção do cliente' }}
+                </span>
+                <small style="display:inline-block;margin-top:8px;background:rgba(255,255,255,.2);padding:4px 8px;border-radius:999px;">
+                    {{ empresa.ecom_texto_promocao if empresa and empresa.ecom_texto_promocao else 'Texto de promocao' }}
+                </small>
+            </div>
+            <div style="
+                margin-top: 10px;
+                border-radius: 12px;
+                padding: 14px;
+                background: {{ empresa.ecom_footer_bg if empresa and empresa.ecom_footer_bg else '#1f2b38' }};
+                color: #eaf0f8;
+            ">
+                <strong style="display:block;">{{ empresa.ecom_footer_texto if empresa and empresa.ecom_footer_texto else 'Texto geral do rodapé' }}</strong>
+                <span style="display:block;opacity:.9;margin-top:4px;">{{ empresa.ecom_footer_contato if empresa and empresa.ecom_footer_contato else 'Contato da loja' }}</span>
+                <small style="display:block;opacity:.75;margin-top:6px;">{{ empresa.ecom_footer_creditos if empresa and empresa.ecom_footer_creditos else 'Créditos' }}</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Salvar configuracoes</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Ver vitrine</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+

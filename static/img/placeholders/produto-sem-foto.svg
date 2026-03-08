@@ -1,0 +1,32 @@
+<svg width="640" height="480" viewBox="0 0 640 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="480" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7F3E8"/>
+      <stop offset="1" stop-color="#F8EFE1"/>
+    </linearGradient>
+    <linearGradient id="box" x1="220" y1="140" x2="420" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2D6A4F"/>
+      <stop offset="1" stop-color="#1B4332"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="480" fill="url(#bg)"/>
+  <circle cx="520" cy="80" r="64" fill="#F4A259" fill-opacity="0.35"/>
+  <circle cx="110" cy="390" r="88" fill="#8FBC8F" fill-opacity="0.28"/>
+
+  <rect x="198" y="116" width="244" height="248" rx="28" fill="url(#box)"/>
+  <path d="M250 210C250 176.863 276.863 150 310 150H330C363.137 150 390 176.863 390 210V216H250V210Z" fill="#95D5B2"/>
+  <rect x="252" y="220" width="136" height="104" rx="14" fill="#D8F3DC"/>
+  <rect x="264" y="232" width="112" height="14" rx="7" fill="#2D6A4F"/>
+  <rect x="264" y="256" width="86" height="12" rx="6" fill="#40916C"/>
+  <rect x="264" y="276" width="98" height="12" rx="6" fill="#74C69D"/>
+  <circle cx="400" cy="290" r="34" fill="#F4A259"/>
+  <path d="M400 276V304M386 290H414" stroke="#FFFDF8" stroke-width="8" stroke-linecap="round"/>
+
+  <text x="320" y="398" text-anchor="middle" font-family="Sora, Arial, sans-serif" font-size="28" font-weight="700" fill="#1B4332">
+    Imagem padrao do produto
+  </text>
+  <text x="320" y="430" text-anchor="middle" font-family="Sora, Arial, sans-serif" font-size="18" fill="#315948">
+    Foto sera exibida aqui quando estiver disponivel
+  </text>
+</svg>

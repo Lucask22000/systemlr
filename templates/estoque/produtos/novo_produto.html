@@ -9,12 +9,14 @@
 
 <div class="form-container">
     <form method="POST" enctype="multipart/form-data" class="form">
+        {{ csrf_input|safe }}
         <div class="form-group">
-            <label for="codigo">Codigo *</label>
+            <label for="código">Codigo *</label>
             <div class="barcode-input-group">
-                <input type="text" id="codigo" name="codigo" required placeholder="Ex: PROD001" class="input-text">
-                <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="codigo">Camera</button>
+                <input type="text" id="código" name="código" required placeholder="Ex: PROD001" class="input-text">
+                <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="código">Câmera</button>
             </div>
+            <small id="códigoErro" class="text-danger"></small>
         </div>
 
         <div class="form-group">
@@ -43,6 +45,16 @@
         </div>
 
         <div class="form-group">
+            <label for="fornecedor_id">Fornecedor *</label>
+            <select id="fornecedor_id" name="fornecedor_id" required class="input-select">
+                <option value="">Selecione um fornecedor</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="endereco_id">Endereco de Estoque</label>
             <select id="endereco_id" name="endereco_id" class="input-select">
                 <option value="">Nao definido</option>
@@ -61,6 +73,15 @@
             <div class="form-group">
                 <label for="preco_venda">Preco de Venda *</label>
                 <input type="number" id="preco_venda" name="preco_venda" step="0.01" required placeholder="0.00" class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="status_disponibilidade">Disponibilidade operacional</label>
+                <select id="status_disponibilidade" name="status_disponibilidade" class="input-select">
+                    {% for chave, label in status_disponibilidade_labels.items() %}
+                    <option value="{{ chave }}" {% if chave == 'online' %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
 
@@ -82,4 +103,28 @@
         </div>
     </form>
 </div>
+
+<script>
+const códigosExistentes = {{ códigos_existentes|tojson }};
+const códigoInput = document.getElementById('código');
+const submitBtn = document.querySelector('form button[type="submit"]');
+const códigoErro = document.getElementById('códigoErro');
+
+function validarCodigoUnico() {
+    const valor = (códigoInput.value || '').trim().toUpperCase();
+    códigoInput.value = valor;
+    const duplicado = valor && códigosExistentes.includes(valor);
+    if (duplicado) {
+        códigoErro.textContent = 'Codigo já utilizado por outro produto.';
+        if (submitBtn) submitBtn.disabled = true;
+    } else {
+        códigoErro.textContent = '';
+        if (submitBtn) submitBtn.disabled = false;
+    }
+}
+
+códigoInput.addEventListener('input', validarCodigoUnico);
+validarCodigoUnico();
+</script>
 {% endblock %}
+

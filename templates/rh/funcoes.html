@@ -1,41 +1,42 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 
-{% block title %}Funcoes RH - SystemLR{% endblock %}
+{% block title %}Cargos - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Funcoes - Meu RH</h1>
+    <h1>Cargos - Meu RH</h1>
 </div>
 
 <div class="card">
-    <div class="card-header">Nova Funcao</div>
+    <div class="card-header">Novo Cargo</div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('nova_funcao_rh') }}" class="form">
+            {{ csrf_input|safe }}
             <div class="form-row">
                 <div class="form-group">
-                    <label for="nome">Nome da Funcao *</label>
+                    <label for="nome">Nome do Cargo *</label>
                     <input type="text" id="nome" name="nome" class="input-text" maxlength="100" required placeholder="Ex: Atendente, Supervisor, Estoquista">
                 </div>
                 <div class="form-group">
                     <label for="descricao">Descricao</label>
-                    <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" placeholder="Descricao resumida da funcao">
+                    <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" placeholder="Descricao resumida do cargo">
                 </div>
             </div>
             <div class="form-group">
                 <label class="checkbox-inline">
                     <input type="checkbox" name="ativo" checked>
-                    Funcao ativa
+                    Cargo ativo
                 </label>
             </div>
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Salvar Funcao</button>
+                <button type="submit" class="btn btn-primary">Salvar Cargo</button>
             </div>
         </form>
     </div>
 </div>
 
 <div class="section">
-    <h2>Funcoes Cadastradas</h2>
+    <h2>Cargos Cadastrados</h2>
     <div class="table-responsive">
         <table class="table">
             <thead>
@@ -62,7 +63,8 @@
                     <td data-label="Criado em">{{ funcao.criado_em.strftime('%d/%m/%Y %H:%M') if funcao.criado_em else '-' }}</td>
                     <td data-label="Acoes" class="actions-cell">
                         <a href="{{ url_for('editar_funcao_rh', funcao_id=funcao.id) }}" class="btn-small btn-warning">Editar</a>
-                        <form method="POST" action="{{ url_for('deletar_funcao_rh', funcao_id=funcao.id) }}" style="display:inline;" onsubmit="return confirm('Excluir funcao {{ funcao.nome }}?');">
+                        <form method="POST" action="{{ url_for('deletar_funcao_rh', funcao_id=funcao.id) }}" class="inline-form" data-confirm-message="Excluir funcao {{ funcao.nome }}?">
+                            {{ csrf_input|safe }}
                             <button type="submit" class="btn-small btn-danger">Excluir</button>
                         </form>
                     </td>
@@ -77,3 +79,6 @@
     </div>
 </div>
 {% endblock %}
+
+
+

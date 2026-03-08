@@ -1,0 +1,85 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Produtos no Endereco - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Produtos Armazenados no Endereco</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_enderecos_estoque', estoque_id=endereco.estoque_id or '') }}" class="btn btn-secondary">Voltar para Enderecos</a>
+    </div>
+</div>
+
+<div class="cards-container analytics-cards">
+    <div class="card card-info">
+        <div class="card-content">
+            <h3>Endereco</h3>
+            <p class="card-value">{{ endereco.nome }}</p>
+            <p class="card-meta"><code>{{ endereco.código_localizacao or '-' }}</code></p>
+        </div>
+    </div>
+    <div class="card card-primary">
+        <div class="card-content">
+            <h3>Produtos</h3>
+            <p class="card-value">{{ produtos|length }}</p>
+            <p class="card-meta">Itens vinculados</p>
+        </div>
+    </div>
+    <div class="card card-success">
+        <div class="card-content">
+            <h3>Total Unidades</h3>
+            <p class="card-value">{{ total_unidades }}</p>
+            <p class="card-meta">Saldo fisico</p>
+        </div>
+    </div>
+    <div class="card card-warning">
+        <div class="card-content">
+            <h3>Valor em Custo</h3>
+            <p class="card-value">R$ {{ "%.2f"|format(valor_total) }}</p>
+            <p class="card-meta">Estimado</p>
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Codigo</th>
+                <th>Produto</th>
+                <th>Categoria</th>
+                <th>Estoque</th>
+                <th>Minimo</th>
+                <th>Status</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produto in produtos %}
+            <tr class="{% if produto.em_falta %}row-warning{% endif %}">
+                <td data-label="Codigo"><code>{{ produto.código }}</code></td>
+                <td data-label="Produto">{{ produto.nome }}</td>
+                <td data-label="Categoria">{{ produto.categoria.nome if produto.categoria else '-' }}</td>
+                <td data-label="Estoque">{{ produto.quantidade_estoque }}</td>
+                <td data-label="Minimo">{{ produto.quantidade_minima }}</td>
+                <td data-label="Status">
+                    {% if produto.ativo %}
+                    <span class="badge badge-success">Ativo</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inativo</span>
+                    {% endif %}
+                </td>
+                <td data-label="Acoes">
+                    <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Ver</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center">Nenhum produto armazenado neste endereco.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

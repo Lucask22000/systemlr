@@ -1,0 +1,95 @@
+.table thead th {
+    white-space: nowrap;
+}
+
+.table td[data-label] {
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.actions-cell {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* Listagens do estoque com cabecalho fixo + rolagem */
+.table-scroll-sticky {
+    max-height: min(62vh, 720px);
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.table-scroll-sticky .table {
+    margin: 0;
+    box-shadow: none;
+    border-radius: 0;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.table-scroll-sticky .table.table-produtos {
+    table-layout: auto;
+    min-width: 1120px;
+}
+
+.table.table-produtos .col-disponibilidade {
+    min-width: 190px;
+}
+
+.table.table-produtos .col-disponibilidade .badge {
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.25;
+}
+
+.table.table-produtos .col-preco-venda {
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.table-scroll-sticky .table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--dark);
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .table-scroll-sticky {
+        max-height: none;
+        overflow: visible;
+        border: none;
+    }
+
+    .actions-cell {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .actions-cell > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .actions-cell .btn,
+    .actions-cell .btn-small,
+    .actions-cell .inline-form {
+        width: 100%;
+    }
+
+    .actions-cell .inline-form .btn,
+    .actions-cell .inline-form .btn-small {
+        width: 100%;
+    }
+
+    .table-scroll-sticky .table.table-produtos {
+        min-width: 0;
+    }
+}

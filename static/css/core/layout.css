@@ -1,0 +1,167 @@
+.main-content {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.content-shell {
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.page-container {
+    width: 100%;
+}
+
+.page-header .header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btn,
+.btn-small {
+    max-width: 100%;
+}
+
+/* Painel minimizavel/expansivel */
+.panel-toggle-head,
+.pdv-panel-head,
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.panel-toggle-head > h1,
+.panel-toggle-head > h2,
+.panel-toggle-head > h3,
+.panel-toggle-head > h4 {
+    margin: 0 !important;
+    border: 0 !important;
+    padding: 0 !important;
+}
+
+.section > .panel-toggle-head {
+    border-bottom: 2px solid var(--primary);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+}
+
+.panel-toggle-btn {
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.panel-collapsed .panel-collapsible-content {
+    display: none !important;
+}
+
+/* Harmonizacao responsiva com Bootstrap (aplica em todas as paginas) */
+@media (max-width: 992px) {
+    .filters-form {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+    }
+
+    .page-header {
+        align-items: flex-start;
+    }
+
+    .page-header .header-actions {
+        width: 100%;
+    }
+
+    .page-header .header-actions .btn {
+        flex: 1 1 180px;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-shell {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr !important;
+        gap: 12px;
+    }
+
+    .form-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    .btn,
+    .btn-small {
+        white-space: normal;
+        text-wrap: balance;
+        overflow-wrap: anywhere;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .action-buttons > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .page-header .header-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .page-header .header-actions > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .page-header .header-actions .btn,
+    .page-header .header-actions .btn-small {
+        width: 100%;
+    }
+
+    .barcode-input-group {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .barcode-input-group .btn {
+        width: 100%;
+    }
+
+    .panel-toggle-btn {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header h1 {
+        font-size: 1.35rem;
+    }
+
+    .form-container,
+    .filters-section,
+    .section,
+    .card {
+        padding: 14px;
+    }
+}

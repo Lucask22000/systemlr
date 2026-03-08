@@ -333,6 +333,8 @@ body {
     text-decoration: none;
     font-size: 0.95em;
     transition: all 0.3s;
+    min-height: 44px; /* tap target confortável em mobile */
+    line-height: 1.2;
 }
 
 .btn {
@@ -397,6 +399,49 @@ body {
 
 .btn-info:hover {
     background-color: #138496;
+}
+
+.btn-fluid {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+}
+
+.list-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.list-row + .list-row {
+    margin-top: 10px;
+}
+
+.list-title {
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.35;
+}
+
+.list-meta {
+    color: #64748b;
+    font-size: 0.9em;
+}
+
+.list-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.list-actions .btn {
+    min-width: 120px;
 }
 
 .btn-outline {
@@ -699,18 +744,23 @@ body {
 }
 
 .filters-form {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    align-items: end;
 }
 
 .filter-group {
-    flex: 1;
-    min-width: 200px;
+    min-width: 0;
 }
 
 .input-search {
+    width: 100%;
+}
+
+.filters-form .input-text,
+.filters-form .input-select,
+.filters-form .input-search {
     width: 100%;
 }
 
@@ -1019,6 +1069,22 @@ body {
     margin-bottom: 20px;
 }
 
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.performance-chart-container {
+    height: 300px;
+    margin-bottom: 14px;
+}
+
 .analytics-kpi-list {
     display: grid;
     gap: 10px;
@@ -1119,11 +1185,8 @@ body {
     }
 
     .filters-form {
-        flex-direction: column;
-    }
-
-    .filter-group {
-        min-width: 100%;
+        grid-template-columns: 1fr;
+        gap: 10px;
     }
 
     .table{
@@ -1188,8 +1251,30 @@ body {
         padding: 11px 30px;
     }
 
+    /* Linhas de lista e botoes ajustados para empilhar bem em mobile */
+    .list-row {
+        grid-template-columns: 1fr;
+    }
+
+    .list-actions {
+        width: 100%;
+    }
+
+    .list-actions .btn {
+        width: 100%;
+    }
+
     .analytics-grid {
         grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+        height: 260px;
+    }
+
+    .performance-chart-container {
+        min-height: 220px;
+        height: auto;
     }
 
     .trend-row {
@@ -1239,9 +1324,15 @@ body {
 
     .container [style*="max-width: 600px"],
     .container [style*="max-width: 700px"],
-    .container [style*="max-width: 1000px"] {
+    .container [style*="max-width: 1000px"],
+    .container [style*="max-width: 500px"],
+    .container [style*="max-width: 1100px"] {
         width: 100%;
         margin: 20px auto !important;
+    }
+
+    .container [style*="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))"] {
+        grid-template-columns: 1fr !important;
     }
 }
 
@@ -1293,28 +1384,40 @@ body {
         text-align: center;
     }
 
-    .table {
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table-responsive .table {
+        min-width: 620px;
+        font-size: 0.86rem;
+    }
+
+    .table:has(td[data-label]) {
+        min-width: 0;
         display: block;
         overflow: visible;
     }
 
-    .table thead {
+    .table:has(td[data-label]) thead {
         display: none;
     }
 
-    .table tbody, .table tr, .table td {
+    .table:has(td[data-label]) tbody,
+    .table:has(td[data-label]) tr,
+    .table:has(td[data-label]) td {
         display: block;
         width: 100%;
     }
 
-    .table tbody tr {
+    .table:has(td[data-label]) tbody tr {
         margin-bottom: 15px;
         border: 1px solid var(--border);
         border-radius: 4px;
         overflow: hidden;
     }
 
-    .table td {
+    .table:has(td[data-label]) td {
         border: none;
         padding: 10px;
         text-align: right;
@@ -1322,7 +1425,7 @@ body {
         padding-left: 50%;
     }
 
-    .table td:before {
+    .table:has(td[data-label]) td:before {
         content: attr(data-label);
         position: absolute;
         left: 10px;
@@ -1336,6 +1439,16 @@ body {
 
     .section {
         padding: 15px;
+    }
+
+    .chart-container {
+        height: 220px;
+    }
+
+    .performance-chart-container {
+        min-height: 200px;
+        height: auto;
+        margin-bottom: 10px;
     }
 
     .grid-container {
@@ -1549,5 +1662,89 @@ body {
     .page-container {
         padding-left: 0;
         padding-right: 0;
+    }
+}
+
+.inline-form {
+    display: inline;
+}
+
+canvas {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+@media (max-width: 640px) {
+    body {
+        overflow-x: hidden;
+    }
+
+    .navbar-container {
+        padding: 0 12px;
+        flex-wrap: wrap;
+    }
+
+    .brand-link {
+        flex: 1 1 0;
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .brand-name {
+        display: inline-block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .navbar-menu {
+        width: 100%;
+        left: 0;
+        right: 0;
+    }
+
+    .nav-link,
+    .nav-dropdown-toggle {
+        width: 100%;
+        text-align: left;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .receipt-items thead {
+        display: none;
+    }
+
+    .receipt-items,
+    .receipt-items tbody,
+    .receipt-items tr,
+    .receipt-items td {
+        display: block;
+        width: 100%;
+    }
+
+    .receipt-items tr {
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+    }
+
+    .receipt-items td[data-label] {
+        text-align: right;
+        padding-left: 48%;
+        position: relative;
+    }
+
+    .receipt-items td[data-label]::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 6px;
+        font-weight: 700;
+        color: var(--primary);
     }
 }
