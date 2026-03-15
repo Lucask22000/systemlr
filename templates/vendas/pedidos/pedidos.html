@@ -12,12 +12,14 @@
     <div class="header-actions">
         {% if not empresa or empresa.separacao_entrega_ativa != False %}
         <a href="{{ url_for('listar_separacao_entrega') }}" class="btn btn-outline-primary">Separação Entrega</a>
+        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-primary">Roteirizacao</a>
+        <a href="{{ url_for('painel_expedicao') }}" class="btn btn-outline-primary">Painel Expedicao</a>
         {% endif %}
         <a href="{{ url_for('novo_pedido') }}" class="btn btn-primary">Novo Pedido</a>
     </div>
 </div>
 
-<div class="section pedido-filtros">
+<div class="section pedido-filtros" data-filter-panel data-filter-title="Filtros dos pedidos">
     <form method="GET" class="pedido-filtros-form">
         <input type="text" name="busca" class="form-control" placeholder="Buscar por pedido, cliente, celular, mesa ou caixa" value="{{ busca or '' }}">
         <select name="status" class="form-select">
@@ -46,14 +48,9 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Mesa</th>
-                <th>Caixa</th>
+                <th>Data/Hora</th>
                 <th>Cliente</th>
-                <th class="col-celular">Celular</th>
-                <th class="col-garcom">Garcom</th>
                 <th>Total</th>
-                <th class="col-pagamento">Pagamento</th>
-                <th class="col-valor-pago">Valor pago</th>
                 <th>Status</th>
                 <th class="col-separacao">Separação</th>
                 <th>Acoes</th>
@@ -62,39 +59,16 @@
         <tbody>
             {% for pedido in pedidos %}
             {% set separacao_ativa = (not empresa or empresa.separacao_entrega_ativa != False) %}
-            {% set etiqueta_ativa = separacao_ativa and (not empresa or empresa.emissao_etiqueta_entrega_ativa != False) %}
             {% set unir_off = (empresa and empresa.separacao_entrega_unir_vendas_off) %}
             {% set origem_elegivel_separacao = (pedido.origem == 'site') or (unir_off and pedido.origem == 'interno') %}
             <tr>
                 <td data-label="ID">{{ pedido.id }}</td>
-                <td data-label="Mesa">{{ pedido.mesa.numero if pedido.mesa else '' }}</td>
-                <td data-label="Caixa">{{ pedido.caixa.nome if pedido.caixa else '' }}</td>
-                <td data-label="Cliente">{{ pedido.cliente_nome or '-' }}</td>
-                <td data-label="Celular" class="col-celular">{{ pedido.cliente_celular or '-' }}</td>
-                <td data-label="Garcom" class="col-garcom">{{ pedido.garcom.nome if pedido.garcom else 'Nao atribuido' }}</td>
-                <td data-label="Total">R$ {{ '%.2f'|format(pedido.total) }}</td>
-                <td data-label="Pagamento" class="col-pagamento">
-                    {% if pedido.metodo_pagamento %}
-                        {% set metodo = pedido.metodo_pagamento|lower %}
-                        {% if 'dividido' in metodo %}
-                            <span class="badge text-bg-info">Dividido</span>
-                        {% elif 'crediario' in metodo %}
-                            <span class="badge text-bg-warning">Crediario</span>
-                        {% elif 'dinheiro' in metodo %}
-                            <span class="badge text-bg-success">Dinheiro</span>
-                        {% elif 'cartao' in metodo %}
-                            <span class="badge text-bg-primary">Cartao</span>
-                        {% elif 'pix' in metodo %}
-                            <span class="badge text-bg-success">Pix</span>
-                        {% else %}
-                            <span class="badge text-bg-secondary">{{ pedido.metodo_pagamento }}</span>
-                        {% endif %}
-                        <div class="pedido-pagamento-linha">{{ pedido.metodo_pagamento }}</div>
-                    {% else %}
-                        -
-                    {% endif %}
+                <td data-label="Data/Hora">{{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</td>
+                <td data-label="Cliente">
+                    <strong>{{ pedido.cliente_nome or '-' }}</strong>
+                    <div class="text-muted small">{{ pedido.cliente_celular or 'Sem celular' }}</div>
                 </td>
-                <td data-label="Valor pago" class="col-valor-pago">{% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% else %}-{% endif %}</td>
+                <td data-label="Total">R$ {{ '%.2f'|format(pedido.total) }}</td>
                 <td data-label="Status">
                     {% if pedido.status == 'aberto' %}
                         <span class="pedido-status-badge pedido-status-aberto">Aberto</span>
@@ -123,43 +97,13 @@
                 </td>
                 <td data-label="Acoes" class="actions-cell pedido-actions-cell">
                     <div class="pedido-actions">
-                        <form method="POST" action="{{ url_for('alterar_status_pedido', pedido_id=pedido.id) }}" class="pedido-status-form">
-                            {{ csrf_input|safe }}
-                            {% set permitidos = status_transitions.get(pedido.status, []) %}
-                            <select name="status" class="form-select form-select-sm">
-                                <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %} {% if pedido.status!='aberto' and 'aberto' not in permitidos %}disabled{% endif %}>Aberto</option>
-                                <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %} {% if pedido.status!='em_preparo' and 'em_preparo' not in permitidos %}disabled{% endif %}>Em preparo</option>
-                                <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %} {% if pedido.status!='entregue' and 'entregue' not in permitidos %}disabled{% endif %}>Entregue</option>
-                                <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %} {% if pedido.status!='fechado' and 'fechado' not in permitidos %}disabled{% endif %}>Venda concluida</option>
-                                <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %} {% if pedido.status!='cancelado' and 'cancelado' not in permitidos %}disabled{% endif %}>Cancelado</option>
-                            </select>
-                            <button type="submit" class="btn btn-sm btn-primary">Atualizar</button>
-                        </form>
-                        <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-warning">Editar</a>
-                        <a href="{{ url_for('detalhes_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-secondary">Detalhes</a>
-                        {% if separacao_ativa and origem_elegivel_separacao %}
-                        <form method="POST" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}" class="inline-form">
-                            {{ csrf_input|safe }}
-                            <input type="hidden" name="acao" value="{% if pedido.separacao_entrega_concluida %}reabrir{% else %}concluir{% endif %}">
-                            <button type="submit" class="btn btn-sm {% if pedido.separacao_entrega_concluida %}btn-outline-warning{% else %}btn-outline-success{% endif %}">
-                                {% if pedido.separacao_entrega_concluida %}Reabrir separacao{% else %}Marcar separado{% endif %}
-                            </button>
-                        </form>
-                        {% if etiqueta_ativa %}
-                        <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-dark" target="_blank">Etiqueta</a>
-                        {% endif %}
-                        {% endif %}
-                        <a href="{{ url_for('visualizar_comprovante_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-info" target="_blank">Comprovante</a>
-                        <form method="POST" action="{{ url_for('deletar_pedido', pedido_id=pedido.id) }}" data-confirm-message="Excluir pedido #{{ pedido.id }}?">
-                            {{ csrf_input|safe }}
-                            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
-                        </form>
+                        <a href="{{ url_for('detalhes_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-primary">Ver completo</a>
                     </div>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="12" class="text-center">Nenhum pedido cadastrado</td>
+                <td colspan="7" class="text-center">Nenhum pedido cadastrado</td>
             </tr>
             {% endfor %}
         </tbody>

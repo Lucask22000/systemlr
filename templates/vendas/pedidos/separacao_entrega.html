@@ -1,11 +1,12 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Separação de Entrega - SystemLR{% endblock %}
+{% block title %}Separacao de Entrega - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h1>Separação para Entrega</h1>
     <div class="header-actions">
+        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-primary">Roteirizacao</a>
         <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar para Pedidos</a>
     </div>
 </div>
@@ -37,7 +38,8 @@
                 <th>Celular</th>
                 <th>Itens</th>
                 <th>Status</th>
-                <th>Separação</th>
+                <th>Separacao</th>
+                <th>Roteiro</th>
                 <th>Criado em</th>
                 <th>Acoes</th>
             </tr>
@@ -77,13 +79,22 @@
                         <span class="badge text-bg-secondary">{{ pedido.status }}</span>
                     {% endif %}
                 </td>
-                <td data-label="Separação">
+                <td data-label="Separacao">
                     {% if pedido.separacao_entrega_concluida %}
                         <span class="badge text-bg-success">Separado</span>
                         <div class="small text-muted">{{ pedido.separacao_entrega_em.strftime('%d/%m/%Y %H:%M') if pedido.separacao_entrega_em else '-' }}</div>
                     {% else %}
                         <span class="badge text-bg-warning">Pendente</span>
                     {% endif %}
+                </td>
+                <td data-label="Roteiro">
+                    <div><strong>Rota:</strong> {{ pedido.rota_entrega or '-' }}</div>
+                    <div><strong>Ordem:</strong> {{ pedido.ordem_rota if pedido.ordem_rota else '-' }}</div>
+                    <div><strong>Saída:</strong> {{ pedido.local_saida or '-' }}</div>
+                    <div><strong>Veículo:</strong> {{ pedido.veiculo_tipo or '-' }}{% if pedido.veiculo_placa %} ({{ pedido.veiculo_placa }}){% endif %}</div>
+                    <div><strong>Motorista:</strong> {{ pedido.motorista_nome or '-' }}</div>
+                    <div><strong>Terceirizada:</strong> {{ pedido.empresa_terceirizada or '-' }}</div>
+                    <div><strong>NF:</strong> {{ pedido.nota_fiscal_numero or '-' }}</div>
                 </td>
                 <td data-label="Criado em">{{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</td>
                 <td data-label="Acoes" class="actions-cell">
@@ -92,6 +103,40 @@
                     {% endif %}
                     <form method="POST" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}" class="inline-form">
                         {{ csrf_input|safe }}
+                        {% if roteirizacao_ativa %}
+                        <input type="text" name="rota_entrega" class="input-text" placeholder="Rota" value="{{ pedido.rota_entrega or '' }}" style="min-width:110px;">
+                        <input type="number" name="ordem_rota" class="input-text" placeholder="Ordem" min="1" value="{{ pedido.ordem_rota or '' }}" style="width:90px;">
+                        <input type="text" name="local_saida" class="input-text" placeholder="Local de saída" value="{{ pedido.local_saida or (empresa.entrega_local_saida_padrao if empresa else '') or '' }}" style="min-width:150px;">
+                        {% if veiculos_cadastrados %}
+                        <select name="veiculo_cadastrado" class="input-text" style="min-width:180px;">
+                            <option value="">Veiculo cadastrado</option>
+                            {% for veiculo_item in veiculos_cadastrados %}
+                            <option value="{{ veiculo_item }}">{{ veiculo_item }}</option>
+                            {% endfor %}
+                        </select>
+                        {% endif %}
+                        <input type="text" name="veiculo_tipo" class="input-text" placeholder="Veículo" value="{{ pedido.veiculo_tipo or (empresa.entrega_veiculo_padrao if empresa else '') or '' }}" style="min-width:130px;">
+                        <input type="text" name="veiculo_placa" class="input-text" placeholder="Placa" value="{{ pedido.veiculo_placa or '' }}" style="width:110px;">
+                        <input type="text" name="motorista_nome" class="input-text" placeholder="Motorista" value="{{ pedido.motorista_nome or (empresa.entrega_motorista_padrao if empresa else '') or '' }}" style="min-width:140px;">
+                        {% if terceirizadas_cadastradas %}
+                        <select name="empresa_terceirizada" class="input-text" style="min-width:170px;">
+                            <option value="">Sem terceirizada</option>
+                            {% for terceirizada_item in terceirizadas_cadastradas %}
+                            <option value="{{ terceirizada_item }}" {% if pedido.empresa_terceirizada == terceirizada_item %}selected{% endif %}>{{ terceirizada_item }}</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <input type="text" name="empresa_terceirizada" class="input-text" placeholder="Empresa terceirizada" value="{{ pedido.empresa_terceirizada or '' }}" style="min-width:170px;">
+                        {% endif %}
+                        {% endif %}
+                        {% if emissao_nota_ativa %}
+                        <input type="text" name="nota_fiscal_numero" class="input-text" placeholder="NF número" value="{{ pedido.nota_fiscal_numero or '' }}" style="min-width:120px;">
+                        <input type="text" name="nota_fiscal_chave" class="input-text" placeholder="Chave NF" value="{{ pedido.nota_fiscal_chave or '' }}" style="min-width:180px;">
+                        <label class="checkbox-inline" style="margin-right:8px;">
+                            <input type="checkbox" name="emitir_nota" {% if pedido.nota_fiscal_emitida_em %}checked{% endif %}>
+                            Emitir NF
+                        </label>
+                        {% endif %}
                         <input type="hidden" name="acao" value="{% if pedido.separacao_entrega_concluida %}reabrir{% else %}concluir{% endif %}">
                         <button type="submit" class="btn-small {% if pedido.separacao_entrega_concluida %}btn-warning{% else %}btn-success{% endif %}">
                             {% if pedido.separacao_entrega_concluida %}Reabrir{% else %}Separar{% endif %}
@@ -102,7 +147,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="9" class="text-center">Nenhum pedido encontrado para separacao.</td>
+                <td colspan="10" class="text-center">Nenhum pedido encontrado para separacao.</td>
             </tr>
             {% endfor %}
         </tbody>

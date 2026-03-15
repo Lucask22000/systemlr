@@ -2,19 +2,26 @@
     const menuToggle = document.getElementById('menuToggle');
     const navbarMenu = document.getElementById('navbarMenu');
     const dropdownToggles = document.querySelectorAll('.nav-dropdown-toggle');
+    const navbar = document.querySelector('.app-navbar');
     const mobileBreakpoint = window.matchMedia('(max-width: 768px)');
+    const closeDropdowns = function () {
+        document.querySelectorAll('.nav-dropdown.open').forEach(function (drop) {
+            drop.classList.remove('open');
+            const toggle = drop.querySelector('.nav-dropdown-toggle');
+            if (toggle) {
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    };
 
     if (menuToggle && navbarMenu) {
-        const closeDropdowns = function () {
-            document.querySelectorAll('.nav-dropdown.open').forEach(function (drop) {
-                drop.classList.remove('open');
-            });
-        };
-
         const setMenuState = function (isOpen) {
             navbarMenu.classList.toggle('active', isOpen);
             menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             menuToggle.setAttribute('aria-label', isOpen ? 'Fechar menu' : 'Abrir menu');
+            if (!isOpen) {
+                closeDropdowns();
+            }
         };
 
         menuToggle.addEventListener('click', function () {
@@ -26,30 +33,28 @@
         navLinks.forEach(function (link) {
             link.addEventListener('click', function () {
                 setMenuState(false);
-                closeDropdowns();
             });
         });
 
         document.addEventListener('keydown', function (event) {
             if (event.key !== 'Escape') return;
             setMenuState(false);
-            closeDropdowns();
         });
 
         document.addEventListener('click', function (event) {
-            if (!mobileBreakpoint.matches) return;
-            const clickedInsideMenu = navbarMenu.contains(event.target);
-            const clickedToggle = menuToggle.contains(event.target);
-            if (!clickedInsideMenu && !clickedToggle) {
-                setMenuState(false);
-                closeDropdowns();
+            const clickedInsideNavbar = navbar && navbar.contains(event.target);
+            if (!clickedInsideNavbar) {
+                if (mobileBreakpoint.matches) {
+                    setMenuState(false);
+                } else {
+                    closeDropdowns();
+                }
             }
         });
 
         const handleBreakpoint = function (event) {
             if (event.matches) return;
             setMenuState(false);
-            closeDropdowns();
         };
 
         if (typeof mobileBreakpoint.addEventListener === 'function') {
@@ -60,14 +65,22 @@
     }
 
     dropdownToggles.forEach(function (toggle) {
-        toggle.addEventListener('click', function () {
+        toggle.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
             const parentDropdown = this.closest('.nav-dropdown');
             document.querySelectorAll('.nav-dropdown.open').forEach(function (drop) {
                 if (drop !== parentDropdown) {
                     drop.classList.remove('open');
+                    const otherToggle = drop.querySelector('.nav-dropdown-toggle');
+                    if (otherToggle) {
+                        otherToggle.setAttribute('aria-expanded', 'false');
+                    }
                 }
             });
-            parentDropdown.classList.toggle('open');
+            const willOpen = !parentDropdown.classList.contains('open');
+            parentDropdown.classList.toggle('open', willOpen);
+            this.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         });
     });
 
@@ -398,7 +411,30 @@ function initCollapsiblePanels() {
         panels.push({ panel: panel, header: header, contentNodes: contentNodes, idHint: 'card-' + header.textContent.trim() });
     });
 
+    document.querySelectorAll('[data-filter-panel]').forEach(function (panel) {
+        let headerWrap = panel.querySelector(':scope > .panel-toggle-head');
+        if (!headerWrap) {
+            headerWrap = document.createElement('div');
+            headerWrap.className = 'panel-toggle-head';
+
+            const title = document.createElement('h2');
+            title.textContent = panel.getAttribute('data-filter-title') || 'Filtros';
+            headerWrap.appendChild(title);
+            panel.insertBefore(headerWrap, panel.firstChild);
+        }
+
+        const contentNodes = Array.from(panel.children).filter(function (child) { return child !== headerWrap; });
+        if (!contentNodes.length) return;
+        panels.push({
+            panel: panel,
+            header: headerWrap,
+            contentNodes: contentNodes,
+            idHint: 'filters-' + (panel.getAttribute('data-filter-title') || panel.className || 'filtros'),
+        });
+    });
+
     document.querySelectorAll('.section').forEach(function (panel) {
+        if (panel.matches('[data-filter-panel]')) return;
         if (panel.closest('.card')) return;
         const title = panel.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4');
         if (!title) return;
@@ -436,7 +472,8 @@ function initCollapsiblePanels() {
 
         const storageKey = 'panel-collapse:' + window.location.pathname + ':' + slugifyPanelId(item.idHint || String(index));
         const stored = window.localStorage ? localStorage.getItem(storageKey) : null;
-        let collapsed = stored === '1';
+        // Padrao inicial minimizado; se usuario ja escolheu antes, respeita preferencia salva.
+        let collapsed = stored === null ? true : stored === '1';
 
         const applyState = function () {
             item.panel.classList.toggle('panel-collapsed', collapsed);

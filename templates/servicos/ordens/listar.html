@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Servicos Tecnicos - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Servicos Tecnicos</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('criar_ordem_servico') }}" class="btn btn-primary">Nova Ordem</a>
+    </div>
+</div>
+
+<section class="filters-section" data-filter-panel data-filter-title="Filtros das ordens">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <input type="text" name="busca" class="input-search" placeholder="Buscar por titulo, produto, funcionario ou ID" value="{{ filtros.busca if filtros else '' }}">
+        </div>
+        <div class="filter-group">
+            <select name="tipo" class="input-select">
+                <option value="">Todos os tipos</option>
+                {% for tipo in tipos_validos %}
+                <option value="{{ tipo }}" {% if filtros and filtros.tipo == tipo %}selected{% endif %}>{{ tipo|replace('_', ' ')|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="status" class="input-select">
+                <option value="">Todos os status</option>
+                {% for status in status_validos %}
+                <option value="{{ status }}" {% if filtros and filtros.status == status %}selected{% endif %}>{{ status|replace('_', ' ')|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+    </form>
+</section>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Titulo</th>
+                <th>Venda</th>
+                <th>Tipo</th>
+                <th>Servico</th>
+                <th>Produto</th>
+                <th>Destino</th>
+                <th>Status</th>
+                <th>Agendada</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordem in ordens %}
+            <tr>
+                <td>#{{ ordem.id }}</td>
+                <td>{{ ordem.titulo }}</td>
+                <td>{% if ordem.pedido_id %}Pedido #{{ ordem.pedido_id }}{% else %}-{% endif %}</td>
+                <td>{{ ordem.tipo|replace('_', ' ')|title }}</td>
+                <td>{{ ordem.servico_tipo|replace('_', ' ')|title }}</td>
+                <td>{{ ordem.produto.nome if ordem.produto else '-' }}</td>
+                <td>{{ ordem.funcionario_destino.nome if ordem.funcionario_destino else '-' }}</td>
+                <td>
+                    <span class="badge {% if ordem.status == 'concluida' %}badge-success{% elif ordem.status == 'cancelada' %}badge-danger{% else %}badge-warning{% endif %}">
+                        {{ ordem.status|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td>{{ ordem.data_agendada.strftime('%d/%m/%Y') if ordem.data_agendada else '-' }}</td>
+                <td class="actions-cell">
+                    <a href="{{ url_for('editar_ordem_servico', ordem_id=ordem.id) }}" class="btn-small btn-warning">Editar</a>
+                    {% if ordem.funcionario_destino_id %}
+                    <a href="{{ url_for('executar_ordem_servico_tecnico', ordem_id=ordem.id) }}" class="btn-small btn-info">Area Tecnico</a>
+                    {% endif %}
+                    {% if ordem.status in ['aberta', 'em_execucao'] %}
+                    <form method="POST" action="{{ url_for('enviar_ordem_servico', ordem_id=ordem.id) }}" class="inline-form">
+                        {{ csrf_input|safe }}
+                        <button type="submit" class="btn-small btn-primary">Enviar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="10" class="text-center">Nenhuma ordem registrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

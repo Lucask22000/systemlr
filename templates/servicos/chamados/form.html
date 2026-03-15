@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{% if chamado %}Chamado #{{ chamado.id }}{% else %}Novo Chamado{% endif %} - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if chamado %}Chamado Interno #{{ chamado.id }}{% else %}Novo Chamado Interno{% endif %}</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_chamados_internos') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-group">
+            <label for="titulo">Titulo *</label>
+            <input type="text" id="titulo" name="titulo" class="input-text" required value="{{ chamado.titulo if chamado else '' }}">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="categoria">Categoria</label>
+                <select id="categoria" name="categoria" class="input-select">
+                    {% for categoria in categorias_validas %}
+                    <option value="{{ categoria }}" {% if chamado and chamado.categoria == categoria %}selected{% endif %}>{{ categoria|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prioridade">Prioridade</label>
+                <select id="prioridade" name="prioridade" class="input-select">
+                    {% for prioridade in prioridades_validas %}
+                    <option value="{{ prioridade }}" {% if chamado and chamado.prioridade == prioridade %}selected{% elif not chamado and prioridade == 'media' %}selected{% endif %}>{{ prioridade|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="setor_origem">Setor de origem</label>
+                <input type="text" id="setor_origem" name="setor_origem" class="input-text" value="{{ chamado.setor_origem if chamado else (funcionario_logado.departamento or '') }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descricao *</label>
+            <textarea id="descricao" name="descricao" class="input-textarea" rows="5" required>{{ chamado.descricao if chamado else '' }}</textarea>
+        </div>
+
+        {% if pode_gerir %}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" class="input-select">
+                    {% for status in status_validos %}
+                    <option value="{{ status }}" {% if chamado and chamado.status == status %}selected{% elif not chamado and status == 'aberto' %}selected{% endif %}>{{ status|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="responsavel_id">Responsavel</label>
+                <select id="responsavel_id" name="responsavel_id" class="input-select">
+                    <option value="">Nao atribuido</option>
+                    {% for funcionario in responsaveis %}
+                    <option value="{{ funcionario.id }}" {% if chamado and chamado.responsavel_id == funcionario.id %}selected{% endif %}>{{ funcionario.nome }} - {{ funcionario.cargo or funcionario.role|upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="resolucao">Resolucao / retorno</label>
+            <textarea id="resolucao" name="resolucao" class="input-textarea" rows="4">{{ chamado.resolucao if chamado else '' }}</textarea>
+        </div>
+        {% elif chamado %}
+        <div class="form-group">
+            <label>Status</label>
+            <input type="text" class="input-text" value="{{ chamado.status|replace('_', ' ')|title }}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Responsavel</label>
+            <input type="text" class="input-text" value="{{ chamado.responsavel.nome if chamado and chamado.responsavel else '-' }}" readonly>
+        </div>
+        <div class="form-group">
+            <label>Resolucao / retorno</label>
+            <textarea class="input-textarea" rows="4" readonly>{{ chamado.resolucao or '' }}</textarea>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{% if chamado %}Salvar alteracoes{% else %}Abrir chamado{% endif %}</button>
+            <a href="{{ url_for('listar_chamados_internos') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

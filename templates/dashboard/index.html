@@ -1,294 +1,265 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
-{% block title %}Dashboard - SystemLR{% endblock %}
+{% block title %}Meu Perfil - SystemLR{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard-mobile.css') }}">
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-page">
-<div class="page-header">
-    <h1>Dashboard Financeiro e Gestão</h1>
-    <form method="get" class="dashboard-filter-form">
-        <label for="data_inicial" class="dashboard-filter-label">De:</label>
-        <input type="date" id="data_inicial" name="data_inicial" value="{{ data_inicial }}" class="input-text dashboard-filter-select">
-        <label for="data_final" class="dashboard-filter-label">Ate:</label>
-        <input type="date" id="data_final" name="data_final" value="{{ data_final }}" class="input-text dashboard-filter-select">
-        <button type="submit" class="btn btn-primary dashboard-filter-button">Aplicar</button>
-    </form>
-</div>
-
-<div class="cards-container analytics-cards">
-    <div class="card card-primary">
-        <div class="card-content">
-            <h3>Faturamento no Periodo</h3>
-            <p class="card-value" id="kpiFaturamentoPeriodo">R$ {{ '%.2f'|format(faturamento_periodo) }}</p>
-            <p class="card-meta" id="kpiPedidosPeriodo">{{ pedidos_periodo_total }} pedidos fechados</p>
-        </div>
+    <div class="page-header">
+        <h1>Meu Perfil e Configuracoes</h1>
+        <p class="mb-1">{{ saudacao }}, {{ funcionario.nome if funcionario else 'Usuario' }}.</p>
+        <p class="text-muted mb-0">Atualizado em {{ data_hora_atual.strftime('%d/%m/%Y %H:%M') }}.</p>
     </div>
-    <div class="card card-success">
-        <div class="card-content">
-            <h3>Ticket Medio</h3>
-            <p class="card-value" id="kpiTicketMedio">R$ {{ '%.2f'|format(ticket_medio_periodo) }}</p>
-            <p class="card-meta">Media por pedido fechado</p>
-        </div>
-    </div>
-    <div class="card card-info">
-        <div class="card-content">
-            <h3>Faturamento Hoje</h3>
-            <p class="card-value" id="kpiFaturamentoHoje">R$ {{ '%.2f'|format(faturamento_hoje) }}</p>
-            <p class="card-meta">Somente pedidos concluidos hoje</p>
-        </div>
-    </div>
-    <div class="card card-warning">
-        <div class="card-content">
-            <h3>Pedidos em Aberto / Cancelados</h3>
-            <p class="card-value"><span id="kpiPedidosAbertos">{{ pedidos_abertos }}</span> / <span id="kpiPedidosCancelados">{{ pedidos_cancelados_periodo }}</span></p>
-            <p class="card-meta">Abertos agora / cancelados no periodo</p>
-        </div>
-    </div>
-</div>
 
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Grafico - Faturamento Diario</h2>
-        <div class="chart-container">
-            <canvas id="chartFaturamento"></canvas>
-        </div>
-    </section>
-    <section class="section">
-        <h2>Grafico - Status de Pedidos</h2>
-        <div class="chart-container">
-            <canvas id="chartStatus"></canvas>
-        </div>
-    </section>
-</div>
-
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Grafico - Metodos de Pagamento</h2>
-        <div class="chart-container">
-            <canvas id="chartPagamento"></canvas>
-        </div>
-    </section>
-    <section class="section">
-        <h2>Grafico - Top Produtos (Receita)</h2>
-        <div class="chart-container">
-            <canvas id="chartTopProdutos"></canvas>
-        </div>
-    </section>
-</div>
-
-<div class="analytics-grid">
-    <section class="section analytics-trend-section">
-        <h2>Tendencia de Vendas - Ultimos {{ periodo_dias }} Dias</h2>
-        <div class="trend-list">
-            {% for dia in vendas_periodo %}
-            <div class="trend-row">
-                <div class="trend-day">
-                    <strong>{{ dia.data_curta }}</strong>
-                    <span>{{ dia.data_semana }}</span>
-                </div>
-                <div class="trend-bar-wrap">
-                    <div class="trend-bar" style="width: {{ '%.2f'|format(dia.faturamento_pct) }}%;"></div>
-                </div>
-                <div class="trend-values">
-                    <strong>R$ {{ '%.2f'|format(dia.faturamento) }}</strong>
-                    <span>{{ dia.pedidos }} pedidos</span>
-                </div>
+    <div class="cards-container analytics-cards">
+        <div class="card card-primary">
+            <div class="card-content">
+                <h3>Usuario atual</h3>
+                <p class="card-value">{{ funcionario.nome }}</p>
+                <p class="card-meta">{{ funcionario.cargo or funcionario.role|upper }}</p>
+                <p class="card-meta">Matricula: {{ funcionario.matricula or '-' }}</p>
             </div>
-            {% endfor %}
         </div>
-    </section>
-
-    <section class="section analytics-summary-section">
-        <h2>Pedidos por Status</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Quantidade</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in pedidos_por_status %}
-                    <tr>
-                        <td data-label="Status">{{ item.label }}</td>
-                        <td data-label="Quantidade">{{ item.quantidade }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="2" class="text-center">Sem pedidos no periodo selecionado.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="card card-secondary">
+            <div class="card-content">
+                <h3>Acessos liberados</h3>
+                <p class="card-value">{{ paginas_liberadas }}</p>
+                <p class="card-meta">Paginas disponiveis para sua conta</p>
+            </div>
         </div>
-    </section>
-</div>
-
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Top Produtos Vendidos</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Produto</th>
-                        <th>Qtd Vendida</th>
-                        <th>Receita</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in top_produtos_vendidos %}
-                    <tr>
-                        <td data-label="Produto">{{ item.nome }}</td>
-                        <td data-label="Qtd Vendida">{{ item.quantidade or 0 }}</td>
-                        <td data-label="Receita">R$ {{ '%.2f'|format(item.receita or 0) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="text-center">Sem vendas fechadas no periodo selecionado.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="card card-warning">
+            <div class="card-content">
+                <h3>Alertas pessoais</h3>
+                <p class="card-value">{{ total_alertas }}</p>
+                <p class="card-meta">Pendencias do proprio usuario</p>
+            </div>
         </div>
-    </section>
-
-    <section class="section">
-        <h2>Top Clientes</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Pedidos</th>
-                        <th>Faturamento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in top_clientes %}
-                    <tr>
-                        <td data-label="Cliente">{{ item.cliente_nome }}</td>
-                        <td data-label="Pedidos">{{ item.pedidos or 0 }}</td>
-                        <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento or 0) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="text-center">Sem clientes identificados no periodo.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-</div>
-
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Desempenho de Garçons</h2>
-        <div class="chart-container performance-chart-container">
-            <canvas id="chartDesempenhoGarcons"></canvas>
-        </div>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Garcom</th>
-                        <th>Pedidos</th>
-                        <th>Faturamento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in desempenho_garcons %}
-                    <tr>
-                        <td data-label="Garcom">{{ item.nome }}</td>
-                        <td data-label="Pedidos">{{ item.pedidos or 0 }}</td>
-                        <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento or 0) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="text-center">Sem pedidos com garcom no periodo.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2>Desempenho de Caixas</h2>
-        <div class="chart-container performance-chart-container">
-            <canvas id="chartDesempenhoCaixas"></canvas>
-        </div>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Caixa</th>
-                        <th>Pedidos</th>
-                        <th>Faturamento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in desempenho_caixas %}
-                    <tr>
-                        <td data-label="Caixa">{{ item.nome }}</td>
-                        <td data-label="Pedidos">{{ item.pedidos or 0 }}</td>
-                        <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento or 0) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="3" class="text-center">Sem pedidos em caixa no periodo.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-</div>
-
-<div class="section">
-    <h2>Formas de Pagamento</h2>
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Metodo</th>
-                    <th>Quantidade de Pedidos</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in metodos_pagamento %}
-                <tr>
-                    <td data-label="Metodo">{{ item.metodo|capitalize }}</td>
-                    <td data-label="Quantidade">{{ item.quantidade }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="2" class="text-center">Sem informacao de pagamento no periodo.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
-</div>
 
-<div class="action-buttons">
-    <a href="{{ url_for('pdv') }}" class="btn btn-primary">Abrir PDV</a>
-    <a href="{{ url_for('listar_pedidos') }}" class="btn btn-secondary">Gerenciar Pedidos</a>
-    <a href="{{ url_for('relatorios') }}" class="btn btn-info">Relatórios de Estoque</a>
-    {% if funcionario_logado and funcionario_logado.role in ['admin', 'gerente'] %}
-    <a href="{{ url_for('indicadores_rh') }}" class="btn btn-success">Indicadores RH</a>
-    {% endif %}
-</div>
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Dados do usuario</h2>
+            <form method="POST" action="{{ url_for('dashboard') }}" class="form" enctype="multipart/form-data">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao" value="atualizar_perfil">
+
+                <div class="form-group">
+                    <label>Imagem de perfil</label>
+                    {% if funcionario.imagem_perfil_path %}
+                    <div style="margin-bottom:8px;">
+                        <img src="{{ url_for('static', filename=funcionario.imagem_perfil_path) }}" alt="Imagem de perfil" style="width:72px;height:72px;object-fit:cover;border-radius:999px;border:1px solid var(--border);">
+                    </div>
+                    {% endif %}
+                    {% if funcionario.permitir_editar_imagem_perfil %}
+                    <input type="file" name="imagem_perfil" class="form-control" accept=".png,.jpg,.jpeg,.webp,.gif">
+                    {% if funcionario.imagem_perfil_path %}
+                    <label class="checkbox-inline" style="margin-top:8px;">
+                        <input type="checkbox" name="remover_imagem_perfil">
+                        Remover imagem atual
+                    </label>
+                    {% endif %}
+                    {% else %}
+                    <p class="text-muted mb-0">Edicao de imagem bloqueada pelo RH para seu cadastro.</p>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="nome">Nome</label>
+                    <input type="text" id="nome" class="form-control" value="{{ funcionario.nome }}" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="form-control" value="{{ funcionario.email }}" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="matricula">Matricula</label>
+                    <input type="text" id="matricula" class="form-control" value="{{ funcionario.matricula or '' }}" maxlength="30" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="cpf">CPF</label>
+                    <input type="text" id="cpf" class="form-control" value="{{ funcionario.cpf or '' }}" maxlength="14" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="rg">RG</label>
+                    <input type="text" id="rg" class="form-control" value="{{ funcionario.rg or '' }}" maxlength="20" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="data_nascimento">Data de nascimento</label>
+                    <input type="date" id="data_nascimento" class="form-control" value="{{ funcionario.data_nascimento.strftime('%Y-%m-%d') if funcionario.data_nascimento else '' }}" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="celular">Celular</label>
+                    <input type="text" id="celular" class="form-control" value="{{ funcionario.celular or '' }}" placeholder="(XX) XXXXX-XXXX" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="cep">CEP</label>
+                    <input type="text" id="cep" class="form-control" value="{{ funcionario.cep or '' }}" maxlength="12" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="endereco">Endereco</label>
+                    <input type="text" id="endereco" class="form-control" value="{{ funcionario.endereco or '' }}" maxlength="180" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="bairro">Bairro</label>
+                    <input type="text" id="bairro" class="form-control" value="{{ funcionario.bairro or '' }}" maxlength="100" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="cidade">Cidade</label>
+                    <input type="text" id="cidade" class="form-control" value="{{ funcionario.cidade or '' }}" maxlength="100" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="estado">UF</label>
+                    <input type="text" id="estado" class="form-control" value="{{ funcionario.estado or '' }}" maxlength="2" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="departamento">Departamento</label>
+                    <input type="text" id="departamento" class="form-control" value="{{ funcionario.departamento or '' }}" placeholder="Ex.: Operacoes" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="time_nome">Time / Squad</label>
+                    <input type="text" id="time_nome" class="form-control" value="{{ funcionario.time_nome or '' }}" placeholder="Ex.: Loja, Entrega, Backoffice" readonly disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de usuario</label>
+                    <input type="text" class="form-control" value="{{ funcionario.role|upper }}" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label>Perfil de acesso padrao</label>
+                    <input type="text" class="form-control" value="{{ funcionario.perfil_acesso.nome if funcionario.perfil_acesso else 'Sem perfil padrao' }}" disabled>
+                </div>
+
+                {% if funcionario.permitir_editar_imagem_perfil %}
+                <button type="submit" class="btn btn-primary">Salvar imagem</button>
+                {% endif %}
+            </form>
+            <p class="text-muted mt-3 mb-0">Dados cadastrais e de RH sao informativos nesta tela. Alteracoes estruturais devem ser feitas no RH.</p>
+        </section>
+
+        <section class="section">
+            <h2>Preferencias pessoais</h2>
+            <form method="POST" action="{{ url_for('dashboard') }}" class="form">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao" value="atualizar_preferencias">
+
+                <div class="form-group">
+                    <label for="receber_alertas">
+                        <input type="checkbox" id="receber_alertas" name="receber_alertas" {% if funcionario.receber_alertas %}checked{% endif %}>
+                        Exibir alertas pessoais no painel
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-secondary">Salvar preferencias</button>
+            </form>
+
+            <hr>
+
+            <h2>Trocar senha</h2>
+            <form method="POST" action="{{ url_for('dashboard') }}" class="form">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao" value="atualizar_senha">
+
+                <div class="form-group">
+                    <label for="senha_atual">Senha atual</label>
+                    <input type="password" id="senha_atual" name="senha_atual" class="form-control" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="nova_senha">Nova senha</label>
+                    <input type="password" id="nova_senha" name="nova_senha" class="form-control" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmacao_senha">Confirmar nova senha</label>
+                    <input type="password" id="confirmacao_senha" name="confirmacao_senha" class="form-control" required minlength="6">
+                </div>
+
+                <button type="submit" class="btn btn-warning">Atualizar senha</button>
+            </form>
+        </section>
+    </div>
+
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Alertas do usuario</h2>
+            <ul class="mb-0">
+                {% for alerta in alertas_usuario %}
+                    <li>{{ alerta }}</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2>Acessos por modulo</h2>
+            {% if secoes_acesso %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Modulo</th>
+                                <th>Paginas liberadas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for secao in secoes_acesso %}
+                                <tr>
+                                    <td data-label="Modulo">{{ secao.secao }}</td>
+                                    <td data-label="Paginas liberadas">{{ secao.paginas|join(', ') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="mb-0">Nenhum acesso configurado para seu usuario.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <section class="section">
+        <h2>Atividades recentes (usuario atual)</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Data/Hora</th>
+                        <th>Acao</th>
+                        <th>Rota</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for evento in atividades_recentes %}
+                        <tr>
+                            <td data-label="Data/Hora">{{ evento.criado_em.strftime('%d/%m/%Y %H:%M:%S') if evento.criado_em else '-' }}</td>
+                            <td data-label="Acao">{{ evento.acao or '-' }}</td>
+                            <td data-label="Rota">{{ evento.rota or '-' }}</td>
+                            <td data-label="Status">{{ evento.status_code or '-' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center">Sem atividades recentes para este usuario.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
 {% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="{{ url_for('static', filename='js/pages/dashboard_analytics.js') }}"></script>
-{% endblock %}
-

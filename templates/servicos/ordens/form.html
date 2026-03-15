@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}{% if ordem %}Editar Ordem{% else %}Nova Ordem{% endif %} - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if ordem %}Editar Ordem #{{ ordem.id }}{% else %}Nova Ordem de Servico{% endif %}</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_ordens_servico') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-group">
+            <label for="titulo">Titulo *</label>
+            <input type="text" id="titulo" name="titulo" class="input-text" required value="{{ ordem.titulo if ordem else '' }}">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo">Tipo</label>
+                <select id="tipo" name="tipo" class="input-select">
+                    {% for tipo in tipos_validos %}
+                    <option value="{{ tipo }}" {% if ordem and ordem.tipo == tipo %}selected{% endif %}>{{ tipo|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" class="input-select">
+                    {% for status in status_validos %}
+                    <option value="{{ status }}" {% if ordem and ordem.status == status %}selected{% elif not ordem and status == 'aberta' %}selected{% endif %}>{{ status|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prioridade">Prioridade</label>
+                <select id="prioridade" name="prioridade" class="input-select">
+                    {% set prioridade_atual = ordem.prioridade if ordem else '' %}
+                    <option value="">Normal</option>
+                    <option value="baixa" {% if prioridade_atual == 'baixa' %}selected{% endif %}>Baixa</option>
+                    <option value="media" {% if prioridade_atual == 'media' %}selected{% endif %}>Media</option>
+                    <option value="alta" {% if prioridade_atual == 'alta' %}selected{% endif %}>Alta</option>
+                    <option value="critica" {% if prioridade_atual == 'critica' %}selected{% endif %}>Critica</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="servico_tipo">Servico (montagem/instalacao)</label>
+                <select id="servico_tipo" name="servico_tipo" class="input-select">
+                    {% for servico in servicos_validos %}
+                    <option value="{{ servico }}" {% if ordem and ordem.servico_tipo == servico %}selected{% elif not ordem and servico == 'nenhum' %}selected{% endif %}>{{ servico|replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+                {% if not empresa or not empresa.servico_montagem_instalacao_ativo %}
+                <small class="text-muted">Montagem/instalacao desativado na configuracao da empresa.</small>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="produto_id">Produto</label>
+                <select id="produto_id" name="produto_id" class="input-select">
+                    <option value="">Sem produto vinculado</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}" {% if ordem and ordem.produto_id == produto.id %}selected{% endif %}>
+                        {{ produto.nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="pedido_id">Vincular a venda</label>
+                <select id="pedido_id" name="pedido_id" class="input-select">
+                    <option value="">Sem venda vinculada</option>
+                    {% for pedido in pedidos %}
+                    <option value="{{ pedido.id }}" {% if ordem and ordem.pedido_id == pedido.id %}selected{% endif %}>
+                        Pedido #{{ pedido.id }} - {{ pedido.cliente_nome or 'Sem cliente' }} - R$ {{ '%.2f'|format(pedido.total or 0) }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="funcionario_destino_id">Enviar para funcionario</label>
+                <select id="funcionario_destino_id" name="funcionario_destino_id" class="input-select">
+                    <option value="">Selecione</option>
+                    {% for funcionario in funcionarios_destino %}
+                    <option value="{{ funcionario.id }}" {% if ordem and ordem.funcionario_destino_id == funcionario.id %}selected{% endif %}>
+                        {{ funcionario.nome }} - {{ funcionario.cargo or funcionario.role|upper }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="data_agendada">Data agendada</label>
+            <input type="date" id="data_agendada" name="data_agendada" class="input-text" value="{{ ordem.data_agendada.strftime('%Y-%m-%d') if ordem and ordem.data_agendada else '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descricao geral</label>
+            <textarea id="descricao" name="descricao" class="input-textarea" rows="4">{{ ordem.descricao if ordem else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="avaria_detalhes">Detalhes de avaria</label>
+            <textarea id="avaria_detalhes" name="avaria_detalhes" class="input-textarea" rows="3">{{ ordem.avaria_detalhes if ordem else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="inspecao_detalhes">Detalhes de inspecao</label>
+            <textarea id="inspecao_detalhes" name="inspecao_detalhes" class="input-textarea" rows="3">{{ ordem.inspecao_detalhes if ordem else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="resultado_inspecao">Resultado da inspecao</label>
+            <input type="text" id="resultado_inspecao" name="resultado_inspecao" class="input-text" value="{{ ordem.resultado_inspecao if ordem else '' }}" placeholder="Ex.: aprovado, reprovado, pendente">
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" class="input-textarea" rows="3">{{ ordem.observacoes if ordem else '' }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{% if ordem %}Salvar alteracoes{% else %}Criar ordem{% endif %}</button>
+            <a href="{{ url_for('listar_ordens_servico') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

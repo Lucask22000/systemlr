@@ -39,6 +39,10 @@
         <h3>Preco de Venda</h3>
         <p class="value">R$ {{ "%.2f"|format(produto.preco_venda) }}</p>
     </div>
+    <div class="info-card">
+        <h3>Movimentacao</h3>
+        <p class="value">{{ (produto.tipo_movimentacao or 'manual')|capitalize }}</p>
+    </div>
 </div>
 
 <div class="info-cards-row">
@@ -60,6 +64,22 @@
     <div class="info-card">
         <h3>Margem de Lucro</h3>
         <p class="value">{{ "%.2f"|format(produto.margem_lucro) }}%</p>
+    </div>
+    <div class="info-card">
+        <h3>Status Picking</h3>
+        <p class="value">{% if produto.fora_picking %}Fora de picking{% else %}Em picking{% endif %}</p>
+    </div>
+    <div class="info-card">
+        <h3>Prioridade Reabastecimento</h3>
+        <p class="value">{{ produto.prioridade_reabastecimento if produto.prioridade_reabastecimento else '-' }}</p>
+    </div>
+    <div class="info-card">
+        <h3>Servico de Montagem</h3>
+        <p class="value">{{ 'Liberado' if produto.servico_montagem_disponivel else 'Nao liberado' }}</p>
+    </div>
+    <div class="info-card">
+        <h3>Servico de Instalacao</h3>
+        <p class="value">{{ 'Liberado' if produto.servico_instalacao_disponivel else 'Nao liberado' }}</p>
     </div>
 </div>
 

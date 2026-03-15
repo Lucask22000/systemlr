@@ -46,7 +46,8 @@
     padding: 0 !important;
 }
 
-.section > .panel-toggle-head {
+.section > .panel-toggle-head,
+[data-filter-panel] > .panel-toggle-head {
     border-bottom: 2px solid var(--primary);
     margin-bottom: 16px;
     padding-bottom: 10px;

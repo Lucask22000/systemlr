@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Frota e Terceiros - Expedicao{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1>Frota Propria e Terceiros</h1>
+    <a href="{{ url_for('central_expedicao') }}" class="btn btn-outline-secondary">Voltar para Expedicao</a>
+</div>
+
+<form method="post" class="card mt-3">
+    <h2>Configuracao operacional</h2>
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <label for="entrega_local_saida_padrao" class="form-label">Local de saida padrao</label>
+            <input
+                type="text"
+                class="form-control"
+                id="entrega_local_saida_padrao"
+                name="entrega_local_saida_padrao"
+                value="{{ empresa.entrega_local_saida_padrao or '' }}"
+                placeholder="Ex.: CD Principal / Doca 2">
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="entrega_motorista_padrao" class="form-label">Motorista responsavel padrao</label>
+            <input
+                type="text"
+                class="form-control"
+                id="entrega_motorista_padrao"
+                name="entrega_motorista_padrao"
+                value="{{ empresa.entrega_motorista_padrao or '' }}"
+                placeholder="Nome do motorista padrao">
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="entrega_veiculo_padrao" class="form-label">Veiculo padrao</label>
+            <input
+                type="text"
+                class="form-control"
+                id="entrega_veiculo_padrao"
+                name="entrega_veiculo_padrao"
+                value="{{ empresa.entrega_veiculo_padrao or '' }}"
+                placeholder="Ex.: Van, Caminhao, Moto">
+        </div>
+    </div>
+
+    <div class="row g-3 mt-2">
+        <div class="col-12 col-lg-6">
+            <label for="entrega_veiculos_cadastro" class="form-label">Frota propria (1 por linha)</label>
+            <textarea
+                id="entrega_veiculos_cadastro"
+                name="entrega_veiculos_cadastro"
+                class="form-control"
+                rows="10"
+                placeholder="Ex.: Van Ducato | QWE1A23 | van | todos | 20 | 450 |&#10;Moto Cargo | ABC1D23 | moto | site | 8 | 40 |&#10;Terceiro Sul | TRP9Z99 | terceiro | interno | 35 | 0 | Transportadora Sul">{{ veiculos_texto }}</textarea>
+            <small class="text-muted">Formato: Nome | Placa | Categoria | Tipo de entrega | Capacidade pedidos | Capacidade kg | Empresa terceirizada</small>
+        </div>
+        <div class="col-12 col-lg-6">
+            <label for="entrega_terceirizadas_cadastro" class="form-label">Terceiros (1 por linha)</label>
+            <textarea
+                id="entrega_terceirizadas_cadastro"
+                name="entrega_terceirizadas_cadastro"
+                class="form-control"
+                rows="10"
+                placeholder="Ex.: Correios&#10;Freelancer Joao Silva&#10;Transportadora XPTO">{{ terceirizadas_texto }}</textarea>
+            <small class="text-muted">Exemplos: Correios, transportadoras e freelancers.</small>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salvar cadastro</button>
+        <a href="{{ url_for('central_expedicao') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}

@@ -95,11 +95,9 @@ document.addEventListener('DOMContentLoaded', togglePagamentoFields);
                     <label for="metodo_pagamento">Metodo de pagamento</label>
                     <select name="metodo_pagamento" id="metodo_pagamento" class="form-select" onchange="togglePagamentoFields()">
                         <option value="" {% if not pedido.metodo_pagamento %}selected{% endif %}>Nao informado</option>
-                        <option value="dinheiro" {% if pedido.metodo_pagamento and 'dinheiro' in pedido.metodo_pagamento and 'dividido' not in pedido.metodo_pagamento %}selected{% endif %}>Dinheiro</option>
-                        <option value="cartao" {% if pedido.metodo_pagamento and 'cartao' in pedido.metodo_pagamento and 'dividido' not in pedido.metodo_pagamento %}selected{% endif %}>Cartao</option>
-                        <option value="pix" {% if pedido.metodo_pagamento and 'pix' in pedido.metodo_pagamento %}selected{% endif %}>Pix</option>
-                        <option value="crediario" {% if pedido.metodo_pagamento and 'crediario' in pedido.metodo_pagamento %}selected{% endif %}>Crediario</option>
-                        <option value="dividido" {% if pedido.metodo_pagamento and 'dividido' in pedido.metodo_pagamento %}selected{% endif %}>Dividido (dinheiro + cartao)</option>
+                        {% for payment in metodos_pagamento_pdv %}
+                        <option value="{{ payment.id }}" {% if metodo_pagamento_atual_id == payment.id %}selected{% endif %}>{{ payment.label }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 

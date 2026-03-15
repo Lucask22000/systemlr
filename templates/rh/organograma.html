@@ -1,0 +1,607 @@
+{% extends "base.html" %}
+
+{% block title %}Organograma RH - SystemLR{% endblock %}
+
+{% block extra_css %}
+<style>
+.org-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.org-filter-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    padding: 14px;
+}
+
+.org-filter-form {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.org-filter-field {
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.org-filter-field label {
+    font-size: 0.86rem;
+    color: #5f6d80;
+}
+
+.org-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.org-summary-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+}
+
+.org-summary-card span {
+    display: block;
+    color: #67778d;
+    font-size: 0.82rem;
+    margin-bottom: 6px;
+}
+
+.org-summary-card strong {
+    font-size: 1.35rem;
+    color: #1f2937;
+}
+
+.org-level {
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #f8fbff;
+    margin-bottom: 12px;
+}
+
+.org-horizontal-board {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 6px 2px 10px;
+}
+
+.org-horizontal-column {
+    min-width: 240px;
+    max-width: 280px;
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    background: #f8fbff;
+    position: relative;
+}
+
+.org-horizontal-column::after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    width: 12px;
+    border-top: 2px dashed #bcd1ec;
+}
+
+.org-horizontal-column:last-child::after {
+    display: none;
+}
+
+.org-horizontal-header {
+    border-bottom: 1px solid #e1e8f2;
+    padding: 10px;
+}
+
+.org-horizontal-title {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.org-horizontal-meta {
+    font-size: 0.78rem;
+    color: #5f6d80;
+}
+
+.org-horizontal-list {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+}
+
+.org-horizontal-item {
+    border: 1px solid #d4dfec;
+    border-left: 4px solid #2b7de9;
+    border-radius: 9px;
+    padding: 8px;
+    background: #fff;
+}
+
+.org-person-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.org-person-text {
+    min-width: 0;
+    flex: 1;
+}
+
+.org-avatar-photo {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #d9e6fb;
+    flex-shrink: 0;
+}
+
+.org-horizontal-item strong {
+    display: block;
+    font-size: 0.84rem;
+    color: #1f2937;
+}
+
+.org-horizontal-item small {
+    display: block;
+    font-size: 0.76rem;
+    color: #5f6d80;
+}
+
+.org-level-header {
+    border-bottom: 1px solid #e1e8f2;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.org-level-title {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.org-level-subtitle {
+    color: #5b6b80;
+    font-size: 0.82rem;
+}
+
+.org-level-grid {
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.org-card {
+    border: 1px solid #d4dfec;
+    border-radius: 12px;
+    background: #fff;
+    padding: 10px;
+}
+
+.org-card-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.org-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #e8f0ff;
+    color: #1f4da3;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.org-card-name {
+    margin: 0;
+    font-size: 0.96rem;
+    color: #1f2937;
+}
+
+.org-card-role {
+    margin: 2px 0 0;
+    font-size: 0.82rem;
+    color: #5f6d80;
+}
+
+.org-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.org-tag {
+    font-size: 0.74rem;
+    border-radius: 999px;
+    padding: 3px 8px;
+    background: #eef2f7;
+    color: #334155;
+}
+
+.org-meta {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #4f6076;
+}
+
+.org-meta + .org-meta {
+    margin-top: 4px;
+}
+
+.org-table-wrap {
+    overflow-x: auto;
+}
+
+.org-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.org-table th,
+.org-table td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid #e4eaf2;
+    font-size: 0.86rem;
+}
+
+.org-tree,
+.org-tree ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 16px;
+}
+
+.org-node {
+    margin: 8px 0;
+    border-left: 2px solid #d4deec;
+    padding-left: 10px;
+}
+
+.org-node-card {
+    border: 1px solid #d4deec;
+    border-radius: 10px;
+    padding: 8px 10px;
+    background: #fff;
+}
+
+.org-node-card strong {
+    display: block;
+    color: #1f2937;
+}
+
+.org-node-card small {
+    display: block;
+    color: #5f6d80;
+}
+
+.org-tree-graph {
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.org-tree-graph-inner {
+    min-width: 760px;
+}
+
+.org-tree-level {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 22px;
+    margin-bottom: 34px;
+    position: relative;
+    flex-wrap: wrap;
+}
+
+.org-tree-level:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -24px;
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(180deg, #9fc0f2 0%, #dbe7f8 100%);
+    transform: translateX(-50%);
+}
+
+.org-graph-card {
+    width: 220px;
+    border: 1px solid #d6e1f0;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow: 0 14px 32px rgba(31, 77, 163, 0.08);
+    padding: 14px;
+    position: relative;
+}
+
+.org-graph-card::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 2px;
+    height: 12px;
+    background: #c7daf6;
+    transform: translateX(-50%);
+}
+
+.org-tree-level:first-child .org-graph-card::before {
+    display: none;
+}
+
+.org-graph-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.org-graph-photo {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #d6e5fb;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.org-graph-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #1d4ed8;
+    background: linear-gradient(135deg, #e8f0ff 0%, #cfe0ff 100%);
+    border: 2px solid #d6e5fb;
+    flex-shrink: 0;
+}
+
+.org-graph-name {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.2;
+    color: #1f2937;
+}
+
+.org-graph-role {
+    margin: 4px 0 0;
+    color: #5f6d80;
+    font-size: 0.8rem;
+}
+
+.org-graph-meta {
+    margin: 5px 0 0;
+    font-size: 0.78rem;
+    color: #4f6076;
+}
+
+@media (max-width: 768px) {
+    .org-filter-field {
+        min-width: 100%;
+    }
+
+    .org-level-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% macro render_node(funcionario, arvore, subordinados_totais) %}
+<li class="org-node">
+    <article class="org-node-card">
+        <div class="org-person-row">
+            {% if funcionario.imagem_perfil_path %}
+            <img src="{{ url_for('static', filename=funcionario.imagem_perfil_path) }}" alt="{{ funcionario.nome }}" class="org-avatar-photo">
+            {% else %}
+            <div class="org-avatar">{{ (funcionario.nome or '?')[:1]|upper }}</div>
+            {% endif %}
+            <div class="org-person-text">
+                <strong>{{ funcionario.nome }}</strong>
+                <small>{{ funcionario.cargo or funcionario.role|upper }}</small>
+                <small>{{ funcionario.departamento or 'Sem departamento' }}{% if funcionario.time_nome %} | {{ funcionario.time_nome }}{% endif %}</small>
+            </div>
+        </div>
+        <small>Lidera {{ subordinados_totais.get(funcionario.id, 0) }} colaborador(es)</small>
+    </article>
+    {% if arvore.get(funcionario.id) %}
+    <ul>
+        {% for filho in arvore.get(funcionario.id) %}
+            {{ render_node(filho, arvore, subordinados_totais) }}
+        {% endfor %}
+    </ul>
+    {% endif %}
+</li>
+{% endmacro %}
+
+{% block content %}
+<div class="page-header org-topbar">
+    <h1>Organograma da Empresa</h1>
+    <div class="header-actions">
+        {% if funcionario_logado and funcionario_logado.role in ['admin', 'gerente'] %}
+        <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-primary">Gerenciar Funcionarios</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if modo_visao == 'restrito' %}
+<div class="alert alert-info">
+    Exibindo seu recorte da hierarquia: superiores diretos e equipe relacionada ao seu usuario.
+</div>
+{% endif %}
+
+<div class="org-filter-card mb-3" data-filter-panel data-filter-title="Filtros do organograma">
+    <form method="GET" class="org-filter-form">
+        <div class="org-filter-field">
+            <label for="departamento">Filtrar por departamento</label>
+            <select id="departamento" name="departamento" class="input-select">
+                <option value="">Todos os departamentos</option>
+                {% for departamento in departamentos_disponiveis %}
+                    <option value="{{ departamento }}" {% if departamento_filtro == departamento %}selected{% endif %}>{{ departamento }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="header-actions">
+            <button type="submit" class="btn btn-secondary">Aplicar</button>
+            {% if departamento_filtro %}
+                <a href="{{ url_for('organograma_rh') }}" class="btn btn-secondary">Limpar</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<div class="org-grid mb-3">
+    <div class="org-summary-card">
+        <span>Colaboradores ativos</span>
+        <strong>{{ total_colaboradores }}</strong>
+    </div>
+    <div class="org-summary-card">
+        <span>Liderancas ativas</span>
+        <strong>{{ total_lideres }}</strong>
+    </div>
+    <div class="org-summary-card">
+        <span>Sem superior direto</span>
+        <strong>{{ total_sem_superior }}</strong>
+    </div>
+    <div class="org-summary-card">
+        <span>Profundidade da estrutura</span>
+        <strong>{{ profundidade_maxima }}</strong>
+    </div>
+</div>
+
+<section class="section mb-3">
+    <h2>Grafico do organograma</h2>
+    {% if camadas_organograma %}
+    <div class="org-tree-graph">
+        <div class="org-tree-graph-inner">
+            {% for camada in camadas_organograma %}
+            <section class="org-tree-level">
+                {% for funcionario in camada.colaboradores %}
+                <article class="org-graph-card">
+                    <div class="org-graph-card-head">
+                        {% if funcionario.imagem_perfil_path %}
+                        <img src="{{ url_for('static', filename=funcionario.imagem_perfil_path) }}" alt="{{ funcionario.nome }}" class="org-graph-photo">
+                        {% else %}
+                        <div class="org-graph-avatar">{{ (funcionario.nome or '?')[:1]|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <h3 class="org-graph-name">{{ funcionario.nome }}</h3>
+                            <p class="org-graph-role">{{ funcionario.cargo or funcionario.role|upper }}</p>
+                        </div>
+                    </div>
+                    <p class="org-graph-meta">Nivel {{ camada.indice }} - {{ funcionario.nivel_organograma or camada.rotulo }}</p>
+                    <p class="org-graph-meta">{{ funcionario.departamento or 'Sem departamento' }}{% if funcionario.time_nome %} | {{ funcionario.time_nome }}{% endif %}</p>
+                    <p class="org-graph-meta">Superior: {{ funcionario.superior.nome if funcionario.superior else 'Sem superior direto' }}</p>
+                    <p class="org-graph-meta">Lidera {{ subordinados_totais.get(funcionario.id, 0) }} colaborador(es)</p>
+                </article>
+                {% endfor %}
+            </section>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="org-horizontal-board mt-3">
+        {% for camada in camadas_organograma %}
+        <section class="org-horizontal-column">
+            <header class="org-horizontal-header">
+                <h3 class="org-horizontal-title">Nivel {{ camada.indice }} - {{ camada.rotulo }}</h3>
+                <div class="org-horizontal-meta">{{ camada.colaboradores|length }} colaborador(es)</div>
+            </header>
+            <div class="org-horizontal-list">
+                {% for funcionario in camada.colaboradores %}
+                <article class="org-horizontal-item">
+                    <div class="org-person-row">
+                        {% if funcionario.imagem_perfil_path %}
+                        <img src="{{ url_for('static', filename=funcionario.imagem_perfil_path) }}" alt="{{ funcionario.nome }}" class="org-avatar-photo">
+                        {% else %}
+                        <div class="org-avatar">{{ (funcionario.nome or '?')[:1]|upper }}</div>
+                        {% endif %}
+                        <div class="org-person-text">
+                            <strong>{{ funcionario.nome }}</strong>
+                            <small>{{ funcionario.cargo or funcionario.role|upper }}</small>
+                        </div>
+                    </div>
+                    <small>{{ funcionario.departamento or 'Sem departamento' }}{% if funcionario.time_nome %} | {{ funcionario.time_nome }}{% endif %}</small>
+                    <small>Superior: {{ funcionario.superior.nome if funcionario.superior else 'Sem superior direto' }}</small>
+                    <small>Lidera {{ subordinados_totais.get(funcionario.id, 0) }} colaborador(es)</small>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p class="mb-0">Nenhum colaborador ativo para montar o organograma.</p>
+    {% endif %}
+</section>
+
+<section class="section mb-3">
+    <h2>Resumo por departamento</h2>
+    {% if resumo_departamentos %}
+        <div class="org-table-wrap">
+            <table class="org-table">
+                <thead>
+                    <tr>
+                        <th>Departamento</th>
+                        <th>Total</th>
+                        <th>Liderancas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resumo_departamentos %}
+                        <tr>
+                            <td>{{ item.nome }}</td>
+                            <td>{{ item.total }}</td>
+                            <td>{{ item.lideres }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="mb-0">Sem dados de departamento para exibir.</p>
+    {% endif %}
+</section>
+
+<section class="section">
+    <h2>Arvore hierarquica detalhada</h2>
+    {% if raizes %}
+        <ul class="org-tree">
+            {% for raiz in raizes %}
+                {{ render_node(raiz, arvore, subordinados_totais) }}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="mb-0">Nenhum colaborador ativo para montar o organograma.</p>
+    {% endif %}
+</section>
+{% endblock %}

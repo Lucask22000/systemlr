@@ -10,10 +10,16 @@
     <title>Cadastro do cliente | {{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home-varejo.css') }}">
 </head>
-<body class="retail-home">
+<body class="retail-home retail-app-page retail-market-app">
+    <style>
+        :root {
+            --market-primary: {{ empresa_config.ecom_cor_primaria if empresa_config and empresa_config.ecom_cor_primaria else '#ff7848' }};
+            --market-secondary: {{ empresa_config.ecom_cor_secundaria if empresa_config and empresa_config.ecom_cor_secundaria else '#ff5a2a' }};
+        }
+    </style>
     <header class="retail-topbar">
         <div class="retail-topbar-inner">
             <a class="brand" href="{{ url_for('index') }}">
@@ -27,7 +33,7 @@
                 <a href="{{ url_for('public.carrinho_site') }}" class="cart-link">
                     Carrinho <span>{{ resumo_carrinho.quantidade_itens }}</span>
                 </a>
-                <a href="{{ url_for('public.checkout_site') }}">Checkout</a>
+                <a href="{{ url_for('public.cadastro_cliente_site') }}" class="is-active">Cadastro</a>
             </nav>
         </div>
     </header>
@@ -53,8 +59,8 @@
                 <h2>Seus dados</h2>
                 <form method="POST" action="{{ url_for('public.cadastro_cliente_site') }}">
                     {{ csrf_input|safe }}
-                    {% if request.args.get('proximo') %}
-                    <input type="hidden" name="proximo" value="{{ request.args.get('proximo') }}">
+                    {% if proximo_seguro %}
+                    <input type="hidden" name="proximo" value="{{ proximo_seguro }}">
                     {% endif %}
 
                     <div class="form-grid">
@@ -83,11 +89,11 @@
                             <input id="estado" name="estado" type="text" maxlength="2" value="{{ cliente_dados.estado }}" required>
                         </div>
                         <div class="field-group full">
-                            <label for="endereco">Endereco</label>
+                            <label for="endereco">Endereço</label>
                             <input id="endereco" name="endereco" type="text" value="{{ cliente_dados.endereco }}" required>
                         </div>
                         <div class="field-group">
-                            <label for="numero">Numero</label>
+                            <label for="numero">Número</label>
                             <input id="numero" name="numero" type="text" value="{{ cliente_dados.numero }}" required>
                         </div>
                         <div class="field-group">
@@ -103,11 +109,11 @@
                             <input id="cidade" name="cidade" type="text" value="{{ cliente_dados.cidade }}" required>
                         </div>
                         <div class="field-group full">
-                            <label for="referencia">Referencia</label>
+                            <label for="referencia">Referência</label>
                             <input id="referencia" name="referencia" type="text" value="{{ cliente_dados.referencia }}">
                         </div>
                         <div class="field-group full">
-                            <label for="observacoes">Observacoes</label>
+                            <label for="observacoes">Observações</label>
                             <textarea id="observacoes" name="observacoes" rows="3">{{ cliente_dados.observacoes }}</textarea>
                         </div>
                         <div class="field-group full">
@@ -138,11 +144,18 @@
                     </div>
                 </div>
                 <div class="note-box">
-                    Com o cadastro salvo, o checkout ja vem preenchido com seus dados.
+                    Com o cadastro salvo, o checkout já vem preenchido com seus dados.
                 </div>
             </aside>
         </section>
     </main>
+
+    <nav class="app-bottom-nav" aria-label="Navegação rápida">
+        <a href="{{ url_for('index') }}"><span aria-hidden="true">&#127968;</span>Início</a>
+        <a href="{{ url_for('public.carrinho_site') }}"><span aria-hidden="true">&#128722;</span>Carrinho</a>
+        <a href="{{ url_for('public.checkout_site') }}"><span aria-hidden="true">&#128179;</span>Checkout</a>
+        <a href="{{ url_for('public.cadastro_cliente_site') }}" class="active"><span aria-hidden="true">&#128100;</span>Cadastro</a>
+    </nav>
 
     <footer class="retail-footer" style="background: {{ empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#1f2b38' }};">
         <div class="retail-footer-inner">

@@ -2,30 +2,123 @@
 
 {% block title %}Ajuda e Treinamento - SystemLR{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/ajuda.css') }}">
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <h1>Ajuda e Treinamento</h1>
-    <p class="text-muted mb-0">Selecione um item da lista para abrir o passo a passo detalhado.</p>
-</div>
+<div class="help-page">
+    <div class="page-header">
+        <div>
+            <h1>Ajuda e Treinamento</h1>
+            <p class="text-muted mb-0">Guias objetivos com passo a passo, checklist, fluxogramas e solucao de problemas.</p>
+            <p class="text-muted mb-0">Perfil atual: {{ perfil_usuario|upper }}{% if cargo_usuario %} | Cargo: {{ cargo_usuario }}{% endif %}</p>
+        </div>
+    </div>
 
-<div class="section">
-    <h2>Guias disponiveis</h2>
-    <ol class="mb-0">
-        {% for topico in topicos_ajuda %}
-        <li style="margin-bottom: 10px;">
-            <a href="{{ url_for('detalhe_ajuda', topico_slug=topico.slug) }}"><strong>{{ topico.titulo }}</strong></a>
-            <div class="text-muted">{{ topico.resumo }}</div>
-        </li>
-        {% endfor %}
-    </ol>
-</div>
+    <section class="help-overview-grid">
+        <article class="help-overview-card">
+            <small>Guias liberados</small>
+            <strong>{{ resumo_ajuda.topicos }}</strong>
+            <span>Topicos disponiveis para o seu perfil atual.</span>
+        </article>
+        <article class="help-overview-card">
+            <small>Passos operacionais</small>
+            <strong>{{ resumo_ajuda.passos }}</strong>
+            <span>Instrucoes praticas distribuidas nos guias.</span>
+        </article>
+        <article class="help-overview-card">
+            <small>Fluxogramas</small>
+            <strong>{{ resumo_ajuda.fluxogramas }}</strong>
+            <span>Operacoes com imagem visual do fluxo.</span>
+        </article>
+        <article class="help-overview-card">
+            <small>FAQ rapido</small>
+            <strong>{{ faq_rapido|length }}</strong>
+            <span>Perguntas frequentes para consulta imediata.</span>
+        </article>
+    </section>
 
-<div class="section">
-    <h2>Uso recomendado</h2>
-    <ul class="mb-0">
-        <li>Comece por "Primeiros passos".</li>
-        <li>Depois avance para Estoque, Vendas e RH.</li>
-        <li>Finalize com o guia de configuracao do e-commerce.</li>
-    </ul>
+    <div class="section">
+        <h2>Guias organizados pelo menu superior</h2>
+        <p class="text-muted">A ordem abaixo segue a mesma navegacao principal do sistema para facilitar o fluxo operacional de cada modulo.</p>
+        {% if grupos_ajuda_menu %}
+            {% for grupo in grupos_ajuda_menu %}
+            <section class="help-menu-section">
+                <div class="help-menu-header">
+                    <div>
+                        <span class="help-menu-kicker">Menu superior</span>
+                        <h3>{{ grupo.secao }}</h3>
+                    </div>
+                    {% if grupo.descricao %}
+                    <p class="text-muted mb-0">{{ grupo.descricao }}</p>
+                    {% endif %}
+                </div>
+                <div class="help-topic-grid">
+                    {% for topico in grupo.topicos %}
+                    <article class="help-topic-card">
+                        <div>
+                            <h3>{{ topico.titulo }}</h3>
+                            <p class="text-muted">{{ topico.resumo }}</p>
+                        </div>
+                        {% if topico.objetivo %}
+                        <p class="help-topic-objective">{{ topico.objetivo }}</p>
+                        {% endif %}
+                        <div class="help-meta-row">
+                            <span class="help-meta-pill">{{ (topico.passos|length) if topico.passos else 0 }} passos</span>
+                            {% if topico.checklist %}<span class="help-meta-pill">{{ topico.checklist|length }} itens de checklist</span>{% endif %}
+                            {% if topico.fluxograma %}<span class="help-meta-pill">Fluxograma visual</span>{% endif %}
+                        </div>
+                        {% if topico.fluxo_paginas %}
+                        <div class="help-flow-inline">
+                            <strong>Fluxo deste menu</strong>
+                            <p class="mb-0">{{ topico.fluxo_paginas|join(' -> ') }}</p>
+                        </div>
+                        {% endif %}
+                        {% if topico.checklist %}
+                        <div>
+                            <strong class="d-block mb-2">Antes de executar</strong>
+                            <ul>
+                                {% for item in topico.checklist[:3] %}
+                                <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        <a href="{{ url_for('detalhe_ajuda', topico_slug=topico.slug) }}" class="btn btn-outline-primary">Abrir guia</a>
+                    </article>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endfor %}
+        {% else %}
+        <p class="mb-0">Nenhum guia disponivel para o seu perfil neste momento.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Duvidas mais comuns</h2>
+        {% if faq_rapido %}
+        <div class="help-faq-list">
+            {% for item in faq_rapido %}
+            <div class="help-faq-item">
+                <a href="{{ url_for('detalhe_ajuda', topico_slug=item.topico_slug) }}">{{ item.pergunta }}</a>
+                <div class="text-muted">{{ item.topico_titulo }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="mb-0">Nao ha perguntas frequentes para o seu perfil neste momento.</p>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Como usar a ajuda no dia a dia</h2>
+        <ul class="mb-0">
+            <li>Abra o guia do modulo antes de executar um processo novo ou treinar outro colaborador.</li>
+            <li>Use o checklist para validar pre-requisitos e o fluxograma para explicar a ordem da operacao.</li>
+            <li>Se algo sair do padrao, consulte a secao de problemas comuns antes de abrir chamado interno.</li>
+        </ul>
+    </div>
 </div>
 {% endblock %}

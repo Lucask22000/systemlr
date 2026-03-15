@@ -36,6 +36,75 @@
             <p class="card-meta">{{ entradas_mes }} entradas / {{ saidas_mes }} saidas</p>
         </div>
     </div>
+    <div class="card card-secondary">
+        <div class="card-content">
+            <h3>Ocupacao de Enderecos</h3>
+            <p class="card-value">{{ '%.1f'|format(taxa_ocupacao_enderecos) }}%</p>
+            <p class="card-meta">{{ enderecos_ocupados }} ocupados de {{ total_enderecos_ativos }} ativos</p>
+        </div>
+    </div>
+    <div class="card card-info">
+        <div class="card-content">
+            <h3>Reposicao Necessaria</h3>
+            <p class="card-value">{{ '%.1f'|format(taxa_reposicao_necessaria) }}%</p>
+            <p class="card-meta">{{ produtos_em_falta|length }} produto(s) abaixo do minimo</p>
+        </div>
+    </div>
+    <div class="card card-danger">
+        <div class="card-content">
+            <h3>Risco Operacional</h3>
+            <p class="card-value">{{ risco_operacional_score }}/25</p>
+            <p class="card-meta">{{ produtos_risco_ruptura }} em risco de ruptura</p>
+        </div>
+    </div>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Indicadores de Entrada, Saida e Risco</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td>Entradas (30 dias)</td>
+                        <td>{{ entradas_mes }}</td>
+                    </tr>
+                    <tr>
+                        <td>Saidas (30 dias)</td>
+                        <td>{{ saidas_mes }}</td>
+                    </tr>
+                    <tr>
+                        <td>Saldo operacional (entradas - saidas)</td>
+                        <td>{{ saldo_movimentacao_mes }}</td>
+                    </tr>
+                    <tr>
+                        <td>Produtos sem endereco</td>
+                        <td>{{ produtos_sem_endereco }}</td>
+                    </tr>
+                    <tr>
+                        <td>Produtos fora de picking</td>
+                        <td>{{ produtos_fora_picking }}</td>
+                    </tr>
+                    <tr>
+                        <td>Produtos com risco de ruptura</td>
+                        <td>{{ produtos_risco_ruptura }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section class="section">
+        <h2>Dicas de Estoque Inteligente</h2>
+        <ul>
+            {% for dica in dicas_estoque_inteligente %}
+            <li>{{ dica }}</li>
+            {% endfor %}
+        </ul>
+        <div class="action-buttons" style="margin-top:8px;">
+            <a href="{{ url_for('enderecos_inteligentes') }}" class="btn btn-primary">Aplicar no Enderecamento Inteligente</a>
+            <a href="{{ url_for('listar_produtos', fora_picking='sim') }}" class="btn btn-secondary">Ver produtos fora de picking</a>
+        </div>
+    </section>
 </div>
 
 <div class="section">

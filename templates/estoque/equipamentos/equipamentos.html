@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Equipamentos de Movimentacao - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Equipamentos de Movimentacao</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('novo_equipamento_movimentacao') }}" class="btn btn-primary">Novo Equipamento</a>
+    </div>
+</div>
+
+<section class="filters-section" data-filter-panel data-filter-title="Filtros dos equipamentos">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <input type="text" name="busca" class="input-search" placeholder="Codigo, nome, placa ou bateria" value="{{ filtros.busca if filtros else '' }}">
+        </div>
+        <div class="filter-group">
+            <select name="tipo" class="input-select">
+                <option value="">Todos os tipos</option>
+                {% for item in tipos_validos %}
+                <option value="{{ item }}" {% if filtros and filtros.tipo == item %}selected{% endif %}>{{ item|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="status" class="input-select">
+                <option value="">Todos os status</option>
+                {% for item in status_validos %}
+                <option value="{{ item }}" {% if filtros and filtros.status == item %}selected{% endif %}>{{ item|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+    </form>
+</section>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Codigo</th>
+                <th>Nome</th>
+                <th>Tipo</th>
+                <th>Status</th>
+                <th>Bateria</th>
+                <th>Prox. manutencao</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for equipamento in equipamentos %}
+            <tr>
+                <td data-label="Codigo">{{ equipamento.codigo }}</td>
+                <td data-label="Nome">{{ equipamento.nome }}</td>
+                <td data-label="Tipo">{{ equipamento.tipo|capitalize }}</td>
+                <td data-label="Status">
+                    <span class="badge {% if equipamento.status == 'operacional' %}badge-success{% elif equipamento.status == 'manutencao' %}badge-warning{% else %}badge-danger{% endif %}">
+                        {{ equipamento.status|capitalize }}
+                    </span>
+                </td>
+                <td data-label="Bateria">
+                    {{ equipamento.bateria_codigo or '-' }}
+                    {% if equipamento.bateria_nivel is not none %}
+                    ({{ equipamento.bateria_nivel }}%)
+                    {% endif %}
+                </td>
+                <td data-label="Prox. manutencao">{{ equipamento.proxima_manutencao_em.strftime('%d/%m/%Y') if equipamento.proxima_manutencao_em else '-' }}</td>
+                <td data-label="Acoes" class="actions-cell">
+                    <a href="{{ url_for('editar_equipamento_movimentacao', equipamento_id=equipamento.id) }}" class="btn-small btn-warning">Editar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center">Nenhum equipamento cadastrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

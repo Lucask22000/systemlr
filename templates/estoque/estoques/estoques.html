@@ -11,11 +11,11 @@
     </div>
 </div>
 
-<section class="filters-section">
+<section class="filters-section" data-filter-panel data-filter-title="Filtros dos estoques">
     <form method="GET" class="filters-form">
         <div class="filter-group">
             <label for="busca">Busca</label>
-            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="Nome ou descricao do estoque">
+            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="Nome, codigo filial ou descricao do estoque">
         </div>
         <div class="filter-group">
             <label for="status">Status</label>
@@ -37,6 +37,7 @@
         <thead>
             <tr>
                 <th>Nome</th>
+                <th>Cod. Filial</th>
                 <th>Descricao</th>
                 <th>Enderecos</th>
                 <th>Status</th>
@@ -47,6 +48,7 @@
             {% for estoque in estoques %}
             <tr>
                 <td data-label="Nome"><strong>{{ estoque.nome }}</strong></td>
+                <td data-label="Cod. Filial">{{ estoque.codigo_filial or '-' }}</td>
                 <td data-label="Descricao">{{ estoque.descricao or '-' }}</td>
                 <td data-label="Enderecos">{{ estoque.enderecos|length }}</td>
                 <td data-label="Status">
@@ -67,7 +69,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="5" class="text-center">Nenhum estoque cadastrado.</td>
+                <td colspan="6" class="text-center">Nenhum estoque cadastrado.</td>
             </tr>
             {% endfor %}
         </tbody>

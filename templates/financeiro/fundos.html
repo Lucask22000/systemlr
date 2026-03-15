@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Gestao Monetaria e Fundos - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Gestao Monetaria e Liberacao de Fundos</h1>
+</div>
+
+<div class="cards-container analytics-cards mb-3">
+    <div class="card card-warning">
+        <div class="card-content">
+            <h3>Solicitado</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(total_solicitado) }}</p>
+        </div>
+    </div>
+    <div class="card card-info">
+        <div class="card-content">
+            <h3>Aprovado</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(total_aprovado) }}</p>
+        </div>
+    </div>
+    <div class="card card-success">
+        <div class="card-content">
+            <h3>Liberado</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(total_liberado) }}</p>
+        </div>
+    </div>
+</div>
+
+<section class="section mb-3">
+    <h2>Nova solicitacao de fundo</h2>
+    <form method="post" class="dashboard-filter-form" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
+        {{ csrf_input|safe }}
+        <input type="hidden" name="acao" value="solicitar">
+        <div>
+            <label for="tipo">Tipo</label>
+            <select id="tipo" name="tipo" class="input-text" required>
+                <option value="">Selecione</option>
+                {% for tipo in tipos_validos %}
+                <option value="{{ tipo }}">{{ tipo|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="valor">Valor</label>
+            <input type="text" id="valor" name="valor" class="input-text" placeholder="0,00" required>
+        </div>
+        <div>
+            <label for="categoria">Categoria monetaria</label>
+            <input type="text" id="categoria" name="categoria" class="input-text" placeholder="Ex.: capital de giro, compras">
+        </div>
+        <div>
+            <label for="centro_custo">Centro de custo</label>
+            <input type="text" id="centro_custo" name="centro_custo" class="input-text">
+        </div>
+        <div>
+            <label for="referencia_documento">Referencia</label>
+            <input type="text" id="referencia_documento" name="referencia_documento" class="input-text" placeholder="Contrato, aprovacao, NF">
+        </div>
+        <div style="grid-column: 1 / -1;">
+            <label for="descricao">Descricao</label>
+            <input type="text" id="descricao" name="descricao" class="input-text" required placeholder="Motivo da solicitacao/liberacao">
+        </div>
+        <div style="grid-column: 1 / -1;">
+            <button type="submit" class="btn btn-primary">Solicitar fundo</button>
+        </div>
+    </form>
+</section>
+
+<section class="section mb-3">
+    <h2>Filtro</h2>
+    <form method="get" class="dashboard-filter-form" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <select name="tipo" class="input-text">
+            <option value="">Todos os tipos</option>
+            {% for tipo in tipos_validos %}
+            <option value="{{ tipo }}" {% if tipo_filtro == tipo %}selected{% endif %}>{{ tipo|capitalize }}</option>
+            {% endfor %}
+        </select>
+        <select name="status" class="input-text">
+            <option value="">Todos os status</option>
+            {% for status in status_validos %}
+            <option value="{{ status }}" {% if status_filtro == status %}selected{% endif %}>{{ status|replace('_', ' ')|title }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+        <a href="{{ url_for('financeiro_fundos') }}" class="btn btn-outline-secondary">Limpar</a>
+    </form>
+</section>
+
+<section class="section">
+    <h2>Solicitacoes de fundos</h2>
+    <div class="table-responsive table-scroll-sticky">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Descricao</th>
+                    <th>Categoria</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                    <th>Solicitado em</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in fundos %}
+                <tr>
+                    <td>#{{ item.id }}</td>
+                    <td>{{ item.tipo|capitalize }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td>{{ item.categoria or '-' }}</td>
+                    <td>R$ {{ '%.2f'|format(item.valor or 0) }}</td>
+                    <td>
+                        <span class="badge {% if item.status == 'liberada' %}badge-success{% elif item.status == 'rejeitada' %}badge-danger{% elif item.status == 'aprovada' %}badge-info{% else %}badge-warning{% endif %}">
+                            {{ item.status|replace('_', ' ')|title }}
+                        </span>
+                    </td>
+                    <td>{{ item.solicitado_em.strftime('%d/%m/%Y %H:%M') if item.solicitado_em else '-' }}</td>
+                    <td class="actions-cell">
+                        {% if item.status == 'solicitada' and funcionario_logado and funcionario_logado.role in ['admin', 'gerente'] %}
+                        <form method="post" action="{{ url_for('financeiro_fundos') }}" class="inline-form">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="acao" value="aprovar">
+                            <input type="hidden" name="fundo_id" value="{{ item.id }}">
+                            <button type="submit" class="btn-small btn-success">Aprovar</button>
+                        </form>
+                        <form method="post" action="{{ url_for('financeiro_fundos') }}" class="inline-form">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="acao" value="rejeitar">
+                            <input type="hidden" name="fundo_id" value="{{ item.id }}">
+                            <input type="text" name="motivo_rejeicao" class="input-text" placeholder="Motivo rejeicao" style="min-width:120px;">
+                            <button type="submit" class="btn-small btn-danger">Rejeitar</button>
+                        </form>
+                        {% endif %}
+                        {% if item.status in ['aprovada', 'solicitada'] and funcionario_logado and funcionario_logado.role in ['admin', 'gerente'] %}
+                        <form method="post" action="{{ url_for('financeiro_fundos') }}" class="inline-form">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="acao" value="liberar">
+                            <input type="hidden" name="fundo_id" value="{{ item.id }}">
+                            <button type="submit" class="btn-small btn-primary">Liberar</button>
+                        </form>
+                        {% endif %}
+                        {% if item.lancamento_financeiro_id %}
+                        <span class="text-muted">Lanc. #{{ item.lancamento_financeiro_id }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center">Nenhuma solicitacao encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

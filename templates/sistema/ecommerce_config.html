@@ -205,6 +205,32 @@
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
+            <h2>Pagamentos da loja online</h2>
+            <div class="form-group">
+                <label for="pagamentos_ecommerce_config">Meios de pagamento ativos no checkout</label>
+                <textarea
+                    id="pagamentos_ecommerce_config"
+                    name="pagamentos_ecommerce_config"
+                    rows="6"
+                    class="input-text"
+                    placeholder="id | Nome exibido | Descricao&#10;pix | Pix | Confirmacao imediata da compra&#10;cartao_credito | Cartao de credito | Pagamento no credito&#10;dinheiro | Dinheiro | Informe valor para troco"
+                >{{ pagamentos_ecommerce_texto or '' }}</textarea>
+                <small class="text-muted">Use um metodo por linha no formato: id | nome | descricao.</small>
+            </div>
+            <div class="form-group">
+                <label for="integracoes_ecommerce_config">APIs e gateways da loja online</label>
+                <textarea
+                    id="integracoes_ecommerce_config"
+                    name="integracoes_ecommerce_config"
+                    rows="5"
+                    class="input-text"
+                    placeholder="id | Nome | Provider | Ambiente | Base URL | Chave publica | Token secreto | Webhook&#10;gateway_checkout | Checkout online | Mercado Pago | sandbox | https://api.exemplo.com | public_key | secret_key | https://sualoja.com/webhook/checkout"
+                >{{ integracoes_ecommerce_texto or '' }}</textarea>
+                <small class="text-muted">Cadastre gateways de pagamento, antifraude, frete, ERP ou APIs externas da vitrine.</small>
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
             <h2>Rodapé da loja</h2>
             <div class="form-row">
                 <div class="form-group">

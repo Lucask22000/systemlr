@@ -1,33 +1,24 @@
 import json
 import re
 import unicodedata
+from urllib.parse import urlparse
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from sqlalchemy import or_
 
+from app.services.utils_service import _normalizar_contato, _to_float
+from app.utils.helpers import slugify
+from app.utils.validators import validar_cep, validar_email, validar_telefone
 from models import Categoria, ClientePublico, EmpresaConfig, Garcom, ItemPedido, Mesa, Pedido, Produto, db
 from realtime import publish_alert
+from app.utils.payment_config import default_payment_id, load_payment_options, payment_methods_map
 
 
 CLIENTE_SESSION_KEY = 'qr_clientes'
 SITE_CART_SESSION_KEY = 'site_carrinho'
 SITE_CUSTOMER_SESSION_KEY = 'site_cliente_cadastro'
-
-SITE_PAYMENT_METHODS = {
-    'pix': 'Pix',
-    'cartao_credito': 'Cartao de credito',
-    'cartao_debito': 'Cartao de debito',
-    'dinheiro': 'Dinheiro',
-    'vale_alimentacao': 'Vale-alimentacao',
-}
-
-SITE_PAYMENT_OPTIONS = [
-    {'id': 'pix', 'label': 'Pix', 'descricao': 'Confirmacao imediata da compra.'},
-    {'id': 'cartao_credito', 'label': 'Cartao de credito', 'descricao': 'Pagamento em credito na retirada/entrega.'},
-    {'id': 'cartao_debito', 'label': 'Cartao de debito', 'descricao': 'Pagamento em debito na retirada/entrega.'},
-    {'id': 'dinheiro', 'label': 'Dinheiro', 'descricao': 'Informe o valor para troco.'},
-    {'id': 'vale_alimentacao', 'label': 'Vale-alimentacao', 'descricao': 'Aceitamos principais bandeiras.'},
-]
+PEDIDO_CONFIRMACAO_SALT = 'pedido-site-confirmacao'
 
 
 def _obter_empresa_config():
@@ -39,16 +30,64 @@ def _obter_empresa_config():
     return empresa
 
 
+def _serializer_confirmacao_pedido():
+    return URLSafeTimedSerializer(current_app.config['SECRET_KEY'], salt=PEDIDO_CONFIRMACAO_SALT)
+
+
+def _gerar_token_confirmacao_pedido(pedido_id):
+    return _serializer_confirmacao_pedido().dumps({'pedido_id': int(pedido_id), 'origem': 'site'})
+
+
+def _token_confirmacao_pedido_valido(pedido_id, token):
+    if not token:
+        return False
+    try:
+        payload = _serializer_confirmacao_pedido().loads(token, max_age=60 * 60 * 24 * 15)
+    except (BadSignature, SignatureExpired):
+        return False
+    return payload.get('origem') == 'site' and int(payload.get('pedido_id') or 0) == int(pedido_id)
+
+
+def _destino_interno_seguro(destino):
+    texto = (destino or '').strip()
+    if not texto:
+        return None
+    parsed = urlparse(texto)
+    if parsed.scheme or parsed.netloc:
+        host_atual = urlparse(request.host_url).netloc
+        if parsed.netloc != host_atual:
+            return None
+        caminho = parsed.path or '/'
+        if not caminho.startswith('/'):
+            caminho = f'/{caminho}'
+        return f'{caminho}?{parsed.query}' if parsed.query else caminho
+    if not texto.startswith('/') or texto.startswith('//'):
+        return None
+    return texto
+
+
+def _redirect_interno_seguro(destino, fallback):
+    return redirect(_destino_interno_seguro(destino) or fallback)
+
+
 def _slugify(texto):
-    normalizado = unicodedata.normalize('NFKD', (texto or '').strip())
-    ascii_texto = normalizado.encode('ascii', 'ignore').decode('ascii').lower()
-    ascii_texto = re.sub(r'[^a-z0-9]+', '-', ascii_texto).strip('-')
-    return ascii_texto or 'cliente'
+    return slugify(texto) or 'cliente'
 
 
 def _atendimento_mesas_ativo():
     empresa = _obter_empresa_config()
     return empresa.atendimento_mesas_ativo is not False
+
+
+def _ecommerce_site_ativo(empresa=None):
+    empresa = empresa or _obter_empresa_config()
+    return empresa.ecommerce_ativo is not False
+
+
+def _redirecionar_loja_inativa():
+    if session.get('funcionario_id'):
+        return redirect(url_for('boas_vindas'))
+    return redirect(url_for('login'))
 
 
 def _status_legivel(status):
@@ -172,14 +211,6 @@ def _listar_pedidos_cliente(mesa_id, cliente):
     return pedidos
 
 
-def _to_float(valor, default=0.0):
-    if valor is None or valor == '':
-        return default
-    if isinstance(valor, str):
-        valor = valor.replace(',', '.').strip()
-    return float(valor)
-
-
 def _normalizar_quantidade(valor, minimo=1, maximo=99, default=1):
     try:
         quantidade = int(valor)
@@ -190,10 +221,6 @@ def _normalizar_quantidade(valor, minimo=1, maximo=99, default=1):
     if quantidade > maximo:
         return maximo
     return quantidade
-
-
-def _normalizar_contato(valor):
-    return re.sub(r'[^0-9]+', '', (valor or '').strip())
 
 
 def _obter_carrinho_site():
@@ -304,12 +331,15 @@ def _coletar_dados_cliente_form(form_data):
     erros = []
     if not dados['nome']:
         erros.append('Informe o nome completo.')
-    if not dados['email'] or '@' not in dados['email']:
+    if not validar_email(dados['email']):
         erros.append('Informe um e-mail valido.')
-    if len(_normalizar_contato(dados['celular'])) < 10:
+    if not validar_telefone(dados['celular']):
         erros.append('Informe um celular valido com DDD.')
-    if not dados['cep']:
+    cep = validar_cep(dados['cep'])
+    if not cep:
         erros.append('Informe o CEP.')
+    elif cep == '__invalid__':
+        erros.append('Informe um CEP valido.')
     if not dados['endereco']:
         erros.append('Informe o endereco.')
     if not dados['numero']:
@@ -326,8 +356,8 @@ def _coletar_dados_cliente_form(form_data):
 
 def _upsert_cliente_publico(dados):
     filtros = []
-    email = (dados.get('email') or '').strip().lower()
-    celular = _normalizar_contato(dados.get('celular'))
+    email = validar_email(dados.get('email'))
+    celular = validar_telefone(dados.get('celular')) or _normalizar_contato(dados.get('celular'))
     cpf_cnpj = _normalizar_contato(dados.get('cpf_cnpj'))
 
     if email:
@@ -404,9 +434,9 @@ def obter_resumo_carrinho_site():
     }
 
 
-def _coletar_pagamento_checkout(form_data, total_pedido):
+def _coletar_pagamento_checkout(form_data, total_pedido, metodos_validos):
     metodo = (form_data.get('metodo_pagamento') or '').strip().lower()
-    if metodo not in SITE_PAYMENT_METHODS:
+    if metodo not in metodos_validos:
         raise ValueError('Selecione um metodo de pagamento valido.')
 
     total = float(total_pedido or 0.0)
@@ -423,7 +453,7 @@ def _coletar_pagamento_checkout(form_data, total_pedido):
 
     return {
         'metodo': metodo,
-        'metodo_label': SITE_PAYMENT_METHODS[metodo],
+        'metodo_label': metodos_validos[metodo],
         'valor_pago': round(valor_pago, 2),
         'troco': round(troco, 2),
         'detalhes': detalhes,
@@ -436,8 +466,11 @@ def register_public_routes(app):
     @bp.route('/cliente/cadastro', methods=['GET', 'POST'])
     def cadastro_cliente_site():
         empresa = _obter_empresa_config()
+        if not _ecommerce_site_ativo(empresa):
+            return _redirecionar_loja_inativa()
         resumo_carrinho = obter_resumo_carrinho_site()
         cliente_dados = _obter_cliente_site_sessao()
+        proximo_seguro = _destino_interno_seguro(request.args.get('proximo'))
 
         if request.method == 'POST':
             cliente_dados, erros = _coletar_dados_cliente_form(request.form)
@@ -452,7 +485,7 @@ def register_public_routes(app):
                     flash('Cadastro do cliente salvo com sucesso.', 'success')
                     proximo = (request.form.get('proximo') or '').strip()
                     if proximo:
-                        return redirect(proximo)
+                        return _redirect_interno_seguro(proximo, url_for('public.checkout_site'))
                     return redirect(url_for('public.checkout_site'))
                 except Exception as e:
                     db.session.rollback()
@@ -463,11 +496,14 @@ def register_public_routes(app):
             empresa=empresa,
             resumo_carrinho=resumo_carrinho,
             cliente_dados=cliente_dados,
+            proximo_seguro=proximo_seguro,
         )
 
     @bp.route('/carrinho', methods=['GET'])
     def carrinho_site():
         empresa = _obter_empresa_config()
+        if not _ecommerce_site_ativo(empresa):
+            return _redirecionar_loja_inativa()
         resumo_carrinho = obter_resumo_carrinho_site()
         ids_no_carrinho = {item['produto'].id for item in resumo_carrinho['itens']}
         query_destaque = Produto.query.filter(
@@ -487,7 +523,9 @@ def register_public_routes(app):
 
     @bp.route('/carrinho/adicionar', methods=['POST'])
     def adicionar_item_carrinho_site():
-        destino = (request.form.get('next') or request.referrer or url_for('index')).strip()
+        if not _ecommerce_site_ativo():
+            return _redirecionar_loja_inativa()
+        destino = _destino_interno_seguro(request.form.get('next')) or _destino_interno_seguro(request.referrer) or url_for('index')
         produto_id = request.form.get('produto_id', type=int)
         quantidade = _normalizar_quantidade(request.form.get('quantidade'), minimo=1, maximo=99, default=1)
 
@@ -505,6 +543,8 @@ def register_public_routes(app):
 
     @bp.route('/carrinho/atualizar', methods=['POST'])
     def atualizar_carrinho_site():
+        if not _ecommerce_site_ativo():
+            return _redirecionar_loja_inativa()
         carrinho = _obter_carrinho_site()
         if not carrinho:
             flash('Seu carrinho esta vazio.', 'warning')
@@ -531,6 +571,8 @@ def register_public_routes(app):
 
     @bp.route('/carrinho/remover', methods=['POST'])
     def remover_item_carrinho_site():
+        if not _ecommerce_site_ativo():
+            return _redirecionar_loja_inativa()
         produto_id = request.form.get('produto_id', type=int)
         carrinho = _obter_carrinho_site()
         if produto_id and str(produto_id) in carrinho:
@@ -544,13 +586,18 @@ def register_public_routes(app):
     @bp.route('/checkout', methods=['GET', 'POST'])
     def checkout_site():
         empresa = _obter_empresa_config()
+        if not _ecommerce_site_ativo(empresa):
+            return _redirecionar_loja_inativa()
         resumo_carrinho = obter_resumo_carrinho_site()
         if not resumo_carrinho['itens']:
             flash('Adicione itens ao carrinho antes de finalizar.', 'warning')
             return redirect(url_for('public.carrinho_site'))
 
+        payment_options = load_payment_options(empresa.pagamentos_ecommerce_json, 'ecommerce')
+        payment_methods = payment_methods_map(empresa.pagamentos_ecommerce_json, 'ecommerce')
+        default_payment = default_payment_id(empresa.pagamentos_ecommerce_json, 'ecommerce') or 'pix'
         cliente_dados = _obter_cliente_site_sessao()
-        pagamento_selecionado = (request.form.get('metodo_pagamento') or 'pix').strip().lower() if request.method == 'POST' else 'pix'
+        pagamento_selecionado = (request.form.get('metodo_pagamento') or default_payment).strip().lower() if request.method == 'POST' else default_payment
         valor_recebido = (request.form.get('valor_recebido') or '').strip() if request.method == 'POST' else ''
 
         if request.method == 'POST':
@@ -560,7 +607,7 @@ def register_public_routes(app):
                     flash(erro, 'warning')
             else:
                 try:
-                    pagamento = _coletar_pagamento_checkout(request.form, resumo_carrinho['subtotal'])
+                    pagamento = _coletar_pagamento_checkout(request.form, resumo_carrinho['subtotal'], payment_methods)
                     cliente_db = _upsert_cliente_publico(cliente_dados)
                     db.session.flush()
 
@@ -616,9 +663,10 @@ def register_public_routes(app):
 
                     _salvar_cliente_site_sessao(cliente_dados)
                     _salvar_carrinho_site({})
+                    token_confirmacao = _gerar_token_confirmacao_pedido(pedido.id)
 
                     flash(f'Pedido #{pedido.id} recebido com sucesso.', 'success')
-                    return redirect(url_for('public.pedido_confirmado_site', pedido_id=pedido.id))
+                    return redirect(url_for('public.pedido_confirmado_site', pedido_id=pedido.id, token=token_confirmacao))
                 except ValueError as e:
                     db.session.rollback()
                     flash(str(e), 'warning')
@@ -631,7 +679,7 @@ def register_public_routes(app):
             empresa=empresa,
             resumo_carrinho=resumo_carrinho,
             cliente_dados=cliente_dados,
-            payment_options=SITE_PAYMENT_OPTIONS,
+            payment_options=payment_options,
             pagamento_selecionado=pagamento_selecionado,
             valor_recebido=valor_recebido,
         )
@@ -639,6 +687,11 @@ def register_public_routes(app):
     @bp.route('/pedido/<int:pedido_id>/confirmado', methods=['GET'])
     def pedido_confirmado_site(pedido_id):
         empresa = _obter_empresa_config()
+        if not _ecommerce_site_ativo(empresa):
+            return _redirecionar_loja_inativa()
+        token = (request.args.get('token') or '').strip()
+        if not _token_confirmacao_pedido_valido(pedido_id, token):
+            abort(404)
         pedido = Pedido.query.filter_by(id=pedido_id, origem='site').first_or_404()
         detalhes = {}
         if pedido.observacoes:

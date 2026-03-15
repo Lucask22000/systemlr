@@ -18,7 +18,7 @@
             <h3>{{ funcionario.nome }}</h3>
             <span class="badge">{{ funcionario.role }}</span>
         </div>
-        <p class="card-category-desc">{{ funcionario.email }}</p>
+        <p class="card-category-desc">Matricula: {{ funcionario.matricula or '-' }} | {{ funcionario.email }}</p>
 
         <form method="POST" action="{{ url_for('salvar_acessos_funcionario', funcionario_id=funcionario.id) }}">
             {{ csrf_input|safe }}

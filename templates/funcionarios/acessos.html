@@ -17,9 +17,21 @@
         <div class="funcionario-access-summary">
             <p>
                 <strong>Funcionario:</strong> {{ funcionario.nome }}<br>
+                <strong>Matricula:</strong> {{ funcionario.matricula or '-' }}<br>
                 <strong>Email:</strong> {{ funcionario.email }}<br>
-                <strong>Funcao:</strong>
-                <span class="funcionario-role role-{{ funcionario.role }}">{{ funcionario.role.upper() }}</span>
+                <strong>Tipo de usuario:</strong>
+                <span class="funcionario-role role-{{ funcionario.role }}">{{ funcionario.role.upper() }}</span><br>
+                <strong>Cargo da empresa:</strong> {{ funcionario.cargo or '-' }}<br>
+                <strong>Perfil de acesso padrao:</strong> {{ funcionario.perfil_acesso.nome if funcionario.perfil_acesso else 'Sem perfil padrao' }}<br>
+                <strong>Estoque principal:</strong> {{ funcionario.estoque_principal.nome if funcionario.estoque_principal else '-' }}<br>
+                <strong>Restricao por estoques:</strong> {{ 'Ativa' if funcionario.restricao_estoques_ativa else 'Livre' }}<br>
+                <strong>Estoques permitidos:</strong>
+                {% if funcionario.estoques_permitidos %}
+                    {{ funcionario.estoques_permitidos | map(attribute='nome') | join(', ') }}<br>
+                {% else %}
+                    Todos os estoques/lojas<br>
+                {% endif %}
+                <strong>Ajustes individuais gravados:</strong> {{ permissoes_personalizadas|length }}
             </p>
         </div>
 
@@ -40,7 +52,7 @@
                 <h3 class="funcionario-access-title">Permissoes de Acesso</h3>
 
                 <div class="funcionario-access-tip">
-                    Selecione as paginas que este funcionario tera acesso no sistema.
+                    As caixas marcadas mostram o acesso final do colaborador. O perfil padrao libera paginas base, e esta tela serve para adicionar ou bloquear paginas individualmente.
                 </div>
 
                 {% for secao_nome, secao_itens in paginas_ordenadas_menu %}
@@ -51,7 +63,21 @@
                                 <label class="funcionario-access-option">
                                     <input type="checkbox" name="paginas" value="{{ pagina_key }}"
                                            {% if pagina_key in permissoes_atuais %}checked{% endif %}>
-                                    <span>{{ pagina_nome }}</span>
+                                    <span>
+                                        {{ pagina_nome }}
+                                        {% if pagina_key in permissoes_base %}
+                                            <small style="display:block; color:#6b7280;">Perfil padrao</small>
+                                        {% endif %}
+                                        {% if pagina_key in permissoes_personalizadas %}
+                                            <small style="display:block; color:#0f766e;">
+                                                {% if permissoes_personalizadas[pagina_key] %}
+                                                    Liberado individualmente
+                                                {% else %}
+                                                    Bloqueado individualmente
+                                                {% endif %}
+                                            </small>
+                                        {% endif %}
+                                    </span>
                                 </label>
                             {% endfor %}
                         </div>

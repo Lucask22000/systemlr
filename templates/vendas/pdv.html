@@ -151,11 +151,12 @@
         <p class="payment-subtitle">Total do pedido: <strong id="paymentTotalLabel">R$ 0.00</strong></p>
 
         <div class="payment-grid">
-            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="dinheiro" checked>Dinheiro</label>
-            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="cartao">Cartao</label>
-            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="pix">Pix</label>
-            <label class="payment-option"><input type="radio" name="metodo_pagamento_pdv" value="crediario">Crediario</label>
-            <label class="payment-option payment-option-row"><input type="radio" name="metodo_pagamento_pdv" value="dividido">Dividido (dinheiro + cartao)</label>
+            {% for payment in metodos_pagamento_pdv %}
+            <label class="payment-option {% if payment.supports_split %}payment-option-row{% endif %}">
+                <input type="radio" name="metodo_pagamento_pdv" value="{{ payment.id }}" {% if payment.id == metodo_pagamento_pdv_padrao %}checked{% endif %}>
+                {{ payment.label }}
+            </label>
+            {% endfor %}
         </div>
 
         <div class="payment-fields" id="paymentDefaultFields">
@@ -208,6 +209,7 @@ let pedidoAtual = null;
 let pedidoStatusAtual = null;
 let caixaSelecionada = null;
 let ultimoElementoComFoco = null;
+const METODO_PAGAMENTO_PADRAO = {{ metodo_pagamento_pdv_padrao|tojson }};
 
 function setButtonLoading(buttonEl, isLoading, loadingText, idleText) {
     if (!buttonEl) return;
@@ -669,7 +671,11 @@ function abrirModalPagamento() {
     document.getElementById('paymentCartao').value = '';
     document.getElementById('paymentClienteCrediario').value = '';
     document.getElementById('paymentEmitirComprovante').checked = true;
-    document.querySelector('input[name="metodo_pagamento_pdv"][value="dinheiro"]').checked = true;
+    const defaultPaymentRadio = document.querySelector(`input[name="metodo_pagamento_pdv"][value="${METODO_PAGAMENTO_PADRAO}"]`)
+        || document.querySelector('input[name="metodo_pagamento_pdv"]');
+    if (defaultPaymentRadio) {
+        defaultPaymentRadio.checked = true;
+    }
     atualizarCamposPagamento();
     atualizarInfoDividido();
     const modal = document.getElementById('paymentModal');

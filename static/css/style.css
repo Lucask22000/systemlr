@@ -145,7 +145,6 @@ body {
     z-index: 200;
 }
 
-.nav-dropdown:hover .nav-submenu,
 .nav-dropdown.open .nav-submenu {
     display: block;
 }

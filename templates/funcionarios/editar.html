@@ -35,7 +35,60 @@
             </div>
 
             <div class="form-group">
-                <label for="role">Perfil de Acesso
+                <label for="matricula">Matricula</label>
+                <input type="text" id="matricula" name="matricula" class="form-control" maxlength="30" value="{{ funcionario.matricula or '' }}" readonly>
+                <small style="display:block; margin-top:8px; color:#6c757d;">
+                    Padrao: codigo da empresa + codigo da filial principal + sequencial do colaborador.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" class="form-control" maxlength="14" value="{{ funcionario.cpf or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="rg">RG</label>
+                <input type="text" id="rg" name="rg" class="form-control" maxlength="20" value="{{ funcionario.rg or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="data_nascimento">Data de Nascimento</label>
+                <input type="date" id="data_nascimento" name="data_nascimento" class="form-control" value="{{ funcionario.data_nascimento.strftime('%Y-%m-%d') if funcionario.data_nascimento else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="celular">Celular</label>
+                <input type="text" id="celular" name="celular" class="form-control" maxlength="30" value="{{ funcionario.celular or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="cep">CEP</label>
+                <input type="text" id="cep" name="cep" class="form-control" maxlength="12" value="{{ funcionario.cep or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="endereco">Endereco</label>
+                <input type="text" id="endereco" name="endereco" class="form-control" maxlength="180" value="{{ funcionario.endereco or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="bairro">Bairro</label>
+                <input type="text" id="bairro" name="bairro" class="form-control" maxlength="100" value="{{ funcionario.bairro or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="cidade">Cidade</label>
+                <input type="text" id="cidade" name="cidade" class="form-control" maxlength="100" value="{{ funcionario.cidade or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="estado">UF</label>
+                <input type="text" id="estado" name="estado" class="form-control" maxlength="2" value="{{ funcionario.estado or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="role">Tipo de usuario
                     {% if funcionario_logado.role != 'admin' %}
                         <span class="hint">(apenas admin pode alterar)</span>
                     {% endif %}
@@ -49,10 +102,28 @@
                         <option value="admin" {% if funcionario.role == 'admin' %}selected{% endif %}>Admin</option>
                     {% endif %}
                 </select>
+                <small style="display:block; margin-top:8px; color:#6c757d;">
+                    Define o papel base no sistema. As paginas liberadas ficam no perfil de acesso e nos ajustes individuais.
+                </small>
             </div>
 
             <div class="form-group">
-                <label for="cargo">Cargo/Funcao (RH) <span class="required">*</span></label>
+                <label for="perfil_acesso_id">Perfil de acesso padrao</label>
+                <select id="perfil_acesso_id" name="perfil_acesso_id" class="form-control">
+                    <option value="">Sem perfil padrao</option>
+                    {% for perfil in perfis_acesso %}
+                        <option value="{{ perfil.id }}" {% if funcionario.perfil_acesso_id == perfil.id %}selected{% endif %}>
+                            {{ perfil.nome }}{% if not perfil.ativo %} - inativo{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small style="display:block; margin-top:8px; color:#6c757d;">
+                    Usa um conjunto padrao de paginas. Voce ainda pode ajustar acessos individuais na tela "Editar acessos".
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="cargo">Cargo da empresa <span class="required">*</span></label>
                 <select id="cargo" name="cargo" class="form-control" required>
                     <option value="">Selecione um cargo</option>
                     {% for funcao in funcoes_rh %}
@@ -62,6 +133,114 @@
                         <option value="{{ funcionario.cargo }}" selected>{{ funcionario.cargo }}</option>
                     {% endif %}
                 </select>
+                <small style="display:block; margin-top:8px; color:#6c757d;">
+                    Cargo descreve a funcao organizacional. O perfil de acesso fica separado para evitar confusao.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="permitir_editar_imagem_perfil" {% if funcionario.permitir_editar_imagem_perfil %}checked{% endif %}>
+                    Permitir que o usuario altere a propria imagem de perfil no Dashboard
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="departamento">Departamento</label>
+                <input
+                    type="text"
+                    id="departamento"
+                    name="departamento"
+                    class="form-control"
+                    value="{{ funcionario.departamento or '' }}"
+                    list="departamentos-existentes"
+                    placeholder="Ex.: Operacoes, Comercial, Financeiro"
+                >
+                <datalist id="departamentos-existentes">
+                    {% for departamento in departamentos_existentes %}
+                        <option value="{{ departamento }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div class="form-group">
+                <label for="time_nome">Time / Squad</label>
+                <input
+                    type="text"
+                    id="time_nome"
+                    name="time_nome"
+                    class="form-control"
+                    value="{{ funcionario.time_nome or '' }}"
+                    list="times-existentes"
+                    placeholder="Ex.: Entrega, Vendas Loja, Backoffice"
+                >
+                <datalist id="times-existentes">
+                    {% for time_nome in times_existentes %}
+                        <option value="{{ time_nome }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div class="form-group">
+                <label for="nivel_organograma">Nivel organizacional</label>
+                <select id="nivel_organograma" name="nivel_organograma" class="form-control">
+                    <option value="">Automatico pelo tipo de usuario</option>
+                    {% for nivel in niveis_organograma %}
+                        <option value="{{ nivel }}" {% if funcionario.nivel_organograma == nivel %}selected{% endif %}>{{ nivel }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="superior_id">Responsavel direto <span class="required">*</span></label>
+                <select id="superior_id" name="superior_id" class="form-control">
+                    <option value="">Selecione o gestor ou lider imediato</option>
+                    {% for superior in superiores %}
+                        <option value="{{ superior.id }}" {% if funcionario.superior_id == superior.id %}selected{% endif %}>
+                            {{ superior.nome }} - {{ superior.cargo or superior.role|upper }}
+                            {% if superior.departamento %} ({{ superior.departamento }}){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small style="display:block; margin-top:8px; color:#6c757d;">
+                    Mantem o organograma e a cadeia de responsabilidade atualizados. Deixe vazio somente quando o colaborador nao tiver superior direto.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label for="estoque_principal_id">Estoque/Loja principal</label>
+                <select id="estoque_principal_id" name="estoque_principal_id" class="form-control">
+                    <option value="">Sem estoque principal definido</option>
+                    {% for estoque in estoques_cadastrados %}
+                        <option value="{{ estoque.id }}" {% if funcionario.estoque_principal_id == estoque.id %}selected{% endif %}>
+                            {{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}{% if not estoque.ativo %} - inativo{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small style="display:block; margin-top:8px; color:#6c757d;">
+                    Usado na composicao da matricula e como referencia principal do colaborador.
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="restricao_estoques_ativa" {% if funcionario.restricao_estoques_ativa %}checked{% endif %}>
+                    Restringir acesso a estoques/lojas especificos
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label for="estoques_permitidos_ids">Estoques/Lojas permitidos</label>
+                <select id="estoques_permitidos_ids" name="estoques_permitidos_ids" class="form-control" multiple size="6">
+                    {% for estoque in estoques_cadastrados %}
+                        <option value="{{ estoque.id }}" {% if estoque.id in estoques_permitidos_ids %}selected{% endif %}>
+                            {{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}{% if not estoque.ativo %} - inativo{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small style="display:block; margin-top:8px; color:#6c757d;">
+                    Se a restricao estiver ativa, apenas estes estoques/lojas ficarao disponiveis para o colaborador.
+                </small>
             </div>
 
             <div class="form-group">

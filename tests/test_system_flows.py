@@ -4,7 +4,7 @@ import unittest
 os.environ['FLASK_CONFIG'] = 'testing'
 
 from app import app, db, sincronizar_garcom_funcionario  # noqa: E402
-from models import AuditoriaEvento, Caixa, Categoria, EmpresaConfig, EnderecoEstoque, Estoque, Fornecedor, Funcionario, Garcom, Mesa, Movimentacao, Pedido, PermissaoAcesso, Produto, RecebimentoFornecedor  # noqa: E402
+from models import AssistenteLocalFeedback, AuditoriaEvento, Caixa, Categoria, EmpresaConfig, EnderecoEstoque, Estoque, Fornecedor, Funcionario, Garcom, Mesa, Movimentacao, Pedido, PermissaoAcesso, Produto, RecebimentoFornecedor  # noqa: E402
 
 
 class SystemFlowsTestCase(unittest.TestCase):
@@ -258,6 +258,102 @@ class SystemFlowsTestCase(unittest.TestCase):
         self.assertEqual(endereco.estoque_id, estoque.id)
         self.assertEqual(endereco.estado, 'MT')
         self.assertTrue(endereco.ativo)
+
+    def test_local_ai_status_endpoint_returns_available_mode(self):
+        response = self.client.get('/api/assistente-local/status')
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload['success'])
+        self.assertIn(payload['data']['mode'], {'lexical', 'semantic'})
+        self.assertGreater(payload['data']['document_count'], 0)
+
+    def test_local_ai_question_returns_answer_and_actions(self):
+        response = self.client.post('/api/assistente-local/perguntar', json={
+            'pergunta': 'Como registrar um recebimento?',
+            'endpoint_atual': 'listar_recebimentos_fornecedor',
+            'tela_atual': 'Central de Recebimentos',
+        }, headers={'X-CSRF-Token': self.csrf_token})
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload['success'])
+        self.assertTrue(payload['data']['answer'])
+        self.assertTrue(payload['data']['actions'])
+        self.assertTrue(payload['data']['response_id'])
+        self.assertTrue(payload['data']['matched_doc_ids'])
+
+    def test_local_ai_follow_up_uses_recent_history_context(self):
+        response = self.client.post('/api/assistente-local/perguntar', json={
+            'pergunta': 'E depois?',
+            'endpoint_atual': 'listar_recebimentos_fornecedor',
+            'tela_atual': 'Central de Recebimentos',
+            'historico': [
+                {'role': 'user', 'text': 'Como registrar um recebimento?'},
+                {'role': 'assistant', 'text': 'Abra a Central de Recebimentos e siga o fluxo.'},
+            ],
+        }, headers={'X-CSRF-Token': self.csrf_token})
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload['success'])
+        self.assertIn('recebimento', payload['data']['answer'].lower())
+
+    def test_local_ai_greeting_returns_conversational_reply_without_actions(self):
+        response = self.client.post('/api/assistente-local/perguntar', json={
+            'pergunta': 'bom dia',
+            'endpoint_atual': 'dashboard',
+            'tela_atual': 'Dashboard',
+        }, headers={'X-CSRF-Token': self.csrf_token})
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload['success'])
+        self.assertEqual(payload['data']['answer'], 'Bom dia! Em que posso ajudar?')
+        self.assertEqual(payload['data']['actions'], [])
+        self.assertEqual(payload['data']['matched_doc_ids'], [])
+
+    def test_local_ai_feedback_endpoint_persists_and_updates_vote(self):
+        pergunta = self.client.post('/api/assistente-local/perguntar', json={
+            'pergunta': 'Nao consigo liberar um pedido para roteirizacao',
+            'endpoint_atual': 'listar_roteirizacao_entrega',
+            'tela_atual': 'Roteirizacao',
+        }, headers={'X-CSRF-Token': self.csrf_token})
+        self.assertEqual(pergunta.status_code, 200)
+        payload = pergunta.get_json()
+        response_id = payload['data']['response_id']
+
+        primeiro_feedback = self.client.post('/api/assistente-local/feedback', json={
+            'response_id': response_id,
+            'vote': 'dislike',
+            'question_text': 'Nao consigo liberar um pedido para roteirizacao',
+            'answer_text': payload['data']['answer'],
+            'endpoint_atual': 'listar_roteirizacao_entrega',
+            'tela_atual': 'Roteirizacao',
+            'matched_doc_ids': payload['data']['matched_doc_ids'],
+        }, headers={'X-CSRF-Token': self.csrf_token})
+        self.assertEqual(primeiro_feedback.status_code, 200)
+
+        registro = AssistenteLocalFeedback.query.filter_by(
+            funcionario_id=self.funcionario.id,
+            response_id=response_id,
+        ).first()
+        self.assertIsNotNone(registro)
+        self.assertEqual(registro.vote, 'dislike')
+
+        segundo_feedback = self.client.post('/api/assistente-local/feedback', json={
+            'response_id': response_id,
+            'vote': 'like',
+            'question_text': 'Nao consigo liberar um pedido para roteirizacao',
+            'answer_text': payload['data']['answer'],
+            'endpoint_atual': 'listar_roteirizacao_entrega',
+            'tela_atual': 'Roteirizacao',
+            'matched_doc_ids': payload['data']['matched_doc_ids'],
+        }, headers={'X-CSRF-Token': self.csrf_token})
+        self.assertEqual(segundo_feedback.status_code, 200)
+
+        registros = AssistenteLocalFeedback.query.filter_by(
+            funcionario_id=self.funcionario.id,
+            response_id=response_id,
+        ).all()
+        self.assertEqual(len(registros), 1)
+        self.assertEqual(registros[0].vote, 'like')
 
     def test_stock_analytics_api_returns_success(self):
         response = self.client.get('/api/estoque/analytics?periodo=30')

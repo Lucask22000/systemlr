@@ -5,7 +5,57 @@
 {% block content %}
 <div class="page-header">
     <h1>Detalhes da Venda #{{ pedido.id }}</h1>
-    <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar</a>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar</a>
+        {% if pode_editar %}
+        <a href="{{ url_for('editar_pedido', pedido_id=pedido.id) }}" class="btn btn-warning">Editar pedido</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">Acoes do Pedido</div>
+    <div class="card-body d-flex flex-wrap gap-2">
+        {% if pode_alterar_status %}
+        <form method="POST" action="{{ url_for('alterar_status_pedido', pedido_id=pedido.id) }}" class="d-flex flex-wrap gap-2">
+            {{ csrf_input|safe }}
+            {% set permitidos = status_transitions.get(pedido.status, []) %}
+            <select name="status" class="form-select form-select-sm" style="min-width: 220px;">
+                <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %} {% if pedido.status!='aberto' and 'aberto' not in permitidos %}disabled{% endif %}>Aberto</option>
+                <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %} {% if pedido.status!='em_preparo' and 'em_preparo' not in permitidos %}disabled{% endif %}>Em preparo</option>
+                <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %} {% if pedido.status!='entregue' and 'entregue' not in permitidos %}disabled{% endif %}>Entregue</option>
+                <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %} {% if pedido.status!='fechado' and 'fechado' not in permitidos %}disabled{% endif %}>Venda concluida</option>
+                <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %} {% if pedido.status!='cancelado' and 'cancelado' not in permitidos %}disabled{% endif %}>Cancelado</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Atualizar status</button>
+        </form>
+        {% endif %}
+
+        {% if separacao_ativa and origem_elegivel_separacao and pode_atualizar_separacao %}
+        <form method="POST" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}">
+            {{ csrf_input|safe }}
+            <input type="hidden" name="acao" value="{% if pedido.separacao_entrega_concluida %}reabrir{% else %}concluir{% endif %}">
+            <button type="submit" class="btn btn-outline-success btn-sm">
+                {% if pedido.separacao_entrega_concluida %}Reabrir separacao{% else %}Marcar separado{% endif %}
+            </button>
+        </form>
+        {% endif %}
+
+        {% if etiquetas_ativas and pode_imprimir_etiqueta and separacao_ativa and origem_elegivel_separacao %}
+        <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn btn-outline-dark btn-sm" target="_blank">Imprimir etiqueta</a>
+        {% endif %}
+
+        {% if pode_ver_comprovante %}
+        <a href="{{ url_for('visualizar_comprovante_pedido', pedido_id=pedido.id) }}" class="btn btn-info btn-sm" target="_blank">Comprovante</a>
+        {% endif %}
+
+        {% if pode_excluir %}
+        <form method="POST" action="{{ url_for('deletar_pedido', pedido_id=pedido.id) }}" data-confirm-message="Excluir pedido #{{ pedido.id }}?">
+            {{ csrf_input|safe }}
+            <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+        </form>
+        {% endif %}
+    </div>
 </div>
 
 <div class="card mb-3">
@@ -63,6 +113,10 @@
                         <td>{{ pedido.mesa.numero if pedido.mesa else '-' }}</td>
                     </tr>
                     <tr>
+                        <th>Origem</th>
+                        <td>{{ pedido.origem or '-' }}</td>
+                    </tr>
+                    <tr>
                         <th>Cliente</th>
                         <td>{{ pedido.cliente_nome or '-' }}</td>
                     </tr>
@@ -85,6 +139,49 @@
                     <tr>
                         <th>Observacoes</th>
                         <td>{{ pedido.observacoes or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Separacao</th>
+                        <td>{% if pedido.separacao_entrega_concluida %}Concluida{% else %}Pendente{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th>Rota</th>
+                        <td>{{ pedido.rota_entrega or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Ordem na rota</th>
+                        <td>{{ pedido.ordem_rota or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Local de saida</th>
+                        <td>{{ pedido.local_saida or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Veiculo</th>
+                        <td>
+                            {{ pedido.veiculo_tipo or '-' }}
+                            {% if pedido.veiculo_placa %} | {{ pedido.veiculo_placa }}{% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Motorista</th>
+                        <td>{{ pedido.motorista_nome or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Terceirizada</th>
+                        <td>{{ pedido.empresa_terceirizada or '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th>Nota fiscal</th>
+                        <td>
+                            Numero: {{ pedido.nota_fiscal_numero or '-' }}<br>
+                            Chave: {{ pedido.nota_fiscal_chave or '-' }}<br>
+                            Emitida em: {{ pedido.nota_fiscal_emitida_em.strftime('%d/%m/%Y %H:%M:%S') if pedido.nota_fiscal_emitida_em else '-' }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Etiqueta de entrega</th>
+                        <td>{{ pedido.etiqueta_entrega_emitida_em.strftime('%d/%m/%Y %H:%M:%S') if pedido.etiqueta_entrega_emitida_em else '-' }}</td>
                     </tr>
                 </tbody>
             </table>

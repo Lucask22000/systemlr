@@ -1,0 +1,97 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Coletor de Estoque - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Coletor - Separacao, Embalagem e Expedicao</h1>
+</div>
+
+<section class="section mb-3">
+    <form method="get" class="dashboard-filter-form" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="search" name="busca" class="input-text" placeholder="Pedido, cliente, celular ou rota" value="{{ busca }}">
+        <select name="etapa" class="input-text">
+            <option value="todos" {% if etapa == 'todos' %}selected{% endif %}>Todas as etapas</option>
+            <option value="separacao" {% if etapa == 'separacao' %}selected{% endif %}>Separacao</option>
+            <option value="embalagem" {% if etapa == 'embalagem' %}selected{% endif %}>Embalagem</option>
+            <option value="expedicao" {% if etapa == 'expedicao' %}selected{% endif %}>Expedicao</option>
+            <option value="em_rota" {% if etapa == 'em_rota' %}selected{% endif %}>Em rota</option>
+            <option value="concluido" {% if etapa == 'concluido' %}selected{% endif %}>Concluido</option>
+        </select>
+        <button class="btn btn-primary" type="submit">Filtrar</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('coletor_estoque') }}">Limpar</a>
+    </form>
+</section>
+
+<div style="display:grid; gap:12px;">
+    {% for card in cards %}
+    {% set pedido = card.pedido %}
+    <section class="section">
+        <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Pedido #{{ pedido.id }}</h2>
+            <span class="badge bg-primary">{{ card.etapa_atual|replace('_', ' ')|capitalize }}</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:8px; margin-top:10px;">
+            <div><strong>Cliente:</strong> {{ pedido.cliente_nome or '-' }}</div>
+            <div><strong>Celular:</strong> {{ pedido.cliente_celular or '-' }}</div>
+            <div><strong>Rota:</strong> {{ pedido.rota_entrega or '-' }}</div>
+            <div><strong>Ordem:</strong> {{ pedido.ordem_rota or '-' }}</div>
+            <div><strong>Local de saida:</strong> {{ pedido.local_saida or (empresa.entrega_local_saida_padrao if empresa else '-') or '-' }}</div>
+            <div><strong>Veiculo:</strong> {{ pedido.veiculo_tipo or (empresa.entrega_veiculo_padrao if empresa else '-') or '-' }}{% if pedido.veiculo_placa %} ({{ pedido.veiculo_placa }}){% endif %}</div>
+            <div><strong>Motorista:</strong> {{ pedido.motorista_nome or (empresa.entrega_motorista_padrao if empresa else '-') or '-' }}</div>
+            <div><strong>Terceirizada:</strong> {{ pedido.empresa_terceirizada or '-' }}</div>
+            <div><strong>Criado em:</strong> {{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</div>
+            <div><strong>Total:</strong> R$ {{ '%.2f'|format(pedido.total or 0) }}</div>
+        </div>
+
+        <div style="margin-top:10px;">
+            <strong>Itens para separacao:</strong>
+            <ul style="margin:6px 0 0 18px; padding:0;">
+                {% for item in pedido.itens %}
+                <li>{{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }} | Qtd: {{ item.quantidade }}</li>
+                {% else %}
+                <li>Sem itens.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+            {% if not pedido.separacao_entrega_concluida %}
+            <form method="post" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao" value="concluir">
+                <button type="submit" class="btn btn-success btn-sm">Marcar separacao</button>
+            </form>
+            {% else %}
+            <span class="badge bg-success">Separacao concluida</span>
+            {% endif %}
+
+            {% if etiquetas_ativas and pedido.separacao_entrega_concluida %}
+            <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" target="_blank" class="btn btn-info btn-sm">Etiqueta</a>
+            {% endif %}
+
+            {% if pedido.separacao_entrega_concluida and not pedido.saiu_para_entrega_em %}
+            <form method="post" action="{{ url_for('atualizar_despacho_entrega', pedido_id=pedido.id) }}">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao" value="sair">
+                <button type="submit" class="btn btn-warning btn-sm">Enviar para expedicao</button>
+            </form>
+            {% elif pedido.saiu_para_entrega_em and not pedido.entrega_concluida_em %}
+            <form method="post" action="{{ url_for('atualizar_despacho_entrega', pedido_id=pedido.id) }}">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao" value="entregar">
+                <button type="submit" class="btn btn-primary btn-sm">Concluir entrega</button>
+            </form>
+            {% elif pedido.entrega_concluida_em %}
+            <span class="badge bg-secondary">Entrega concluida</span>
+            {% endif %}
+        </div>
+    </section>
+    {% else %}
+    <section class="section">
+        <p class="mb-0">Nenhum pedido encontrado para o coletor.</p>
+    </section>
+    {% endfor %}
+</div>
+{% endblock %}

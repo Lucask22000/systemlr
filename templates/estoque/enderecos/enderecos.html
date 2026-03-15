@@ -6,12 +6,13 @@
 <div class="page-header">
     <h1>Enderecos de Estoque</h1>
     <div class="header-actions">
+        <a href="{{ url_for('enderecos_inteligentes') }}" class="btn btn-secondary">Enderecos Inteligentes</a>
         <a href="{{ url_for('listar_estoques') }}" class="btn btn-secondary">Ver Estoques</a>
         <a href="{{ url_for('novo_endereco_estoque') }}" class="btn btn-primary">Novo Endereco</a>
     </div>
 </div>
 
-<section class="filters-section">
+<section class="filters-section" data-filter-panel data-filter-title="Filtros dos enderecos">
     <form method="GET" class="filters-form">
         <div class="filter-group">
             <label for="estoque_id">Estoque</label>

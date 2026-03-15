@@ -1,384 +1,146 @@
-# SystemLR - Gestão de Estoque
+# SystemLR
 
-Um sistema web completo de gerenciamento de estoque para conveniências, desenvolvido com Flask e otimizado para funcionar em PC e dispositivos móveis.
+Sistema de gestao para loja de conveniencia com operacao integrada de vendas, estoque, RH, financeiro, servicos e e-commerce. O projeto usa Flask, SQLAlchemy, SQLite, Jinja2 e Bootstrap, com foco em operacao web responsiva para desktop e mobile.
 
-**Website**: [systemlr.com](https://systemlr.com)
+## Visao Geral
 
-## 🎯 Funcionalidades
+- Dashboard operacional e gerencial
+- PDV, pedidos, mesas, caixas e expedicao
+- Estoque com produtos, enderecos, movimentacoes, recebimentos e relatorios
+- RH com funcionarios, perfis, permissoes e organograma
+- Financeiro com lancamentos, fundos e metricas
+- Assistente local "Marcia" com busca hibrida, contexto de pagina e feedback like/dislike
+- API interna para analytics e assistente
 
-- ✅ **Dashboard** - Visualize estatísticas e alertas em tempo real
-- 📦 **Gerenciamento de Produtos** - Cadastre, edite, visualize e delete produtos
-- 🏷️ **Categorias** - Organize produtos por categorias
-- 📊 **Movimentações** - Registre entradas e saídas de estoque
-- 📈 **Relatórios** - Gere relatórios completos do estoque
-- 📱 **Responsivo** - Interface adaptável para mobile e desktop
-- 🔔 **Alertas** - Notificações de produtos em falta
-- 💰 **Análise Financeira** - Cálculo de lucro e margem de lucro
-- 💳 **Sistema de Vendas** - pedidos, mesas e caixas diretamente pela interface web
+## Arquitetura Atual
 
-## 🛠️ Requisitos
+A base esta em transicao de um `app/__init__.py` monolitico para uma estrutura modular.
 
-- Python 3.8 ou superior
-- pip (gerenciador de pacotes Python)
+Principais modulos novos:
 
-## 📦 Instalação
+- `app/factory.py`: cria a app e configura extensoes
+- `app/decorators.py`: `login_required`, `require_role`, `_limit`
+- `app/helpers.py`: helpers reutilizaveis de request, login e analytics
+- `app/exceptions.py`: excecoes padronizadas de dominio
+- `app/utils/validators.py`: validacoes e normalizacoes compartilhadas
+- `app/utils/helpers.py`: helpers comuns como `slugify`, `sem_acentos` e `parse_date_range`
 
-### 1. Clonar ou extrair o projeto
+Camada de servicos:
+
+- `app/services/pedido_service.py`
+- `app/services/estoque_service.py`
+- `app/services/financeiro_service.py`
+- `app/services/rh_service.py`
+- `app/services/assistente_service.py`
+- `app/services/utils_service.py`
+
+Rotas novas ja extraidas:
+
+- `app/auth_routes.py`
+- `app/api_routes.py`
+
+Rotas ainda em migracao gradual:
+
+- `app/dashboard_routes.py`
+- `app/rh_routes.py`
+- `app/empresa_routes.py`
+- `app/services_routes.py`
+
+## Assistente Local
+
+A Marcia agora possui:
+
+- configuracao de modelo por ambiente
+- candidatos de embeddings com fallback
+- busca hibrida: lexical + BM25 + semantica + feedback + contexto da pagina
+- contexto recente de conversa
+- respostas por intencao: `howto`, `problem`, `location`, `permission`, `follow_up`
+- feedback persistente por `like` e `dislike`
+
+Variaveis uteis:
+
+- `SYSTEMLR_LOCAL_AI_ENABLED`
+- `SYSTEMLR_LOCAL_AI_AUTO_INSTALL`
+- `SYSTEMLR_LOCAL_AI_MODEL`
+- `SYSTEMLR_LOCAL_AI_MODEL_CANDIDATES`
+- `SYSTEMLR_LOCAL_AI_MAX_HISTORY_MESSAGES`
+
+## Testes
+
+O projeto agora possui base `pytest` em `tests/` com fixtures compartilhadas e suites por dominio:
+
+- `tests/conftest.py`
+- `tests/test_auth.py`
+- `tests/test_pedidos.py`
+- `tests/test_estoque.py`
+- `tests/test_caixa.py`
+- `tests/test_rh.py`
+- `tests/test_assistente.py`
+
+Tambem existem testes legados em `tests/test_system_flows.py`.
+
+Executar:
+
+```bash
+.venv\Scripts\python.exe -m pytest -q
+.venv\Scripts\python.exe -m pytest --cov=app --cov=routes --cov-report=term-missing
+```
+
+## Instalacao
 
 ```bash
 cd c:\Users\lucas\OneDrive\Desktop\conveniencia
-```
-
-### 2. Criar ambiente virtual (recomendado)
-
-```bash
-# Windows
-python -m venv venv
-venv\Scripts\activate
-
-# Linux/Mac
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Instalar dependências
-
-```bash
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## 🚀 Como Usar
-
-### 📁 Auto‑commit (opcional)
-Se desejar que todas as alterações sejam registradas automaticamente no Git, há um pequeno script
-`autocommit.ps1` na raiz. Abra o PowerShell na pasta do projeto e execute:
-
-```powershell
-.\.\autocommit.ps1
-```
-
-O script observa o diretório e faz `git add -A && git commit` com uma mensagem de timestamp cada
-vez que um arquivo é modificado/criado/excluído. Pressione Enter para parar o watcher.
-
-
-
-### 1. Executar a aplicação
+## Execucao
 
 ```bash
-python app.py
+.venv\Scripts\python.exe run.py
 ```
 
-### 2. Acessar no navegador
+Se necessario, ajuste:
 
-- **Desktop**: http://localhost:5000
-- **Mobile**: Acesse via IP da máquina (http://seu-ip:5000)
+- `FLASK_CONFIG=development`
+- `SECRET_KEY`
+- configuracoes de cache/Redis em producao
 
-### 3. Primeiro acesso
+## Relatorios e Documentacao
 
-- O banco de dados SQLite será criado automaticamente
-- **Primeira vez**: Você será direcionado para criar a conta do administrador
-- Comece criando categorias de produtos
-- Cadastre seus produtos
-- Registre movimentações de estoque
-- Configure caixas e mesas para iniciar vendas
-- Abra pedidos e acompanhe vendas
-- Acompanhe relatórios e alertas
+Gerar relatorios de apoio:
 
-### 🔐 Autenticação e Controle de Acesso
-
-O SystemLR agora oferece um sistema completo de autenticação com controle de acesso por função (role-based).
-
-#### Roles Disponíveis:
-- **🔴 Admin** - Acesso total ao sistema, gerenciamento de funcionários
-- **🟠 Gerente** - Acesso a vendas, pedidos, relatórios e gerenciamento de operadores/caixas
-- **🟡 Caixa** - Acesso a vendas, pedidos e movimentação de estoque
-- **🟢 Operador** - Acesso limitado a movimentação de estoque e leitura de relatórios
-
-#### Login/Registro:
-1. **Primeira vez**: Crie a conta do administrador em `/registro`
-2. **Novos funcionários**: Admin cria conta em `Funcionários → Novo Funcionário`
-3. **Login**: Acesse `/login` com email e senha
-
-#### Proteger Rotas:
-Todas as rotas do sistema (exceto login/registro) requerem autenticação. Tente acessar qualquer página sem logar e será redirecionado para o login.
-
-## 📁 Estrutura do Projeto
-
-```
-conveniencia/
-├── app.py                 # Aplicação principal Flask
-├── config.py              # Configurações
-├── models.py              # Modelos de dados (SQLAlchemy)
-├── requirements.txt       # Dependências do projeto
-├── templates/             # Arquivos HTML
-│   ├── base.html          # Template base
-│   ├── sistema/           # Autenticação e sistema
-│   │   ├── boas_vindas.html
-│   │   ├── login.html     # Login
-│   │   └── registro.html  # Registro de novo usuário
-│   ├── funcionarios/      # Gerenciamento de funcionários (admin/gerente)
-│   │   ├── listar.html
-│   │   ├── criar.html
-│   │   └── editar.html
-│   ├── dashboard/         # Dashboard principal
-│   │   └── index.html
-│   ├── produtos/          # CRUD de produtos
-│   │   ├── produtos.html
-│   │   ├── novo_produto.html
-│   │   ├── editar_produto.html
-│   │   └── visualizar_produto.html
-│   ├── categorias/        # CRUD de categorias
-│   │   ├── categorias.html
-│   │   ├── nova_categoria.html
-│   │   └── editar_categoria.html
-│   ├── movimentacoes/     # Histórico e registro de movimentações
-│   │   ├── movimentacoes.html
-│   │   ├── nova_movimentacao.html
-│   │   └── movimentacao_rapida.html
-│   ├── relatorios/        # Relatórios
-│   │   └── relatorios.html
-│   ├── caixas/            # CRUD de caixas
-│   │   ├── caixas.html
-│   │   ├── nova_caixa.html
-│   │   └── editar_caixa.html
-│   ├── mesas/             # CRUD de mesas
-│   │   ├── mesas.html
-│   │   ├── nova_mesa.html
-│   │   └── editar_mesa.html
-│   ├── pedidos/           # Pedidos (comandas)
-│   │   ├── pedidos.html
-│   │   ├── novo_pedido.html
-│   │   └── editar_pedido.html
-│   ├── vendas/            # Lista de vendas
-│   │   └── vendas.html
-│   ├── fornecedores/      # CRUD de fornecedores
-│   │   ├── fornecedores.html
-│   │   ├── novo_fornecedor.html
-│   │   └── editar_fornecedor.html
-│   ├── errors/            # Páginas de erro
-│   │   ├── 404.html
-│   │   └── 500.html
-├── static/                # Arquivos estáticos
-│   ├── css/
-│   │   └── style.css      # Estilos responsivos
-│   ├── js/
-│   │   ├── main.js        # JavaScript e menus
-│   │   └── quagga.min.js  # Leitura de código de barras
-│   └── img/               # Imagens
-└── estoque.db             # Banco de dados (criado automaticamente)
+```bash
+.venv\Scripts\python.exe scripts/generate_backend_ai_report.py
+.venv\Scripts\python.exe scripts/generate_system_documentation.py
 ```
 
-## 💾 Banco de Dados
+Saidas:
 
-O projeto usa **SQLite** com as seguintes tabelas:
+- `docs/backend_ai_report.md`
+- `docs/system_overview_ai.md`
 
-### 1. **categorias**
-- id (PK)
-- nome (único)
-- descricao
-- criado_em
+Healthcheck tecnico:
 
-### 2. **produtos**
-- id (PK)
-- codigo (único)
-- nome
-- descricao
-- categoria_id (FK)
-- preco_custo
-- preco_venda
-- quantidade_estoque
-- quantidade_minima
-- ativo
-- criado_em
-- atualizado_em
+```bash
+.venv\Scripts\python.exe scripts/healthcheck.py
+```
 
-### 3. **movimentacoes**
-- id (PK)
-- produto_id (FK)
-- tipo (entrada/saida)
-- quantidade
-- motivo
-- observacoes
-- criado_em
+## Smoke Test Manual
 
-### 4. **funcionarios** (Novo)
-- id (PK)
-- nome
-- email (único)
-- senha_hash (bcrypt)
-- role (admin/gerente/caixa/operador)
-- ativo
-- criado_em
-- atualizado_em
+Fluxo recomendado apos alteracoes maiores:
 
-## 🎨 Design Responsivo
+1. Fazer login com um usuario admin ou gerente.
+2. Abrir dashboard e financeiro.
+3. Criar um pedido via PDV ou API.
+4. Finalizar o pedido e validar saldo de caixa e baixa de estoque.
+5. Registrar movimentacao de estoque.
+6. Criar e conferir um recebimento.
+7. Abrir analytics de estoque e RH.
+8. Testar a Marcia com uma saudacao e uma pergunta operacional.
 
-O sistema é totalmente responsivo com breakpoints para:
+## Observacoes
 
-- **Desktop** (1200px+) - Visualização completa com múltiplas colunas
-- **Tablet** (768px - 1199px) - Adaptação de grid e navegação
-- **Mobile** (até 767px) - Layout vertical otimizado para toque
-
-### Recursos Mobile:
-- Menu hamburger colapsável
-- Tabelas em modo de cards no mobile
-- Botões grandes e fáceis de tocar
-- Navegação intuitiva
-- Otimização de performance
-
-## 📊 Principais Funcionalidades
-
-### Dashboard
-- Total de produtos cadastrados
-- Quantidade de produtos em falta
-- Valor total de estoque
-- Últimas movimentações registradas
-
-### Produtos
-- Busca e filtro por categoria
-- Visualização de estoque e status
-- Cálculo automático de lucro e margem
-- Alertas de produtos em falta
-
-### Movimentações
-- Registro de entradas e saídas
-- Filtro por produto e tipo
-- Histórico completo com timestamps
-- Atualização automática de estoque
-
-### Relatórios
-- Produtos em falta
-- Produtos com maior valor em estoque
-- Estatísticas gerais
-- Movimentações do mês
-
-## 🔒 Segurança
-
-- ✅ **Autenticação**: Sistema de login com email e senha (bcrypt hashing)
-- ✅ **Controle de Acesso**: Role-based access control (RBAC) com 4 níveis
-- ✅ **Proteção de Rotas**: Todas as rotas protegidas com @login_required
-- ✅ **Sessão Segura**: Cookies de sessão com SameSite=Lax
-- ✅ **Senhas Criptografadas**: Uso de werkzeug.security para hash bcrypt
-- ⚠️ **Produção**: Configure SECRET_KEY com um valor aleatório forte em produção
-- ⚠️ **HTTPS**: Use HTTPS em produção
-- ⚠️ **Variáveis de Ambiente**: Nunca commite credenciais no repositório
-
-## 🚦 Fazendo Builds e Deploy
-
-### Para Produção
-
-1. Mude a configuração de debug:
-   ```python
-   app.run(debug=False)
-   ```
-
-2. Configure um servidor WSGI (Gunicorn):
-   ```bash
-   pip install gunicorn
-   gunicorn -w 4 -b 0.0.0.0:5000 app:app
-   ```
-
-3. Use um proxy reverso (Nginx) para melhor performance
-
-## 📝 Exemplos de Uso
-
-### Criar primeira categoria
-1. Acesse "Categorias"
-2. Clique em "➕ Nova Categoria"
-3. Preencha o nome (ex: "Bebidas")
-4. Clique em "✓ Salvar Categoria"
-
-### Adicionar produto
-1. Vá para "Produtos"
-2. Clique em "➕ Novo Produto"
-3. Preencha os dados:
-   - Código: PROD001
-   - Nome: Refrigerante 2L
-   - Categoria: Bebidas
-   - Preço de Custo: 3.50
-   - Preço de Venda: 5.50
-4. Clique em "✓ Salvar Produto"
-
-### Registrar movimentação
-1. Acesse "Movimentações"
-2. Clique em "➕ Nova Movimentação"
-3. Selecione o produto
-4. Escolha o tipo (Entrada/Saída)
-5. Informe quantidade e motivo
-6. Clique em "✓ Registrar Movimentação"
-
-## 🐛 Troubleshooting
-
-### "ModuleNotFoundError: No module named 'flask'"
-→ Certifique-se de instalar as dependências: `pip install -r requirements.txt`
-
-### "Erro ao conectar ao banco de dados"
-→ Delete o arquivo `estoque.db` e execute novamente. O banco será recriado.
-
-### Aplicação não acessível via mobile
-→ Certifique-se de usar o IP correto: `ipconfig` (Windows) ou `ifconfig` (Linux)
-
-## 📞 Suporte e Contribuições
-
-Para melhorias e sugestões, considere adicionar:
-- Sistema de backup automático
-- Exportação de relatórios em PDF/Excel
-- Autenticação de usuários
-- Múltiplas validações de entrada
-- Notificações por email
-- Integração com sistemas de pagamento
-
-## 📄 Licença
-
-Este projeto é fornecido como está para uso educacional e comercial.
-
-## 🌐 Sobre SystemLR
-
-**SystemLR** é uma marca registrada dedicada a fornecer soluções de gestão de estoque simples, intuitivas e poderosas para pequenos e médios negócios.
-
-- 🌟 Website: [systemlr.com](https://systemlr.com)
-- 📧 Suporte disponível em tempo real
-- 🚀 Sempre inovando para melhor atender seus clientes
-
----
-
-**Desenvolvido com ❤️ em Flask | SystemLR - Sua Gestão Simplificada**
-
-## Atualizacoes 2026-03-01 (Seguranca, Coerencia e Analytics)
-
-### Seguranca
-
-- CSRF global habilitado para formularios e requisicoes de escrita (`POST/PUT/PATCH/DELETE`).
-- Cookies de sessao endurecidos (`HttpOnly`, `SameSite=Lax`, `Secure` em producao).
-- Validacao de `SECRET_KEY` em ambiente de producao (fallback de desenvolvimento nao permitido).
-- Respostas JSON padronizadas em APIs de escrita: `{ success, message, data?, code? }`.
-
-### Coerencia de Pedidos
-
-- Regra de ciclo de vida consolidada:
-  - `aberto -> em_preparo -> entregue -> fechado` ou `cancelado`
-  - `fechado` e `cancelado` sao imutaveis
-- Fechamento do pedido agora processa estoque e financeiro uma unica vez.
-- Baixa de estoque registrada em movimentacao de saida no fechamento.
-- Caixa recebe entrada financeira no fechamento (nao mais na criacao).
-
-### Novos Endpoints de Analytics
-
-- `GET /api/dashboard/analytics?data_inicial=YYYY-MM-DD&data_final=YYYY-MM-DD`
-- `GET /api/estoque/analytics?periodo=7|30|90`
-- `GET /api/rh/analytics?periodo=30|90|365`
-
-### Frontend Dinamico
-
-- Dashboard com graficos Chart.js (faturamento diario, status, pagamentos, top produtos).
-- Relatorios de estoque com graficos dinamicos por periodo.
-- Indicadores RH com graficos por perfil e admissoes no periodo.
-
-### Testes Automatizados Minimos
-
-- Arquivo: `tests/test_system_flows.py`
-- Cobertura inicial:
-  - autenticacao obrigatoria em API
-  - CSRF obrigatorio para escrita
-  - fechamento imutavel de pedido
-  - impacto de fechamento em estoque e caixa
+- O repositorio pode conter alteracoes locais grandes e nao relacionadas. Revise `git status` antes de commitar.
+- Os indices adicionados em `models.py` precisam de migration/aplicacao no banco para efeito completo em producao.

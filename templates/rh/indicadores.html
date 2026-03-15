@@ -24,9 +24,9 @@
     </div>
     <div class="card card-info">
         <div class="card-content">
-            <h3>Funcoes RH</h3>
+            <h3>Estrutura RH</h3>
             <p class="card-value">{{ funcoes_total }}</p>
-            <p class="card-meta">{{ funcoes_ativas }} funções ativas</p>
+            <p class="card-meta">{{ funcoes_ativas }} cargos ativos | {{ perfis_acesso_ativos }} perfis ativos</p>
         </div>
     </div>
     <div class="card card-warning">
@@ -36,6 +36,96 @@
             <p class="card-meta">Funcionarios com acesso customizado</p>
         </div>
     </div>
+    <div class="card card-info">
+        <div class="card-content">
+            <h3>Pedidos Pendentes</h3>
+            <p class="card-value">{{ pedidos_pendentes }}</p>
+            <p class="card-meta">{{ '%.2f'|format(pendencias_por_colaborador) }} por colaborador ativo</p>
+        </div>
+    </div>
+    <div class="card card-primary">
+        <div class="card-content">
+            <h3>Equipe Operacao</h3>
+            <p class="card-value">{{ equipe_operacao_ativa }}</p>
+            <p class="card-meta">Minimo recomendado: {{ equipe_minima_recomendada }}</p>
+        </div>
+    </div>
+    <div class="card card-danger">
+        <div class="card-content">
+            <h3>Deficit de Equipe</h3>
+            <p class="card-value">{{ deficit_equipe }}</p>
+            <p class="card-meta">Ajuste de escala para fila atual</p>
+        </div>
+    </div>
+    <div class="card card-success">
+        <div class="card-content">
+            <h3>Produtividade media</h3>
+            <p class="card-value">{{ '%.2f'|format(media_pedidos_produtividade) }}</p>
+            <p class="card-meta">Pedidos fechados por colaborador (30 dias)</p>
+        </div>
+    </div>
+    <div class="card card-secondary">
+        <div class="card-content">
+            <h3>Destaque produtividade</h3>
+            {% if top_produtividade %}
+            <p class="card-value">{{ top_produtividade.nome }}</p>
+            <p class="card-meta">{{ top_produtividade.pedidos }} pedidos | Indice {{ '%.2f'|format(top_produtividade.indice_produtividade) }}</p>
+            {% else %}
+            <p class="card-value">-</p>
+            <p class="card-meta">Sem dados no periodo</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Demanda Operacional</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td>Pedidos hoje</td>
+                        <td>{{ pedidos_hoje }}</td>
+                    </tr>
+                    <tr>
+                        <td>Pedidos ultimos 30 dias</td>
+                        <td>{{ pedidos_30_dias }}</td>
+                    </tr>
+                    <tr>
+                        <td>Media diaria (30 dias)</td>
+                        <td>{{ '%.2f'|format(media_pedidos_dia_30) }}</td>
+                    </tr>
+                    <tr>
+                        <td>Pedidos pendentes por colaborador</td>
+                        <td>{{ '%.2f'|format(pendencias_por_colaborador) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Cargos sem Cobertura</h2>
+        {% if cargos_sem_cobertura %}
+        <ul class="mb-0">
+            {% for cargo in cargos_sem_cobertura %}
+            <li>{{ cargo }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="mb-0">Todos os cargos ativos possuem ao menos um colaborador ativo.</p>
+        {% endif %}
+    </section>
+</div>
+
+<div class="section">
+    <h2>Plano de Acao RH</h2>
+    <ul class="mb-0">
+        {% for acao in acoes_rh %}
+        <li>{{ acao }}</li>
+        {% endfor %}
+    </ul>
 </div>
 
 <div class="section">
@@ -51,7 +141,7 @@
     </div>
     <div class="analytics-grid">
         <section class="section">
-            <h2>Distribuicao por Perfil</h2>
+            <h2>Distribuicao por Tipo de Usuario</h2>
             <div class="chart-container">
                 <canvas id="chartRhPerfis"></canvas>
             </div>
@@ -65,9 +155,63 @@
     </div>
 </div>
 
+<div class="section">
+    <h2>Distribuicao por Cargo RH</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Cargo</th>
+                    <th>Total</th>
+                    <th>Ativos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in distribuicao_cargos %}
+                <tr>
+                    <td data-label="Cargo">{{ item.cargo or '-' }}</td>
+                    <td data-label="Total">{{ item.quantidade or 0 }}</td>
+                    <td data-label="Ativos">{{ item.ativos or 0 }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center">Sem dados de cargos.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="analytics-grid">
     <section class="section">
-        <h2>Distribuicao por Perfil</h2>
+        <h2>Distribuicao por Tipo de Usuario</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Quantidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in distribuicao_roles %}
+                    <tr>
+                        <td data-label="Tipo">{{ item.role|upper }}</td>
+                        <td data-label="Quantidade">{{ item.quantidade }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" class="text-center">Sem dados de tipos de usuario.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2>Perfis de Acesso Aplicados</h2>
         <div class="table-responsive">
             <table class="table">
                 <thead>
@@ -77,52 +221,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in distribuicao_roles %}
+                    {% for item in distribuicao_perfis_acesso %}
                     <tr>
-                        <td data-label="Perfil">{{ item.role|upper }}</td>
-                        <td data-label="Quantidade">{{ item.quantidade }}</td>
+                        <td data-label="Perfil">{{ item.perfil or 'Sem perfil padrao' }}</td>
+                        <td data-label="Quantidade">{{ item.quantidade or 0 }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="2" class="text-center">Sem dados de perfis.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2>Ultimos Funcionarios Cadastrados</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Perfil</th>
-                        <th>Status</th>
-                        <th>Cadastro</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for funcionario in funcionarios_recentes %}
-                    <tr>
-                        <td data-label="Nome">{{ funcionario.nome }}</td>
-                        <td data-label="Email">{{ funcionario.email }}</td>
-                        <td data-label="Perfil">{{ funcionario.role|upper }}</td>
-                        <td data-label="Status">
-                            {% if funcionario.ativo %}
-                            <span class="badge badge-success">Ativo</span>
-                            {% else %}
-                            <span class="badge badge-danger">Inativo</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Cadastro">{{ funcionario.criado_em.strftime('%d/%m/%Y %H:%M') if funcionario.criado_em else '-' }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center">Nenhum funcionario cadastrado.</td>
+                        <td colspan="2" class="text-center">Sem dados de perfis de acesso.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -131,9 +237,99 @@
     </section>
 </div>
 
+<div class="section">
+    <h2>Ultimos Funcionarios Cadastrados</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Matricula</th>
+                    <th>Email</th>
+                    <th>Tipo</th>
+                    <th>Perfil de acesso</th>
+                    <th>Status</th>
+                    <th>Cadastro</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for funcionario in funcionarios_recentes %}
+                <tr>
+                    <td data-label="Nome">{{ funcionario.nome }}</td>
+                    <td data-label="Matricula">{{ funcionario.matricula or '-' }}</td>
+                    <td data-label="Email">{{ funcionario.email }}</td>
+                    <td data-label="Tipo">{{ funcionario.role|upper }}</td>
+                    <td data-label="Perfil de acesso">{{ funcionario.perfil_acesso.nome if funcionario.perfil_acesso else '-' }}</td>
+                    <td data-label="Status">
+                        {% if funcionario.ativo %}
+                        <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                        <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Cadastro">{{ funcionario.criado_em.strftime('%d/%m/%Y %H:%M') if funcionario.criado_em else '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center">Nenhum funcionario cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Observacao Operacional</h2>
+        <p class="mb-0">Use a central de funcionarios para revisar o cadastro completo, o cargo e o perfil de acesso de cada colaborador.</p>
+    </section>
+</div>
+
+<div class="section">
+    <h2>Produtividade por Colaborador (ultimos 30 dias)</h2>
+    {% if produtividade_colaboradores %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Colaborador</th>
+                    <th>Cargo</th>
+                    <th>Pedidos</th>
+                    <th>Itens</th>
+                    <th>Faturamento</th>
+                    <th>Ticket Medio</th>
+                    <th>Pedidos/dia</th>
+                    <th>Indice</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in produtividade_colaboradores %}
+                <tr>
+                    <td data-label="#">{{ loop.index }}</td>
+                    <td data-label="Colaborador">{{ item.nome }}</td>
+                    <td data-label="Cargo">{{ item.cargo }}</td>
+                    <td data-label="Pedidos">{{ item.pedidos }}</td>
+                    <td data-label="Itens">{{ item.itens }}</td>
+                    <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento) }}</td>
+                    <td data-label="Ticket Medio">R$ {{ '%.2f'|format(item.ticket_medio) }}</td>
+                    <td data-label="Pedidos/dia">{{ '%.2f'|format(item.pedidos_dia) }}</td>
+                    <td data-label="Indice">{{ '%.2f'|format(item.indice_produtividade) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="mb-0">Sem dados de produtividade no periodo analisado.</p>
+    {% endif %}
+</div>
+
 <div class="action-buttons">
     <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-primary">Funcionarios</a>
-    <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Funcoes RH</a>
+    <a href="{{ url_for('organograma_rh') }}" class="btn btn-info">Organograma</a>
+    <a href="{{ url_for('listar_perfis_rh') }}" class="btn btn-secondary">Cargos e Perfis RH</a>
 </div>
 {% endblock %}
 

@@ -4,23 +4,30 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>Bem-vindo ao {{ app_name }}</h1>
+    <h1>Boas-vindas ao {{ app_name }}</h1>
 </div>
 
 <div class="section">
-    <h2>Informacoes Gerais</h2>
+    <h2>Sobre o Sistema</h2>
     <p><strong>Sistema:</strong> {{ app_name }}</p>
     <p><strong>Versao:</strong> {{ app_version }}</p>
     <p><strong>Dominio:</strong> {{ app_domain }}</p>
-    <p><strong>Criador:</strong> Lucas Ramalho</p>
-    <p><strong>Telefone:</strong> 67 981029292</p>
-    <p><strong>Total de Produtos:</strong> {{ total_produtos }}</p>
-    <p><strong>Total de Categorias:</strong> {{ total_categorias }}</p>
+    <p>Plataforma integrada para operacao de vendas, estoque, financeiro, RH e e-commerce.</p>
+</div>
+
+<div class="section">
+    <h2>Modulos Principais</h2>
+    <ul>
+        <li>Vendas e pedidos</li>
+        <li>Estoque e movimentacoes</li>
+        <li>Financeiro e lancamentos</li>
+        <li>RH e controle de acessos</li>
+        <li>E-commerce e configuracoes visuais</li>
+    </ul>
 </div>
 
 <div class="action-buttons">
-    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Ir para Dashboard</a>
-    <a href="{{ url_for('listar_produtos') }}" class="btn btn-secondary">Ver Produtos</a>
-    <a href="{{ url_for('relatorios') }}" class="btn btn-info">Ver Relatórios</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Ir para Painel</a>
+    <a href="{{ url_for('central_ajuda') }}" class="btn btn-secondary">Abrir Ajuda</a>
 </div>
 {% endblock %}

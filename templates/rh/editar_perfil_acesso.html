@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Perfil de Acesso - SystemLR{% endblock %}
+
+{% block extra_css %}
+<style>
+.setor-permissao-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+.setor-permissao-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+}
+
+.setor-permissao-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.setor-permissao-title {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.setor-permissao-items {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.setor-permissao-items.is-collapsed {
+    display: none;
+}
+
+.setor-hint {
+    color: #637488;
+    font-size: 0.8rem;
+    margin: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Editar Perfil de Acesso</h1>
+    <a href="{{ url_for('listar_perfis_rh') }}" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-group">
+            <label for="nome">Nome do perfil *</label>
+            <input type="text" id="nome" name="nome" class="input-text" maxlength="100" required value="{{ perfil.nome }}">
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descricao</label>
+            <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" value="{{ perfil.descricao or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-inline">
+                <input type="checkbox" name="ativo" {% if perfil.ativo %}checked{% endif %}>
+                Perfil ativo
+            </label>
+        </div>
+
+        <div class="section">
+            <h3>Paginas padrao</h3>
+            <p class="setor-hint">Use acesso total por setor ou expanda para selecionar paginas especificas.</p>
+            <div class="setor-permissao-grid">
+                {% for secao_nome, itens in paginas_ordenadas_menu %}
+                {% set ns = namespace(total=true, selected=0) %}
+                {% for pagina_key, _ in itens %}
+                    {% if pagina_key in permissoes_atuais %}
+                        {% set ns.selected = ns.selected + 1 %}
+                    {% else %}
+                        {% set ns.total = false %}
+                    {% endif %}
+                {% endfor %}
+                <article class="setor-permissao-card" data-permission-block>
+                    <header class="setor-permissao-header">
+                        <h4 class="setor-permissao-title">{{ secao_nome }}</h4>
+                        <button type="button" class="btn-small btn-secondary js-toggle-setor">
+                            {% if ns.selected > 0 %}Recolher{% else %}Expandir{% endif %}
+                        </button>
+                    </header>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="setores_totais" value="{{ secao_nome }}" class="js-setor-total" {% if ns.total and ns.selected > 0 %}checked{% endif %}>
+                        Acesso total ao setor
+                    </label>
+                    <div class="setor-permissao-items {% if ns.selected == 0 %}is-collapsed{% endif %}">
+                        {% for pagina_key, pagina_label in itens %}
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="paginas" value="{{ pagina_key }}" class="js-setor-pagina" {% if pagina_key in permissoes_atuais %}checked{% endif %}>
+                            {{ pagina_label }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Alteracoes</button>
+            <a href="{{ url_for('listar_perfis_rh') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-permission-block]').forEach(function (block) {
+        var toggleBtn = block.querySelector('.js-toggle-setor');
+        var totalCheckbox = block.querySelector('.js-setor-total');
+        var itensWrap = block.querySelector('.setor-permissao-items');
+        var pageCheckboxes = block.querySelectorAll('.js-setor-pagina');
+
+        if (toggleBtn && itensWrap) {
+            toggleBtn.addEventListener('click', function () {
+                itensWrap.classList.toggle('is-collapsed');
+                toggleBtn.textContent = itensWrap.classList.contains('is-collapsed') ? 'Expandir' : 'Recolher';
+            });
+        }
+
+        if (totalCheckbox) {
+            totalCheckbox.addEventListener('change', function () {
+                pageCheckboxes.forEach(function (cb) {
+                    cb.checked = totalCheckbox.checked;
+                });
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

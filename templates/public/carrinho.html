@@ -10,10 +10,16 @@
     <title>Carrinho | {{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home-varejo.css') }}">
 </head>
-<body class="retail-home">
+<body class="retail-home retail-app-page retail-market-app">
+    <style>
+        :root {
+            --market-primary: {{ empresa_config.ecom_cor_primaria if empresa_config and empresa_config.ecom_cor_primaria else '#ff7848' }};
+            --market-secondary: {{ empresa_config.ecom_cor_secundaria if empresa_config and empresa_config.ecom_cor_secundaria else '#ff5a2a' }};
+        }
+    </style>
     <header class="retail-topbar">
         <div class="retail-topbar-inner">
             <a class="brand" href="{{ url_for('index') }}">
@@ -25,8 +31,7 @@
             <nav class="top-links" aria-label="Navegação">
                 <a href="{{ url_for('index') }}">Vitrine</a>
                 <a href="{{ url_for('public.cadastro_cliente_site') }}">Cadastro</a>
-                <a href="{{ url_for('public.checkout_site') }}">Checkout</a>
-                <a href="{{ url_for('public.carrinho_site') }}" class="cart-link">
+                <a href="{{ url_for('public.carrinho_site') }}" class="cart-link is-active">
                     Carrinho <span>{{ resumo_carrinho.quantidade_itens }}</span>
                 </a>
             </nav>
@@ -85,7 +90,7 @@
                     </div>
                 </form>
                 {% else %}
-                <p class="empty-state">Seu carrinho esta vazio. Adicione itens da vitrine para continuar.</p>
+                <p class="empty-state">Seu carrinho está vazio. Adicione itens da vitrine para continuar.</p>
                 <a href="{{ url_for('index') }}" class="btn-action primary" style="display:inline-flex;align-items:center;text-decoration:none;margin-top:10px;">Ir para vitrine</a>
                 {% endif %}
             </article>
@@ -103,7 +108,7 @@
                     </div>
                 </div>
                 <div class="note-box">
-                    O total final pode incluir troco quando o metodo de pagamento escolhido for dinheiro.
+                    O total final pode incluir troco quando o método de pagamento escolhido for dinheiro.
                 </div>
                 <div style="margin-top: 12px; display:grid; gap:8px;">
                     <a href="{{ url_for('public.checkout_site') }}" class="btn-action primary wide" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">Finalizar pedido</a>
@@ -112,41 +117,14 @@
             </aside>
         </section>
 
-        {% if produtos_destaque %}
-        <section class="commerce-card">
-            <h2>Sugestoes para completar o pedido</h2>
-            <div class="shelf-grid">
-                {% for produto in produtos_destaque %}
-                <article class="shelf-card">
-                    {% set imagem_produto = produto.imagem_path %}
-                    {% if not imagem_produto or imagem_produto == 'img/placeholders/produto-sem-foto.svg' %}
-                        {% set imagem_produto = produto_imagem_padrao_path %}
-                    {% endif %}
-                    {% if imagem_produto %}
-                    <img class="shelf-image" src="{{ url_for('static', filename=imagem_produto) }}" alt="{{ produto.nome }}">
-                    {% else %}
-                    <div class="shelf-image shelf-image-placeholder" aria-hidden="true">{{ produto.nome[:2]|upper }}</div>
-                    {% endif %}
-                    <div class="shelf-body">
-                        <p class="shelf-kicker">{{ produto.categoria.nome if produto.categoria else 'Destaque' }}</p>
-                        <h3>{{ produto.nome }}</h3>
-                        <div class="shelf-footer">
-                            <strong>R$ {{ '%.2f'|format(produto.preco_venda or 0)|replace('.', ',') }}</strong>
-                            <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}" class="add-cart-form">
-                                {{ csrf_input|safe }}
-                                <input type="hidden" name="produto_id" value="{{ produto.id }}">
-                                <input type="hidden" name="next" value="{{ url_for('public.carrinho_site') }}">
-                                <input type="number" name="quantidade" min="1" max="99" value="1">
-                                <button type="submit">Adicionar</button>
-                            </form>
-                        </div>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
     </main>
+
+    <nav class="app-bottom-nav" aria-label="Navegação rápida">
+        <a href="{{ url_for('index') }}"><span aria-hidden="true">&#127968;</span>Início</a>
+        <a href="{{ url_for('public.carrinho_site') }}" class="active"><span aria-hidden="true">&#128722;</span>Carrinho</a>
+        <a href="{{ url_for('public.checkout_site') }}"><span aria-hidden="true">&#128179;</span>Checkout</a>
+        <a href="{{ url_for('public.cadastro_cliente_site') }}"><span aria-hidden="true">&#128100;</span>Cadastro</a>
+    </nav>
 
     <footer class="retail-footer" style="background: {{ empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#1f2b38' }};">
         <div class="retail-footer-inner">

@@ -1,0 +1,182 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Financeiro - SystemLR{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard-mobile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <div class="page-header">
+        <h1>Painel Financeiro</h1>
+        <form method="get" class="dashboard-filter-form">
+            <label for="data_inicial" class="dashboard-filter-label">De:</label>
+            <input type="date" id="data_inicial" name="data_inicial" value="{{ data_inicial }}" class="input-text dashboard-filter-select">
+            <label for="data_final" class="dashboard-filter-label">Ate:</label>
+            <input type="date" id="data_final" name="data_final" value="{{ data_final }}" class="input-text dashboard-filter-select">
+            <button type="submit" class="btn btn-primary dashboard-filter-button">Aplicar</button>
+        </form>
+    </div>
+
+    <div class="cards-container analytics-cards">
+        <div class="card card-primary">
+            <div class="card-content">
+                <h3>Receita no periodo</h3>
+                <p class="card-value" id="kpiFaturamentoPeriodo">R$ {{ '%.2f'|format(faturamento_periodo) }}</p>
+                <p class="card-meta" id="kpiPedidosPeriodo">{{ pedidos_periodo_total }} transacoes fechadas</p>
+            </div>
+        </div>
+        <div class="card card-success">
+            <div class="card-content">
+                <h3>Resultado operacional</h3>
+                <p class="card-value">R$ {{ '%.2f'|format(resultado_operacional_periodo) }}</p>
+                <p class="card-meta">Margem {{ '%.2f'|format(margem_operacional_pct) }}%</p>
+            </div>
+        </div>
+        <div class="card card-info">
+            <div class="card-content">
+                <h3>Lucro bruto</h3>
+                <p class="card-value">R$ {{ '%.2f'|format(lucro_bruto_periodo) }}</p>
+                <p class="card-meta">Margem bruta {{ '%.2f'|format(margem_bruta_pct) }}%</p>
+            </div>
+        </div>
+        <div class="card card-warning">
+            <div class="card-content">
+                <h3>Crescimento receita</h3>
+                <p class="card-value">{{ '%.2f'|format(crescimento_receita_pct) }}%</p>
+                <p class="card-meta">Periodo anterior: R$ {{ '%.2f'|format(faturamento_periodo_anterior) }}</p>
+            </div>
+        </div>
+        <div class="card card-secondary">
+            <div class="card-content">
+                <h3>Ticket medio</h3>
+                <p class="card-value" id="kpiTicketMedio">R$ {{ '%.2f'|format(ticket_medio_periodo) }}</p>
+                <p class="card-meta">{{ '%.2f'|format(pedidos_media_dia) }} pedidos/dia</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Receita diaria</h2>
+            <div class="chart-container">
+                <canvas id="chartFaturamento"></canvas>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Metodos de pagamento</h2>
+            <div class="chart-container">
+                <canvas id="chartPagamento"></canvas>
+            </div>
+        </section>
+    </div>
+
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Top produtos por receita</h2>
+            <div class="chart-container">
+                <canvas id="chartTopProdutos"></canvas>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Indicadores executivos</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>Receita media diaria</td>
+                            <td>R$ {{ '%.2f'|format(receita_media_dia) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Receita hoje</td>
+                            <td id="kpiFaturamentoHoje">R$ {{ '%.2f'|format(faturamento_hoje) }}</td>
+                        </tr>
+                        <tr>
+                            <td>CMV (custo mercadoria vendida)</td>
+                            <td>R$ {{ '%.2f'|format(cmv_periodo) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Despesas operacionais</td>
+                            <td>R$ {{ '%.2f'|format(despesas_operacionais_periodo) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Ajustes financeiros</td>
+                            <td>R$ {{ '%.2f'|format(ajustes_financeiros_periodo) }}</td>
+                        </tr>
+                        <tr>
+                            <td>Pedidos cancelados</td>
+                            <td>{{ pedidos_cancelados_periodo }} ({{ '%.2f'|format(taxa_cancelamento_pct) }}%)</td>
+                        </tr>
+                        <tr>
+                            <td>Valor cancelado</td>
+                            <td>R$ {{ '%.2f'|format(valor_cancelado_periodo) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Resumo de pagamentos</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Metodo</th>
+                            <th>Quantidade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in metodos_pagamento %}
+                        <tr>
+                            <td data-label="Metodo">{{ item.metodo|capitalize }}</td>
+                            <td data-label="Quantidade">{{ item.quantidade }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center">Sem informacao de pagamento no periodo.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Risco e concentracao</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>Metodo mais usado</td>
+                            <td>{{ metodo_mais_usado|capitalize }}</td>
+                        </tr>
+                        <tr>
+                            <td>Concentracao no metodo lider</td>
+                            <td>{{ '%.2f'|format(concentracao_top_pagamento_pct) }}%</td>
+                        </tr>
+                        <tr>
+                            <td>Pedidos abertos</td>
+                            <td>{{ pedidos_abertos }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('financeiro') }}" class="btn btn-primary">Atualizar visao financeira</a>
+        <a href="{{ url_for('financeiro_lancamentos') }}" class="btn btn-secondary">Lancamentos contabeis</a>
+        <a href="{{ url_for('financeiro_fundos') }}" class="btn btn-warning">Gestao monetaria e fundos</a>
+        <a href="{{ url_for('exportar_lancamentos_financeiros') }}" class="btn btn-info">Exportar CSV contador</a>
+        <a href="{{ url_for('exportar_lancamentos_financeiros_xlsx') }}" class="btn btn-secondary">Exportar XLSX contador</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/dashboard_analytics.js') }}"></script>
+{% endblock %}

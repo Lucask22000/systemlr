@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Execucao da Ordem #{{ ordem.id }} - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Execucao da Ordem #{{ ordem.id }}</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('minhas_ordens_servico') }}" class="btn btn-outline-secondary">Minhas Ordens</a>
+        {% if pode_gerir %}
+        <a href="{{ url_for('editar_ordem_servico', ordem_id=ordem.id) }}" class="btn btn-warning">Editar Administrativamente</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Dados da ordem</h2>
+        <table class="table">
+            <tbody>
+                <tr><th>Titulo</th><td>{{ ordem.titulo }}</td></tr>
+                <tr><th>Status</th><td>{{ ordem.status|replace('_', ' ')|title }}</td></tr>
+                <tr><th>Servico</th><td>{{ ordem.servico_tipo|replace('_', ' ')|title }}</td></tr>
+                <tr><th>Produto</th><td>{{ ordem.produto.nome if ordem.produto else '-' }}</td></tr>
+                <tr><th>Venda vinculada</th><td>{% if ordem.pedido_id %}Pedido #{{ ordem.pedido_id }}{% else %}-{% endif %}</td></tr>
+                <tr><th>Cliente</th><td>{{ ordem.pedido.cliente_nome if ordem.pedido else '-' }}</td></tr>
+                <tr><th>Agendada</th><td>{{ ordem.data_agendada.strftime('%d/%m/%Y') if ordem.data_agendada else '-' }}</td></tr>
+                <tr><th>Enviada em</th><td>{{ ordem.enviada_em.strftime('%d/%m/%Y %H:%M') if ordem.enviada_em else '-' }}</td></tr>
+                <tr><th>Iniciada em</th><td>{{ ordem.iniciado_em.strftime('%d/%m/%Y %H:%M') if ordem.iniciado_em else '-' }}</td></tr>
+                <tr><th>Concluida em</th><td>{{ ordem.concluida_em.strftime('%d/%m/%Y %H:%M') if ordem.concluida_em else '-' }}</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="section">
+        <h2>Execucao e retorno</h2>
+        <form method="POST" class="form">
+            {{ csrf_input|safe }}
+
+            <div class="form-group">
+                <label for="resultado_inspecao">Resultado tecnico</label>
+                <input type="text" id="resultado_inspecao" name="resultado_inspecao" class="input-text" value="{{ ordem.resultado_inspecao or '' }}" placeholder="Ex.: executado, pendente peca, cliente ausente">
+            </div>
+
+            <div class="form-group">
+                <label for="retorno_tecnico">Retorno do tecnico</label>
+                <textarea id="retorno_tecnico" name="retorno_tecnico" class="input-textarea" rows="5">{{ ordem.retorno_tecnico or '' }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="observacoes">Observacoes adicionais</label>
+                <textarea id="observacoes" name="observacoes" class="input-textarea" rows="4">{{ ordem.observacoes or '' }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" name="acao" value="iniciar" class="btn btn-primary">Iniciar execucao</button>
+                <button type="submit" name="acao" value="aguardar" class="btn btn-secondary">Salvar retorno</button>
+                <button type="submit" name="acao" value="concluir" class="btn btn-success">Concluir servico</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<section class="section">
+    <h2>Descricao da ordem</h2>
+    <p>{{ ordem.descricao or '-' }}</p>
+    {% if ordem.avaria_detalhes %}
+    <p><strong>Avaria:</strong> {{ ordem.avaria_detalhes }}</p>
+    {% endif %}
+    {% if ordem.inspecao_detalhes %}
+    <p><strong>Inspecao:</strong> {{ ordem.inspecao_detalhes }}</p>
+    {% endif %}
+</section>
+{% endblock %}

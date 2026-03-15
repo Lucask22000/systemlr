@@ -40,6 +40,10 @@
                 <input type="text" id="cnpj" name="cnpj" value="{{ empresa.cnpj if empresa else '' }}" class="input-text">
             </div>
             <div class="form-group">
+                <label for="codigo_empresa">Código da Empresa</label>
+                <input type="text" id="codigo_empresa" name="codigo_empresa" maxlength="10" value="{{ empresa.codigo_empresa if empresa else '' }}" class="input-text" placeholder="Ex.: SYS01">
+            </div>
+            <div class="form-group">
                 <label for="inscricao_estadual">Inscrição Estadual</label>
                 <input type="text" id="inscricao_estadual" name="inscricao_estadual" value="{{ empresa.inscricao_estadual if empresa else '' }}" class="input-text">
             </div>
@@ -170,23 +174,119 @@
 
             <div class="form-row">
                 <label class="checkbox-inline">
-                    <input type="checkbox" name="separação_entrega_ativa" {% if not empresa or empresa.separação_entrega_ativa != False %}checked{% endif %}>
+                    <input type="checkbox" name="separacao_entrega_ativa" {% if not empresa or empresa.separacao_entrega_ativa != False %}checked{% endif %}>
                     Ativar separação de pedidos para entrega
                 </label>
             </div>
 
             <div class="form-row">
                 <label class="checkbox-inline">
-                    <input type="checkbox" name="emissão_etiqueta_entrega_ativa" {% if not empresa or empresa.emissão_etiqueta_entrega_ativa != False %}checked{% endif %}>
+                    <input type="checkbox" name="emissao_etiqueta_entrega_ativa" {% if not empresa or empresa.emissao_etiqueta_entrega_ativa != False %}checked{% endif %}>
                     Ativar emissão de etiquetas de entrega
                 </label>
             </div>
 
             <div class="form-row">
                 <label class="checkbox-inline">
-                    <input type="checkbox" name="separação_entrega_unir_vendas_off" {% if empresa and empresa.separação_entrega_unir_vendas_off %}checked{% endif %}>
+                    <input type="checkbox" name="separacao_entrega_unir_vendas_off" {% if empresa and empresa.separacao_entrega_unir_vendas_off %}checked{% endif %}>
                     Unir fila de separação com vendas off (internas)
                 </label>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="roteirizacao_entrega_ativa" {% if not empresa or empresa.roteirizacao_entrega_ativa != False %}checked{% endif %}>
+                    Ativar roteirização de entregas
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="emissao_nota_entrega_ativa" {% if not empresa or empresa.emissao_nota_entrega_ativa != False %}checked{% endif %}>
+                    Ativar emissão de nota fiscal na entrega
+                </label>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="entrega_local_saida_padrao">Local de saída padrão</label>
+                    <input type="text" id="entrega_local_saida_padrao" name="entrega_local_saida_padrao" value="{{ empresa.entrega_local_saida_padrao if empresa else '' }}" class="input-text" placeholder="Ex.: CD Principal - Doca 2">
+                </div>
+                <div class="form-group">
+                    <label for="entrega_veiculo_padrao">Veículo padrão</label>
+                    <input type="text" id="entrega_veiculo_padrao" name="entrega_veiculo_padrao" value="{{ empresa.entrega_veiculo_padrao if empresa else '' }}" class="input-text" placeholder="Ex.: Fiorino Refrigerada">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="entrega_motorista_padrao">Motorista padrão</label>
+                    <input type="text" id="entrega_motorista_padrao" name="entrega_motorista_padrao" value="{{ empresa.entrega_motorista_padrao if empresa else '' }}" class="input-text" placeholder="Ex.: João da Silva">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="entrega_veiculos_cadastro">Cadastro de veículos para expedição</label>
+                    <textarea
+                        id="entrega_veiculos_cadastro"
+                        name="entrega_veiculos_cadastro"
+                        rows="4"
+                        class="input-text"
+                        placeholder="Um por linha. Ex.: Fiorino 1|ABC1D23"
+                    >{{ veiculos_texto or '' }}</textarea>
+                    <small class="text-muted">Formato sugerido: Nome do veículo | Placa (opcional).</small>
+                </div>
+                <div class="form-group">
+                    <label for="entrega_terceirizadas_cadastro">Cadastro de empresas terceirizadas</label>
+                    <textarea
+                        id="entrega_terceirizadas_cadastro"
+                        name="entrega_terceirizadas_cadastro"
+                        rows="4"
+                        class="input-text"
+                        placeholder="Um por linha. Ex.: Transportadora XPTO"
+                    >{{ terceirizadas_texto or '' }}</textarea>
+                    <small class="text-muted">Use para entregas com parceiros terceirizados.</small>
+                </div>
+            </div>
+        </div>
+
+        <div id="config-servicos" class="section" style="margin: 16px 0 0;">
+            <h2>Configuracao de servicos tecnicos</h2>
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servicos_tecnicos_ativos" {% if empresa and empresa.servicos_tecnicos_ativos %}checked{% endif %}>
+                    Ativar modulo de ordens de servico, avarias e inspecoes
+                </label>
+            </div>
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servico_montagem_instalacao_ativo" {% if empresa and empresa.servico_montagem_instalacao_ativo %}checked{% endif %}>
+                    Permitir servicos de montagem e instalacao (dependente de produto habilitado)
+                </label>
+            </div>
+        </div>
+
+        <div id="config-pagamentos-pdv" class="section" style="margin: 16px 0 0;">
+            <h2>Meios de pagamento do caixa</h2>
+            <div class="form-group">
+                <label for="pagamentos_pdv_config">Metodos ativos no PDV</label>
+                <textarea
+                    id="pagamentos_pdv_config"
+                    name="pagamentos_pdv_config"
+                    rows="6"
+                    class="input-text"
+                    placeholder="id | Nome exibido | Descricao&#10;dinheiro | Dinheiro | Recebimento em especie com troco&#10;pix | Pix | Transferencia instantanea&#10;cartao | Cartao | Credito ou debito no caixa"
+                >{{ pagamentos_pdv_texto or '' }}</textarea>
+                <small class="text-muted">Use um metodo por linha no formato: id | nome | descricao.</small>
+            </div>
+            <div class="form-group">
+                <label for="integracoes_pdv_config">APIs e integracoes do caixa</label>
+                <textarea
+                    id="integracoes_pdv_config"
+                    name="integracoes_pdv_config"
+                    rows="5"
+                    class="input-text"
+                    placeholder="id | Nome | Provider | Ambiente | Base URL | Chave publica | Token secreto | Webhook&#10;pix_caixa | Pix Caixa | Cielo | producao | https://api.exemplo.com | public_key | secret_key | https://sualoja.com/webhook/pix"
+                >{{ integracoes_pdv_texto or '' }}</textarea>
+                <small class="text-muted">Cadastre gateways, TEF, fiscal, conciliacao ou outros servicos usados no caixa.</small>
             </div>
         </div>
 

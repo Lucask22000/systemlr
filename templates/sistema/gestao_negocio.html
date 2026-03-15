@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Gestao do Negocio - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Gestao do Negocio</h1>
+    <p class="text-muted mb-0">Central com os ajustes mais importantes para o dono/gestor manter a operacao pronta.</p>
+</div>
+
+<div class="cards-grid cards-grid-compact">
+    <article class="metric-card">
+        <h3>Equipe ativa</h3>
+        <p class="card-value">{{ funcionarios_ativos }}</p>
+        <p class="card-meta">de {{ total_funcionarios }} cadastrados</p>
+    </article>
+    <article class="metric-card">
+        <h3>Produtos ativos</h3>
+        <p class="card-value">{{ produtos_ativos }}</p>
+        <p class="card-meta">{{ categorias_total }} categorias</p>
+    </article>
+    <article class="metric-card">
+        <h3>Caixas abertos</h3>
+        <p class="card-value">{{ caixas_abertas }}</p>
+        <p class="card-meta">status atual da operacao</p>
+    </article>
+    <article class="metric-card">
+        <h3>Pedidos em andamento</h3>
+        <p class="card-value">{{ pedidos_abertos }}</p>
+        <p class="card-meta">aberto, em preparo e entregue</p>
+    </article>
+</div>
+
+<section class="section">
+    <h2>Checklist critico de configuracao</h2>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Status</th>
+                    <th>Detalhe</th>
+                    <th>Acao</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in checklist_config %}
+                <tr>
+                    <td>{{ item.titulo }}</td>
+                    <td>
+                        {% if item.ok %}
+                        <span class="badge text-bg-success">OK</span>
+                        {% else %}
+                        <span class="badge text-bg-warning">Pendente</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.detalhe_ok if item.ok else item.detalhe_pendente }}</td>
+                    <td><a href="{{ item.url }}" class="btn btn-sm btn-outline-primary">{{ item.acao }}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="section">
+    <h2>Pendencias prioritarias</h2>
+    {% if pendencias_criticas %}
+    <ul class="mb-0">
+        {% for item in pendencias_criticas %}
+        <li><strong>{{ item.titulo }}:</strong> {{ item.detalhe_pendente }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="mb-0">Nenhuma pendencia critica encontrada. Ambiente principal esta pronto para operar.</p>
+    {% endif %}
+</section>
+
+<section class="section">
+    <h2>Atalhos estrategicos do dono</h2>
+    <div class="row g-3">
+        {% for item in atalhos_dono %}
+        <div class="col-12 col-md-6">
+            <article class="card h-100">
+                <div class="card-body">
+                    <h3 class="h5">{{ item.titulo }}</h3>
+                    <p class="text-muted">{{ item.descricao }}</p>
+                    <a href="{{ item.url }}" class="btn btn-primary btn-sm">Abrir</a>
+                </div>
+            </article>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

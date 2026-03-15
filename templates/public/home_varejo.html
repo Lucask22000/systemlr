@@ -44,7 +44,7 @@
 
             <section class="market-hero">
                 <article>
-                    <p>{{ campanha_principal if campanha_principal else 'Oferta relampago' }}</p>
+                    <p>{{ campanha_principal if campanha_principal else 'Oferta relâmpago' }}</p>
                     <h1>{{ empresa_config.ecom_titulo_banner if empresa_config and empresa_config.ecom_titulo_banner else 'Cupons, frete promocional e itens em destaque.' }}</h1>
                     {% if empresa_config and empresa_config.ecom_subtitulo_banner %}
                     <p class="market-hero-sub">{{ empresa_config.ecom_subtitulo_banner }}</p>
@@ -52,9 +52,9 @@
                     <a href="#ofertas">Comprar agora</a>
                 </article>
                 <article>
-                    <p>Venda online</p>
-                    <strong>{{ total_produtos_ativos }}</strong>
-                    <span>produtos ativos hoje</span>
+                    <p>Compre com praticidade</p>
+                    <strong>Ofertas</strong>
+                    <span>selecionadas para facilitar sua compra</span>
                 </article>
             </section>
 
@@ -98,8 +98,8 @@
             <a href="#ofertas"><span aria-hidden="true">&#128176;</span>Ofertas</a>
             <a href="{{ url_for('public.carrinho_site') }}"><span aria-hidden="true">&#128722;</span>Carrinho</a>
             <a href="{{ url_for('public.checkout_site') }}"><span aria-hidden="true">&#128179;</span>Checkout</a>
-            <a href="#ofertas"><span aria-hidden="true">&#127991;</span>Ofertas</a>
             <a href="{{ url_for('public.cadastro_cliente_site') }}"><span aria-hidden="true">&#128100;</span>Cadastro</a>
+            <a href="#ofertas"><span aria-hidden="true">&#128293;</span>Destaques</a>
         </section>
 
         {% if campanhas_ativas %}
@@ -123,7 +123,7 @@
                 <article class="product-card">
                     <div class="product-media">
                         {% set imagem_produto = produto.imagem_path %}
-                        {% if not imagem_produto or imagem_produto == 'img/placeholders/produto-sem-foto.svg' %}
+                        {% if not imagem_produto or imagem_produto == 'img/placeholders/imgindisponivel.png' %}
                             {% set imagem_produto = produto_imagem_padrao_path %}
                         {% endif %}
                         {% if imagem_produto %}
@@ -163,11 +163,7 @@
         <a href="#ofertas"><span aria-hidden="true">&#127991;</span>Ofertas</a>
         <a href="{{ url_for('public.carrinho_site') }}"><span aria-hidden="true">&#128722;</span>Carrinho</a>
         <a href="{{ url_for('public.checkout_site') }}"><span aria-hidden="true">&#128179;</span>Checkout</a>
-        {% if funcionario_logado %}
-        <a href="{{ url_for('dashboard') }}"><span aria-hidden="true">&#9881;</span>Painel</a>
-        {% else %}
-        <a href="{{ url_for('login') }}"><span aria-hidden="true">&#128100;</span>Conta</a>
-        {% endif %}
+        <a href="{{ url_for('public.cadastro_cliente_site') }}"><span aria-hidden="true">&#128100;</span>Cadastro</a>
     </nav>
 
     <footer class="retail-footer" style="background: {{ empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#1f2b38' }};">

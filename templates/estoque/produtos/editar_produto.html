@@ -11,8 +11,8 @@
     <form method="POST" enctype="multipart/form-data" class="form">
         {{ csrf_input|safe }}
         <div class="form-group">
-            <label for="código">Codigo</label>
-            <input type="text" id="código" value="{{ produto.código }}" disabled class="input-text">
+            <label for="codigo">Codigo de barras (EAN-13)</label>
+            <input type="text" id="codigo" value="{{ produto.codigo }}" disabled class="input-text">
         </div>
 
         <div class="form-group">
@@ -93,6 +93,42 @@
                     <option value="{{ chave }}" {% if status_atual_normalizado == chave %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo_movimentacao">Tipo de movimentacao no estoque</label>
+                <select id="tipo_movimentacao" name="tipo_movimentacao" class="input-select">
+                    {% for chave, label in tipos_movimentacao_produto.items() %}
+                    <option value="{{ chave }}" {% if (produto.tipo_movimentacao or 'manual') == chave %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prioridade_reabastecimento">Prioridade de reabastecimento</label>
+                <input type="number" id="prioridade_reabastecimento" name="prioridade_reabastecimento" class="input-text" min="1" max="999" value="{{ produto.prioridade_reabastecimento or '' }}">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="fora_picking" {% if produto.fora_picking %}checked{% endif %}>
+                    Produto fora de picking
+                </label>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servico_montagem_disponivel" {% if produto.servico_montagem_disponivel %}checked{% endif %}>
+                    Permitir servico de montagem
+                </label>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servico_instalacao_disponivel" {% if produto.servico_instalacao_disponivel %}checked{% endif %}>
+                    Permitir servico de instalacao
+                </label>
             </div>
         </div>
 

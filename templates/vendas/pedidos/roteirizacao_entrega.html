@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Roteirizacao de Entrega - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/roteirizacao-entrega.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="delivery-routing-page">
+    <div class="page-header">
+        <div>
+            <h1>Roteirizacao de Entrega</h1>
+            <p class="text-muted mb-0">Organize rotas, acompanhe despachos e ajuste a operacao em qualquer tela.</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('painel_expedicao') }}" class="btn btn-outline-primary">Painel em tempo real</a>
+            <a href="{{ url_for('listar_separacao_entrega') }}" class="btn btn-outline-secondary">Voltar para Separacao</a>
+        </div>
+    </div>
+
+    <section class="routing-kpis">
+        <article class="routing-kpi-card">
+            <small>Pedidos aptos</small>
+            <strong>{{ resumo_roteirizacao.total_pedidos }}</strong>
+            <span>Prontos para roteirizacao ou acompanhamento de entrega.</span>
+        </article>
+        <article class="routing-kpi-card">
+            <small>Aguardando saida</small>
+            <strong>{{ resumo_roteirizacao.aguardando }}</strong>
+            <span>Pedidos separados e aguardando despacho.</span>
+        </article>
+        <article class="routing-kpi-card">
+            <small>Em rota</small>
+            <strong>{{ resumo_roteirizacao.em_rota }}</strong>
+            <span>Despachos ja liberados para entrega.</span>
+        </article>
+        <article class="routing-kpi-card">
+            <small>Rotas ativas</small>
+            <strong>{{ resumo_roteirizacao.rotas_ativas }}</strong>
+            <span>{{ resumo_roteirizacao.sem_rota }} pedidos ainda sem rota definida.</span>
+        </article>
+        <article class="routing-kpi-card">
+            <small>Frota configurada</small>
+            <strong>{{ resumo_roteirizacao.veiculos_configurados }}</strong>
+            <span>Veiculos cadastrados para distribuicao automatica.</span>
+        </article>
+    </section>
+
+    <section class="section">
+        <div class="routing-section-head">
+            <div>
+                <h2>Filtros de operacao</h2>
+                <p class="text-muted mb-0">Refine a visualizacao por rota e situacao de entrega.</p>
+            </div>
+            <div class="routing-chip-row">
+                <span class="routing-chip">Rota: {{ rota_filtro or 'Todas' }}</span>
+                <span class="routing-chip">
+                    Status:
+                    {% if status_filtro == 'aguardando' %}
+                    Aguardando despacho
+                    {% elif status_filtro == 'em_rota' %}
+                    Em rota
+                    {% elif status_filtro == 'entregue' %}
+                    Entregue
+                    {% else %}
+                    Todos
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <form method="GET" class="filters-form routing-filter-bar">
+            <div class="filter-group">
+                <label for="rota" class="form-label">Rota</label>
+                <select id="rota" name="rota" class="input-select">
+                    <option value="">Todas as rotas</option>
+                    {% for rota in rotas_disponiveis %}
+                    <option value="{{ rota }}" {% if rota_filtro == rota %}selected{% endif %}>{{ rota }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="status_entrega" class="form-label">Status da entrega</label>
+                <select id="status_entrega" name="status_entrega" class="input-select">
+                    <option value="todos" {% if status_filtro == 'todos' %}selected{% endif %}>Todos</option>
+                    <option value="aguardando" {% if status_filtro == 'aguardando' %}selected{% endif %}>Aguardando despacho</option>
+                    <option value="em_rota" {% if status_filtro == 'em_rota' %}selected{% endif %}>Em rota</option>
+                    <option value="entregue" {% if status_filtro == 'entregue' %}selected{% endif %}>Entregue</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+            <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-secondary">Limpar</a>
+        </form>
+    </section>
+
+    <div class="routing-panels">
+        <section class="section">
+            <div class="routing-section-head">
+                <div>
+                    <h2>Distribuicao automatica</h2>
+                    <p class="text-muted mb-0">Monte rotas com regras padrao e capacidade da frota.</p>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('otimizar_rota_entrega') }}" class="routing-form-grid">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao_otimizacao" value="distribuir_automatico">
+
+                <div class="filter-group">
+                    <label for="prefixo_rota" class="form-label">Prefixo da rota</label>
+                    <input type="text" id="prefixo_rota" name="prefixo_rota" class="input-text" value="{{ regras_roteirizacao.prefixo_rota }}" placeholder="Ex.: Rota">
+                </div>
+                <div class="filter-group">
+                    <label for="tipo_entrega" class="form-label">Tipo de entrega</label>
+                    <select id="tipo_entrega" name="tipo_entrega" class="input-select">
+                        <option value="todos" {% if regras_roteirizacao.tipo_entrega == 'todos' %}selected{% endif %}>Todos</option>
+                        <option value="site" {% if regras_roteirizacao.tipo_entrega == 'site' %}selected{% endif %}>Site</option>
+                        <option value="interno" {% if regras_roteirizacao.tipo_entrega == 'interno' %}selected{% endif %}>Interno</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="modo_distribuicao" class="form-label">Modo de distribuicao</label>
+                    <select id="modo_distribuicao" name="modo_distribuicao" class="input-select">
+                        <option value="capacidade" {% if regras_roteirizacao.modo_distribuicao == 'capacidade' %}selected{% endif %}>Priorizar capacidade</option>
+                        <option value="sequencial" {% if regras_roteirizacao.modo_distribuicao == 'sequencial' %}selected{% endif %}>Sequencial por veiculo</option>
+                        <option value="round_robin" {% if regras_roteirizacao.modo_distribuicao == 'round_robin' %}selected{% endif %}>Round robin</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="max_paradas_por_rota" class="form-label">Maximo de paradas por rota</label>
+                    <input type="number" min="0" id="max_paradas_por_rota" name="max_paradas_por_rota" class="input-text" value="{{ regras_roteirizacao.max_paradas_por_rota or 0 }}">
+                </div>
+                <div class="routing-field-full">
+                    <div class="routing-checkbox-list">
+                        <label><input type="checkbox" name="considerar_capacidade" {% if regras_roteirizacao.considerar_capacidade %}checked{% endif %}> Respeitar capacidade dos veiculos</label>
+                        <label><input type="checkbox" name="somente_sem_rota" {% if regras_roteirizacao.somente_sem_rota %}checked{% endif %}> Distribuir somente pedidos sem rota</label>
+                    </div>
+                </div>
+                <div class="routing-field-full">
+                    <button type="submit" class="btn btn-success">Distribuir automaticamente</button>
+                </div>
+            </form>
+
+            {% if veiculos_configurados %}
+            <div class="routing-vehicle-list">
+                {% for veiculo in veiculos_configurados %}
+                <article class="routing-vehicle-card">
+                    <div class="routing-vehicle-head">
+                        <strong>{{ veiculo.nome }}</strong>
+                        <span>{{ veiculo.tipo_entrega or 'todos' }}</span>
+                    </div>
+                    <div class="routing-vehicle-meta">
+                        <span>{{ veiculo.categoria or 'Sem categoria' }}</span>
+                        <span>{{ veiculo.capacidade_pedidos or '-' }} pedidos</span>
+                        <span>{{ veiculo.capacidade_kg or '-' }} kg</span>
+                        <span>{{ veiculo.empresa or 'Frota propria' }}</span>
+                    </div>
+                    {% if veiculo.placa %}
+                    <p class="text-muted mb-0">Placa: {{ veiculo.placa }}</p>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="routing-empty-state">
+                Cadastre a frota em Expedicao &gt; Frota Propria e Terceiros para usar a distribuicao por capacidade.
+            </div>
+            {% endif %}
+        </section>
+
+        <aside class="section routing-side-panel">
+            <div class="routing-section-head">
+                <div>
+                    <h2>Operacao atual</h2>
+                    <p class="text-muted mb-0">Resumo rapido para ajuste manual e despacho.</p>
+                </div>
+            </div>
+
+            <div class="routing-summary-list">
+                <div class="routing-summary-item">
+                    <span>Filtro de rota</span>
+                    <strong>{{ rota_filtro or 'Todas as rotas' }}</strong>
+                </div>
+                <div class="routing-summary-item">
+                    <span>Status monitorado</span>
+                    <strong>
+                        {% if status_filtro == 'aguardando' %}
+                        Aguardando despacho
+                        {% elif status_filtro == 'em_rota' %}
+                        Em rota
+                        {% elif status_filtro == 'entregue' %}
+                        Entregue
+                        {% else %}
+                        Todos
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="routing-summary-item">
+                    <span>Rotas conhecidas</span>
+                    <strong>{{ rotas_disponiveis|length }}</strong>
+                </div>
+                <div class="routing-summary-item">
+                    <span>Pedidos sem rota</span>
+                    <strong>{{ resumo_roteirizacao.sem_rota }}</strong>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="routing-section-head">
+                <div>
+                    <h2>Otimizar ordem manual</h2>
+                    <p class="text-muted mb-0">Recalcule a sequencia de uma rota especifica sem redistribuir tudo.</p>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('otimizar_rota_entrega') }}" class="routing-manual-form">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="acao_otimizacao" value="ordem">
+                <label for="rota_otimizacao" class="form-label">Nome da rota</label>
+                <input type="text" id="rota_otimizacao" name="rota" class="input-text" placeholder="Ex.: Rota Norte" value="{{ rota_filtro or '' }}" required>
+                <button type="submit" class="btn btn-warning">Otimizar ordem da rota</button>
+            </form>
+
+            <div class="routing-empty-state">
+                Dica: use a distribuicao automatica para montar a base e a otimizacao manual apenas para ajustes finos no percurso.
+            </div>
+        </aside>
+    </div>
+
+    <section class="section">
+        <div class="routing-section-head">
+            <div>
+                <h2>Pedidos prontos para despacho</h2>
+                <p class="text-muted mb-0">Acompanhe a rota, o veiculo e o status de cada entrega.</p>
+            </div>
+            <span class="routing-chip">{{ resumo_roteirizacao.total_pedidos }} pedidos</span>
+        </div>
+
+        {% if pedidos %}
+        <div class="table-responsive table-scroll-sticky routing-table-wrap">
+            <table class="table routing-table">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Rota</th>
+                        <th>Ordem</th>
+                        <th>Saida</th>
+                        <th>Veiculo</th>
+                        <th>Motorista</th>
+                        <th>Terceirizada</th>
+                        <th>NF</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td data-label="Pedido">#{{ pedido.id }}</td>
+                        <td data-label="Cliente">
+                            <div>{{ pedido.cliente_nome or '-' }}</div>
+                            <small class="text-muted">{{ pedido.cliente_celular or '-' }}</small>
+                        </td>
+                        <td data-label="Rota">{{ pedido.rota_entrega or '-' }}</td>
+                        <td data-label="Ordem">{{ pedido.ordem_rota if pedido.ordem_rota else '-' }}</td>
+                        <td data-label="Saida">{{ pedido.local_saida or empresa.entrega_local_saida_padrao or '-' }}</td>
+                        <td data-label="Veiculo">{{ pedido.veiculo_tipo or empresa.entrega_veiculo_padrao or '-' }}{% if pedido.veiculo_placa %} ({{ pedido.veiculo_placa }}){% endif %}</td>
+                        <td data-label="Motorista">{{ pedido.motorista_nome or empresa.entrega_motorista_padrao or '-' }}</td>
+                        <td data-label="Terceirizada">{{ pedido.empresa_terceirizada or '-' }}</td>
+                        <td data-label="NF">{{ pedido.nota_fiscal_numero or '-' }}</td>
+                        <td data-label="Status">
+                            {% if pedido.entrega_concluida_em %}
+                            <span class="badge text-bg-success">Entregue</span>
+                            {% elif pedido.saiu_para_entrega_em %}
+                            <span class="badge text-bg-info">Em rota</span>
+                            {% else %}
+                            <span class="badge text-bg-warning">Aguardando</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Acoes" class="actions-cell">
+                            <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn-small btn-info" target="_blank">Etiqueta</a>
+                            <form method="POST" action="{{ url_for('atualizar_despacho_entrega', pedido_id=pedido.id) }}" class="inline-form">
+                                {{ csrf_input|safe }}
+                                <input type="hidden" name="acao" value="{% if pedido.entrega_concluida_em %}reabrir{% elif pedido.saiu_para_entrega_em %}entregar{% else %}sair{% endif %}">
+                                <button type="submit" class="btn-small {% if pedido.entrega_concluida_em %}btn-warning{% elif pedido.saiu_para_entrega_em %}btn-success{% else %}btn-primary{% endif %}">
+                                    {% if pedido.entrega_concluida_em %}Reabrir{% elif pedido.saiu_para_entrega_em %}Confirmar entrega{% else %}Saiu para entrega{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="routing-mobile-list">
+            {% for pedido in pedidos %}
+            <article class="routing-order-card">
+                <div class="routing-order-card-head">
+                    <div>
+                        <strong>Pedido #{{ pedido.id }}</strong>
+                        <p class="mb-0 text-muted">{{ pedido.cliente_nome or '-' }}</p>
+                    </div>
+                    {% if pedido.entrega_concluida_em %}
+                    <span class="badge text-bg-success">Entregue</span>
+                    {% elif pedido.saiu_para_entrega_em %}
+                    <span class="badge text-bg-info">Em rota</span>
+                    {% else %}
+                    <span class="badge text-bg-warning">Aguardando</span>
+                    {% endif %}
+                </div>
+                <div class="routing-order-grid">
+                    <div>
+                        <span>Celular</span>
+                        <strong>{{ pedido.cliente_celular or '-' }}</strong>
+                    </div>
+                    <div>
+                        <span>Rota</span>
+                        <strong>{{ pedido.rota_entrega or '-' }}</strong>
+                    </div>
+                    <div>
+                        <span>Ordem</span>
+                        <strong>{{ pedido.ordem_rota if pedido.ordem_rota else '-' }}</strong>
+                    </div>
+                    <div>
+                        <span>Saida</span>
+                        <strong>{{ pedido.local_saida or empresa.entrega_local_saida_padrao or '-' }}</strong>
+                    </div>
+                    <div>
+                        <span>Veiculo</span>
+                        <strong>{{ pedido.veiculo_tipo or empresa.entrega_veiculo_padrao or '-' }}{% if pedido.veiculo_placa %} ({{ pedido.veiculo_placa }}){% endif %}</strong>
+                    </div>
+                    <div>
+                        <span>Motorista</span>
+                        <strong>{{ pedido.motorista_nome or empresa.entrega_motorista_padrao or '-' }}</strong>
+                    </div>
+                    <div>
+                        <span>Terceirizada</span>
+                        <strong>{{ pedido.empresa_terceirizada or '-' }}</strong>
+                    </div>
+                    <div>
+                        <span>NF</span>
+                        <strong>{{ pedido.nota_fiscal_numero or '-' }}</strong>
+                    </div>
+                </div>
+                <div class="actions-cell">
+                    <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn-small btn-info" target="_blank">Etiqueta</a>
+                    <form method="POST" action="{{ url_for('atualizar_despacho_entrega', pedido_id=pedido.id) }}" class="inline-form">
+                        {{ csrf_input|safe }}
+                        <input type="hidden" name="acao" value="{% if pedido.entrega_concluida_em %}reabrir{% elif pedido.saiu_para_entrega_em %}entregar{% else %}sair{% endif %}">
+                        <button type="submit" class="btn-small {% if pedido.entrega_concluida_em %}btn-warning{% elif pedido.saiu_para_entrega_em %}btn-success{% else %}btn-primary{% endif %}">
+                            {% if pedido.entrega_concluida_em %}Reabrir{% elif pedido.saiu_para_entrega_em %}Confirmar entrega{% else %}Saiu para entrega{% endif %}
+                        </button>
+                    </form>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="routing-empty-state">
+            Nenhum pedido pronto para roteirizacao.
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

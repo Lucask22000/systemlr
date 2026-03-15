@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Novo Produto - SystemLR{% endblock %}
 
@@ -11,12 +11,12 @@
     <form method="POST" enctype="multipart/form-data" class="form">
         {{ csrf_input|safe }}
         <div class="form-group">
-            <label for="código">Codigo *</label>
+            <label for="codigo">Codigo de barras (EAN-13) *</label>
             <div class="barcode-input-group">
-                <input type="text" id="código" name="código" required placeholder="Ex: PROD001" class="input-text">
-                <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="código">Câmera</button>
+                <input type="text" id="codigo" name="codigo" required placeholder="Ex: 7891234567895" class="input-text" inputmode="numeric" maxlength="14">
+                <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="codigo">Camera</button>
             </div>
-            <small id="códigoErro" class="text-danger"></small>
+            <small id="codigoErro" class="text-danger"></small>
         </div>
 
         <div class="form-group">
@@ -87,6 +87,42 @@
 
         <div class="form-row">
             <div class="form-group">
+                <label for="tipo_movimentacao">Tipo de movimentacao no estoque</label>
+                <select id="tipo_movimentacao" name="tipo_movimentacao" class="input-select">
+                    {% for chave, label in tipos_movimentacao_produto.items() %}
+                    <option value="{{ chave }}" {% if chave == 'manual' %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prioridade_reabastecimento">Prioridade de reabastecimento</label>
+                <input type="number" id="prioridade_reabastecimento" name="prioridade_reabastecimento" class="input-text" min="1" max="999" placeholder="1 = maior prioridade">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="fora_picking">
+                    Produto fora de picking
+                </label>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servico_montagem_disponivel">
+                    Permitir servico de montagem
+                </label>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servico_instalacao_disponivel">
+                    Permitir servico de instalacao
+                </label>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
                 <label for="quantidade_estoque">Quantidade Inicial</label>
                 <input type="number" id="quantidade_estoque" name="quantidade_estoque" value="0" placeholder="0" class="input-text">
             </div>
@@ -105,26 +141,53 @@
 </div>
 
 <script>
-const códigosExistentes = {{ códigos_existentes|tojson }};
-const códigoInput = document.getElementById('código');
+const codigosExistentes = {{ codigos_existentes|tojson }};
+const codigoInput = document.getElementById('codigo');
 const submitBtn = document.querySelector('form button[type="submit"]');
-const códigoErro = document.getElementById('códigoErro');
+const codigoErro = document.getElementById('codigoErro');
 
-function validarCodigoUnico() {
-    const valor = (códigoInput.value || '').trim().toUpperCase();
-    códigoInput.value = valor;
-    const duplicado = valor && códigosExistentes.includes(valor);
-    if (duplicado) {
-        códigoErro.textContent = 'Codigo já utilizado por outro produto.';
-        if (submitBtn) submitBtn.disabled = true;
-    } else {
-        códigoErro.textContent = '';
-        if (submitBtn) submitBtn.disabled = false;
+function calcDvEan13(base12) {
+    let somaImpares = 0;
+    let somaPares = 0;
+    for (let i = 0; i < 12; i++) {
+        const n = Number(base12[i] || 0);
+        if (i % 2 === 0) somaImpares += n;
+        else somaPares += n;
     }
+    const total = somaImpares + (somaPares * 3);
+    return String((10 - (total % 10)) % 10);
 }
 
-códigoInput.addEventListener('input', validarCodigoUnico);
+function validarCodigoUnico() {
+    let valor = (codigoInput.value || '').replace(/\D/g, '');
+    if (valor.length === 12) valor = `0${valor}`;
+    codigoInput.value = valor;
+
+    if (valor.length !== 13) {
+        codigoErro.textContent = 'Use 13 digitos (EAN-13).';
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+    }
+
+    const dv = calcDvEan13(valor.slice(0, 12));
+    if (valor.slice(-1) !== dv) {
+        codigoErro.textContent = 'EAN-13 invalido (digito verificador incorreto).';
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+    }
+
+    const duplicado = codigosExistentes.includes(valor);
+    if (duplicado) {
+        codigoErro.textContent = 'Codigo ja utilizado por outro produto.';
+        if (submitBtn) submitBtn.disabled = true;
+        return;
+    }
+
+    codigoErro.textContent = '';
+    if (submitBtn) submitBtn.disabled = false;
+}
+
+codigoInput.addEventListener('input', validarCodigoUnico);
 validarCodigoUnico();
 </script>
 {% endblock %}
-

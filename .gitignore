@@ -1,6 +1,22 @@
-venv/
-estoque.db
-/*.pyc
+# Ambiente virtual
+.venv/
+
+# Python cache
 __pycache__/
-instance/
-static/uploads/
+*.py[cod]
+
+# Banco local
+instance/*.db
+
+# Variáveis de ambiente
+.env
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db

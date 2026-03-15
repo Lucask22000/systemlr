@@ -4,9 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
+    {% set app_install_name = empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' %}
+    {% set app_icon_path = (empresa_config.logo_path if empresa_config and empresa_config.logo_path else (favicon_path or 'uploads/empresa/Loja_do_Lucas_logo.png')) %}
     {% if favicon_path %}
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
     {% endif %}
+    <meta name="theme-color" content="#0f766e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ app_install_name }}">
+    <link rel="manifest" href="{{ url_for('pwa_manifest') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename=app_icon_path) }}">
     <title>{% block title %}SystemLR - Gestão de Estoque{% endblock %}</title>
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -17,7 +26,7 @@
     {% block extra_css %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/app-theme.css') }}">
 </head>
-<body class="app-body">
+<body class="app-body" data-app-install-name="{{ app_install_name }}">
     <header class="navbar app-navbar">
         <div class="container navbar-container">
             <a href="{{ url_for('boas_vindas') }}" class="navbar-brand brand-link d-flex align-items-center gap-2 me-2">
@@ -33,73 +42,191 @@
 
             <nav class="navbar-menu" id="navbarMenu">
                 {% if funcionario_logado %}
-                <a href="{{ url_for('dashboard') }}" class="nav-link">Dashboard</a>
-
                 <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle">Vendas</button>
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Meu Perfil</button>
                     <div class="nav-submenu">
-                        <a href="{{ url_for('pdv') }}" class="nav-link nav-sublink">PDV</a>
-                        <a href="{{ url_for('listar_pedidos') }}" class="nav-link nav-sublink">Pedidos</a>
-                        {% if atendimento_mesas_ativo %}
-                        <a href="{{ url_for('listar_mesas') }}" class="nav-link nav-sublink">Mesas</a>
-                        {% endif %}
-                        <a href="{{ url_for('listar_caixas') }}" class="nav-link nav-sublink">Caixas</a>
-                        {% if atendimento_mesas_ativo %}
-                        <a href="{{ url_for('listar_garcons') }}" class="nav-link nav-sublink">Garçons</a>
-                        {% endif %}
-                        {% if funcionario_logado.role in ['admin', 'gerente'] and atendimento_mesas_ativo %}
-                        <a href="{{ url_for('editar_empresa') }}#config-cardapio" class="nav-link nav-sublink">Cardápio QR</a>
-                        {% endif %}
+                        <a href="{{ url_for('dashboard') }}" class="nav-link nav-sublink">Meu Painel</a>
                     </div>
                 </div>
 
+                {% if 'gestao_negocio' in paginas_permitidas_usuario %}
                 <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle">Estoque</button>
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Gestao</button>
                     <div class="nav-submenu">
-                        <a href="{{ url_for('listar_produtos') }}" class="nav-link nav-sublink">Produtos</a>
-                        <a href="{{ url_for('listar_estoques') }}" class="nav-link nav-sublink">Estoques</a>
-                        <a href="{{ url_for('listar_categorias') }}" class="nav-link nav-sublink">Categorias</a>
-                        <a href="{{ url_for('listar_fornecedores') }}" class="nav-link nav-sublink">Fornecedores</a>
-                        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="nav-link nav-sublink">Recebimentos</a>
-                        <a href="{{ url_for('listar_separacao_entrega') }}" class="nav-link nav-sublink">Separação e Entrega</a>
-                        <a href="{{ url_for('listar_movimentacoes') }}" class="nav-link nav-sublink">Movimentações</a>
-                        <a href="{{ url_for('relatorios') }}" class="nav-link nav-sublink">Relatórios</a>
-                    </div>
-                </div>
-
-                {% if funcionario_logado.role in ['admin', 'gerente'] %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle">Meu RH</button>
-                    <div class="nav-submenu">
-                        <a href="{{ url_for('indicadores_rh') }}" class="nav-link nav-sublink">Indicadores RH</a>
-                        <a href="{{ url_for('listar_funcionarios') }}" class="nav-link nav-sublink">Funcionarios</a>
-                        <a href="{{ url_for('listar_funcoes_rh') }}" class="nav-link nav-sublink">Cargos</a>
-                        <a href="{{ url_for('listar_perfis_rh') }}" class="nav-link nav-sublink">Perfis/Cargos</a>
-                        <a href="{{ url_for('auditoria_sistema') }}" class="nav-link nav-sublink">Auditoria</a>
+                        {% if 'gestao_negocio' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('gestao_negocio') }}" class="nav-link nav-sublink">Central do Negocio</a>
+                        {% endif %}
+                        {% if 'empresa' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('editar_empresa') }}" class="nav-link nav-sublink">Empresa</a>
+                        {% endif %}
+                        {% if 'ecommerce_config' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('configurar_ecommerce') }}" class="nav-link nav-sublink">E-commerce</a>
+                        {% endif %}
+                        {% if 'rh_funcoes' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_perfis_rh') }}" class="nav-link nav-sublink">Cargos e Perfis</a>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
 
-                {% if funcionario_logado.role in ['admin', 'gerente'] %}
+                {% if 'financeiro' in paginas_permitidas_usuario %}
                 <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle">E-commerce</button>
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Financeiro</button>
+                    <div class="nav-submenu">
+                        <a href="{{ url_for('financeiro') }}" class="nav-link nav-sublink">Visão Financeira</a>
+                        <a href="{{ url_for('financeiro_lancamentos') }}" class="nav-link nav-sublink">Lançamentos Contábeis</a>
+                        <a href="{{ url_for('financeiro_fundos') }}" class="nav-link nav-sublink">Gestao Monetaria e Fundos</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if 'pdv' in paginas_permitidas_usuario or 'pedidos' in paginas_permitidas_usuario or 'mesas' in paginas_permitidas_usuario or 'caixas' in paginas_permitidas_usuario or 'garcons' in paginas_permitidas_usuario %}
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Vendas</button>
+                    <div class="nav-submenu">
+                        {% if 'pdv' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('pdv') }}" class="nav-link nav-sublink">PDV</a>
+                        {% endif %}
+                        {% if 'pedidos' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_pedidos') }}" class="nav-link nav-sublink">Pedidos</a>
+                        {% endif %}
+                        {% if atendimento_mesas_ativo and 'mesas' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_mesas') }}" class="nav-link nav-sublink">Mesas</a>
+                        {% endif %}
+                        {% if 'caixas' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_caixas') }}" class="nav-link nav-sublink">Caixas</a>
+                        {% endif %}
+                        {% if atendimento_mesas_ativo and 'garcons' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_garcons') }}" class="nav-link nav-sublink">Garçons</a>
+                        {% endif %}
+                        {% if 'empresa' in paginas_permitidas_usuario and atendimento_mesas_ativo %}
+                        <a href="{{ url_for('editar_empresa') }}#config-cardapio" class="nav-link nav-sublink">Cardápio QR</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if 'produtos' in paginas_permitidas_usuario or 'estoques' in paginas_permitidas_usuario or 'categorias' in paginas_permitidas_usuario or 'fornecedores' in paginas_permitidas_usuario or 'movimentacoes' in paginas_permitidas_usuario or 'relatorios' in paginas_permitidas_usuario or 'equipamentos_estoque' in paginas_permitidas_usuario or 'enderecos_inteligentes' in paginas_permitidas_usuario %}
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Estoque</button>
+                    <div class="nav-submenu">
+                        {% if 'produtos' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_produtos') }}" class="nav-link nav-sublink">Produtos</a>
+                        {% endif %}
+                        {% if 'estoques' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_estoques') }}" class="nav-link nav-sublink">Estoques</a>
+                        {% endif %}
+                        {% if 'categorias' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_categorias') }}" class="nav-link nav-sublink">Categorias</a>
+                        {% endif %}
+                        {% if 'fornecedores' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_fornecedores') }}" class="nav-link nav-sublink">Fornecedores</a>
+                        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="nav-link nav-sublink">Recebimentos</a>
+                        {% endif %}
+                        {% if 'equipamentos_estoque' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_equipamentos_movimentacao') }}" class="nav-link nav-sublink">Equipamentos</a>
+                        {% endif %}
+                        {% if 'enderecos_inteligentes' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('enderecos_inteligentes') }}" class="nav-link nav-sublink">Enderecos Inteligentes</a>
+                        {% endif %}
+                        {% if 'expedicao' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('coletor_estoque') }}" class="nav-link nav-sublink">Coletor Operacional</a>
+                        {% endif %}
+                        {% if 'movimentacoes' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_movimentacoes') }}" class="nav-link nav-sublink">Movimentações</a>
+                        {% endif %}
+                        {% if 'relatorios' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('relatorios') }}" class="nav-link nav-sublink">Relatórios</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if 'expedicao' in paginas_permitidas_usuario %}
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Expedicao</button>
+                    <div class="nav-submenu">
+                        <a href="{{ url_for('central_expedicao') }}" class="nav-link nav-sublink">Central de Expedicao</a>
+                        <a href="{{ url_for('listar_separacao_entrega') }}" class="nav-link nav-sublink">Separacao e Entrega</a>
+                        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="nav-link nav-sublink">Roteirizacao</a>
+                        <a href="{{ url_for('painel_expedicao') }}" class="nav-link nav-sublink">Painel em Tempo Real</a>
+                        <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="nav-link nav-sublink">Etiquetas</a>
+                        <a href="{{ url_for('listar_movimentacoes') }}" class="nav-link nav-sublink">Entradas e Saidas</a>
+                        <a href="{{ url_for('nova_movimentacao') }}" class="nav-link nav-sublink">Entrada em Massa</a>
+                        <a href="{{ url_for('transferir_armazenamento') }}" class="nav-link nav-sublink">Transferencias entre Estoques</a>
+                        <a href="{{ url_for('frota_expedicao') }}" class="nav-link nav-sublink">Frota Propria e Terceiros</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if 'rh_indicadores' in paginas_permitidas_usuario or 'rh_organograma' in paginas_permitidas_usuario or 'funcionarios' in paginas_permitidas_usuario or 'rh_funcoes' in paginas_permitidas_usuario or 'auditoria' in paginas_permitidas_usuario or 'empresa' in paginas_permitidas_usuario %}
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Meu RH</button>
+                    <div class="nav-submenu">
+                        {% if 'rh_indicadores' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('indicadores_rh') }}" class="nav-link nav-sublink">Indicadores RH</a>
+                        {% endif %}
+                        {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('organograma_rh') }}" class="nav-link nav-sublink">Organograma</a>
+                        {% endif %}
+                        {% if 'funcionarios' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_funcionarios') }}" class="nav-link nav-sublink">Funcionarios</a>
+                        {% endif %}
+                        {% if 'rh_funcoes' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_perfis_rh') }}" class="nav-link nav-sublink">Cargos e Perfis</a>
+                        {% endif %}
+                        {% if 'auditoria' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('auditoria_sistema') }}" class="nav-link nav-sublink">Auditoria</a>
+                        {% endif %}
+                        {% if 'empresa' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('editar_empresa') }}" class="nav-link nav-sublink">Empresa</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if 'ecommerce_config' in paginas_permitidas_usuario %}
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">E-commerce</button>
                     <div class="nav-submenu">
                         <a href="{{ url_for('configurar_ecommerce') }}" class="nav-link nav-sublink">Tema, Banner e Promoções</a>
                     </div>
                 </div>
                 {% endif %}
 
+                {% if 'servicos_tecnicos' in paginas_permitidas_usuario or 'chamados_internos' in paginas_permitidas_usuario %}
                 <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle">Ajuda</button>
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Servicos</button>
+                    <div class="nav-submenu">
+                        {% if 'chamados_internos' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_chamados_internos') }}" class="nav-link nav-sublink">Chamados Internos</a>
+                        {% endif %}
+                        {% if 'servicos_tecnicos' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('minhas_ordens_servico') }}" class="nav-link nav-sublink">Minhas Ordens</a>
+                        <a href="{{ url_for('listar_ordens_servico') }}" class="nav-link nav-sublink">Ordens de Servico</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Ajuda</button>
                     <div class="nav-submenu">
                         <a href="{{ url_for('central_ajuda') }}" class="nav-link nav-sublink">Guia do Sistema</a>
                     </div>
                 </div>
 
                 <div class="nav-dropdown nav-dropdown-user">
-                    <button type="button" class="nav-dropdown-toggle nav-user-toggle">{{ funcionario_logado.nome }}</button>
+                    <button type="button" class="nav-dropdown-toggle nav-user-toggle" aria-expanded="false">
+                        {% if funcionario_logado.imagem_perfil_path %}
+                        <img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Perfil" style="width:24px;height:24px;border-radius:999px;object-fit:cover;vertical-align:middle;margin-right:6px;">
+                        {% endif %}
+                        {{ funcionario_logado.nome }}
+                    </button>
                     <div class="nav-submenu">
+                        {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('organograma_rh') }}" class="nav-link nav-sublink">Arvore de Hierarquia</a>
+                        {% endif %}
                         <a href="{{ url_for('logout') }}" class="nav-link nav-sublink">Sair</a>
                     </div>
                 </div>
@@ -163,6 +290,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

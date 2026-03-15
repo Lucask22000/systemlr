@@ -1,158 +1,341 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Produtos - SystemLR{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <h1>Produtos</h1>
-    <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">Novo Produto</a>
-</div>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/produtos-lista.css') }}">
+{% endblock %}
 
-<div class="filters-section">
-    <form method="GET" class="filters-form">
-        <div class="filter-group">
-            <div class="barcode-input-group">
-                <input type="text" id="busca" name="busca" placeholder="Buscar por nome ou código..."
-                       value="{{ busca }}" class="input-search">
-                <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="busca">Câmera</button>
+{% block content %}
+<div class="produtos-list-page">
+    <div class="page-header">
+        <div>
+            <h1>Produtos</h1>
+            <p class="text-muted mb-0">Listagem preparada para navegar em volumes maiores com filtros, ordenacao e pagina controlada.</p>
+        </div>
+        <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">Novo Produto</a>
+    </div>
+
+    <section class="produtos-overview-grid">
+        <article class="produtos-overview-card">
+            <small>Resultados filtrados</small>
+            <strong>{{ resumo_lista.total_resultados }}</strong>
+            <span>Produtos encontrados com os filtros atuais.</span>
+        </article>
+        <article class="produtos-overview-card">
+            <small>Faixa exibida</small>
+            <strong>{{ resumo_lista.inicio_resultados }}-{{ resumo_lista.fim_resultados }}</strong>
+            <span>Itens desta pagina para leitura mais rapida.</span>
+        </article>
+        <article class="produtos-overview-card">
+            <small>Paginacao</small>
+            <strong>{{ resumo_lista.pagina_atual }}/{{ resumo_lista.total_paginas or 1 }}</strong>
+            <span>{{ per_page }} itens por pagina.</span>
+        </article>
+        <article class="produtos-overview-card">
+            <small>Filtros ativos</small>
+            <strong>{{ resumo_lista.filtros_ativos }}</strong>
+            <span>Use limpar quando quiser voltar para a visao ampla.</span>
+        </article>
+    </section>
+
+    <section class="filters-section">
+        <div class="produtos-filter-head">
+            <div>
+                <h2>Filtros e ordenacao</h2>
+                <p class="text-muted mb-0">Combine busca, estoque, ruptura e ordenacao para localizar produtos sem travar a leitura.</p>
+            </div>
+            {% if filtros_labels %}
+            <div class="produtos-filter-chips">
+                {% for item in filtros_labels %}
+                <span class="produtos-filter-chip">{{ item }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <form method="GET" class="filters-form">
+            <input type="hidden" name="page" value="1">
+            <div class="filter-group">
+                <label for="busca" class="form-label">Busca</label>
+                <div class="barcode-input-group">
+                    <input type="text" id="busca" name="busca" placeholder="Buscar por nome, codigo ou descricao" value="{{ busca }}" class="input-search">
+                    <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="busca">Camera</button>
+                </div>
+            </div>
+            <div class="filter-group">
+                <label for="categoria_id" class="form-label">Categoria</label>
+                <select id="categoria_id" name="categoria_id" class="input-select">
+                    <option value="">Todas as categorias</option>
+                    {% for cat in categorias %}
+                    <option value="{{ cat.id }}" {% if categoria_selecionada == cat.id %}selected{% endif %}>{{ cat.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="status_disponibilidade" class="form-label">Disponibilidade</label>
+                <select id="status_disponibilidade" name="status_disponibilidade" class="input-select">
+                    <option value="">Todas</option>
+                    {% for chave, label in status_disponibilidade_labels.items() %}
+                    <option value="{{ chave }}" {% if filtros and filtros.status_disponibilidade == chave %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="status_ativo" class="form-label">Cadastro</label>
+                <select id="status_ativo" name="status_ativo" class="input-select">
+                    <option value="">Ativos e inativos</option>
+                    <option value="ativos" {% if filtros and filtros.status_ativo == 'ativos' %}selected{% endif %}>Somente ativos</option>
+                    <option value="inativos" {% if filtros and filtros.status_ativo == 'inativos' %}selected{% endif %}>Somente inativos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="ruptura" class="form-label">Ruptura</label>
+                <select id="ruptura" name="ruptura" class="input-select">
+                    <option value="">Todos os niveis</option>
+                    <option value="sim" {% if filtros and filtros.ruptura == 'sim' %}selected{% endif %}>Somente em ruptura</option>
+                    <option value="nao" {% if filtros and filtros.ruptura == 'nao' %}selected{% endif %}>Sem ruptura</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="estoque_id" class="form-label">Estoque</label>
+                <select id="estoque_id" name="estoque_id" class="input-select">
+                    <option value="">Todos os estoques</option>
+                    {% for estoque in estoques %}
+                    <option value="{{ estoque.id }}" {% if filtros and filtros.estoque_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="endereco_id" class="form-label">Endereco</label>
+                <select id="endereco_id" name="endereco_id" class="input-select" {% if not filtros or not filtros.estoque_id %}disabled{% endif %}>
+                    <option value="">{% if filtros and filtros.estoque_id %}Todos os enderecos{% else %}Selecione um estoque primeiro{% endif %}</option>
+                    {% for endereco in enderecos %}
+                    <option value="{{ endereco.id }}" {% if filtros and filtros.endereco_id == endereco.id %}selected{% endif %}>{{ endereco.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="fornecedor_id" class="form-label">Fornecedor</label>
+                <select id="fornecedor_id" name="fornecedor_id" class="input-select">
+                    <option value="">Todos os fornecedores</option>
+                    {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}" {% if filtros and filtros.fornecedor_id == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="fora_picking" class="form-label">Picking</label>
+                <select id="fora_picking" name="fora_picking" class="input-select">
+                    <option value="">Picking e reserva</option>
+                    <option value="sim" {% if filtros and filtros.fora_picking == 'sim' %}selected{% endif %}>Somente fora de picking</option>
+                    <option value="nao" {% if filtros and filtros.fora_picking == 'nao' %}selected{% endif %}>Somente em picking</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="ordenar" class="form-label">Ordenar por</label>
+                <select id="ordenar" name="ordenar" class="input-select">
+                    {% for chave, label in ordenacoes_disponiveis.items() %}
+                    <option value="{{ chave }}" {% if ordenar == chave %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="per_page" class="form-label">Itens por pagina</label>
+                <select id="per_page" name="per_page" class="input-select">
+                    {% for option in per_page_options %}
+                    <option value="{{ option }}" {% if per_page == option %}selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Aplicar filtros</button>
+            <a href="{{ url_for('listar_produtos') }}" class="btn btn-outline-secondary">Limpar</a>
+        </form>
+    </section>
+
+    <section class="section">
+        <div class="produtos-results-head">
+            <div>
+                <h2>Resultados</h2>
+                <p class="produtos-results-summary mb-0">
+                    {% if resumo_lista.total_resultados %}
+                    Mostrando {{ resumo_lista.inicio_resultados }} a {{ resumo_lista.fim_resultados }} de {{ resumo_lista.total_resultados }} produtos.
+                    {% else %}
+                    Nenhum produto encontrado com os filtros atuais.
+                    {% endif %}
+                </p>
             </div>
         </div>
-        <div class="filter-group">
-            <select name="categoria_id" class="input-select">
-                <option value="">Todas as categorias</option>
-                {% for cat in categorias %}
-                <option value="{{ cat.id }}" {% if categoria_selecionada == cat.id %}selected{% endif %}>
-                    {{ cat.nome }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="filter-group">
-            <select name="status_disponibilidade" class="input-select">
-                <option value="">Todas as disponibilidades</option>
-                {% for chave, label in status_disponibilidade_labels.items() %}
-                <option value="{{ chave }}" {% if filtros and filtros.status_disponibilidade == chave %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="filter-group">
-            <select name="estoque_id" class="input-select">
-                <option value="">Todos os estoques</option>
-                {% for estoque in estoques %}
-                <option value="{{ estoque.id }}" {% if filtros and filtros.estoque_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="filter-group">
-            <select name="endereco_id" class="input-select">
-                <option value="">Todos os enderecos</option>
-                {% for endereco in enderecos %}
-                <option value="{{ endereco.id }}" {% if filtros and filtros.endereco_id == endereco.id %}selected{% endif %}>{{ endereco.nome }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="filter-group">
-            <select name="fornecedor_id" class="input-select">
-                <option value="">Todos os fornecedores</option>
-                {% for fornecedor in fornecedores %}
-                <option value="{{ fornecedor.id }}" {% if filtros and filtros.fornecedor_id == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button type="submit" class="btn btn-secondary">Filtrar</button>
-    </form>
-</div>
 
-<div class="table-responsive table-scroll-sticky">
-    <table class="table table-produtos">
-        <thead>
-            <tr>
-                <th>Codigo</th>
-                <th>Nome</th>
-                <th>Categoria</th>
-                <th>Fornecedor</th>
-                <th>Endereco</th>
-                <th class="col-disponibilidade">Disponibilidade</th>
-                <th class="col-preco-venda">Preco Venda</th>
-                <th>Estoque</th>
-                <th>Status</th>
-                <th>Acoes</th>
-            </tr>
-        </thead>
-        <tbody>
+        <div class="produtos-mobile-list">
             {% for produto in produtos %}
-            <tr class="{% if produto.em_falta %}row-warning{% endif %}">
-                <td data-label="Codigo">{{ produto.código }}</td>
-                <td data-label="Nome">
-                    <div class="product-name-cell">
-                        {% if produto.imagem_path %}
-                        <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" class="product-thumb">
-                        {% endif %}
-                        <span>{{ produto.nome }}</span>
+            <article class="produto-mobile-card">
+                <div class="produto-mobile-top">
+                    <img src="{{ url_for('static', filename=(produto.imagem_path or produto_imagem_padrao_path)) }}" alt="{{ produto.nome }}" class="produto-mobile-thumb" loading="lazy" decoding="async">
+                    <div class="produto-mobile-meta">
+                        <div class="produto-mobile-name">{{ produto.nome }}</div>
+                        <div class="produto-mobile-code">Cod: {{ produto.código }}</div>
+                        <div>
+                            {% if produto.ativo %}
+                            <span class="badge badge-success">Ativo</span>
+                            {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                            {% endif %}
+                            {% if produto.status_disponibilidade_label == 'Online' %}
+                            <span class="badge badge-success">Online</span>
+                            {% else %}
+                            <span class="badge badge-danger">Off</span>
+                            {% endif %}
+                            <span class="badge {% if produto.fora_picking %}badge-danger{% else %}badge-success{% endif %}">
+                                {% if produto.fora_picking %}Fora picking{% else %}Em picking{% endif %}
+                            </span>
+                        </div>
                     </div>
-                </td>
-                <td data-label="Categoria">{{ produto.categoria.nome }}</td>
-                <td data-label="Fornecedor">{{ produto.fornecedor.nome if produto.fornecedor else '-' }}</td>
-                <td data-label="Endereco">{{ produto.endereco.nome if produto.endereco else '-' }}</td>
-                <td data-label="Disponibilidade" class="col-disponibilidade">
-                    {% if produto.status_disponibilidade_label == 'Online' %}
-                    <span class="badge badge-success">Online</span>
-                    {% else %}
-                    <span class="badge badge-danger">Off</span>
-                    {% endif %}
-                </td>
-                <td data-label="Preco" class="col-preco-venda">R$ {{ "%.2f"|format(produto.preco_venda) }}</td>
-                <td data-label="Estoque">
-                    {{ produto.quantidade_estoque }}
-                    {% if produto.em_falta %}<span class="icon-warning">!</span>{% endif %}
-                </td>
-                <td data-label="Status">
-                    {% if produto.ativo %}
-                        <span class="badge badge-success">Ativo</span>
-                    {% else %}
-                        <span class="badge badge-danger">Inativo</span>
-                    {% endif %}
-                </td>
-                <td data-label="Acoes" class="actions-cell">
+                </div>
+
+                <div class="produto-mobile-grid">
+                    <div><strong>Preco:</strong> R$ {{ "%.2f"|format(produto.preco_venda) }}</div>
+                    <div><strong>Estoque:</strong> {{ produto.quantidade_estoque }}{% if produto.em_falta %} !{% endif %}</div>
+                    <div><strong>Categoria:</strong> {{ produto.categoria.nome }}</div>
+                    <div><strong>Endereco:</strong> {{ produto.endereco.nome if produto.endereco else '-' }}</div>
+                    <div><strong>Movimentacao:</strong> {{ tipos_movimentacao_produto.get((produto.tipo_movimentacao or 'manual'), 'Manual') }}</div>
+                    <div style="grid-column: 1 / -1;"><strong>Fornecedor:</strong> {{ produto.fornecedor.nome if produto.fornecedor else '-' }}</div>
+                </div>
+
+                <div class="produto-mobile-actions">
                     <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Ver</a>
                     <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn-small btn-warning">Editar</a>
+                    {% if produto.fora_picking %}
+                    <form method="POST" action="{{ url_for('baixar_produto_para_picking', produto_id=produto.id) }}" class="inline-form">
+                        {{ csrf_input|safe }}
+                        <button type="submit" class="btn-small btn-success">Baixar picking</button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('marcar_produto_fora_picking', produto_id=produto.id) }}" class="inline-form">
+                        {{ csrf_input|safe }}
+                        <button type="submit" class="btn-small btn-secondary">Fora picking</button>
+                    </form>
+                    {% endif %}
                     <form method="POST" action="{{ url_for('deletar_produto', produto_id=produto.id) }}" class="inline-form" data-confirm-message="Excluir produto {{ produto.nome }}?">
                         {{ csrf_input|safe }}
                         <button type="submit" class="btn-small btn-danger">Excluir</button>
                     </form>
-                </td>
-            </tr>
+                </div>
+            </article>
             {% else %}
-            <tr>
-                <td colspan="10" class="text-center">Nenhum produto encontrado</td>
-            </tr>
+            <article class="produto-mobile-card">Nenhum produto encontrado.</article>
             {% endfor %}
-        </tbody>
-    </table>
-</div>
+        </div>
 
-{% if pagination and pagination.pages > 1 %}
-<div class="pagination">
-    {% set params = query_params.copy() if query_params else {} %}
-    {% if pagination.has_prev %}
-        {% set params_prev = params.copy() %}
-        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
-        <a class="btn btn-outline-secondary" href="{{ url_for('listar_produtos', **params_prev) }}">Anterior</a>
-    {% else %}
-        <span class="btn btn-outline-secondary disabled">Anterior</span>
+        <div class="table-responsive table-scroll-sticky">
+            <table class="table table-produtos">
+                <thead>
+                    <tr>
+                        <th>Codigo</th>
+                        <th>Nome</th>
+                        <th>Categoria</th>
+                        <th>Fornecedor</th>
+                        <th>Endereco</th>
+                        <th class="col-disponibilidade">Disponibilidade</th>
+                        <th>Movimentacao</th>
+                        <th>Picking</th>
+                        <th class="col-preco-venda">Preco Venda</th>
+                        <th>Estoque</th>
+                        <th>Status</th>
+                        <th>Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto in produtos %}
+                    <tr class="{% if produto.em_falta %}row-warning{% endif %}">
+                        <td data-label="Codigo">{{ produto.código }}</td>
+                        <td data-label="Nome">
+                            <div class="product-name-cell">
+                                <img src="{{ url_for('static', filename=(produto.imagem_path or produto_imagem_padrao_path)) }}" alt="{{ produto.nome }}" class="product-thumb" loading="lazy" decoding="async">
+                                <span>{{ produto.nome }}</span>
+                            </div>
+                        </td>
+                        <td data-label="Categoria">{{ produto.categoria.nome }}</td>
+                        <td data-label="Fornecedor">{{ produto.fornecedor.nome if produto.fornecedor else '-' }}</td>
+                        <td data-label="Endereco">{{ produto.endereco.nome if produto.endereco else '-' }}</td>
+                        <td data-label="Disponibilidade" class="col-disponibilidade">
+                            {% if produto.status_disponibilidade_label == 'Online' %}
+                            <span class="badge badge-success">Online</span>
+                            {% else %}
+                            <span class="badge badge-danger">Off</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Movimentacao">{{ tipos_movimentacao_produto.get((produto.tipo_movimentacao or 'manual'), 'Manual') }}</td>
+                        <td data-label="Picking">
+                            {% if produto.fora_picking %}
+                            <span class="badge badge-danger">Fora</span>
+                            {% else %}
+                            <span class="badge badge-success">Em picking</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Preco" class="col-preco-venda">R$ {{ "%.2f"|format(produto.preco_venda) }}</td>
+                        <td data-label="Estoque">
+                            {{ produto.quantidade_estoque }}
+                            {% if produto.em_falta %}<span class="icon-warning">!</span>{% endif %}
+                        </td>
+                        <td data-label="Status">
+                            {% if produto.ativo %}
+                            <span class="badge badge-success">Ativo</span>
+                            {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Acoes" class="actions-cell">
+                            <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Ver</a>
+                            <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn-small btn-warning">Editar</a>
+                            {% if produto.fora_picking %}
+                            <form method="POST" action="{{ url_for('baixar_produto_para_picking', produto_id=produto.id) }}" class="inline-form">
+                                {{ csrf_input|safe }}
+                                <button type="submit" class="btn-small btn-success">Baixar picking</button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('marcar_produto_fora_picking', produto_id=produto.id) }}" class="inline-form">
+                                {{ csrf_input|safe }}
+                                <button type="submit" class="btn-small btn-secondary">Fora picking</button>
+                            </form>
+                            {% endif %}
+                            <form method="POST" action="{{ url_for('deletar_produto', produto_id=produto.id) }}" class="inline-form" data-confirm-message="Excluir produto {{ produto.nome }}?">
+                                {{ csrf_input|safe }}
+                                <button type="submit" class="btn-small btn-danger">Excluir</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="12" class="text-center">Nenhum produto encontrado</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {% if pagination and pagination.pages > 1 %}
+    <div class="pagination">
+        {% set params = query_params.copy() if query_params else {} %}
+        {% if pagination.has_prev %}
+            {% set params_prev = params.copy() %}
+            {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('listar_produtos', **params_prev) }}">Anterior</a>
+        {% else %}
+            <span class="btn btn-outline-secondary disabled">Anterior</span>
+        {% endif %}
+
+        <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+        {% if pagination.has_next %}
+            {% set params_next = params.copy() %}
+            {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+            <a class="btn btn-outline-secondary" href="{{ url_for('listar_produtos', **params_next) }}">Proxima</a>
+        {% else %}
+            <span class="btn btn-outline-secondary disabled">Proxima</span>
+        {% endif %}
+    </div>
     {% endif %}
-
-    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
-
-    {% if pagination.has_next %}
-        {% set params_next = params.copy() %}
-        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
-        <a class="btn btn-outline-secondary" href="{{ url_for('listar_produtos', **params_next) }}">Proxima</a>
-    {% else %}
-        <span class="btn btn-outline-secondary disabled">Proxima</span>
-    {% endif %}
 </div>
-{% endif %}
 {% endblock %}
-
-

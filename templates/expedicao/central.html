@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block title %}Central de Expedicao - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1>Central de Expedicao</h1>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('frota_expedicao') }}" class="btn btn-outline-secondary">Frota e Terceiros</a>
+        <a href="{{ url_for('painel_expedicao') }}" class="btn btn-outline-primary">Painel em Tempo Real</a>
+    </div>
+</div>
+
+<div class="cards-grid cards-grid-compact mt-3">
+    <article class="metric-card">
+        <h3>Total do dia</h3>
+        <p class="card-value">{{ progresso.total_dia }}</p>
+        <p class="card-meta">Pedidos em fluxo de expedicao hoje</p>
+    </article>
+    <article class="metric-card">
+        <h3>Etiquetas</h3>
+        <p class="card-value">{{ 'Ativa' if etiquetas_ativas else 'Inativa' }}</p>
+        <p class="card-meta">Emissao de etiqueta de entrega</p>
+    </article>
+    <article class="metric-card">
+        <h3>Nota fiscal</h3>
+        <p class="card-value">{{ 'Ativa' if emissao_nota_ativa else 'Inativa' }}</p>
+        <p class="card-meta">Emissao de nota na separacao</p>
+    </article>
+</div>
+
+<section class="card mt-4">
+    <h2>Operacoes de Expedicao</h2>
+    <div class="d-flex flex-wrap gap-2 mt-2">
+        <a href="{{ url_for('listar_separacao_entrega') }}" class="btn btn-primary">Separacao e Embalagem</a>
+        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-primary">Roteirizacao</a>
+        <a href="{{ url_for('coletor_estoque') }}" class="btn btn-outline-secondary">Coletor Operacional</a>
+        <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="btn btn-outline-secondary">Etiquetas de Endereco</a>
+        <a href="{{ url_for('transferir_armazenamento') }}" class="btn btn-outline-secondary">Transferencias entre Estoques</a>
+        <a href="{{ url_for('nova_movimentacao') }}" class="btn btn-outline-secondary">Entrada em Massa por Operacao</a>
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-outline-secondary">Controle de Entradas e Saidas</a>
+    </div>
+</section>
+
+<section class="card mt-4">
+    <h2>Abastecimento de Lojas e Pontos</h2>
+    <p class="text-muted mb-2">
+        Use movimentacao rapida para abastecimento por operacao e transferencias para reposicao entre estoques.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('nova_movimentacao') }}" class="btn btn-outline-primary">Registrar Abastecimento</a>
+        <a href="{{ url_for('transferir_armazenamento') }}" class="btn btn-outline-primary">Transferir por Endereco</a>
+    </div>
+</section>
+
+<section class="card mt-4">
+    <h2>Frota Cadastrada</h2>
+    <div class="row g-3">
+        <div class="col-12 col-lg-6">
+            <h3 class="h6">Frota propria</h3>
+            {% if veiculos_cadastrados %}
+            <ul class="mb-0">
+                {% for item in veiculos_cadastrados %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">Nenhum veiculo cadastrado.</p>
+            {% endif %}
+        </div>
+        <div class="col-12 col-lg-6">
+            <h3 class="h6">Terceiros (Correios/Freelancers/Transportadoras)</h3>
+            {% if terceirizadas_cadastradas %}
+            <ul class="mb-0">
+                {% for item in terceirizadas_cadastradas %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mb-0">Nenhuma empresa terceira cadastrada.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
