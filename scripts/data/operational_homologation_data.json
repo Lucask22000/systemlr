@@ -1,0 +1,137 @@
+{
+  "empresa": {
+    "razao_social": "LogMaster Distribuicao LTDA",
+    "nome_fantasia": "LogMaster",
+    "cnpj": "12.345.678/0001-90",
+    "telefone": "(65) 3020-4040",
+    "email": "contato@logmaster.local",
+    "endereco": "Avenida das Operacoes, 1500 - Distrito Industrial",
+    "cidade": "Cuiaba",
+    "estado": "MT",
+    "cep": "78098-000",
+    "regime_tributario_observacao": "Lucro presumido (campo nao estruturado no schema atual)",
+    "codigo_empresa": "LOGM01"
+  },
+  "perfis": [
+    {
+      "nome": "Administrador Operacional",
+      "descricao": "Acesso total a operacao e configuracoes.",
+      "paginas": ["inicio", "gestao_negocio", "financeiro", "pdv", "estoques", "produtos", "categorias", "fornecedores", "enderecos_estoque", "movimentacoes", "almoxarifado", "recebimentos", "relatorios", "equipamentos_estoque", "enderecos_inteligentes", "caixas", "mesas", "pedidos", "expedicao", "transferencias_estoque", "funcionarios", "rh_funcoes", "rh_indicadores", "rh_organograma", "auditoria", "empresa", "ecommerce_config", "servicos_tecnicos", "chamados_internos", "garcons", "ajuda"]
+    },
+    {
+      "nome": "Gerente Operacional",
+      "descricao": "Acesso amplo aos fluxos operacionais e gerenciais.",
+      "paginas": ["inicio", "gestao_negocio", "financeiro", "pdv", "estoques", "produtos", "categorias", "fornecedores", "enderecos_estoque", "movimentacoes", "almoxarifado", "recebimentos", "relatorios", "caixas", "mesas", "pedidos", "expedicao", "transferencias_estoque", "funcionarios", "auditoria", "empresa", "ajuda"]
+    },
+    {
+      "nome": "Vendedor",
+      "descricao": "Vendas, pedidos e consultas basicas.",
+      "paginas": ["inicio", "pdv", "pedidos", "mesas", "caixas", "ajuda"]
+    },
+    {
+      "nome": "Estoquista",
+      "descricao": "Estoque, recebimento, enderecamento e relatorios operacionais.",
+      "paginas": ["inicio", "estoques", "produtos", "categorias", "fornecedores", "enderecos_estoque", "movimentacoes", "almoxarifado", "recebimentos", "relatorios", "expedicao", "transferencias_estoque", "ajuda"]
+    },
+    {
+      "nome": "Financeiro",
+      "descricao": "Lancamentos, fundos e consultas financeiras.",
+      "paginas": ["inicio", "financeiro", "relatorios", "caixas", "auditoria", "ajuda"]
+    },
+    {
+      "nome": "Perfil Restrito",
+      "descricao": "Apenas perfil e ajuda para validar bloqueios.",
+      "paginas": ["inicio", "ajuda"]
+    }
+  ],
+  "funcionarios": [
+    {"nome": "Alice Administradora", "email": "admin.logmaster@local", "senha": "Admin@123", "role": "admin", "cargo": "Administradora do Sistema", "departamento": "Tecnologia", "nivel_organograma": "Diretoria", "perfil": "Administrador Operacional"},
+    {"nome": "Marcos Operacoes", "email": "gerente.operacoes@local", "senha": "Gerente@123", "role": "gerente", "cargo": "Gerente de Operacoes", "departamento": "Operacao", "nivel_organograma": "Gerencia", "perfil": "Gerente Operacional"},
+    {"nome": "Paula Vendas", "email": "vendedor.01@local", "senha": "Vendas@123", "role": "operador", "cargo": "Vendedora", "departamento": "Vendas", "nivel_organograma": "Operacao", "perfil": "Vendedor"},
+    {"nome": "Rafael Caixa", "email": "operador.caixa@local", "senha": "Caixa@123", "role": "caixa", "cargo": "Operador de Caixa", "departamento": "Vendas", "nivel_organograma": "Operacao", "perfil": "Vendedor"},
+    {"nome": "Bruno Estoque", "email": "estoque.01@local", "senha": "Estoque@123", "role": "operador", "cargo": "Estoquista", "departamento": "Estoque", "nivel_organograma": "Operacao", "perfil": "Estoquista"},
+    {"nome": "Fernanda Recebimento", "email": "operador.recebimento@local", "senha": "Recebe@123", "role": "operador", "cargo": "Auxiliar de Recebimento", "departamento": "Estoque", "nivel_organograma": "Operacao", "perfil": "Estoquista"},
+    {"nome": "Tiago Financeiro", "email": "financeiro.01@local", "senha": "Financeiro@123", "role": "gerente", "cargo": "Analista Financeiro", "departamento": "Financeiro", "nivel_organograma": "Especialista", "perfil": "Financeiro"},
+    {"nome": "Leila Restrita", "email": "restrito.01@local", "senha": "Restrito@123", "role": "operador", "cargo": "Apoio Administrativo", "departamento": "Administrativo", "nivel_organograma": "Operacao", "perfil": "Perfil Restrito"}
+  ],
+  "clientes": [
+    {"nome": "Mercado Bom Preco", "email": "compras@mercadobompreco.local", "celular": "65999800001", "cpf_cnpj": "11.111.111/0001-01", "cidade": "Cuiaba", "bairro": "Centro Norte", "status_observacao": "ativo", "limite_credito_observacao": 2500.0},
+    {"nome": "Padaria Central", "email": "financeiro@padariacentral.local", "celular": "65999800002", "cpf_cnpj": "11.111.111/0001-02", "cidade": "Cuiaba", "bairro": "Bosque da Saude", "status_observacao": "ativo", "limite_credito_observacao": 1800.0},
+    {"nome": "Restaurante Sabor da Serra", "email": "compras@sabordaserra.local", "celular": "65999800003", "cpf_cnpj": "11.111.111/0001-03", "cidade": "Varzea Grande", "bairro": "Jardim Aeroporto", "status_observacao": "ativo", "limite_credito_observacao": 3200.0},
+    {"nome": "Mini Box Avenida", "email": "contato@miniboxavenida.local", "celular": "65999800004", "cpf_cnpj": "11.111.111/0001-04", "cidade": "Cuiaba", "bairro": "CPA II", "status_observacao": "ativo", "limite_credito_observacao": 900.0},
+    {"nome": "Convivencia Ponto 24h", "email": "compras@ponto24h.local", "celular": "65999800005", "cpf_cnpj": "11.111.111/0001-05", "cidade": "Cuiaba", "bairro": "Dom Aquino", "status_observacao": "ativo", "limite_credito_observacao": 1600.0},
+    {"nome": "Emporio Vila Nova", "email": "contato@emporiovilanova.local", "celular": "65999800006", "cpf_cnpj": "11.111.111/0001-06", "cidade": "Cuiaba", "bairro": "Vila Nova", "status_observacao": "ativo", "limite_credito_observacao": 1100.0},
+    {"nome": "Supermercado Horizonte", "email": "fiscal@horizonte.local", "celular": "65999800007", "cpf_cnpj": "11.111.111/0001-07", "cidade": "Chapada dos Guimaraes", "bairro": "Centro", "status_observacao": "ativo", "limite_credito_observacao": 5000.0},
+    {"nome": "Lanchonete Estacao", "email": "caixa@estacao.local", "celular": "65999800008", "cpf_cnpj": "11.111.111/0001-08", "cidade": "Varzea Grande", "bairro": "Cristo Rei", "status_observacao": "ativo", "limite_credito_observacao": 750.0},
+    {"nome": "Hotel Vale Verde", "email": "compras@hotelvaleverde.local", "celular": "65999800009", "cpf_cnpj": "11.111.111/0001-09", "cidade": "Cuiaba", "bairro": "Jardim das Americas", "status_observacao": "ativo", "limite_credito_observacao": 4200.0},
+    {"nome": "Mercearia Dois Irmaos", "email": "mercearia@doisirmaos.local", "celular": "65999800010", "cpf_cnpj": "11.111.111/0001-10", "cidade": "Cuiaba", "bairro": "Pedra 90", "status_observacao": "inativo para teste", "limite_credito_observacao": 600.0}
+  ],
+  "fornecedores": [
+    {"nome": "Nova Era Alimentos LTDA", "documento": "22.345.678/0001-10", "contato": "Patricia Gomes", "telefone": "6530211001", "email": "comercial@novaera.local", "endereco_cidade": "Cuiaba", "tipo_produtos_fornece": "alimentos basicos", "status_observacao": "ativo", "prazo_medio_entrega_observacao": 3},
+    {"nome": "Forte Limpeza Distribuidora", "documento": "22.345.678/0001-11", "contato": "Eduardo Lima", "telefone": "6530211002", "email": "vendas@fortelimpeza.local", "endereco_cidade": "Varzea Grande", "tipo_produtos_fornece": "limpeza e higiene", "status_observacao": "ativo", "prazo_medio_entrega_observacao": 4},
+    {"nome": "Gelosul Refrigeracao Comercial", "documento": "22.345.678/0001-12", "contato": "Renata Nunes", "telefone": "6530211003", "email": "pedidos@gelosul.local", "endereco_cidade": "Cuiaba", "tipo_produtos_fornece": "pereciveis refrigerados", "status_observacao": "ativo", "prazo_medio_entrega_observacao": 2},
+    {"nome": "Atacado Sul Bebidas", "documento": "22.345.678/0001-13", "contato": "Joao Farias", "telefone": "6530211004", "email": "atendimento@atacadosul.local", "endereco_cidade": "Rondonopolis", "tipo_produtos_fornece": "bebidas e sucos", "status_observacao": "ativo", "prazo_medio_entrega_observacao": 5},
+    {"nome": "FrioBom Pereciveis LTDA", "documento": "22.345.678/0001-14", "contato": "Silvia Moraes", "telefone": "6530211005", "email": "frios@friobom.local", "endereco_cidade": "Cuiaba", "tipo_produtos_fornece": "frios e lacteos", "status_observacao": "ativo", "prazo_medio_entrega_observacao": 1}
+  ],
+  "categorias": [
+    {"nome": "Bebidas", "descricao": "Refrigerantes, sucos, agua e bebidas prontas."},
+    {"nome": "Alimentos", "descricao": "Mercearia seca e alimentos de giro."},
+    {"nome": "Limpeza", "descricao": "Produtos de limpeza domestica."},
+    {"nome": "Higiene", "descricao": "Higiene pessoal e conveniencia."},
+    {"nome": "Utilidades", "descricao": "Itens de apoio, descartaveis e multiuso."},
+    {"nome": "Pereciveis", "descricao": "Itens refrigerados com controle de validade."}
+  ],
+  "estoques": [
+    {"nome": "Deposito A", "codigo_filial": "DPA", "descricao": "Deposito principal"},
+    {"nome": "Deposito B", "codigo_filial": "DPB", "descricao": "Deposito secundario"},
+    {"nome": "Loja LogMaster", "codigo_filial": "LJM", "descricao": "Area de venda e picking"}
+  ],
+  "enderecos": [
+    {"estoque": "Deposito A", "nome": "Recebimento", "tipo_area": "recebimento", "controle_validade": "fifo", "codigo_armazem": "DPA", "rua_corredor": "01", "coluna_baia": "01", "nivel_prateleira": "01", "posicao_slot": "01", "lado": "LA", "restricoes": ""},
+    {"estoque": "Deposito A", "nome": "Deposito A", "tipo_area": "armazenagem", "controle_validade": "fifo", "codigo_armazem": "DPA", "rua_corredor": "01", "coluna_baia": "02", "nivel_prateleira": "01", "posicao_slot": "01", "lado": "LB", "restricoes": ""},
+    {"estoque": "Deposito B", "nome": "Deposito B", "tipo_area": "armazenagem", "controle_validade": "fifo", "codigo_armazem": "DPB", "rua_corredor": "02", "coluna_baia": "01", "nivel_prateleira": "01", "posicao_slot": "01", "lado": "LA", "restricoes": ""},
+    {"estoque": "Loja LogMaster", "nome": "Gondola 01", "tipo_area": "picking", "controle_validade": "fifo", "codigo_armazem": "LJM", "rua_corredor": "03", "coluna_baia": "01", "nivel_prateleira": "01", "posicao_slot": "01", "lado": "LA", "restricoes": ""},
+    {"estoque": "Loja LogMaster", "nome": "Camara Fria", "tipo_area": "armazenagem", "controle_validade": "fefo", "codigo_armazem": "LJM", "rua_corredor": "04", "coluna_baia": "01", "nivel_prateleira": "01", "posicao_slot": "01", "lado": "LC", "restricoes": "alimentos"}
+  ],
+  "pagamentos_pdv": [
+    {"id": "dinheiro", "label": "Dinheiro", "descricao": "Recebimento em especie"},
+    {"id": "pix", "label": "Pix", "descricao": "Transferencia instantanea"},
+    {"id": "cartao_debito", "label": "Cartao Debito", "descricao": "Pagamento no debito"},
+    {"id": "cartao_credito", "label": "Cartao Credito", "descricao": "Pagamento no credito"},
+    {"id": "boleto", "label": "Boleto", "descricao": "Boleto emitido para cliente"},
+    {"id": "prazo", "label": "Prazo", "descricao": "Recebimento faturado"}
+  ],
+  "produtos": [
+    {"codigo": "BEB001", "nome": "Refrigerante Cola 2L", "categoria": "Bebidas", "fornecedor": "Atacado Sul Bebidas", "preco_custo": 6.2, "preco_venda": 9.9, "quantidade_minima": 12, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "BEB002", "nome": "Agua Mineral 500ml", "categoria": "Bebidas", "fornecedor": "Atacado Sul Bebidas", "preco_custo": 1.1, "preco_venda": 2.5, "quantidade_minima": 24, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI001", "nome": "Arroz Tipo 1 5kg", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 19.8, "preco_venda": 26.9, "quantidade_minima": 8, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI002", "nome": "Feijao Carioca 1kg", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 5.4, "preco_venda": 8.9, "quantidade_minima": 12, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "LIM001", "nome": "Detergente Neutro 500ml", "categoria": "Limpeza", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 1.9, "preco_venda": 3.6, "quantidade_minima": 10, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "HIG001", "nome": "Papel Higienico 12 rolos", "categoria": "Higiene", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 11.5, "preco_venda": 17.9, "quantidade_minima": 8, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "HIG002", "nome": "Sabonete 90g", "categoria": "Higiene", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 1.2, "preco_venda": 2.5, "quantidade_minima": 15, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "PER001", "nome": "Manteiga 200g", "categoria": "Pereciveis", "fornecedor": "FrioBom Pereciveis LTDA", "preco_custo": 5.2, "preco_venda": 8.7, "quantidade_minima": 6, "ativo": true, "tipo_movimentacao": "manual", "controle_lote_observacao": true, "controle_validade_observacao": true},
+    {"codigo": "PER002", "nome": "Iogurte Natural 170g", "categoria": "Pereciveis", "fornecedor": "FrioBom Pereciveis LTDA", "preco_custo": 2.2, "preco_venda": 4.3, "quantidade_minima": 10, "ativo": true, "tipo_movimentacao": "manual", "controle_lote_observacao": true, "controle_validade_observacao": true},
+    {"codigo": "ALI003", "nome": "Cafe Torrado 500g", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 10.5, "preco_venda": 15.9, "quantidade_minima": 10, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI004", "nome": "Macarrao Espaguete 500g", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 2.8, "preco_venda": 4.9, "quantidade_minima": 14, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI005", "nome": "Acucar Refinado 1kg", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 3.4, "preco_venda": 5.8, "quantidade_minima": 12, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI006", "nome": "Oleo de Soja 900ml", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 6.3, "preco_venda": 8.8, "quantidade_minima": 10, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "PER003", "nome": "Leite Integral 1L", "categoria": "Pereciveis", "fornecedor": "FrioBom Pereciveis LTDA", "preco_custo": 3.6, "preco_venda": 5.7, "quantidade_minima": 18, "ativo": true, "tipo_movimentacao": "manual", "controle_lote_observacao": true, "controle_validade_observacao": true},
+    {"codigo": "ALI007", "nome": "Biscoito Cream Cracker 200g", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 2.1, "preco_venda": 3.8, "quantidade_minima": 16, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "LIM002", "nome": "Desinfetante Lavanda 2L", "categoria": "Limpeza", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 4.2, "preco_venda": 7.4, "quantidade_minima": 8, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "LIM003", "nome": "Agua Sanitaria 1L", "categoria": "Limpeza", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 2.0, "preco_venda": 3.7, "quantidade_minima": 10, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "UTI001", "nome": "Esponja Multiuso", "categoria": "Utilidades", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 0.8, "preco_venda": 1.9, "quantidade_minima": 20, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "HIG003", "nome": "Shampoo 350ml", "categoria": "Higiene", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 7.0, "preco_venda": 11.9, "quantidade_minima": 6, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "HIG004", "nome": "Creme Dental 90g", "categoria": "Higiene", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 2.9, "preco_venda": 5.2, "quantidade_minima": 12, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "UTI002", "nome": "Papel Toalha 2 rolos", "categoria": "Utilidades", "fornecedor": "Forte Limpeza Distribuidora", "preco_custo": 4.1, "preco_venda": 6.9, "quantidade_minima": 8, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "BEB003", "nome": "Suco de Uva 1L", "categoria": "Bebidas", "fornecedor": "Atacado Sul Bebidas", "preco_custo": 4.5, "preco_venda": 7.9, "quantidade_minima": 8, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI008", "nome": "Achocolatado 400g", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 4.8, "preco_venda": 7.6, "quantidade_minima": 8, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "PER004", "nome": "Queijo Mussarela 500g", "categoria": "Pereciveis", "fornecedor": "FrioBom Pereciveis LTDA", "preco_custo": 14.5, "preco_venda": 21.9, "quantidade_minima": 4, "ativo": true, "tipo_movimentacao": "manual", "controle_lote_observacao": true, "controle_validade_observacao": true},
+    {"codigo": "PER005", "nome": "Presunto Cozido 500g", "categoria": "Pereciveis", "fornecedor": "FrioBom Pereciveis LTDA", "preco_custo": 10.7, "preco_venda": 16.8, "quantidade_minima": 4, "ativo": true, "tipo_movimentacao": "manual", "controle_lote_observacao": true, "controle_validade_observacao": true},
+    {"codigo": "PER006", "nome": "Margarina 250g", "categoria": "Pereciveis", "fornecedor": "FrioBom Pereciveis LTDA", "preco_custo": 3.1, "preco_venda": 5.4, "quantidade_minima": 10, "ativo": true, "tipo_movimentacao": "manual", "controle_lote_observacao": true, "controle_validade_observacao": true},
+    {"codigo": "ALI009", "nome": "Molho de Tomate 300g", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 1.9, "preco_venda": 3.4, "quantidade_minima": 14, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI010", "nome": "Farinha de Trigo 1kg", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 3.3, "preco_venda": 5.5, "quantidade_minima": 10, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI011", "nome": "Sal Refinado 1kg", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 1.4, "preco_venda": 2.8, "quantidade_minima": 15, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI012", "nome": "Vinagre de Alcool 750ml", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 2.3, "preco_venda": 4.1, "quantidade_minima": 8, "ativo": true, "tipo_movimentacao": "manual"},
+    {"codigo": "ALI013", "nome": "Biscoito Agua e Sal", "categoria": "Alimentos", "fornecedor": "Nova Era Alimentos LTDA", "preco_custo": 2.0, "preco_venda": 3.5, "quantidade_minima": 12, "ativo": true, "tipo_movimentacao": "manual"}
+  ]
+}

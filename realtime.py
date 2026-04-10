@@ -25,5 +25,7 @@ def sse_stream():
             yield "event: ping\ndata: {}\n\n"
             continue
 
-        yield f"event: pedido\ndata: {json.dumps(payload, default=str)}\n\n"
+        event_name = str(payload.get('event') or 'pedido') if isinstance(payload, dict) else 'pedido'
+        data = payload.get('data', payload) if isinstance(payload, dict) else payload
+        yield f"event: {event_name}\ndata: {json.dumps(data, default=str)}\n\n"
         time.sleep(0.01)

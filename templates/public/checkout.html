@@ -16,10 +16,24 @@
     <article class="store-panel">
         <div class="store-panel-header">
             <div>
-                <h2 class="store-card-title">Cadastro do cliente</h2>
-                <p class="store-note">Os dados ficam mais claros e prontos para reaproveitar nas próximas compras.</p>
+                <h2 class="store-card-title">Dados do cliente</h2>
+                <p class="store-note">Use um endereço salvo ou ajuste os dados manualmente.</p>
             </div>
         </div>
+
+        {% if cliente_publico and enderecos_salvos %}
+        <div class="store-field" style="margin-bottom: 14px;">
+            <label for="endereco_id">Endereço salvo</label>
+            <select id="endereco_id" name="endereco_id">
+                <option value="">Preencher manualmente</option>
+                {% for endereco in enderecos_salvos %}
+                <option value="{{ endereco.id }}" {% if endereco.principal %}selected{% endif %}>
+                    {{ endereco.apelido or 'Endereço' }} - {{ endereco.endereco }}, {{ endereco.numero }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
 
         <div class="store-form-grid">
             <div class="store-field">
@@ -121,14 +135,28 @@
                 <strong>R$ {{ '%.2f'|format(item.total_item)|replace('.', ',') }}</strong>
             </div>
             {% endfor %}
+            {% if resumo_carrinho.cupom %}
+            <div class="store-summary-line">
+                <span>Cupom {{ resumo_carrinho.cupom.codigo }}</span>
+                <strong>- R$ {{ '%.2f'|format(resumo_carrinho.desconto)|replace('.', ',') }}</strong>
+            </div>
+            {% endif %}
+            <div class="store-summary-line">
+                <span>Subtotal</span>
+                <strong>R$ {{ '%.2f'|format(resumo_carrinho.subtotal)|replace('.', ',') }}</strong>
+            </div>
             <div class="store-summary-line total">
                 <span>Total</span>
-                <strong>R$ {{ '%.2f'|format(resumo_carrinho.subtotal)|replace('.', ',') }}</strong>
+                <strong>R$ {{ '%.2f'|format(resumo_carrinho.total)|replace('.', ',') }}</strong>
             </div>
         </div>
 
         <div class="store-note-box">
+            {% if cliente_publico %}
+            Compra vinculada à conta de {{ cliente_publico.nome }}.
+            {% else %}
             Revise os dados com cuidado para agilizar a confirmação da compra.
+            {% endif %}
         </div>
 
         <div class="store-grid-actions" style="margin-top: 14px;">

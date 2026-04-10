@@ -3,83 +3,83 @@
 
 {% block content %}
 <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <h1>Central de Expedicao</h1>
+    <div>
+        <h1>Dashboard de Expedicao</h1>
+        <p class="text-muted mb-0">Separacao, rotas, entregas e frota do dia.</p>
+    </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="{{ url_for('frota_expedicao') }}" class="btn btn-outline-secondary">Frota e Terceiros</a>
         <a href="{{ url_for('painel_expedicao') }}" class="btn btn-outline-primary">Painel em Tempo Real</a>
     </div>
 </div>
 
-<div class="cards-grid cards-grid-compact mt-3">
-    <article class="metric-card">
-        <h3>Total do dia</h3>
-        <p class="card-value">{{ progresso.total_dia }}</p>
-        <p class="card-meta">Pedidos em fluxo de expedicao hoje</p>
-    </article>
-    <article class="metric-card">
-        <h3>Etiquetas</h3>
-        <p class="card-value">{{ 'Ativa' if etiquetas_ativas else 'Inativa' }}</p>
-        <p class="card-meta">Emissao de etiqueta de entrega</p>
-    </article>
-    <article class="metric-card">
-        <h3>Nota fiscal</h3>
-        <p class="card-value">{{ 'Ativa' if emissao_nota_ativa else 'Inativa' }}</p>
-        <p class="card-meta">Emissao de nota na separacao</p>
-    </article>
+<div class="cards-container analytics-cards">
+    <div class="card card-primary"><div class="card-content"><h3>Pedidos no dia</h3><p class="card-value" id="kpiExpTotal">0</p><p class="card-meta">Fluxo total</p></div></div>
+    <div class="card card-info"><div class="card-content"><h3>Separados / Embalados</h3><p class="card-value" id="kpiExpSeparados">0 / 0</p><p class="card-meta">Etapas internas</p></div></div>
+    <div class="card card-warning"><div class="card-content"><h3>Expedidos / Entregues</h3><p class="card-value" id="kpiExpExpedidos">0 / 0</p><p class="card-meta">Saida e conclusao</p></div></div>
+    <div class="card card-success"><div class="card-content"><h3>Tempo medio de separacao</h3><p class="card-value" id="kpiExpTempo">0,0 min</p><p class="card-meta">Do pedido ate a separacao</p></div></div>
+    <div class="card card-secondary"><div class="card-content"><h3>Aderencia a rota</h3><p class="card-value" id="kpiExpAderencia">0,0%</p><p class="card-meta">Entregas dentro da rota planejada</p></div></div>
+    <div class="card card-danger"><div class="card-content"><h3>Etiquetas / NF</h3><p class="card-value">{{ 'Ativa' if etiquetas_ativas else 'Inativa' }}</p><p class="card-meta">{{ 'NF ativa' if emissao_nota_ativa else 'NF inativa' }}</p></div></div>
 </div>
 
-<section class="card mt-4">
-    <h2>Operacoes de Expedicao</h2>
-    <p class="text-muted mb-2">
-        Esta central concentra separacao, roteirizacao, entregas e transferencias entre lojas/CDs. Entradas e saidas internas ficam em Estoque, e recebimentos de fornecedor ficam no menu Recebimento.
-    </p>
-    <div class="d-flex flex-wrap gap-2 mt-2">
-        <a href="{{ url_for('listar_separacao_entrega') }}" class="btn btn-primary">Separacao e Embalagem</a>
-        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-primary">Roteirizacao</a>
-        <a href="{{ url_for('coletor_estoque') }}" class="btn btn-outline-secondary">Coletor Operacional</a>
-        <a href="{{ url_for('listar_transferencias_estoque') }}" class="btn btn-outline-secondary">Historico de Transferencias</a>
-        <a href="{{ url_for('transferir_armazenamento') }}" class="btn btn-outline-secondary">Nova Transferencia entre Lojas/CDs</a>
+<section class="section mb-3">
+    <h2>Alertas</h2>
+    <div id="expedicaoAlertas" class="d-grid gap-2">
+        <p class="text-muted mb-0">Nenhum alerta carregado.</p>
     </div>
 </section>
 
-<section class="card mt-4">
-    <h2>Abastecimento de Lojas e Pontos</h2>
-    <p class="text-muted mb-2">
-        Reposicoes entre loja, filial e centro de distribuicao devem ser registradas como transferencia. Ajustes de saldo, avarias e consumo interno ficam no fluxo de entradas e saidas internas.
-    </p>
-    <div class="d-flex flex-wrap gap-2">
-        <a href="{{ url_for('transferir_armazenamento') }}" class="btn btn-outline-primary">Transferir entre Estoques</a>
-        <a href="{{ url_for('listar_transferencias_estoque') }}" class="btn btn-outline-primary">Consultar Transferencias</a>
-    </div>
-</section>
+<div class="analytics-grid">
+    <section class="section"><h2>Progresso diario</h2><div class="chart-container"><canvas id="chartExpedicaoProgresso"></canvas></div></section>
+    <section class="section"><h2>Fila de separacao</h2><div class="chart-container"><canvas id="chartExpedicaoFila"></canvas></div></section>
+</div>
 
-<section class="card mt-4">
-    <h2>Frota Cadastrada</h2>
-    <div class="row g-3">
-        <div class="col-12 col-lg-6">
-            <h3 class="h6">Frota propria</h3>
-            {% if veiculos_cadastrados %}
-            <ul class="mb-0">
-                {% for item in veiculos_cadastrados %}
-                <li>{{ item }}</li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="text-muted mb-0">Nenhum veiculo cadastrado.</p>
-            {% endif %}
+<div class="analytics-grid">
+    <section class="section"><h2>Status das rotas</h2><div class="chart-container"><canvas id="chartExpedicaoRotas"></canvas></div></section>
+    <section class="section">
+        <h2>Operacoes de Expedicao</h2>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('listar_separacao_entrega') }}" class="btn btn-primary">Separacao e Embalagem</a>
+            <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-primary">Roteirizacao</a>
+            <a href="{{ url_for('coletor_estoque') }}" class="btn btn-outline-secondary">Coletor Operacional</a>
+            <a href="{{ url_for('listar_transferencias_estoque') }}" class="btn btn-outline-secondary">Transferencias</a>
         </div>
-        <div class="col-12 col-lg-6">
-            <h3 class="h6">Terceiros (Correios/Freelancers/Transportadoras)</h3>
-            {% if terceirizadas_cadastradas %}
-            <ul class="mb-0">
-                {% for item in terceirizadas_cadastradas %}
-                <li>{{ item }}</li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="text-muted mb-0">Nenhuma empresa terceira cadastrada.</p>
-            {% endif %}
+    </section>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Pedidos em separacao</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>ID</th><th>Cliente</th><th>Rota</th><th>Motorista</th><th>Tempo de espera</th></tr></thead>
+                <tbody id="tableExpSeparacao"></tbody>
+            </table>
         </div>
+    </section>
+    <section class="section">
+        <h2>Pedidos em rota</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>ID</th><th>Cliente</th><th>Rota</th><th>Motorista</th><th>Previsao</th></tr></thead>
+                <tbody id="tableExpRota"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<section class="section">
+    <h2>Veiculos configurados</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>Nome</th><th>Placa</th><th>Tipo</th><th>Capacidade</th></tr></thead>
+            <tbody id="tableExpVeiculos"></tbody>
+        </table>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/expedicao_analytics.js') }}"></script>
 {% endblock %}

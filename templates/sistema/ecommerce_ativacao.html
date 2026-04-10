@@ -39,7 +39,7 @@
             <div class="form-group">
                 <label>Próximo passo recomendado</label>
                 <div class="input-text" style="background: #f5f7fb;">
-                    Depois da ativação, revise tema, banners, campanhas, pagamentos e integrações na tela de configuração da loja online.
+                    Depois da ativação, revise tema, banners e checkout na tela da loja online e organize promoções, cupons e sazonalidades na tela de marketing.
                 </div>
             </div>
         </div>
@@ -47,6 +47,7 @@
         <div class="form-actions">
             <button type="submit" class="btn btn-success">Salvar ativação</button>
             <a href="{{ url_for('configurar_ecommerce') }}" class="btn btn-secondary">Abrir tema e loja online</a>
+            <a href="{{ url_for('configurar_marketing_ecommerce') }}" class="btn btn-secondary">Abrir promoções e campanhas</a>
         </div>
     </form>
 </div>

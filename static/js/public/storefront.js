@@ -1,4 +1,110 @@
 (function () {
+    function initLoadingProgress() {
+        const overlay = document.querySelector('[data-store-loading-overlay]');
+        if (!overlay) {
+            return;
+        }
+
+        const bar = overlay.querySelector('[data-store-loading-bar]');
+        const percentNode = overlay.querySelector('[data-store-loading-percent]');
+        const statusNode = overlay.querySelector('[data-store-loading-status]');
+        const resources = [];
+        const seen = new Set();
+
+        document.querySelectorAll('img').forEach(function (img) {
+            if (!img || !img.currentSrc && !img.src) return;
+            const key = img.currentSrc || img.src;
+            if (seen.has(key)) return;
+            seen.add(key);
+            resources.push(img);
+        });
+
+        const fontPromise = (document.fonts && typeof document.fonts.ready === 'object')
+            ? document.fonts.ready
+            : Promise.resolve();
+
+        const total = Math.max(resources.length + 2, 3);
+        let completed = 0;
+        let currentPercent = 0;
+
+        function updateStatus(message) {
+            if (statusNode) {
+                statusNode.textContent = message;
+            }
+        }
+
+        function renderProgress(forcePercent) {
+            const calculated = typeof forcePercent === 'number'
+                ? forcePercent
+                : Math.min(96, Math.round((completed / total) * 100));
+            currentPercent = Math.max(currentPercent, calculated);
+            if (bar) {
+                bar.style.width = currentPercent + '%';
+            }
+            if (percentNode) {
+                percentNode.textContent = currentPercent + '%';
+            }
+        }
+
+        function step(message, forcePercent) {
+            completed += 1;
+            if (message) {
+                updateStatus(message);
+            }
+            renderProgress(forcePercent);
+        }
+
+        function finish() {
+            updateStatus('Loja pronta.');
+            renderProgress(100);
+            window.setTimeout(function () {
+                overlay.classList.add('is-hidden');
+            }, 180);
+        }
+
+        updateStatus('Mapeando recursos da vitrine...');
+        renderProgress(8);
+
+        let loadedImages = 0;
+        if (!resources.length) {
+            step('Sem imagens pendentes, liberando vitrine...', 42);
+        } else {
+            resources.forEach(function (img) {
+                const onDone = function () {
+                    loadedImages += 1;
+                    const percentualImagens = Math.min(82, 12 + Math.round((loadedImages / resources.length) * 58));
+                    updateStatus('Carregando imagens da vitrine (' + loadedImages + '/' + resources.length + ')...');
+                    renderProgress(percentualImagens);
+                };
+
+                if (img.complete) {
+                    onDone();
+                    return;
+                }
+
+                img.addEventListener('load', onDone, { once: true });
+                img.addEventListener('error', onDone, { once: true });
+            });
+        }
+
+        Promise.resolve(fontPromise).then(function () {
+            step('Tipografia carregada.', 88);
+        }).catch(function () {
+            step('Tipografia liberada.', 88);
+        });
+
+        window.addEventListener('load', function () {
+            step('Conexão principal estabilizada.', 96);
+            finish();
+        }, { once: true });
+
+        window.setTimeout(function () {
+            if (!overlay.classList.contains('is-hidden')) {
+                finish();
+            }
+        }, 5000);
+    }
+
     function normalizarTexto(texto) {
         return (texto || '')
             .toString()
@@ -112,6 +218,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        initLoadingProgress();
         initCarousel();
         initPaymentToggle();
         initProductSearch();

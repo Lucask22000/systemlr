@@ -5,8 +5,14 @@ import uuid
 from flask import current_app
 from PIL import Image
 
+try:
+    import magic
+except Exception:  # pragma: no cover - fallback quando python-magic nao estiver disponivel
+    magic = None
+
 from app.exceptions import BusinessRuleError, ValidationError
 from app.services.operational_rules import validate_stock_movement_payload, validate_stock_transfer_payload
+from app.services.traceability import record_process_event
 from app.services.transaction import atomic_transaction
 from app.utils.helpers import sem_acentos
 from app.utils.validators import normalizar_codigo_barras
@@ -14,6 +20,7 @@ from models import EmpresaConfig, Movimentacao, Produto, db
 
 
 ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
+ALLOWED_IMAGE_MIME_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 DEFAULT_PRODUCT_IMAGE = 'img/placeholders/imgindisponivel.png'
 
 
@@ -53,6 +60,9 @@ def registrar_movimentacao_manual(
     observacoes=None,
     movimentacao_model=Movimentacao,
     failure_hook=None,
+    actor=None,
+    pedido_id=None,
+    recebimento_id=None,
 ):
     with atomic_transaction():
         motivo_normalizado = validate_stock_movement_payload(
@@ -67,6 +77,8 @@ def registrar_movimentacao_manual(
 
         movimentacao = movimentacao_model(
             produto_id=produto.id,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
             fornecedor_id=(fornecedor.id if fornecedor else None),
             tipo=tipo,
             quantidade=quantidade,
@@ -78,6 +90,24 @@ def registrar_movimentacao_manual(
             endereco_destino_id=(produto.endereco_id if tipo == movimentacao_model.TIPO_ENTRADA else None),
         )
         db.session.add(movimentacao)
+        db.session.flush()
+        record_process_event(
+            processo_tipo='estoque',
+            etapa='movimentacao',
+            acao='movimentacao_manual_registrada',
+            entidade='movimentacao',
+            entidade_id=movimentacao.id,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
+            movimentacao_id=movimentacao.id,
+            actor=actor,
+            detalhes={
+                'produto_id': produto.id,
+                'tipo': tipo,
+                'quantidade': quantidade,
+                'motivo': motivo_normalizado,
+            },
+        )
     return movimentacao
 
 
@@ -91,6 +121,7 @@ def transferir_estoque(
     allow_same_stock=False,
     movimentacao_model=Movimentacao,
     failure_hook=None,
+    actor=None,
 ):
     with atomic_transaction():
         validate_stock_transfer_payload(
@@ -123,6 +154,23 @@ def transferir_estoque(
             endereco_destino_id=endereco_destino.id,
         )
         db.session.add(movimentacao)
+        db.session.flush()
+        record_process_event(
+            processo_tipo='estoque',
+            etapa='transferencia',
+            acao='transferencia_registrada',
+            entidade='movimentacao',
+            entidade_id=movimentacao.id,
+            movimentacao_id=movimentacao.id,
+            actor=actor,
+            detalhes={
+                'produto_id': produto.id,
+                'endereco_origem_id': endereco_origem.id if endereco_origem else None,
+                'endereco_destino_id': endereco_destino.id,
+                'quantidade': movimentacao.quantidade,
+                'motivo': movimentacao.motivo,
+            },
+        )
     return movimentacao
 
 
@@ -143,6 +191,12 @@ def _is_valid_image_content(file_storage):
         return False
     try:
         stream.seek(0)
+        header = stream.read(2048)
+        stream.seek(0)
+        if magic is not None:
+            mime_type = magic.from_buffer(header, mime=True)
+            if mime_type not in ALLOWED_IMAGE_MIME_TYPES:
+                return False
         img = Image.open(stream)
         img.verify()
         stream.seek(0)

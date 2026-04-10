@@ -1123,7 +1123,7 @@ class LocalAIAssistant:
                 'lancar entrada no sistema',
             ]
         elif intent == 'access_permission':
-            return 'Quero responder certo. Voce esta sem acesso a qual menu? Financeiro, Estoque, Vendas ou outro?'
+            return 'Quero responder certo. Voce esta sem acesso a qual menu ou tela?'
         elif intent == 'navigation_request':
             return 'Posso te mostrar o caminho. Qual tela voce quer abrir agora?'
         if opcoes:
@@ -1140,6 +1140,8 @@ class LocalAIAssistant:
         checklist = (doc or {}).get('checklist') or []
         alertas = (doc or {}).get('alerts') or []
         problemas = (doc or {}).get('problems') or []
+        topic_key = self._detect_primary_topic(question, doc) or domain
+        profile = TOPIC_PROFILES.get(topic_key or '')
 
         def format_passos(lista, limite=5):
             return [self._ensure_sentence(item) for item in lista[:limite]]
@@ -1148,6 +1150,21 @@ class LocalAIAssistant:
             return 'Ola! Como posso ajudar?'
 
         if intent == 'broad_exploration':
+            if profile:
+                passos_iniciais = profile.get('starter_steps') or []
+                fluxo_comum = passos_iniciais[0] if passos_iniciais else profile.get('overview') or 'Posso detalhar as partes principais.'
+                sequencia = '; '.join(passos_iniciais[1:3]) if len(passos_iniciais) > 1 else profile.get('overview') or ''
+                resposta = [
+                    f'Posso te explicar {topic_key} passo a passo.',
+                    f'O fluxo mais comum comeca assim: {fluxo_comum}',
+                ]
+                if sequencia:
+                    resposta.append(sequencia)
+                refinamentos = ', '.join((profile.get('refinements') or [])[:4])
+                if refinamentos:
+                    resposta.append(f'Se quiser, eu detalho {refinamentos}.')
+                resposta.append('Qual parte primeiro?')
+                return ' '.join(resposta)
             resumo = (doc or {}).get('summary') or (doc or {}).get('snippet') or 'Posso detalhar as partes principais.'
             topicos = []
             if doc and doc.get('checklist'):
@@ -1240,7 +1257,7 @@ class LocalAIAssistant:
         if profile:
             partes = ', '.join(profile.get('refinements')[:4])
             return (
-                f'Posso te ajudar com mais precisao em {topic}. '
+                f'Quero te responder certo. Voce quer saber como funciona {topic} ou uma parte especifica? '
                 f'Normalmente essa area envolve {profile.get("overview").rstrip(".")}. '
                 f'Se quiser, eu detalho {partes}. Qual parte voce quer ver primeiro?'
             )

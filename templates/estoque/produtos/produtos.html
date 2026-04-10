@@ -198,32 +198,14 @@
                 </div>
 
                 <div class="produto-mobile-grid">
-                    <div><strong>Preco:</strong> R$ {{ "%.2f"|format(produto.preco_venda) }}</div>
+                    <div><strong>Preco:</strong> R$ {{ "%.2f"|format(produto.preco_venda or 0) }}</div>
                     <div><strong>Estoque:</strong> {{ produto.quantidade_estoque }}{% if produto.em_falta %} !{% endif %}</div>
-                    <div><strong>Categoria:</strong> {{ produto.categoria.nome }}</div>
-                    <div><strong>Endereco:</strong> {{ produto.endereco.nome if produto.endereco else '-' }}</div>
-                    <div><strong>Movimentacao:</strong> {{ tipos_movimentacao_produto.get((produto.tipo_movimentacao or 'manual'), 'Manual') }}</div>
-                    <div style="grid-column: 1 / -1;"><strong>Fornecedor:</strong> {{ produto.fornecedor.nome if produto.fornecedor else '-' }}</div>
+                    <div><strong>Categoria:</strong> {{ produto.categoria.nome if produto.categoria else '-' }}</div>
+                    <div><strong>Status:</strong> {% if produto.ativo %}Ativo{% else %}Inativo{% endif %}</div>
                 </div>
 
                 <div class="produto-mobile-actions">
-                    <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Ver</a>
-                    <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn-small btn-warning">Editar</a>
-                    {% if produto.fora_picking %}
-                    <form method="POST" action="{{ url_for('baixar_produto_para_picking', produto_id=produto.id) }}" class="inline-form">
-                        {{ csrf_input|safe }}
-                        <button type="submit" class="btn-small btn-success">Baixar picking</button>
-                    </form>
-                    {% else %}
-                    <form method="POST" action="{{ url_for('marcar_produto_fora_picking', produto_id=produto.id) }}" class="inline-form">
-                        {{ csrf_input|safe }}
-                        <button type="submit" class="btn-small btn-secondary">Fora picking</button>
-                    </form>
-                    {% endif %}
-                    <form method="POST" action="{{ url_for('deletar_produto', produto_id=produto.id) }}" class="inline-form" data-confirm-message="Excluir produto {{ produto.nome }}?">
-                        {{ csrf_input|safe }}
-                        <button type="submit" class="btn-small btn-danger">Excluir</button>
-                    </form>
+                    <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Visualizar</a>
                 </div>
             </article>
             {% else %}
@@ -231,18 +213,13 @@
             {% endfor %}
         </div>
 
-        <div class="table-responsive table-scroll-sticky">
-            <table class="table table-produtos">
+        <div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
+            <div class="table-responsive table-scroll-sticky" style="overflow-x: auto;">
+                <table class="table table-produtos">
                 <thead>
                     <tr>
                         <th>Codigo</th>
                         <th>Nome</th>
-                        <th>Categoria</th>
-                        <th>Fornecedor</th>
-                        <th>Endereco</th>
-                        <th class="col-disponibilidade">Disponibilidade</th>
-                        <th>Movimentacao</th>
-                        <th>Picking</th>
                         <th class="col-preco-venda">Preco Venda</th>
                         <th>Estoque</th>
                         <th>Status</th>
@@ -256,28 +233,10 @@
                         <td data-label="Nome">
                             <div class="product-name-cell">
                                 <img src="{{ url_for('static', filename=(produto.imagem_path or produto_imagem_padrao_path)) }}" alt="{{ produto.nome }}" class="product-thumb" loading="lazy" decoding="async">
-                                <span>{{ produto.nome }}</span>
+                                <span>{{ produto.nome }}<br><small class="text-muted">{{ produto.categoria.nome if produto.categoria else 'Sem categoria' }}</small></span>
                             </div>
                         </td>
-                        <td data-label="Categoria">{{ produto.categoria.nome }}</td>
-                        <td data-label="Fornecedor">{{ produto.fornecedor.nome if produto.fornecedor else '-' }}</td>
-                        <td data-label="Endereco">{{ produto.endereco.nome if produto.endereco else '-' }}</td>
-                        <td data-label="Disponibilidade" class="col-disponibilidade">
-                            {% if produto.status_disponibilidade_label == 'Online' %}
-                            <span class="badge badge-success">Online</span>
-                            {% else %}
-                            <span class="badge badge-danger">Off</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Movimentacao">{{ tipos_movimentacao_produto.get((produto.tipo_movimentacao or 'manual'), 'Manual') }}</td>
-                        <td data-label="Picking">
-                            {% if produto.fora_picking %}
-                            <span class="badge badge-danger">Fora</span>
-                            {% else %}
-                            <span class="badge badge-success">Em picking</span>
-                            {% endif %}
-                        </td>
-                        <td data-label="Preco" class="col-preco-venda">R$ {{ "%.2f"|format(produto.preco_venda) }}</td>
+                        <td data-label="Preco" class="col-preco-venda">R$ {{ "%.2f"|format(produto.preco_venda or 0) }}</td>
                         <td data-label="Estoque">
                             {{ produto.quantidade_estoque }}
                             {% if produto.em_falta %}<span class="icon-warning">!</span>{% endif %}
@@ -290,32 +249,17 @@
                             {% endif %}
                         </td>
                         <td data-label="Acoes" class="actions-cell">
-                            <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Ver</a>
-                            <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn-small btn-warning">Editar</a>
-                            {% if produto.fora_picking %}
-                            <form method="POST" action="{{ url_for('baixar_produto_para_picking', produto_id=produto.id) }}" class="inline-form">
-                                {{ csrf_input|safe }}
-                                <button type="submit" class="btn-small btn-success">Baixar picking</button>
-                            </form>
-                            {% else %}
-                            <form method="POST" action="{{ url_for('marcar_produto_fora_picking', produto_id=produto.id) }}" class="inline-form">
-                                {{ csrf_input|safe }}
-                                <button type="submit" class="btn-small btn-secondary">Fora picking</button>
-                            </form>
-                            {% endif %}
-                            <form method="POST" action="{{ url_for('deletar_produto', produto_id=produto.id) }}" class="inline-form" data-confirm-message="Excluir produto {{ produto.nome }}?">
-                                {{ csrf_input|safe }}
-                                <button type="submit" class="btn-small btn-danger">Excluir</button>
-                            </form>
+                            <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn-small btn-info">Visualizar</a>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="12" class="text-center">Nenhum produto encontrado</td>
+                        <td colspan="6" class="text-center">Nenhum produto encontrado</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
         </div>
     </section>
 

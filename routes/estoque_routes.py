@@ -27,6 +27,8 @@ from app.services.master_data import (
 from app.services.recebimento_service import armazenar_recebimento, conferir_recebimento, create_recebimento
 from app.services.estoque_service import registrar_movimentacao_manual, transferir_estoque
 from app.utils.helpers import sem_acentos
+from app.utils.responses import ok, fail
+from app.utils.validation import validate_required_fields
 from app.utils.validators import normalizar_codigo_barras, validar_cpf, validar_cnpj
 from models import (
     AlmoxarifadoAtribuicao,
@@ -59,8 +61,13 @@ from utils.endereco_codigo import (
 
 # pillow serÃ¡ usado para redimensionar/comprimir imagens
 from PIL import Image
+try:
+    import magic
+except Exception:  # pragma: no cover - fallback quando python-magic nao estiver disponivel
+    magic = None
 
 ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
+ALLOWED_IMAGE_MIME_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 DEFAULT_PRODUCT_IMAGE = 'img/placeholders/imgindisponivel.png'
 
 
@@ -173,6 +180,22 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         except ValueError:
             return None
 
+    def _parse_validade_produto(valor):
+        """Normaliza a validade do produto a partir do formulario."""
+        texto = (valor or '').strip()
+        if not texto:
+            return None
+        try:
+            return datetime.strptime(texto, '%Y-%m-%d').date()
+        except ValueError as exc:
+            raise ValidationError('Informe a validade do produto no formato YYYY-MM-DD.') from exc
+
+    def _aplicar_bloqueio_validade_produto(produto):
+        """Tira de venda produtos com validade ja expirada."""
+        if produto and produto.vencido:
+            produto.ativo = False
+            produto.status_disponibilidade = Produto.STATUS_DISPONIVEL_OFF
+
     def _tipo_recebimento_exige_fornecedor(tipo_recebimento):
         tipo_normalizado = (tipo_recebimento or '').strip().lower()
         return (
@@ -265,6 +288,19 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         params = {'context_key': context_key}
         params.update({key: value for key, value in extra.items() if value not in (None, '')})
         return url_for('novo_recebimento_fornecedor', **params)
+
+    def _gerar_codigo_filial_estoque(nome):
+        """Gera um codigo curto e previsivel para manter compatibilidade com cadastros legados."""
+        base = re.sub(r'[^A-Z0-9]+', '', (nome or '').strip().upper())
+        if not base:
+            return None
+        codigo = base[:8]
+        candidato = codigo
+        sufixo = 1
+        while Estoque.query.filter(db.func.lower(Estoque.codigo_filial) == candidato.lower()).first():
+            sufixo += 1
+            candidato = f'{codigo[:6]}{sufixo:02d}'[:8]
+        return candidato
 
     def _resolver_funcionario_por_matricula_ou_nome(texto_busca='', funcionario_id=None):
         if funcionario_id:
@@ -487,6 +523,12 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             return False
         try:
             stream.seek(0)
+            header = stream.read(2048)
+            stream.seek(0)
+            if magic is not None:
+                mime_type = magic.from_buffer(header, mime=True)
+                if mime_type not in ALLOWED_IMAGE_MIME_TYPES:
+                    return False
             img = Image.open(stream)
             img.verify()
             stream.seek(0)
@@ -601,6 +643,71 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         _optimize_image_file(absolute_path)
         return relative_path, None
 
+    def _list_category_uploaded_images():
+        relative_dir = os.path.join('uploads', 'categorias')
+        absolute_dir = os.path.join(app.static_folder, relative_dir)
+        if not os.path.isdir(absolute_dir):
+            return []
+
+        imagens = []
+        for entry in sorted(os.scandir(absolute_dir), key=lambda item: item.name.lower()):
+            if not entry.is_file():
+                continue
+            _, ext = os.path.splitext(entry.name.lower())
+            if ext not in ALLOWED_IMAGE_EXTENSIONS:
+                continue
+            relative_path = os.path.join(relative_dir, entry.name).replace('\\', '/')
+            nome_base = os.path.splitext(entry.name)[0].replace('_', ' ').replace('-', ' ').strip()
+            imagens.append({
+                'path': relative_path,
+                'filename': entry.name,
+                'label': nome_base or entry.name,
+            })
+        return imagens
+
+    def _selected_category_image_path(raw_path):
+        path = (raw_path or '').strip().replace('\\', '/')
+        if not path:
+            return None
+
+        allowed_prefix = 'uploads/categorias/'
+        if not path.startswith(allowed_prefix):
+            return None
+
+        _, ext = os.path.splitext(path.lower())
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            return None
+
+        absolute_path = os.path.normpath(os.path.join(app.static_folder, path))
+        static_root = os.path.normpath(app.static_folder)
+        if os.path.commonpath([absolute_path, static_root]) != static_root:
+            return None
+        if not os.path.exists(absolute_path):
+            return None
+        return path
+
+    def _is_generated_category_image(relative_path):
+        caminho_rel = (relative_path or '').strip().replace('\\', '/')
+        nome_arquivo = os.path.splitext(os.path.basename(caminho_rel))[0]
+        return bool(re.fullmatch(r'[0-9a-f]{32}', nome_arquivo))
+
+    def _delete_category_image_if_unused(relative_path, categoria_id_to_ignore=None):
+        caminho_rel = (relative_path or '').strip().replace('\\', '/')
+        if not caminho_rel:
+            return
+        if not caminho_rel.startswith('uploads/categorias/'):
+            _delete_image_file(caminho_rel)
+            return
+        if not _is_generated_category_image(caminho_rel):
+            return
+
+        query = Categoria.query.filter(Categoria.imagem_path == caminho_rel)
+        if categoria_id_to_ignore:
+            query = query.filter(Categoria.id != categoria_id_to_ignore)
+        if query.first():
+            return
+        _delete_image_file(caminho_rel)
+
     with app.app_context():
         _preencher_imagem_padrao_produtos()
 
@@ -663,6 +770,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 Produto.preco_venda,
                 Produto.quantidade_estoque,
                 Produto.quantidade_minima,
+                Produto.validade,
                 Produto.status_disponibilidade,
                 Produto.tipo_movimentacao,
                 Produto.fora_picking,
@@ -677,16 +785,24 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
         pagination = query.order_by(*ordenacoes_produto[ordenar]).paginate(page=page, per_page=per_page, error_out=False)
         produtos = pagination.items
-        categorias = Categoria.query.order_by(Categoria.nome.asc()).all()
-        estoques = _estoque_query_permitida(funcionario_logado).filter_by(ativo=True).order_by(Estoque.nome.asc()).all()
+        categorias = Categoria.query.options(
+            load_only(Categoria.id, Categoria.nome)
+        ).order_by(Categoria.nome.asc()).all()
+        estoques = _estoque_query_permitida(funcionario_logado).options(
+            load_only(Estoque.id, Estoque.nome, Estoque.codigo_filial, Estoque.ativo)
+        ).filter_by(ativo=True).order_by(Estoque.nome.asc()).all()
         if estoque_id:
-            enderecos = _endereco_query_permitida(funcionario_logado).filter_by(
+            enderecos = _endereco_query_permitida(funcionario_logado).options(
+                load_only(EnderecoEstoque.id, EnderecoEstoque.nome, EnderecoEstoque.estoque_id, EnderecoEstoque.ativo)
+            ).filter_by(
                 ativo=True,
                 estoque_id=estoque_id,
             ).order_by(EnderecoEstoque.nome.asc()).all()
         else:
             enderecos = []
-        fornecedores = Fornecedor.query.filter(
+        fornecedores = Fornecedor.query.options(
+            load_only(Fornecedor.id, Fornecedor.nome, Fornecedor.ativo)
+        ).filter(
             Fornecedor.ativo.is_(True),
             db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
         ).order_by(Fornecedor.nome.asc()).all()
@@ -952,6 +1068,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             'preco_venda': (request.values.get('preco_venda') or '').strip(),
             'quantidade_estoque': (request.values.get('quantidade_estoque') or '0').strip(),
             'quantidade_minima': (request.values.get('quantidade_minima') or '5').strip(),
+            'validade': (request.values.get('validade') or '').strip(),
             'status_disponibilidade': (
                 (request.values.get('status_disponibilidade') or Produto.STATUS_DISPONIVEL_ONLINE).strip().lower()
             ),
@@ -1031,6 +1148,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     preco_venda=float(request.form.get('preco_venda', 0)),
                     quantidade_estoque=int(request.form.get('quantidade_estoque', 0)),
                     quantidade_minima=int(request.form.get('quantidade_minima', 5)),
+                    validade=_parse_validade_produto(request.form.get('validade')),
                     status_disponibilidade=_normalizar_status_disponibilidade(request.form.get('status_disponibilidade')),
                     tipo_movimentacao=_normalizar_tipo_movimentacao(request.form.get('tipo_movimentacao')),
                     fora_picking=(request.form.get('fora_picking') == 'on'),
@@ -1038,6 +1156,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     servico_montagem_disponivel=(request.form.get('servico_montagem_disponivel') == 'on'),
                     servico_instalacao_disponivel=(request.form.get('servico_instalacao_disponivel') == 'on'),
                 )
+                _aplicar_bloqueio_validade_produto(produto)
                 validate_active_product_payload(
                     codigo=produto.codigo,
                     nome=produto.nome,
@@ -1107,12 +1226,14 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if preco_venda_raw is not None and str(preco_venda_raw).strip() != '':
                     produto.preco_venda = float(preco_venda_raw)
                 produto.quantidade_minima = int(request.form.get('quantidade_minima', 5))
+                produto.validade = _parse_validade_produto(request.form.get('validade'))
                 produto.status_disponibilidade = _normalizar_status_disponibilidade(request.form.get('status_disponibilidade'))
                 produto.tipo_movimentacao = _normalizar_tipo_movimentacao(request.form.get('tipo_movimentacao'))
                 produto.fora_picking = (request.form.get('fora_picking') == 'on')
                 produto.prioridade_reabastecimento = request.form.get('prioridade_reabastecimento', type=int)
                 produto.servico_montagem_disponivel = (request.form.get('servico_montagem_disponivel') == 'on')
                 produto.servico_instalacao_disponivel = (request.form.get('servico_instalacao_disponivel') == 'on')
+                _aplicar_bloqueio_validade_produto(produto)
                 validate_active_product_payload(
                     codigo=produto.codigo,
                     nome=produto.nome,
@@ -1519,17 +1640,28 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @app.route('/categorias/nova', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
     def nova_categoria():
+        imagens_categoria_existentes = _list_category_uploaded_images()
         if request.method == 'POST':
             nova_imagem_path = None
             try:
                 nome_categoria = request.form.get('nome')
-                nova_imagem_path, erro_imagem = _save_category_image(
-                    request.files.get('imagem'),
-                    nome_categoria
-                )
-                if erro_imagem:
-                    flash(erro_imagem, 'error')
-                    return redirect(url_for('nova_categoria'))
+                imagem_existente_path = _selected_category_image_path(request.form.get('imagem_existente'))
+                arquivo_imagem = request.files.get('imagem')
+
+                if arquivo_imagem and arquivo_imagem.filename:
+                    nova_imagem_path, erro_imagem = _save_category_image(
+                        arquivo_imagem,
+                        nome_categoria
+                    )
+                    if erro_imagem:
+                        flash(erro_imagem, 'error')
+                        return render_template(
+                            'estoque/categorias/nova_categoria.html',
+                            imagens_categoria_existentes=imagens_categoria_existentes,
+                            imagem_existente_selecionada=imagem_existente_path,
+                        )
+                else:
+                    nova_imagem_path = imagem_existente_path
 
                 categoria = Categoria(
                     nome=nome_categoria,
@@ -1543,14 +1675,19 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 if nova_imagem_path:
-                    _delete_image_file(nova_imagem_path)
+                    _delete_category_image_if_unused(nova_imagem_path)
                 flash(f'Erro ao criar categoria: {str(e)}', 'error')
-        return render_template('estoque/categorias/nova_categoria.html')
+        return render_template(
+            'estoque/categorias/nova_categoria.html',
+            imagens_categoria_existentes=imagens_categoria_existentes,
+            imagem_existente_selecionada=None,
+        )
 
     @app.route('/categorias/<int:categoria_id>/editar', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
     def editar_categoria(categoria_id):
         categoria = Categoria.query.get_or_404(categoria_id)
+        imagens_categoria_existentes = _list_category_uploaded_images()
         if request.method == 'POST':
             nova_imagem_path = None
             imagem_anterior = categoria.imagem_path
@@ -1559,31 +1696,46 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 categoria.descricao = request.form.get('descricao')
                 remover_imagem = request.form.get('remover_imagem') == 'on'
                 arquivo_imagem = request.files.get('imagem')
+                imagem_existente_path = _selected_category_image_path(request.form.get('imagem_existente'))
 
                 if arquivo_imagem and arquivo_imagem.filename:
                     nova_imagem_path, erro_imagem = _save_category_image(arquivo_imagem, categoria.nome)
                     if erro_imagem:
                         flash(erro_imagem, 'error')
-                        return redirect(url_for('editar_categoria', categoria_id=categoria_id))
+                        return render_template(
+                            'estoque/categorias/editar_categoria.html',
+                            categoria=categoria,
+                            imagens_categoria_existentes=imagens_categoria_existentes,
+                            imagem_existente_selecionada=imagem_existente_path or categoria.imagem_path,
+                        )
                     categoria.imagem_path = nova_imagem_path
+                elif imagem_existente_path:
+                    categoria.imagem_path = imagem_existente_path
                 elif remover_imagem:
                     categoria.imagem_path = None
 
                 db.session.commit()
 
                 if nova_imagem_path and imagem_anterior and imagem_anterior != nova_imagem_path:
-                    _delete_image_file(imagem_anterior)
+                    _delete_category_image_if_unused(imagem_anterior, categoria.id)
+                if imagem_existente_path and imagem_anterior and imagem_anterior != imagem_existente_path:
+                    _delete_category_image_if_unused(imagem_anterior, categoria.id)
                 if remover_imagem and imagem_anterior:
-                    _delete_image_file(imagem_anterior)
+                    _delete_category_image_if_unused(imagem_anterior, categoria.id)
 
                 flash(f'Categoria "{categoria.nome}" atualizada com sucesso!', 'success')
                 return redirect(url_for('listar_categorias'))
             except Exception as e:
                 db.session.rollback()
                 if nova_imagem_path:
-                    _delete_image_file(nova_imagem_path)
+                    _delete_category_image_if_unused(nova_imagem_path, categoria.id)
                 flash(f'Erro ao atualizar categoria: {str(e)}', 'error')
-        return render_template('estoque/categorias/editar_categoria.html', categoria=categoria)
+        return render_template(
+            'estoque/categorias/editar_categoria.html',
+            categoria=categoria,
+            imagens_categoria_existentes=imagens_categoria_existentes,
+            imagem_existente_selecionada=categoria.imagem_path,
+        )
 
     @app.route('/categorias/<int:categoria_id>/deletar', methods=['POST'])
     @require_role(*estoque_write_roles)
@@ -1594,7 +1746,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             db.session.delete(categoria)
             db.session.commit()
             if imagem_categoria:
-                _delete_image_file(imagem_categoria)
+                _delete_category_image_if_unused(imagem_categoria, categoria_id)
             flash(f'Categoria "{categoria.nome}" deletada com sucesso!', 'success')
         except Exception as e:
             db.session.rollback()
@@ -1745,6 +1897,13 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao cadastrar fornecedor: {str(e)}', 'error')
+                if flow_metadata.get('return_to'):
+                    return redirect(
+                        build_related_return_url(
+                            'listar_fornecedores',
+                            entity='fornecedor',
+                        )
+                    )
                 return _render_novo_fornecedor()
         return _render_novo_fornecedor()
 
@@ -2653,6 +2812,9 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 descricao = (request.form.get('descricao') or '').strip() or None
                 ativo = (request.form.get('ativo') == 'on')
 
+                if ativo and not codigo_filial and descricao:
+                    codigo_filial = _gerar_codigo_filial_estoque(nome)
+
                 if not nome:
                     flash('Nome do estoque e obrigatorio.', 'error')
                     return redirect(url_for('novo_estoque'))
@@ -2671,6 +2833,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar estoque: {str(e)}', 'error')
+                return render_template('estoque/estoques/novo_estoque.html')
         return render_template('estoque/estoques/novo_estoque.html')
 
     @app.route('/estoques/<int:estoque_id>/editar', methods=['GET', 'POST'])
@@ -2973,9 +3136,11 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except ValueError as e:
                 db.session.rollback()
                 flash(str(e), 'error')
+                return redirect(url_for('novo_endereco_estoque'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao cadastrar endereco: {str(e)}', 'error')
+                return redirect(url_for('novo_endereco_estoque'))
         return render_template(
             'estoque/enderecos/novo_endereco.html',
             estoques=estoques_ativos,
@@ -3153,6 +3318,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     valor_compra=request.form.get('valor_compra', type=float),
                     info_nota=request.form.get('info_nota'),
                     observacoes=request.form.get('observacoes'),
+                    actor=funcionario_logado,
                 )
                 db.session.commit()
                 flash('Movimentacao registrada com sucesso!', 'success')
@@ -3234,7 +3400,12 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 Fornecedor.nome,
             )
         ).order_by(Movimentacao.criado_em.desc()).paginate(page=page, per_page=per_page, error_out=False)
-        produtos = _produto_query_permitida(Produto.query, funcionario_logado).all()
+        produtos = _produto_query_permitida(
+            Produto.query.options(
+                load_only(Produto.id, Produto.nome, Produto.codigo, Produto.quantidade_estoque)
+            ),
+            funcionario_logado,
+        ).order_by(Produto.nome.asc()).all()
         return render_template(
             'estoque/movimentacoes/movimentacoes.html',
             movimentacoes=movimentacoes.items,
@@ -3297,6 +3468,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     valor_compra=request.form.get('valor_compra', type=float),
                     info_nota=request.form.get('info_nota'),
                     observacoes=request.form.get('observacoes'),
+                    actor=funcionario_logado,
                 )
                 db.session.commit()
                 flash('Movimentacao registrada com sucesso!', 'success')
@@ -3403,6 +3575,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     endereco_destino=endereco_destino,
                     motivo=motivo,
                     observacoes=observacoes,
+                    actor=funcionario_logado,
                 )
                 db.session.commit()
                 flash(
@@ -3448,9 +3621,14 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         if cache is not None:
             cached_payload = cache.get(cache_key)
             if cached_payload is not None:
-                return jsonify(cached_payload)
+                if isinstance(cached_payload, dict) and 'data' in cached_payload:
+                    cached_data = cached_payload.get('data')
+                else:
+                    cached_data = cached_payload
+                return ok(cached_data, message='Analytics de estoque (cache)', code='estoque_analytics_cache')
 
-        data_limite = datetime.utcnow() - timedelta(days=periodo)
+        agora = datetime.utcnow()
+        data_limite = agora - timedelta(days=periodo)
         movimentos_raw = _movimentacao_query_permitida(db.session.query(
             db.func.date(Movimentacao.criado_em).label('dia'),
             Movimentacao.tipo.label('tipo'),
@@ -3482,45 +3660,257 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 'saidas': saidas_por_dia.get(key, 0),
             })
 
-        valor_categoria_raw = _produto_query_permitida(db.session.query(
-            Categoria.nome.label('categoria_nome'),
-            db.func.sum(Produto.quantidade_estoque * Produto.preco_custo).label('valor_total')
-        ).join(Produto, Produto.categoria_id == Categoria.id), funcionario_logado).filter(
+        total_produtos_ativos = _produto_query_permitida(Produto.query, funcionario_logado).filter(
             Produto.ativo == True
-        ).group_by(Categoria.id, Categoria.nome).order_by(db.desc('valor_total')).all()
+        ).count()
+        total_unidades = int(_produto_query_permitida(
+            db.session.query(db.func.sum(Produto.quantidade_estoque)),
+            funcionario_logado
+        ).scalar() or 0)
+
+        total_enderecos_ativos = _endereco_query_permitida(funcionario_logado).filter_by(ativo=True).count()
+        enderecos_ocupados = _endereco_query_permitida(funcionario_logado).with_entities(EnderecoEstoque.id).join(
+            Produto, Produto.endereco_id == EnderecoEstoque.id
+        ).filter(
+            EnderecoEstoque.ativo == True,
+            Produto.ativo == True
+        ).distinct().count()
+        enderecos_livres = max(total_enderecos_ativos - enderecos_ocupados, 0)
+        taxa_ocupacao = ((enderecos_ocupados / total_enderecos_ativos) * 100.0) if total_enderecos_ativos else 0.0
+
+        produtos_pareto_raw = _produto_query_permitida(
+            db.session.query(
+                Produto.codigo.label('sku'),
+                Produto.nome.label('produto_nome'),
+                Produto.quantidade_estoque.label('quantidade')
+            ),
+            funcionario_logado
+        ).filter(
+            Produto.ativo == True
+        ).order_by(db.desc('quantidade')).limit(10).all()
+        total_pareto = sum(int(item.quantidade or 0) for item in produtos_pareto_raw) or 0
+        acumulado_pareto = 0.0
+        pareto_produtos = []
+        for item in produtos_pareto_raw:
+            quantidade = int(item.quantidade or 0)
+            acumulado_pareto += quantidade
+            percentual = (quantidade / total_pareto * 100.0) if total_pareto > 0 else 0.0
+            percentual_acumulado = (acumulado_pareto / total_pareto * 100.0) if total_pareto > 0 else 0.0
+            pareto_produtos.append({
+                'sku': item.sku,
+                'produto': item.produto_nome,
+                'quantidade': quantidade,
+                'percentual': percentual,
+                'percentual_acumulado': percentual_acumulado,
+            })
+
+        produtos_ruptura_raw = _produto_query_permitida(
+            Produto.query.options(selectinload(Produto.fornecedor)),
+            funcionario_logado,
+        ).filter(
+            Produto.ativo == True,
+            Produto.quantidade_estoque < Produto.quantidade_minima
+        ).order_by(
+            Produto.quantidade_estoque.asc(),
+            Produto.nome.asc(),
+        ).limit(5).all()
+        produtos_ruptura = [
+            {
+                'produto_id': prod.id,
+                'sku': prod.codigo,
+                'nome': prod.nome,
+                'estoque_atual': int(prod.quantidade_estoque or 0),
+                'estoque_minimo': int(prod.quantidade_minima or 0),
+                'fornecedor': prod.fornecedor.nome if prod.fornecedor else '-',
+            }
+            for prod in produtos_ruptura_raw
+        ]
+
+        data_sem_giro = agora - timedelta(days=60)
+        produtos_sem_giro_raw = _produto_query_permitida(
+            Produto.query,
+            funcionario_logado,
+        ).filter(
+            Produto.ativo == True,
+            ~Produto.movimentacoes.any(Movimentacao.criado_em >= data_sem_giro)
+        ).order_by(Produto.nome.asc()).limit(5).all()
+        produtos_sem_giro = []
+        for prod in produtos_sem_giro_raw:
+            ultima_mov = _movimentacao_query_permitida(
+                Movimentacao.query.filter(Movimentacao.produto_id == prod.id),
+                funcionario_logado,
+            ).order_by(Movimentacao.criado_em.desc()).first()
+            produtos_sem_giro.append({
+                'produto_id': prod.id,
+                'sku': prod.codigo,
+                'nome': prod.nome,
+                'ultima_movimentacao': ultima_mov.criado_em.strftime('%d/%m/%Y %H:%M') if ultima_mov and ultima_mov.criado_em else '-',
+            })
+
+        periodo_kpi_dias = max(periodo, 1)
+        vendas_periodo_unidades = int(_produto_query_permitida(
+            db.session.query(db.func.sum(ItemPedido.quantidade)).join(
+                Produto, Produto.id == ItemPedido.produto_id
+            ).join(
+                Pedido, Pedido.id == ItemPedido.pedido_id
+            ),
+            funcionario_logado
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= data_limite,
+        ).scalar() or 0)
+        estoque_medio_unidades = max(total_unidades, 0)
+        giro_estoque = (vendas_periodo_unidades / estoque_medio_unidades) if estoque_medio_unidades > 0 else 0.0
+        vendas_diarias_medias = (vendas_periodo_unidades / periodo_kpi_dias) if periodo_kpi_dias else 0.0
+        dias_cobertura = (estoque_medio_unidades / vendas_diarias_medias) if vendas_diarias_medias > 0 else 0.0
+
+        recebimentos_pendentes = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.status == RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        ).count()
+
+        alertas = []
+        if produtos_ruptura:
+            alertas.append({
+                'nivel': 'warning',
+                'titulo': 'Produtos abaixo do minimo',
+                'descricao': f'{len(produtos_ruptura)} SKU(s) com reposicao imediata recomendada.',
+            })
+        if total_enderecos_ativos and taxa_ocupacao < 55:
+            alertas.append({
+                'nivel': 'info',
+                'titulo': 'Baixa ocupacao de enderecos',
+                'descricao': f'Ocupacao atual em {taxa_ocupacao:.1f}% dos enderecos ativos.',
+            })
+        if recebimentos_pendentes:
+            alertas.append({
+                'nivel': 'danger',
+                'titulo': 'Recebimentos pendentes de armazenagem',
+                'descricao': f'{recebimentos_pendentes} recebimento(s) aguardando enderecamento/armazenagem.',
+            })
+
+        data_payload = {
+            'periodo_dias': periodo,
+            'kpis': {
+                'giro_estoque': float(giro_estoque),
+                'dias_cobertura': float(dias_cobertura),
+                'produtos_ruptura': len(produtos_ruptura),
+                'taxa_ocupacao_enderecos': float(taxa_ocupacao),
+                'total_unidades': total_unidades,
+            },
+            'movimentacao_diaria': dias,
+            'ocupacao_enderecos': {
+                'ocupados': int(enderecos_ocupados or 0),
+                'livres': int(enderecos_livres or 0),
+                'total': int(total_enderecos_ativos or 0),
+                'taxa_ocupacao_pct': float(taxa_ocupacao),
+            },
+            'pareto_produtos': pareto_produtos,
+            'produtos_em_falta': _produto_query_permitida(Produto.query, funcionario_logado).filter(
+                Produto.quantidade_estoque < Produto.quantidade_minima,
+                Produto.ativo == True
+            ).count(),
+            'produtos_sem_estoque': _produto_query_permitida(Produto.query, funcionario_logado).filter(
+                Produto.ativo == True,
+                Produto.quantidade_estoque <= 0
+            ).count(),
+            'produtos_risco_ruptura': produtos_ruptura,
+            'produtos_sem_giro': produtos_sem_giro,
+            'recebimentos_pendentes_armazenagem': int(recebimentos_pendentes),
+            'alertas': alertas,
+            'comparativos': {
+                'giro_estoque': {'atual': float(giro_estoque), 'variacao_pct': 0.0},
+                'dias_cobertura': {'atual': float(dias_cobertura), 'variacao_pct': 0.0},
+                'produtos_ruptura': {'atual': len(produtos_ruptura), 'variacao_pct': 0.0},
+                'taxa_ocupacao_enderecos': {'atual': float(taxa_ocupacao), 'variacao_pct': 0.0},
+            },
+        }
+        if cache is not None:
+            cache.set(cache_key, data_payload, timeout=60)
+        return ok(data_payload, message='Analytics de estoque carregado', code='estoque_analytics')
+
+    @app.route('/api/estoque/processos-tempo-real')
+    @login_required
+    def processos_tempo_real():
+        funcionario_logado = _funcionario_logado_estoque()
+        agora = datetime.utcnow()
+        limite = agora - timedelta(days=30)
+
+        pedidos_totais = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.criado_em >= limite
+        ).count()
+        pedidos_em_separacao = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO]),
+            Pedido.criado_em >= limite
+        ).count()
+        entregas_em_andamento = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.saiu_para_entrega_em.isnot(None),
+            Pedido.entrega_concluida_em.is_(None),
+            Pedido.status != Pedido.STATUS_CANCELADO,
+            Pedido.criado_em >= limite
+        ).count()
+        entregas_concluidas = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.entrega_concluida_em.isnot(None),
+            Pedido.criado_em >= limite
+        ).count()
+
+        recebimentos_pendentes = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.status == RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        ).count()
+
+        mov_avarias = db.session.query(db.func.count(Movimentacao.id)).filter(
+            Movimentacao.motivo.ilike('%avaria%'),
+            Movimentacao.criado_em >= limite
+        ).scalar() or 0
+        mov_devolucoes = db.session.query(db.func.count(Movimentacao.id)).filter(
+            Movimentacao.motivo.ilike('%devolucao%'),
+            Movimentacao.criado_em >= limite
+        ).scalar() or 0
+
+        def _pct(parcial, total):
+            total = total or 1
+            return round((parcial / total) * 100.0, 1)
 
         payload = {
             'success': True,
-            'message': 'Analytics de estoque carregado com sucesso.',
             'data': {
-                'periodo_dias': periodo,
-                'movimentacao_diaria': dias,
-                'valor_por_categoria': [
-                    {
-                        'categoria': item.categoria_nome,
-                        'valor_total': float(item.valor_total or 0)
-                    }
-                    for item in valor_categoria_raw
-                ],
-                'produtos_em_falta': _produto_query_permitida(Produto.query, funcionario_logado).filter(
-                    Produto.quantidade_estoque < Produto.quantidade_minima,
-                    Produto.ativo == True
-                ).count(),
-                'produtos_sem_estoque': _produto_query_permitida(Produto.query, funcionario_logado).filter(
-                    Produto.ativo == True,
-                    Produto.quantidade_estoque <= 0
-                ).count()
+                'janela_dias': 30,
+                'pedidos_totais': pedidos_totais,
+                'separacao': {
+                    'em_andamento': pedidos_em_separacao,
+                    'pct': _pct(pedidos_em_separacao, max(pedidos_totais, 1)),
+                },
+                'entregas': {
+                    'em_andamento': entregas_em_andamento,
+                    'concluidas': entregas_concluidas,
+                    'pct_concluidas': _pct(entregas_concluidas, max(pedidos_totais, 1)),
+                },
+                'recebimentos_pendentes': recebimentos_pendentes,
+                'avarias_30d': int(mov_avarias),
+                'devolucoes_30d': int(mov_devolucoes),
             }
         }
-        if cache is not None:
-            cache.set(cache_key, payload, timeout=120)
         return jsonify(payload)
+
+    @app.route('/estoque/painel-tempo-real')
+    @login_required
+    def painel_tempo_real_estoque():
+        funcionario = _funcionario_logado_estoque()
+        return render_template(
+            'estoque/tempo_real.html',
+            funcionario_logado=funcionario,
+        )
 
     @app.route('/relatorios')
     @login_required
     def relatorios():
         empresa = _obter_empresa_config_estoque()
         funcionario_logado = _funcionario_logado_estoque()
+        cache = extensions.cache
+        cache_key = f'view:relatorios:{getattr(funcionario_logado, "id", "anon")}'
+        if cache is not None:
+            html = cache.get(cache_key)
+            if html is not None:
+                return html
         total_produtos = _produto_query_permitida(Produto.query, funcionario_logado).count()
         produtos_ativos = _produto_query_permitida(Produto.query, funcionario_logado).filter_by(ativo=True).count()
         produtos_inativos = _produto_query_permitida(Produto.query, funcionario_logado).filter_by(ativo=False).count()
@@ -3600,6 +3990,73 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             if total_enderecos_ativos > 0 else 0.0
         )
 
+        periodo_kpi_dias = 30
+        data_kpi_limite = datetime.utcnow() - timedelta(days=periodo_kpi_dias)
+        cmv_periodo_raw = _produto_query_permitida(
+            db.session.query(
+                db.func.sum(ItemPedido.quantidade * Produto.preco_custo)
+            ).join(Produto, Produto.id == ItemPedido.produto_id).join(Pedido, Pedido.id == ItemPedido.pedido_id),
+            funcionario_logado
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= data_kpi_limite,
+        ).scalar()
+        cmv_periodo = float(cmv_periodo_raw or 0.0)
+        cmv_diario = (cmv_periodo / periodo_kpi_dias) if periodo_kpi_dias > 0 else 0.0
+        estoque_medio_periodo = float(valor_total or 0.0)
+        dias_cobertura_estoque = (estoque_medio_periodo / cmv_diario) if cmv_diario > 0 else 0.0
+        giro_estoque = (cmv_periodo / estoque_medio_periodo) if estoque_medio_periodo > 0 else 0.0
+
+        recebimentos_periodo = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.criado_em >= data_kpi_limite,
+            RecebimentoFornecedor.status.in_([
+                RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM,
+                RecebimentoFornecedor.STATUS_CONCLUIDO,
+            ]),
+        )
+        itens_recebidos_periodo = db.session.query(
+            db.func.sum(RecebimentoItem.qtd_recebida),
+            db.func.sum(RecebimentoItem.qtd_avaria),
+        ).join(
+            RecebimentoFornecedor,
+            RecebimentoFornecedor.id == RecebimentoItem.recebimento_id
+        ).filter(
+            RecebimentoFornecedor.criado_em >= data_kpi_limite,
+            RecebimentoFornecedor.status.in_([
+                RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM,
+                RecebimentoFornecedor.STATUS_CONCLUIDO,
+            ]),
+        ).first()
+        total_itens_recebidos = int((itens_recebidos_periodo[0] or 0) if itens_recebidos_periodo else 0)
+        total_itens_avariados = int((itens_recebidos_periodo[1] or 0) if itens_recebidos_periodo else 0)
+        taxa_avarias_recebimento = (
+            (total_itens_avariados / total_itens_recebidos) * 100.0
+            if total_itens_recebidos > 0 else 0.0
+        )
+
+        itens_vendidos_periodo_raw = db.session.query(
+            db.func.sum(ItemPedido.quantidade)
+        ).join(
+            Pedido,
+            Pedido.id == ItemPedido.pedido_id
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= data_kpi_limite,
+        ).scalar()
+        itens_devolvidos_periodo_raw = _movimentacao_query_permitida(
+            db.session.query(db.func.sum(Movimentacao.quantidade)),
+            funcionario_logado
+        ).filter(
+            Movimentacao.criado_em >= data_kpi_limite,
+            db.func.lower(Movimentacao.motivo).like('%devol%'),
+        ).scalar()
+        total_itens_vendidos = int(itens_vendidos_periodo_raw or 0)
+        total_itens_devolvidos = int(itens_devolvidos_periodo_raw or 0)
+        taxa_devolucao_produtos = (
+            (total_itens_devolvidos / total_itens_vendidos) * 100.0
+            if total_itens_vendidos > 0 else 0.0
+        )
+
         produtos_ativos_total = max(int(produtos_ativos or 0), 1)
         taxa_reposicao_necessaria = (len(produtos_em_falta) / produtos_ativos_total) * 100.0
 
@@ -3664,7 +4121,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 'Operacao equilibrada. Mantenha rotina de reposicao preventiva e revisao semanal por endereco.'
             )
 
-        return render_template(
+        html = render_template(
             'estoque/relatorios/relatorios.html',
             empresa=empresa,
             total_produtos=total_produtos,
@@ -3675,6 +4132,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             produtos_sem_estoque=produtos_sem_estoque,
             valor_total_estoque=f'{valor_total:.2f}',
             custo_medio_estoque=f'{custo_medio_estoque:.2f}',
+            cmv_periodo=cmv_periodo,
+            dias_cobertura_estoque=dias_cobertura_estoque,
+            giro_estoque=giro_estoque,
+            taxa_avarias_recebimento=taxa_avarias_recebimento,
+            taxa_devolucao_produtos=taxa_devolucao_produtos,
+            total_itens_recebidos=total_itens_recebidos,
+            total_itens_avariados=total_itens_avariados,
+            total_itens_vendidos=total_itens_vendidos,
+            total_itens_devolvidos=total_itens_devolvidos,
             produtos_maior_valor=produtos_maior_valor,
             movimentacoes_mes=movimentacoes_mes,
             entradas_mes=entradas_mes,
@@ -3693,4 +4159,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             risco_operacional_score=risco_operacional_score,
             dicas_estoque_inteligente=dicas_estoque_inteligente,
         )
+        if cache is not None:
+            cache.set(cache_key, html, timeout=300)
+        return html
 

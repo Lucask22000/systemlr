@@ -1,18 +1,20 @@
 ﻿from datetime import datetime, timedelta
+from collections import deque
 import os
 import json
 import csv
 import io
 import re
+import unicodedata
 from urllib.parse import urlparse
 
-from flask import Response, flash, jsonify, redirect, render_template, request, send_from_directory, session, url_for
-from sqlalchemy.exc import OperationalError
+from flask import Response, flash, has_request_context, jsonify, redirect, render_template, request, send_from_directory, session, url_for
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import selectinload
 from werkzeug.utils import secure_filename
 
-from models import Categoria, ClientePublico, EnderecoEstoque, Estoque, Fornecedor, Funcionario, FuncaoRH, PerfilAcesso, LancamentoFinanceiro, Movimentacao, Produto, PermissaoAcesso, Caixa, MovimentacaoCaixa, Pedido, ItemPedido, Garcom, EmpresaConfig, AuditoriaEvento, AssistenteLocalFeedback, EquipamentoMovimentacao, ManutencaoEquipamento, OrdemServico, ChamadoInterno, FundoSolicitacao, RecebimentoFornecedor, AlmoxarifadoAtribuicao, funcionario_estoques, db
+from models import Categoria, ClientePublico, EnderecoEstoque, Estoque, Fornecedor, Funcionario, FuncaoRH, PerfilAcesso, LancamentoFinanceiro, Mesa, Movimentacao, ProcessoEvento, Produto, PermissaoAcesso, Caixa, MovimentacaoCaixa, Pedido, ItemPedido, Garcom, EmpresaConfig, AuditoriaEvento, AssistenteLocalFeedback, EquipamentoMovimentacao, ManutencaoEquipamento, OrdemServico, ChamadoInterno, FundoSolicitacao, RecebimentoFornecedor, AlmoxarifadoAtribuicao, funcionario_estoques, db
 from routes.estoque_routes import register_estoque_routes
 from routes.vendas_routes import register_vendas_routes
 from routes.public_routes import obter_resumo_carrinho_site, register_public_routes
@@ -33,7 +35,9 @@ from app.helpers import (
     _register_login_attempt,
     get_funcionario_logado,
 )
+from app.user_messages import build_flash_message, flash_category_for_status, resolve_action
 from app.services.assistente_service import LocalAIAssistant
+from app.services.permissao_service import PermissaoService
 from app.services.estoque_service import aplicar_movimentacao_estoque
 from app.services.financeiro_operacional import aplicar_acao_fundo, criar_lancamento_financeiro, criar_solicitacao_fundo
 from app.services.master_data import (
@@ -42,7 +46,9 @@ from app.services.master_data import (
     validate_payment_options_configuration,
 )
 from app.services.rh_service import sincronizar_garcom_funcionario
+from app.services.traceability import build_timeline
 from app.constants import (
+    API_FALLBACK_ACCESS_PAGES,
     CARGOS_PERMANENTES,
     ENDPOINT_TO_PAGINA,
     NIVEIS_ORGANOGRAMA,
@@ -185,14 +191,13 @@ def _paginas_efetivas_funcionario(funcionario):
         permitidas = set(PAGINAS_SISTEMA.keys())
     else:
         mapa_personalizado = _mapa_permissoes_personalizadas_funcionario(funcionario)
+        paginas_base = _paginas_perfil_acesso(funcionario.perfil_acesso)
         bloqueadas = {
             pagina
             for pagina, permitido in mapa_personalizado.items()
             if not permitido
         }
-        permitidas = _carregar_paginas_json(
-            getattr(funcionario.perfil_acesso, 'permissoes_padrao', None)
-        )
+        permitidas = set(paginas_base)
         permitidas.update(
             pagina
             for pagina, permitido in mapa_personalizado.items()
@@ -200,6 +205,17 @@ def _paginas_efetivas_funcionario(funcionario):
         )
         permitidas.difference_update(bloqueadas)
         permitidas = _expandir_paginas_relacionadas(permitidas, bloqueadas=bloqueadas)
+        if not permitidas and has_request_context():
+            app.logger.warning(
+                'menu_debug_empty funcionario_id=%s role=%s controle=%s perfil_acesso_id=%s endpoint=%s mapa_personalizado=%s paginas_base=%s',
+                getattr(funcionario, 'id', None),
+                getattr(funcionario, 'role', None),
+                getattr(funcionario, 'controle_acesso_ativo', None),
+                getattr(funcionario, 'perfil_acesso_id', None),
+                request.endpoint,
+                mapa_personalizado,
+                sorted(paginas_base),
+            )
 
     permitidas.add('ajuda')
     return permitidas
@@ -341,250 +357,298 @@ def _garantir_admin_primeiro_acesso():
         raise
 
 
+def _runtime_schema_patches_enabled():
+    configurado = os.environ.get('SYSTEMLR_ENABLE_RUNTIME_SCHEMA_PATCHES')
+    if configurado is None:
+        return app.config.get('ENV_NAME') == 'testing'
+    return configurado.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 with app.app_context():
-    # A estrutura do schema deve ser aplicada via Flask-Migrate/Alembic.
     inspector = inspect(db.engine)
-    if inspector.has_table('funcoes_rh'):
-        colunas_funcoes = {col['name'] for col in inspector.get_columns('funcoes_rh')}
-        if 'permissoes_padrao' not in colunas_funcoes:
-            try:
-                db.session.execute(text('ALTER TABLE funcoes_rh ADD COLUMN permissoes_padrao TEXT'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if not inspector.has_table('perfis_acesso'):
-        PerfilAcesso.__table__.create(bind=db.engine, checkfirst=True)
-    if inspector.has_table('funcionarios'):
-        colunas_funcionarios = {col['name'] for col in inspector.get_columns('funcionarios')}
-        if 'superior_id' not in colunas_funcionarios:
-            try:
-                db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN superior_id INTEGER'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-        colunas_novas_funcionarios = {
-            'numero_cadastro': 'INTEGER',
-            'matricula': 'VARCHAR(30)',
-            'cpf': 'VARCHAR(14)',
-            'rg': 'VARCHAR(20)',
-            'data_nascimento': 'DATE',
-            'celular': 'VARCHAR(30)',
-            'cep': 'VARCHAR(12)',
-            'endereco': 'VARCHAR(180)',
-            'bairro': 'VARCHAR(100)',
-            'cidade': 'VARCHAR(100)',
-            'estado': 'VARCHAR(2)',
-            'imagem_perfil_path': 'VARCHAR(255)',
-            'permitir_editar_imagem_perfil': 'INTEGER DEFAULT 0',
-            'senha_provisoria': 'INTEGER DEFAULT 0',
-            'departamento': 'VARCHAR(80)',
-            'time_nome': 'VARCHAR(80)',
-            'nivel_organograma': 'VARCHAR(40)',
-            'pagina_inicial': "VARCHAR(30) DEFAULT 'dashboard'",
-            'receber_alertas': 'INTEGER DEFAULT 1',
-            'restricao_estoques_ativa': 'INTEGER DEFAULT 0',
-            'estoque_principal_id': 'INTEGER',
-            'perfil_acesso_id': 'INTEGER',
-        }
-        for coluna_nome, definicao in colunas_novas_funcionarios.items():
-            if coluna_nome in colunas_funcionarios:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE funcionarios ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('permissoes_acesso'):
-        colunas_permissoes_acesso = {col['name'] for col in inspector.get_columns('permissoes_acesso')}
-        if 'permitido' not in colunas_permissoes_acesso:
-            try:
-                db.session.execute(text('ALTER TABLE permissoes_acesso ADD COLUMN permitido INTEGER DEFAULT 1'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('estoques'):
-        colunas_estoques = {col['name'] for col in inspector.get_columns('estoques')}
-        colunas_novas_estoques = {
-            'codigo_filial': 'VARCHAR(20)',
-        }
-        for coluna_nome, definicao in colunas_novas_estoques.items():
-            if coluna_nome in colunas_estoques:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE estoques ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('empresa_config'):
-        colunas_empresa = {col['name'] for col in inspector.get_columns('empresa_config')}
-        colunas_novas_empresa = {
-            'codigo_empresa': 'VARCHAR(20)',
-            'favicon_path': 'VARCHAR(255)',
-            'app_icon_path': 'VARCHAR(255)',
-            'separacao_entrega_ativa': 'INTEGER DEFAULT 1',
-            'emissao_etiqueta_entrega_ativa': 'INTEGER DEFAULT 1',
-            'separacao_entrega_unir_vendas_off': 'INTEGER DEFAULT 0',
-            'roteirizacao_entrega_ativa': 'INTEGER DEFAULT 1',
-            'emissao_nota_entrega_ativa': 'INTEGER DEFAULT 1',
-            'entrega_local_saida_padrao': 'VARCHAR(160)',
-            'entrega_veiculo_padrao': 'VARCHAR(80)',
-            'entrega_motorista_padrao': 'VARCHAR(120)',
-            'entrega_horario_fechamento_roteirizacao': 'VARCHAR(5)',
-            'entrega_veiculos_json': 'TEXT',
-            'entrega_terceirizadas_json': 'TEXT',
-            'entrega_regras_roteirizacao_json': 'TEXT',
-            'servicos_tecnicos_ativos': 'INTEGER DEFAULT 0',
-            'servico_montagem_instalacao_ativo': 'INTEGER DEFAULT 0',
-            'tipo_negocio': "VARCHAR(30) DEFAULT 'conveniencia'",
-            'canal_operacao': "VARCHAR(30) DEFAULT 'hibrido'",
-            'ecommerce_ativo': 'INTEGER DEFAULT 1',
-            'ecom_cor_primaria': "VARCHAR(20) DEFAULT '#ff7848'",
-            'ecom_cor_secundaria': "VARCHAR(20) DEFAULT '#ff5a2a'",
-            'ecom_titulo_banner': 'VARCHAR(140)',
-            'ecom_subtitulo_banner': 'VARCHAR(255)',
-            'ecom_texto_promocao': 'VARCHAR(255)',
-            'ecom_banner_path': 'VARCHAR(255)',
-            'ecom_favicon_path': 'VARCHAR(255)',
-            'ecom_produto_placeholder_path': 'VARCHAR(255)',
-            'ecom_banners_json': 'TEXT',
-            'ecom_campanhas_json': 'TEXT',
-            'ecom_footer_bg': "VARCHAR(20) DEFAULT '#1f2b38'",
-            'ecom_footer_texto': 'VARCHAR(255)',
-            'ecom_footer_contato': 'VARCHAR(255)',
-            'ecom_footer_creditos': 'VARCHAR(255)',
-            'pagamentos_pdv_json': 'TEXT',
-            'pagamentos_ecommerce_json': 'TEXT',
-            'integracoes_pdv_json': 'TEXT',
-            'integracoes_ecommerce_json': 'TEXT',
-            'reposicao_loja_fisica_ativa': 'INTEGER DEFAULT 1',
-            'emissao_etiqueta_loja_ativa': 'INTEGER DEFAULT 1',
-            'emissao_etiqueta_endereco_ativa': 'INTEGER DEFAULT 1',
-        }
-        for coluna_nome, definicao in colunas_novas_empresa.items():
-            if coluna_nome in colunas_empresa:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE empresa_config ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if not inspector.has_table('funcionario_estoques'):
-        funcionario_estoques.create(bind=db.engine, checkfirst=True)
-    if inspector.has_table('pedidos'):
-        colunas_pedidos = {col['name'] for col in inspector.get_columns('pedidos')}
-        colunas_novas_pedidos = {
-            'separacao_entrega_concluida': 'INTEGER DEFAULT 0',
-            'separacao_entrega_em': 'DATETIME',
-            'etiqueta_entrega_emitida_em': 'DATETIME',
-            'rota_entrega': 'VARCHAR(120)',
-            'ordem_rota': 'INTEGER',
-            'local_saida': 'VARCHAR(160)',
-            'veiculo_tipo': 'VARCHAR(80)',
-            'veiculo_placa': 'VARCHAR(20)',
-            'motorista_nome': 'VARCHAR(120)',
-            'empresa_terceirizada': 'VARCHAR(150)',
-            'nota_fiscal_numero': 'VARCHAR(60)',
-            'nota_fiscal_chave': 'VARCHAR(120)',
-            'nota_fiscal_emitida_em': 'DATETIME',
-            'saiu_para_entrega_em': 'DATETIME',
-            'entrega_concluida_em': 'DATETIME',
-        }
-        for coluna_nome, definicao in colunas_novas_pedidos.items():
-            if coluna_nome in colunas_pedidos:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE pedidos ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('produtos'):
-        colunas_produtos = {col['name'] for col in inspector.get_columns('produtos')}
-        colunas_novas_produtos = {
-            'tipo_movimentacao': "VARCHAR(20) DEFAULT 'manual'",
-            'fora_picking': 'INTEGER DEFAULT 0',
-            'prioridade_reabastecimento': 'INTEGER',
-            'ultima_baixa_picking_em': 'DATETIME',
-            'servico_montagem_disponivel': 'INTEGER DEFAULT 0',
-            'servico_instalacao_disponivel': 'INTEGER DEFAULT 0',
-        }
-        for coluna_nome, definicao in colunas_novas_produtos.items():
-            if coluna_nome in colunas_produtos:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE produtos ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('recebimentos_fornecedor'):
-        colunas_recebimentos = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
-        if 'tipo_recebimento' not in colunas_recebimentos:
-            try:
-                db.session.execute(
-                    text(
-                        "ALTER TABLE recebimentos_fornecedor "
-                        "ADD COLUMN tipo_recebimento VARCHAR(40) DEFAULT 'compra_revenda'"
+    if _runtime_schema_patches_enabled():
+        app.logger.warning(
+            'Runtime schema patches habilitados. Use apenas como contingencia temporaria e aplique '
+            '`flask db upgrade` para manter o schema via migrations formais.'
+        )
+        if inspector.has_table('funcoes_rh'):
+            colunas_funcoes = {col['name'] for col in inspector.get_columns('funcoes_rh')}
+            if 'permissoes_padrao' not in colunas_funcoes:
+                try:
+                    db.session.execute(text('ALTER TABLE funcoes_rh ADD COLUMN permissoes_padrao TEXT'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('perfis_acesso'):
+            PerfilAcesso.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('processo_eventos'):
+            ProcessoEvento.__table__.create(bind=db.engine, checkfirst=True)
+        if inspector.has_table('funcionarios'):
+            colunas_funcionarios = {col['name'] for col in inspector.get_columns('funcionarios')}
+            if 'superior_id' not in colunas_funcionarios:
+                try:
+                    db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN superior_id INTEGER'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            colunas_novas_funcionarios = {
+                'numero_cadastro': 'INTEGER',
+                'matricula': 'VARCHAR(30)',
+                'cpf': 'VARCHAR(14)',
+                'rg': 'VARCHAR(20)',
+                'data_nascimento': 'DATE',
+                'celular': 'VARCHAR(30)',
+                'cep': 'VARCHAR(12)',
+                'endereco': 'VARCHAR(180)',
+                'bairro': 'VARCHAR(100)',
+                'cidade': 'VARCHAR(100)',
+                'estado': 'VARCHAR(2)',
+                'imagem_perfil_path': 'VARCHAR(255)',
+                'permitir_editar_imagem_perfil': 'INTEGER DEFAULT 0',
+                'senha_provisoria': 'INTEGER DEFAULT 0',
+                'departamento': 'VARCHAR(80)',
+                'time_nome': 'VARCHAR(80)',
+                'nivel_organograma': 'VARCHAR(40)',
+                'pagina_inicial': "VARCHAR(30) DEFAULT 'dashboard'",
+                'receber_alertas': 'INTEGER DEFAULT 1',
+                'restricao_estoques_ativa': 'INTEGER DEFAULT 0',
+                'estoque_principal_id': 'INTEGER',
+                'perfil_acesso_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_funcionarios.items():
+                if coluna_nome in colunas_funcionarios:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE funcionarios ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('permissoes_acesso'):
+            colunas_permissoes_acesso = {col['name'] for col in inspector.get_columns('permissoes_acesso')}
+            if 'permitido' not in colunas_permissoes_acesso:
+                try:
+                    db.session.execute(text('ALTER TABLE permissoes_acesso ADD COLUMN permitido INTEGER DEFAULT 1'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('estoques'):
+            colunas_estoques = {col['name'] for col in inspector.get_columns('estoques')}
+            colunas_novas_estoques = {
+                'codigo_filial': 'VARCHAR(20)',
+            }
+            for coluna_nome, definicao in colunas_novas_estoques.items():
+                if coluna_nome in colunas_estoques:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE estoques ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('movimentacoes'):
+            colunas_movimentacoes = {col['name'] for col in inspector.get_columns('movimentacoes')}
+            colunas_novas_movimentacoes = {
+                'pedido_id': 'INTEGER',
+                'recebimento_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_movimentacoes.items():
+                if coluna_nome in colunas_movimentacoes:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE movimentacoes ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('lancamentos_financeiros'):
+            colunas_lancamentos = {col['name'] for col in inspector.get_columns('lancamentos_financeiros')}
+            colunas_novas_lancamentos = {
+                'pedido_id': 'INTEGER',
+                'recebimento_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_lancamentos.items():
+                if coluna_nome in colunas_lancamentos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE lancamentos_financeiros ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('empresa_config'):
+            colunas_empresa = {col['name'] for col in inspector.get_columns('empresa_config')}
+            colunas_novas_empresa = {
+                'codigo_empresa': 'VARCHAR(20)',
+                'favicon_path': 'VARCHAR(255)',
+                'app_icon_path': 'VARCHAR(255)',
+                'separacao_entrega_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_entrega_ativa': 'INTEGER DEFAULT 1',
+                'separacao_entrega_unir_vendas_off': 'INTEGER DEFAULT 0',
+                'roteirizacao_entrega_ativa': 'INTEGER DEFAULT 1',
+                'emissao_nota_entrega_ativa': 'INTEGER DEFAULT 1',
+                'entrega_local_saida_padrao': 'VARCHAR(160)',
+                'entrega_veiculo_padrao': 'VARCHAR(80)',
+                'entrega_motorista_padrao': 'VARCHAR(120)',
+                'entrega_horario_fechamento_roteirizacao': 'VARCHAR(5)',
+                'entrega_veiculos_json': 'TEXT',
+                'entrega_terceirizadas_json': 'TEXT',
+                'entrega_regras_roteirizacao_json': 'TEXT',
+                'servicos_tecnicos_ativos': 'INTEGER DEFAULT 0',
+                'servico_montagem_instalacao_ativo': 'INTEGER DEFAULT 0',
+                'tipo_negocio': "VARCHAR(30) DEFAULT 'conveniencia'",
+                'canal_operacao': "VARCHAR(30) DEFAULT 'hibrido'",
+                'ecommerce_ativo': 'INTEGER DEFAULT 1',
+                'ecom_cor_primaria': "VARCHAR(20) DEFAULT '#ff7848'",
+                'ecom_cor_secundaria': "VARCHAR(20) DEFAULT '#ff5a2a'",
+                'ecom_card_bg': "VARCHAR(20) DEFAULT '#ffffff'",
+                'ecom_titulo_banner': 'VARCHAR(140)',
+                'ecom_subtitulo_banner': 'VARCHAR(255)',
+                'ecom_texto_promocao': 'VARCHAR(255)',
+                'ecom_banner_path': 'VARCHAR(255)',
+                'ecom_favicon_path': 'VARCHAR(255)',
+                'ecom_produto_placeholder_path': 'VARCHAR(255)',
+                'ecom_banners_json': 'TEXT',
+                'ecom_campanhas_json': 'TEXT',
+                'ecom_cupons_json': 'TEXT',
+                'ecom_footer_bg': "VARCHAR(20) DEFAULT '#1f2b38'",
+                'ecom_footer_texto': 'VARCHAR(255)',
+                'ecom_footer_contato': 'VARCHAR(255)',
+                'ecom_footer_creditos': 'VARCHAR(255)',
+                'pagamentos_pdv_json': 'TEXT',
+                'pagamentos_ecommerce_json': 'TEXT',
+                'integracoes_pdv_json': 'TEXT',
+                'integracoes_ecommerce_json': 'TEXT',
+                'reposicao_loja_fisica_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_loja_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_endereco_ativa': 'INTEGER DEFAULT 1',
+            }
+            for coluna_nome, definicao in colunas_novas_empresa.items():
+                if coluna_nome in colunas_empresa:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE empresa_config ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('funcionario_estoques'):
+            funcionario_estoques.create(bind=db.engine, checkfirst=True)
+        if inspector.has_table('pedidos'):
+            colunas_pedidos = {col['name'] for col in inspector.get_columns('pedidos')}
+            colunas_novas_pedidos = {
+                'cliente_publico_id': 'INTEGER',
+                'codigo_rastreio': 'VARCHAR(100)',
+                'transportadora': 'VARCHAR(100)',
+                'data_estimada_entrega': 'DATE',
+                'separacao_entrega_concluida': 'INTEGER DEFAULT 0',
+                'separacao_entrega_em': 'DATETIME',
+                'etiqueta_entrega_emitida_em': 'DATETIME',
+                'rota_entrega': 'VARCHAR(120)',
+                'ordem_rota': 'INTEGER',
+                'local_saida': 'VARCHAR(160)',
+                'veiculo_tipo': 'VARCHAR(80)',
+                'veiculo_placa': 'VARCHAR(20)',
+                'motorista_nome': 'VARCHAR(120)',
+                'empresa_terceirizada': 'VARCHAR(150)',
+                'nota_fiscal_numero': 'VARCHAR(60)',
+                'nota_fiscal_chave': 'VARCHAR(120)',
+                'nota_fiscal_emitida_em': 'DATETIME',
+                'saiu_para_entrega_em': 'DATETIME',
+                'entrega_concluida_em': 'DATETIME',
+            }
+            for coluna_nome, definicao in colunas_novas_pedidos.items():
+                if coluna_nome in colunas_pedidos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE pedidos ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('produtos'):
+            colunas_produtos = {col['name'] for col in inspector.get_columns('produtos')}
+            colunas_novas_produtos = {
+                'tipo_movimentacao': "VARCHAR(20) DEFAULT 'manual'",
+                'fora_picking': 'INTEGER DEFAULT 0',
+                'prioridade_reabastecimento': 'INTEGER',
+                'ultima_baixa_picking_em': 'DATETIME',
+                'servico_montagem_disponivel': 'INTEGER DEFAULT 0',
+                'servico_instalacao_disponivel': 'INTEGER DEFAULT 0',
+            }
+            for coluna_nome, definicao in colunas_novas_produtos.items():
+                if coluna_nome in colunas_produtos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE produtos ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('recebimentos_fornecedor'):
+            colunas_recebimentos = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+            if 'tipo_recebimento' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN tipo_recebimento VARCHAR(40) DEFAULT 'compra_revenda'"
+                        )
                     )
-                )
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-        if 'local_recebimento_id' not in colunas_recebimentos:
-            try:
-                db.session.execute(
-                    text(
-                        "ALTER TABLE recebimentos_fornecedor "
-                        "ADD COLUMN local_recebimento_id INTEGER"
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            if 'local_recebimento_id' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN local_recebimento_id INTEGER"
+                        )
                     )
-                )
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-        if 'recebedor_funcionario_id' not in colunas_recebimentos:
-            try:
-                db.session.execute(
-                    text(
-                        "ALTER TABLE recebimentos_fornecedor "
-                        "ADD COLUMN recebedor_funcionario_id INTEGER"
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            if 'recebedor_funcionario_id' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN recebedor_funcionario_id INTEGER"
+                        )
                     )
-                )
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('clientes_publicos'):
+            ClientePublico.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('lancamentos_financeiros'):
+            LancamentoFinanceiro.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('fundos_solicitacoes'):
+            FundoSolicitacao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('equipamentos_movimentacao'):
+            EquipamentoMovimentacao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('manutencoes_equipamento'):
+            ManutencaoEquipamento.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('ordens_servico'):
+            OrdemServico.__table__.create(bind=db.engine, checkfirst=True)
+        else:
+            colunas_ordens_servico = {col['name'] for col in inspector.get_columns('ordens_servico')}
+            colunas_novas_ordens_servico = {
+                'pedido_id': 'INTEGER',
+                'iniciado_em': 'DATETIME',
+                'retorno_tecnico': 'TEXT',
+            }
+            for coluna_nome, definicao in colunas_novas_ordens_servico.items():
+                if coluna_nome in colunas_ordens_servico:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE ordens_servico ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('chamados_internos'):
+            ChamadoInterno.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('almoxarifado_atribuicoes'):
+            AlmoxarifadoAtribuicao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('assistente_local_feedback'):
+            AssistenteLocalFeedback.__table__.create(bind=db.engine, checkfirst=True)
+
     _garantir_cargos_permanentes()
     _migrar_funcoes_legadas_para_perfis()
-    if not inspector.has_table('clientes_publicos'):
-        ClientePublico.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('lancamentos_financeiros'):
-        LancamentoFinanceiro.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('fundos_solicitacoes'):
-        FundoSolicitacao.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('equipamentos_movimentacao'):
-        EquipamentoMovimentacao.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('manutencoes_equipamento'):
-        ManutencaoEquipamento.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('ordens_servico'):
-        OrdemServico.__table__.create(bind=db.engine, checkfirst=True)
-    else:
-        colunas_ordens_servico = {col['name'] for col in inspector.get_columns('ordens_servico')}
-        colunas_novas_ordens_servico = {
-            'pedido_id': 'INTEGER',
-            'iniciado_em': 'DATETIME',
-            'retorno_tecnico': 'TEXT',
-        }
-        for coluna_nome, definicao in colunas_novas_ordens_servico.items():
-            if coluna_nome in colunas_ordens_servico:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE ordens_servico ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if not inspector.has_table('chamados_internos'):
-        ChamadoInterno.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('almoxarifado_atribuicoes'):
-        AlmoxarifadoAtribuicao.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('assistente_local_feedback'):
-        AssistenteLocalFeedback.__table__.create(bind=db.engine, checkfirst=True)
     try:
         db.session.query(Produto).filter(
             Produto.imagem_path == 'img/placeholders/produto-sem-foto.svg'
@@ -896,6 +960,205 @@ def _paginas_ordenadas_menu():
     return paginas_ordenadas_menu
 
 
+def _menu_agrupado_para_paginas(paginas_permitidas):
+    paginas_permitidas = set(paginas_permitidas or [])
+    menu_agrupado = []
+    for secao_nome, secao_paginas in PAGINAS_SISTEMA_MENU_ORDEM:
+        itens_secao = [
+            {
+                'key': pagina_key,
+                'label': PAGINAS_SISTEMA[pagina_key],
+            }
+            for pagina_key in secao_paginas
+            if pagina_key in paginas_permitidas and pagina_key in PAGINAS_SISTEMA
+        ]
+        if itens_secao:
+            menu_agrupado.append({
+                'secao': secao_nome,
+                'paginas': itens_secao,
+            })
+    return menu_agrupado
+
+
+def _url_for_safe(endpoint, **values):
+    try:
+        return url_for(endpoint, **values)
+    except Exception:
+        return '#'
+
+
+def _item_menu_interno(*, label, endpoint, page_keys, current_page_key=None, visible=True):
+    if not visible:
+        return None
+    page_keys = tuple(page_keys or ())
+    current = bool(current_page_key and current_page_key in page_keys)
+    return {
+        'label': label,
+        'url': _url_for_safe(endpoint),
+        'current': current,
+        'page_keys': page_keys,
+    }
+
+
+def _menu_navegacao_principal(funcionario, empresa_config=None, atendimento_mesas_ativo=True, current_page_key=None):
+    paginas_permitidas = _paginas_permitidas_para_funcionario(funcionario)
+    menu = []
+
+    definicoes = [
+        {
+            'id': 'gestao',
+            'label': 'Gestão',
+            'icon': 'management',
+            'items': [
+                _item_menu_interno(label='Central do Negócio', endpoint='gestao_negocio', page_keys=('gestao_negocio',), current_page_key=current_page_key, visible='gestao_negocio' in paginas_permitidas),
+                _item_menu_interno(label='Empresa', endpoint='editar_empresa', page_keys=('empresa',), current_page_key=current_page_key, visible='empresa' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'financeiro',
+            'label': 'Financeiro',
+            'icon': 'finance',
+            'items': [
+                _item_menu_interno(label='Visão Financeira', endpoint='financeiro', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+                _item_menu_interno(label='Lançamentos Contábeis', endpoint='financeiro_lancamentos', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+                _item_menu_interno(label='Gestão Monetária e Fundos', endpoint='financeiro_fundos', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'vendas',
+            'label': 'Vendas',
+            'icon': 'sales',
+            'items': [
+                _item_menu_interno(label='PDV', endpoint='pdv', page_keys=('pdv',), current_page_key=current_page_key, visible='pdv' in paginas_permitidas),
+                _item_menu_interno(label='Pedidos', endpoint='listar_pedidos', page_keys=('pedidos',), current_page_key=current_page_key, visible='pedidos' in paginas_permitidas),
+                _item_menu_interno(label='Mesas', endpoint='listar_mesas', page_keys=('mesas',), current_page_key=current_page_key, visible=atendimento_mesas_ativo and 'mesas' in paginas_permitidas),
+                _item_menu_interno(label='Caixas', endpoint='listar_caixas', page_keys=('caixas',), current_page_key=current_page_key, visible='caixas' in paginas_permitidas),
+                _item_menu_interno(label='Garçons', endpoint='listar_garcons', page_keys=('garcons',), current_page_key=current_page_key, visible=atendimento_mesas_ativo and 'garcons' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'estoque',
+            'label': 'Estoque',
+            'icon': 'inventory',
+            'items': [
+                _item_menu_interno(label='Produtos', endpoint='listar_produtos', page_keys=('produtos',), current_page_key=current_page_key, visible='produtos' in paginas_permitidas),
+                _item_menu_interno(label='Etiquetas de Loja', endpoint='imprimir_etiquetas_loja', page_keys=('produtos',), current_page_key=current_page_key, visible='produtos' in paginas_permitidas and (not empresa_config or empresa_config.emissao_etiqueta_loja_ativa is not False)),
+                _item_menu_interno(label='Estoques', endpoint='listar_estoques', page_keys=('estoques',), current_page_key=current_page_key, visible='estoques' in paginas_permitidas),
+                _item_menu_interno(label='Categorias', endpoint='listar_categorias', page_keys=('categorias',), current_page_key=current_page_key, visible='categorias' in paginas_permitidas),
+                _item_menu_interno(label='Endereços de Estoque', endpoint='listar_enderecos_estoque', page_keys=('enderecos_estoque',), current_page_key=current_page_key, visible='enderecos_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Equipamentos', endpoint='listar_equipamentos_movimentacao', page_keys=('equipamentos_estoque',), current_page_key=current_page_key, visible='equipamentos_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Endereços Inteligentes', endpoint='enderecos_inteligentes', page_keys=('enderecos_inteligentes',), current_page_key=current_page_key, visible='enderecos_inteligentes' in paginas_permitidas),
+                _item_menu_interno(label='Etiquetas de Endereço', endpoint='imprimir_etiquetas_enderecos_estoque', page_keys=('enderecos_estoque',), current_page_key=current_page_key, visible='enderecos_estoque' in paginas_permitidas and (not empresa_config or empresa_config.emissao_etiqueta_endereco_ativa is not False)),
+                _item_menu_interno(label='Entradas e Saídas Internas', endpoint='listar_movimentacoes', page_keys=('movimentacoes',), current_page_key=current_page_key, visible='movimentacoes' in paginas_permitidas),
+                _item_menu_interno(label='Almoxarifado', endpoint='listar_almoxarifado', page_keys=('almoxarifado',), current_page_key=current_page_key, visible='almoxarifado' in paginas_permitidas),
+                _item_menu_interno(label='Relatórios', endpoint='relatorios', page_keys=('relatorios',), current_page_key=current_page_key, visible='relatorios' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'recebimento',
+            'label': 'Recebimento',
+            'icon': 'receiving',
+            'items': [
+                _item_menu_interno(label='Central de Recebimentos', endpoint='listar_recebimentos_fornecedor', page_keys=('recebimentos',), current_page_key=current_page_key, visible='recebimentos' in paginas_permitidas),
+                _item_menu_interno(label='Novo Recebimento', endpoint='novo_recebimento_fornecedor', page_keys=('recebimentos',), current_page_key=current_page_key, visible='recebimentos' in paginas_permitidas),
+                _item_menu_interno(label='Fornecedores', endpoint='listar_fornecedores', page_keys=('fornecedores',), current_page_key=current_page_key, visible='fornecedores' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'expedicao',
+            'label': 'Expedição',
+            'icon': 'shipping',
+            'items': [
+                _item_menu_interno(label='Central de Expedição', endpoint='central_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Separação e Entrega', endpoint='listar_separacao_entrega', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Roteirização', endpoint='listar_roteirizacao_entrega', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Painel em Tempo Real', endpoint='painel_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Coletor Operacional', endpoint='coletor_estoque', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Frota Própria e Terceiros', endpoint='frota_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Histórico de Transferências', endpoint='listar_transferencias_estoque', page_keys=('transferencias_estoque',), current_page_key=current_page_key, visible='transferencias_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Nova Transferência entre Lojas/CDs', endpoint='transferir_armazenamento', page_keys=('transferencias_estoque',), current_page_key=current_page_key, visible='transferencias_estoque' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'meu-rh',
+            'label': 'Meu RH',
+            'icon': 'hr',
+            'items': [
+                _item_menu_interno(label='Indicadores RH', endpoint='indicadores_rh', page_keys=('rh_indicadores',), current_page_key=current_page_key, visible='rh_indicadores' in paginas_permitidas),
+                _item_menu_interno(label='Organograma', endpoint='organograma_rh', page_keys=('rh_organograma',), current_page_key=current_page_key, visible='rh_organograma' in paginas_permitidas),
+                _item_menu_interno(label='Funcionários', endpoint='listar_funcionarios', page_keys=('funcionarios',), current_page_key=current_page_key, visible='funcionarios' in paginas_permitidas),
+                _item_menu_interno(label='Cargos', endpoint='listar_funcoes_rh', page_keys=('rh_funcoes',), current_page_key=current_page_key, visible='rh_funcoes' in paginas_permitidas),
+                _item_menu_interno(label='Perfis de Acesso', endpoint='listar_perfis_rh', page_keys=('rh_funcoes',), current_page_key=current_page_key, visible='rh_funcoes' in paginas_permitidas),
+                _item_menu_interno(label='Auditoria', endpoint='auditoria_sistema', page_keys=('auditoria',), current_page_key=current_page_key, visible='auditoria' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'ecommerce',
+            'label': 'E-commerce',
+            'icon': 'ecommerce',
+            'items': [
+                _item_menu_interno(label='Ativação da Loja', endpoint='configurar_ativacao_ecommerce', page_keys=('ecommerce_config',), current_page_key=current_page_key, visible='ecommerce_config' in paginas_permitidas),
+                _item_menu_interno(label='Tema e Loja Online', endpoint='configurar_ecommerce', page_keys=('ecommerce_config',), current_page_key=current_page_key, visible='ecommerce_config' in paginas_permitidas),
+                _item_menu_interno(label='Marketing, Campanhas e Cupons', endpoint='configurar_marketing_ecommerce', page_keys=('ecommerce_marketing',), current_page_key=current_page_key, visible='ecommerce_marketing' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'servicos',
+            'label': 'Serviços',
+            'icon': 'services',
+            'items': [
+                _item_menu_interno(label='Chamados Internos', endpoint='listar_chamados_internos', page_keys=('chamados_internos',), current_page_key=current_page_key, visible='chamados_internos' in paginas_permitidas),
+                _item_menu_interno(label='Minhas Ordens', endpoint='minhas_ordens_servico', page_keys=('servicos_tecnicos',), current_page_key=current_page_key, visible='servicos_tecnicos' in paginas_permitidas),
+                _item_menu_interno(label='Ordens de Serviço', endpoint='listar_ordens_servico', page_keys=('servicos_tecnicos',), current_page_key=current_page_key, visible='servicos_tecnicos' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'ajuda',
+            'label': 'Ajuda',
+            'icon': 'help',
+            'items': [
+                _item_menu_interno(label='Guia do Sistema', endpoint='central_ajuda', page_keys=('ajuda',), current_page_key=current_page_key, visible='ajuda' in paginas_permitidas),
+            ],
+        },
+    ]
+
+    for grupo in definicoes:
+        itens = [item for item in grupo['items'] if item]
+        if not itens:
+            continue
+        menu.append({
+            'id': grupo['id'],
+            'label': grupo['label'],
+            'icon': grupo['icon'],
+            'items': itens,
+            'current': any(item['current'] for item in itens),
+        })
+    return menu
+
+
+def _registrar_debug_menu(funcionario, paginas_permitidas, menu_agrupado=None):
+    if not funcionario or not app.config.get('MENU_DEBUG_ENABLED'):
+        return
+    if not has_request_context():
+        return
+
+    menu_agrupado = menu_agrupado if menu_agrupado is not None else _menu_agrupado_para_paginas(paginas_permitidas)
+    secoes_resumo = {
+        item['secao']: [pagina['key'] for pagina in item['paginas']]
+        for item in menu_agrupado
+    }
+    app.logger.info(
+        'menu_debug funcionario_id=%s role=%s controle=%s perfil_acesso_id=%s endpoint=%s paginas=%s secoes=%s',
+        getattr(funcionario, 'id', None),
+        getattr(funcionario, 'role', None),
+        getattr(funcionario, 'controle_acesso_ativo', None),
+        getattr(funcionario, 'perfil_acesso_id', None),
+        request.endpoint,
+        sorted(set(paginas_permitidas or [])),
+        secoes_resumo,
+    )
+
+
 def _tabela_existe(nome_tabela):
     try:
         return inspect(db.engine).has_table(nome_tabela)
@@ -917,23 +1180,48 @@ def _extrair_permissoes_padrao_form():
 
 
 def funcionario_tem_acesso(funcionario, endpoint):
-    if not funcionario:
-        return False
-    if funcionario.role == 'admin':
-        return True
-    if not funcionario.controle_acesso_ativo:
-        return True
-
-    pagina = ENDPOINT_TO_PAGINA.get(endpoint)
-    if not pagina:
-        if request.path.startswith('/api/'):
-            return False
-        return True
-
-    return pagina in _paginas_efetivas_funcionario(funcionario)
+    permissao_service = PermissaoService(resolver_paginas=_paginas_efetivas_funcionario)
+    return permissao_service.tem_acesso(
+        funcionario,
+        endpoint,
+        is_api_request=request.path.startswith('/api/'),
+    )
 
 
 def _resumir_payload_requisicao():
+    chaves_sensiveis = {
+        'senha',
+        'confirmacao_senha',
+        'password',
+        'cpf',
+        'rg',
+        'celular',
+        'telefone',
+        'cep',
+        'endereco',
+        'token',
+        'csrf_token',
+    }
+
+    def _is_sensitive_key(chave):
+        chave_norm = (chave or '').strip().lower()
+        return any(item in chave_norm for item in chaves_sensiveis)
+
+    def _flatten_payload(payload, prefix=''):
+        if isinstance(payload, dict):
+            for chave, valor in payload.items():
+                chave_composta = f'{prefix}.{chave}' if prefix else str(chave)
+                if _is_sensitive_key(chave_composta) or _is_sensitive_key(chave):
+                    continue
+                yield from _flatten_payload(valor, chave_composta)
+            return
+        if isinstance(payload, list):
+            for idx, item in enumerate(payload):
+                chave_composta = f'{prefix}[{idx}]' if prefix else f'[{idx}]'
+                yield from _flatten_payload(item, chave_composta)
+            return
+        yield prefix, payload
+
     dados = {}
     try:
         if request.is_json:
@@ -945,11 +1233,9 @@ def _resumir_payload_requisicao():
     except Exception:
         dados = {}
 
-    chaves_sensiveis = {'senha', 'confirmacao_senha', 'password', 'token', 'csrf_token'}
     resumo = []
-    for chave, valor in dados.items():
-        chave_norm = (chave or '').strip().lower()
-        if chave_norm in chaves_sensiveis:
+    for chave, valor in _flatten_payload(dados):
+        if not chave or _is_sensitive_key(chave):
             continue
         texto_valor = str(valor)
         if len(texto_valor) > 80:
@@ -1075,6 +1361,7 @@ def _titulo_tela_atual():
         'financeiro_fundos': 'Gestão Monetária e Fundos',
         'pdv': 'PDV',
         'configurar_ecommerce': 'Tema e Loja Online',
+        'configurar_marketing_ecommerce': 'Promocoes e Campanhas',
         'configurar_ativacao_ecommerce': 'Ativação da Loja',
         'central_expedicao': 'Central de Expedição',
         'frota_expedicao': 'Frota Própria e Terceiros',
@@ -1154,6 +1441,61 @@ def _normalizar_linhas_configuracao(valor_texto, tamanho_max=200):
     return linhas
 
 
+def _count_recebimentos_by_status_safe(status):
+    try:
+        inspector = inspect(db.engine)
+        if not inspector.has_table('recebimentos_fornecedor'):
+            return 0
+        colunas = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+        if 'status' not in colunas:
+            return 0
+        resultado = db.session.execute(
+            text("SELECT COUNT(*) FROM recebimentos_fornecedor WHERE status = :status"),
+            {'status': status},
+        ).scalar()
+        return int(resultado or 0)
+    except Exception:
+        return 0
+
+
+def _oldest_pending_storage_recebimento_safe():
+    try:
+        inspector = inspect(db.engine)
+        if not inspector.has_table('recebimentos_fornecedor'):
+            return None
+        colunas = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+        if 'status' not in colunas:
+            return None
+
+        order_parts = []
+        if 'conferido_em' in colunas:
+            order_parts.append('conferido_em ASC')
+        if 'criado_em' in colunas:
+            order_parts.append('criado_em ASC')
+        if not order_parts:
+            order_parts.append('id ASC')
+
+        select_cols = ['id']
+        if 'conferido_em' in colunas:
+            select_cols.append('conferido_em')
+        if 'criado_em' in colunas:
+            select_cols.append('criado_em')
+
+        sql = (
+            f"SELECT {', '.join(select_cols)} "
+            "FROM recebimentos_fornecedor "
+            "WHERE status = :status "
+            f"ORDER BY {', '.join(order_parts)} "
+            "LIMIT 1"
+        )
+        return db.session.execute(
+            text(sql),
+            {'status': RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM},
+        ).mappings().first()
+    except Exception:
+        return None
+
+
 def _parse_datetime_local(valor):
     valor = (valor or '').strip()
     if not valor:
@@ -1215,6 +1557,7 @@ register_auth_routes(app, {
     '_gerar_numero_cadastro_unico': _gerar_numero_cadastro_unico,
     '_gerar_matricula_unica': _gerar_matricula_unica,
     '_listar_cadastros_organograma': _listar_cadastros_organograma,
+    '_paginas_permitidas_para_funcionario': _paginas_permitidas_para_funcionario,
     'sincronizar_garcom_funcionario': sincronizar_garcom_funcionario,
     'registrar_evento_auditoria': registrar_evento_auditoria,
     '_bootstrap_admin_configurado': _bootstrap_admin_configurado,
@@ -1262,7 +1605,18 @@ def index():
         if session.get('funcionario_id'):
             return redirect(url_for('boas_vindas'))
         return redirect(url_for('login'))
-    resumo_carrinho = obter_resumo_carrinho_site()
+    cliente_publico = None
+    cliente_publico_id = session.get('site_cliente_id')
+    if cliente_publico_id:
+        query_cliente_publico = ClientePublico.query
+        inspector = inspect(db.engine)
+        tabelas = set(inspector.get_table_names())
+        if 'clientes_enderecos' in tabelas:
+            query_cliente_publico = query_cliente_publico.options(selectinload(ClientePublico.enderecos))
+        if 'clientes_favoritos' in tabelas:
+            query_cliente_publico = query_cliente_publico.options(selectinload(ClientePublico.favoritos))
+        cliente_publico = query_cliente_publico.get(cliente_publico_id)
+    resumo_carrinho = obter_resumo_carrinho_site(cliente_publico)
     produtos_disponiveis = Produto.query.filter(
         Produto.ativo.is_(True),
         Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES)
@@ -1295,6 +1649,8 @@ def index():
         banners_ativos.append({
             'titulo': (banner.get('titulo') or '').strip(),
             'subtitulo': (banner.get('subtitulo') or '').strip(),
+            'link_url': (banner.get('link_url') or '').strip(),
+            'link_label': (banner.get('link_label') or '').strip(),
             'image_path': image_path,
         })
 
@@ -1302,6 +1658,8 @@ def index():
         banners_ativos.append({
             'titulo': empresa.ecom_titulo_banner or 'Destaque da loja',
             'subtitulo': empresa.ecom_subtitulo_banner or '',
+            'link_url': '#ofertas',
+            'link_label': 'Ver ofertas',
             'image_path': empresa.ecom_banner_path,
         })
 
@@ -1325,6 +1683,61 @@ def index():
     if not campanha_principal and empresa:
         campanha_principal = empresa.ecom_texto_promocao
 
+    def _normalizar_chave_categoria_imagem(valor):
+        texto = unicodedata.normalize('NFKD', (valor or '').strip())
+        texto = ''.join(ch for ch in texto if not unicodedata.combining(ch))
+        texto = re.sub(r'[^a-zA-Z0-9]+', ' ', texto).strip().lower()
+        return texto
+
+    def _mapear_imagens_categoria_existentes():
+        relative_dir = os.path.join('uploads', 'categorias')
+        absolute_dir = os.path.join(app.static_folder, relative_dir)
+        imagens = {}
+        if not os.path.isdir(absolute_dir):
+            return imagens
+
+        for nome_arquivo in sorted(os.listdir(absolute_dir)):
+            caminho_absoluto = os.path.join(absolute_dir, nome_arquivo)
+            if not os.path.isfile(caminho_absoluto):
+                continue
+            _, ext = os.path.splitext(nome_arquivo.lower())
+            if ext not in {'.png', '.jpg', '.jpeg', '.webp', '.gif'}:
+                continue
+            chave = _normalizar_chave_categoria_imagem(
+                os.path.splitext(nome_arquivo)[0].replace('_', ' ').replace('-', ' ')
+            )
+            if not chave:
+                continue
+            imagens.setdefault(chave, os.path.join(relative_dir, nome_arquivo).replace('\\', '/'))
+        return imagens
+
+    def _resolver_imagem_categoria_vitrine(categoria, imagens_existentes):
+        caminho_salvo = (getattr(categoria, 'imagem_path', None) or '').strip().replace('\\', '/')
+        if caminho_salvo:
+            return caminho_salvo
+        return imagens_existentes.get(_normalizar_chave_categoria_imagem(getattr(categoria, 'nome', '')))
+
+    categorias_vitrine = []
+    imagens_categoria_existentes = _mapear_imagens_categoria_existentes()
+    categorias_home = Categoria.query.order_by(Categoria.nome.asc()).all()
+    for categoria in categorias_home:
+        produtos_categoria = Produto.query.filter(
+            Produto.categoria_id == categoria.id,
+            Produto.ativo.is_(True),
+            Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES)
+        ).order_by(
+            Produto.atualizado_em.desc(),
+            Produto.criado_em.desc()
+        ).limit(8).all()
+        if not produtos_categoria:
+            continue
+        categorias_vitrine.append({
+            'categoria': categoria,
+            'categoria_imagem_path': _resolver_imagem_categoria_vitrine(categoria, imagens_categoria_existentes),
+            'produtos': produtos_categoria,
+            'ancora': f'categoria-{categoria.id}',
+        })
+
     return render_template(
         'public/home_varejo.html',
         app_name=APP_NAME,
@@ -1334,6 +1747,8 @@ def index():
         banners_ativos=banners_ativos,
         campanhas_ativas=campanhas_ativas,
         campanha_principal=campanha_principal,
+        categorias_vitrine=categorias_vitrine,
+        cliente_publico=cliente_publico,
     )
 
 
@@ -1492,23 +1907,18 @@ def gestao_negocio():
     cargos_rh_ativos = FuncaoRH.query.filter_by(ativo=True).count()
     perfis_acesso_ativos = PerfilAcesso.query.filter_by(ativo=True).count()
     pedidos_abertos = Pedido.query.filter(Pedido.status.in_(['aberto', 'em_preparo', 'entregue'])).count()
-    pendencias_armazenagem = RecebimentoFornecedor.query.filter_by(
-        status=RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-    ).count()
-    recebimento_armazenagem_mais_antigo = RecebimentoFornecedor.query.filter_by(
-        status=RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-    ).order_by(
-        RecebimentoFornecedor.conferido_em.asc(),
-        RecebimentoFornecedor.criado_em.asc(),
-    ).first()
+    pendencias_armazenagem = _count_recebimentos_by_status_safe(
+        RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+    )
+    recebimento_armazenagem_mais_antigo = _oldest_pending_storage_recebimento_safe()
     if recebimento_armazenagem_mais_antigo:
         referencia_pendencia_armazenagem = (
-            recebimento_armazenagem_mais_antigo.conferido_em
-            or recebimento_armazenagem_mais_antigo.criado_em
+            recebimento_armazenagem_mais_antigo.get('conferido_em')
+            or recebimento_armazenagem_mais_antigo.get('criado_em')
         )
         detalhe_pendencia_armazenagem = (
             f'{pendencias_armazenagem} recebimento(s) aguardando armazenagem. '
-            f'Mais antigo desde {referencia_pendencia_armazenagem.strftime("%d/%m/%Y %H:%M")}.'
+            f'Mais antigo desde {referencia_pendencia_armazenagem.strftime("%d/%m/%Y %H:%M") if referencia_pendencia_armazenagem else "data indisponivel"}.'
         )
     else:
         detalhe_pendencia_armazenagem = 'Nenhum recebimento aguardando armazenagem.'
@@ -1579,7 +1989,8 @@ def gestao_negocio():
     atalhos_dono = [
         {'titulo': 'Configuracoes da Empresa', 'descricao': 'Dados, operacao, entrega e servicos.', 'url': url_for('editar_empresa')},
         {'titulo': 'Ativacao da Loja Online', 'descricao': 'Liga ou desliga a vitrine publica do e-commerce.', 'url': url_for('configurar_ativacao_ecommerce')},
-        {'titulo': 'Tema e Loja Online', 'descricao': 'Cores, banners, promocoes, checkout e rodape.', 'url': url_for('configurar_ecommerce')},
+        {'titulo': 'Tema e Loja Online', 'descricao': 'Cores, banners, checkout e rodape da vitrine.', 'url': url_for('configurar_ecommerce')},
+        {'titulo': 'Promocoes e Campanhas', 'descricao': 'Campanhas, cupons e temas sazonais para datas especiais.', 'url': url_for('configurar_marketing_ecommerce')},
         {'titulo': 'Cargos da Equipe', 'descricao': 'Estrutura organizacional usada nos cadastros e no organograma.', 'url': url_for('listar_funcoes_rh')},
         {'titulo': 'Perfis de Acesso', 'descricao': 'Conjuntos padrao de paginas para aplicar por colaborador.', 'url': url_for('listar_perfis_rh')},
         {'titulo': 'Central de Expedicao', 'descricao': 'Separacao, rotas, etiquetas e frota.', 'url': url_for('central_expedicao')},
@@ -1613,8 +2024,14 @@ def financeiro():
         default_days=7
     )
     analytics = _coletar_dashboard_analytics(inicio_periodo, fim_periodo)
+    cache = extensions.cache
+    cache_key = f'view:financeiro:{inicio_periodo.strftime("%Y%m%d")}:{fim_periodo.strftime("%Y%m%d")}'
+    if cache is not None:
+        html = cache.get(cache_key)
+        if html is not None:
+            return html
 
-    return render_template(
+    html = render_template(
         'financeiro/index.html',
         periodo_dias=analytics['periodo_dias'],
         data_inicial=data_inicial_str,
@@ -1631,6 +2048,8 @@ def financeiro():
         lucro_bruto_periodo=analytics['lucro_bruto_periodo'],
         margem_bruta_pct=analytics['margem_bruta_pct'],
         despesas_operacionais_periodo=analytics['despesas_operacionais_periodo'],
+        movimentacoes_financeiras_excluidas_periodo=analytics['movimentacoes_financeiras_excluidas_periodo'],
+        categorias_excluidas_resultado=analytics['categorias_excluidas_resultado'],
         ajustes_financeiros_periodo=analytics['ajustes_financeiros_periodo'],
         resultado_operacional_periodo=analytics['resultado_operacional_periodo'],
         margem_operacional_pct=analytics['margem_operacional_pct'],
@@ -1648,6 +2067,9 @@ def financeiro():
         desempenho_caixas=analytics['desempenho_caixas'],
         metodos_pagamento=analytics['metodos_pagamento']
     )
+    if cache is not None:
+        cache.set(cache_key, html, timeout=300)
+    return html
 
 
 @app.route('/financeiro/fundos', methods=['GET', 'POST'])
@@ -1674,6 +2096,7 @@ def financeiro_fundos():
                     referencia_documento=request.form.get('referencia_documento'),
                     valor=valor,
                     solicitado_por_id=(funcionario.id if funcionario else None),
+                    actor=funcionario,
                 )
                 db.session.commit()
                 flash(f'Solicitacao de fundo #{fundo.id} registrada.', 'success')
@@ -1834,6 +2257,7 @@ def financeiro_lancamentos():
                 produto_id=produto_id,
                 quantidade=quantidade,
                 criado_por_id=(funcionario.id if funcionario else None),
+                actor=funcionario,
             )
             db.session.commit()
             flash('Lancamento financeiro registrado com sucesso.', 'success')
@@ -1888,6 +2312,34 @@ def financeiro_lancamentos():
         total_ajustes=total_ajustes,
         saldo_periodo=saldo_periodo,
     )
+
+
+@app.route('/api/rastreabilidade/pedidos/<int:pedido_id>/timeline')
+@require_role('admin', 'gerente', 'caixa', 'operador')
+def api_timeline_pedido(pedido_id):
+    pedido = Pedido.query.get_or_404(pedido_id)
+    timeline = build_timeline(pedido=pedido)
+    return jsonify({
+        'pedido_id': pedido.id,
+        'timeline': [
+            {**item, 'quando': (item['quando'].isoformat() if item.get('quando') else None)}
+            for item in timeline
+        ],
+    })
+
+
+@app.route('/api/rastreabilidade/recebimentos/<int:recebimento_id>/timeline')
+@require_role('admin', 'gerente', 'caixa', 'operador')
+def api_timeline_recebimento(recebimento_id):
+    recebimento = RecebimentoFornecedor.query.get_or_404(recebimento_id)
+    timeline = build_timeline(recebimento=recebimento)
+    return jsonify({
+        'recebimento_id': recebimento.id,
+        'timeline': [
+            {**item, 'quando': (item['quando'].isoformat() if item.get('quando') else None)}
+            for item in timeline
+        ],
+    })
 
 
 @app.route('/financeiro/lancamentos/<int:lancamento_id>/marcar-enviado', methods=['POST'])
@@ -2297,23 +2749,11 @@ def configurar_ecommerce():
             slots.append({
                 'titulo': item.get('titulo') or '',
                 'subtitulo': item.get('subtitulo') or '',
+                'link_url': item.get('link_url') or '',
+                'link_label': item.get('link_label') or '',
                 'inicio_em': item.get('inicio_em') or '',
                 'fim_em': item.get('fim_em') or '',
                 'image_path': item.get('image_path') or '',
-                'ativo': bool(item.get('ativo', False)),
-            })
-        return slots
-
-    def _montar_slots_campanhas():
-        slots = []
-        origem = _carregar_json_lista(empresa.ecom_campanhas_json)
-        for i in range(5):
-            item = origem[i] if i < len(origem) and isinstance(origem[i], dict) else {}
-            slots.append({
-                'nome': item.get('nome') or '',
-                'texto': item.get('texto') or '',
-                'inicio_em': item.get('inicio_em') or '',
-                'fim_em': item.get('fim_em') or '',
                 'ativo': bool(item.get('ativo', False)),
             })
         return slots
@@ -2336,9 +2776,12 @@ def configurar_ecommerce():
                 request.form.get('ecom_cor_secundaria'),
                 empresa.ecom_cor_secundaria or '#ff5a2a'
             )
+            empresa.ecom_card_bg = _normalizar_cor_hex(
+                request.form.get('ecom_card_bg'),
+                empresa.ecom_card_bg or '#ffffff'
+            )
             empresa.ecom_titulo_banner = request.form.get('ecom_titulo_banner', '').strip() or None
             empresa.ecom_subtitulo_banner = request.form.get('ecom_subtitulo_banner', '').strip() or None
-            empresa.ecom_texto_promocao = request.form.get('ecom_texto_promocao', '').strip() or None
             empresa.ecom_footer_bg = _normalizar_cor_hex(
                 request.form.get('ecom_footer_bg'),
                 empresa.ecom_footer_bg or '#1f2b38'
@@ -2414,6 +2857,8 @@ def configurar_ecommerce():
             for idx in range(5):
                 titulo = (request.form.get(f'banner_titulo_{idx}') or '').strip()
                 subtitulo = (request.form.get(f'banner_subtitulo_{idx}') or '').strip()
+                link_url = (request.form.get(f'banner_link_url_{idx}') or '').strip()
+                link_label = (request.form.get(f'banner_link_label_{idx}') or '').strip()
                 inicio_em = (request.form.get(f'banner_inicio_{idx}') or '').strip()
                 fim_em = (request.form.get(f'banner_fim_{idx}') or '').strip()
                 image_path_atual = (request.form.get(f'banner_path_{idx}') or '').strip() or None
@@ -2446,45 +2891,21 @@ def configurar_ecommerce():
                     flash(f'Banner {idx + 1}: o fim da vigência não pode ser menor que o início.', 'error')
                     return redirect(url_for('configurar_ecommerce'))
 
-                if not any([titulo, subtitulo, image_path_slot, inicio_em, fim_em]):
+                if not any([titulo, subtitulo, link_url, link_label, image_path_slot, inicio_em, fim_em]):
                     continue
 
                 banners_slots.append({
                     'titulo': titulo,
                     'subtitulo': subtitulo,
+                    'link_url': link_url,
+                    'link_label': link_label,
                     'inicio_em': inicio_em,
                     'fim_em': fim_em,
                     'image_path': image_path_slot,
                     'ativo': ativo,
                 })
 
-            campanhas_slots = []
-            for idx in range(5):
-                nome = (request.form.get(f'campanha_nome_{idx}') or '').strip()
-                texto = (request.form.get(f'campanha_texto_{idx}') or '').strip()
-                inicio_em = (request.form.get(f'campanha_inicio_{idx}') or '').strip()
-                fim_em = (request.form.get(f'campanha_fim_{idx}') or '').strip()
-                ativo = (request.form.get(f'campanha_ativa_{idx}') == 'on')
-
-                if not any([nome, texto, inicio_em, fim_em]):
-                    continue
-
-                inicio_data = _parse_date_iso(inicio_em)
-                fim_data = _parse_date_iso(fim_em)
-                if fim_data and inicio_data and fim_data < inicio_data:
-                    flash(f'Campanha {idx + 1}: o fim da vigência não pode ser menor que o início.', 'error')
-                    return redirect(url_for('configurar_ecommerce'))
-
-                campanhas_slots.append({
-                    'nome': nome,
-                    'texto': texto,
-                    'inicio_em': inicio_em,
-                    'fim_em': fim_em,
-                    'ativo': ativo,
-                })
-
             empresa.ecom_banners_json = json.dumps(banners_slots, ensure_ascii=False)
-            empresa.ecom_campanhas_json = json.dumps(campanhas_slots, ensure_ascii=False)
 
             placeholder_alvos = [None, '', 'img/placeholders/imgindisponivel.png']
             if produto_placeholder_anterior:
@@ -2557,9 +2978,159 @@ def configurar_ecommerce():
         'sistema/ecommerce_config.html',
         empresa=empresa,
         banners_config=_montar_slots_banners(),
-        campanhas_config=_montar_slots_campanhas(),
         pagamentos_ecommerce_texto=payment_options_to_text(empresa.pagamentos_ecommerce_json, 'ecommerce'),
         integracoes_ecommerce_texto=api_integrations_to_text(empresa.integracoes_ecommerce_json),
+    )
+
+
+@app.route('/ecommerce-marketing', methods=['GET', 'POST'])
+@require_role('admin', 'gerente')
+def configurar_marketing_ecommerce():
+    empresa = EmpresaConfig.query.first()
+    if not empresa:
+        empresa = EmpresaConfig()
+        db.session.add(empresa)
+        db.session.commit()
+
+    temas_sazonais = [
+        ('neutro', 'Neutro'),
+        ('natal', 'Natal'),
+        ('pascoa', 'Pascoa'),
+        ('ano_novo', 'Ano Novo'),
+        ('dia_das_maes', 'Dia das Maes'),
+        ('dia_dos_pais', 'Dia dos Pais'),
+        ('black_friday', 'Black Friday'),
+        ('volta_as_aulas', 'Volta as aulas'),
+        ('festa_junina', 'Festa junina'),
+    ]
+
+    tipos_desconto_cupom = [
+        ('percentual', 'Percentual (%)'),
+        ('fixo', 'Valor fixo (R$)'),
+        ('frete', 'Frete promocional'),
+    ]
+
+    def _montar_slots_campanhas():
+        slots = []
+        origem = _carregar_json_lista(empresa.ecom_campanhas_json)
+        for i in range(5):
+            item = origem[i] if i < len(origem) and isinstance(origem[i], dict) else {}
+            slots.append({
+                'nome': item.get('nome') or '',
+                'texto': item.get('texto') or '',
+                'tema_sazonal': item.get('tema_sazonal') or 'neutro',
+                'inicio_em': item.get('inicio_em') or '',
+                'fim_em': item.get('fim_em') or '',
+                'ativo': bool(item.get('ativo', False)),
+            })
+        return slots
+
+    def _montar_slots_cupons():
+        slots = []
+        origem = _carregar_json_lista(empresa.ecom_cupons_json)
+        for i in range(5):
+            item = origem[i] if i < len(origem) and isinstance(origem[i], dict) else {}
+            slots.append({
+                'codigo': item.get('codigo') or '',
+                'descricao': item.get('descricao') or '',
+                'tipo_desconto': item.get('tipo_desconto') or 'percentual',
+                'valor': item.get('valor') or '',
+                'inicio_em': item.get('inicio_em') or '',
+                'fim_em': item.get('fim_em') or '',
+                'ativo': bool(item.get('ativo', False)),
+            })
+        return slots
+
+    if request.method == 'POST':
+        try:
+            empresa.ecom_texto_promocao = request.form.get('ecom_texto_promocao', '').strip() or None
+
+            campanhas_slots = []
+            for idx in range(5):
+                nome = (request.form.get(f'campanha_nome_{idx}') or '').strip()
+                texto = (request.form.get(f'campanha_texto_{idx}') or '').strip()
+                tema_sazonal = (request.form.get(f'campanha_tema_{idx}') or 'neutro').strip() or 'neutro'
+                inicio_em = (request.form.get(f'campanha_inicio_{idx}') or '').strip()
+                fim_em = (request.form.get(f'campanha_fim_{idx}') or '').strip()
+                ativo = (request.form.get(f'campanha_ativa_{idx}') == 'on')
+
+                if not any([nome, texto, inicio_em, fim_em]):
+                    continue
+
+                inicio_data = _parse_date_iso(inicio_em)
+                fim_data = _parse_date_iso(fim_em)
+                if fim_data and inicio_data and fim_data < inicio_data:
+                    flash(f'Campanha {idx + 1}: o fim da vigencia nao pode ser menor que o inicio.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                campanhas_slots.append({
+                    'nome': nome,
+                    'texto': texto,
+                    'tema_sazonal': tema_sazonal,
+                    'inicio_em': inicio_em,
+                    'fim_em': fim_em,
+                    'ativo': ativo,
+                })
+
+            cupons_slots = []
+            for idx in range(5):
+                codigo = (request.form.get(f'cupom_codigo_{idx}') or '').strip().upper()
+                descricao = (request.form.get(f'cupom_descricao_{idx}') or '').strip()
+                tipo_desconto = (request.form.get(f'cupom_tipo_{idx}') or 'percentual').strip() or 'percentual'
+                valor = (request.form.get(f'cupom_valor_{idx}') or '').strip()
+                inicio_em = (request.form.get(f'cupom_inicio_{idx}') or '').strip()
+                fim_em = (request.form.get(f'cupom_fim_{idx}') or '').strip()
+                ativo = (request.form.get(f'cupom_ativo_{idx}') == 'on')
+
+                if not any([codigo, descricao, valor, inicio_em, fim_em]):
+                    continue
+
+                if tipo_desconto not in {item[0] for item in tipos_desconto_cupom}:
+                    flash(f'Cupom {idx + 1}: tipo de desconto invalido.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                try:
+                    valor_numerico = float(valor.replace(',', '.')) if valor else 0.0
+                except ValueError:
+                    flash(f'Cupom {idx + 1}: informe um valor numerico valido.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                if valor_numerico < 0:
+                    flash(f'Cupom {idx + 1}: o valor nao pode ser negativo.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                inicio_data = _parse_date_iso(inicio_em)
+                fim_data = _parse_date_iso(fim_em)
+                if fim_data and inicio_data and fim_data < inicio_data:
+                    flash(f'Cupom {idx + 1}: o fim da vigencia nao pode ser menor que o inicio.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                cupons_slots.append({
+                    'codigo': codigo,
+                    'descricao': descricao,
+                    'tipo_desconto': tipo_desconto,
+                    'valor': f'{valor_numerico:.2f}',
+                    'inicio_em': inicio_em,
+                    'fim_em': fim_em,
+                    'ativo': ativo,
+                })
+
+            empresa.ecom_campanhas_json = json.dumps(campanhas_slots, ensure_ascii=False)
+            empresa.ecom_cupons_json = json.dumps(cupons_slots, ensure_ascii=False)
+            db.session.commit()
+            flash('Promocoes, cupons e temas sazonais salvos com sucesso.', 'success')
+            return redirect(url_for('configurar_marketing_ecommerce'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao salvar configuracoes de marketing do e-commerce: {str(e)}', 'error')
+
+    return render_template(
+        'sistema/ecommerce_marketing.html',
+        empresa=empresa,
+        campanhas_config=_montar_slots_campanhas(),
+        cupons_config=_montar_slots_cupons(),
+        temas_sazonais=temas_sazonais,
+        tipos_desconto_cupom=tipos_desconto_cupom,
     )
 
 
@@ -2704,12 +3275,12 @@ def _montar_prioridades_home(funcionario, paginas_permitidas, empresa):
         })
 
     if 'recebimentos' in paginas_permitidas:
-        recebimentos_conferencia = RecebimentoFornecedor.query.filter_by(
-            status=RecebimentoFornecedor.STATUS_CRIADO
-        ).count()
-        pendencias_armazenagem = RecebimentoFornecedor.query.filter_by(
-            status=RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-        ).count()
+        recebimentos_conferencia = _count_recebimentos_by_status_safe(
+            RecebimentoFornecedor.STATUS_CRIADO
+        )
+        pendencias_armazenagem = _count_recebimentos_by_status_safe(
+            RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        )
         prioridades.append({
             'titulo': 'Recebimentos operacionais',
             'quantidade': recebimentos_conferencia,
@@ -2870,6 +3441,177 @@ def _montar_fluxos_home(paginas_permitidas, empresa):
     return passos
 
 
+def _perfil_estoquista(funcionario, paginas_permitidas):
+    cargo = (getattr(funcionario, 'cargo', '') or '').strip().lower()
+    return 'estoqu' in cargo or 'almox' in cargo or (
+        {'recebimentos', 'relatorios', 'movimentacoes'}.intersection(paginas_permitidas)
+        and not {'financeiro', 'pdv'}.intersection(paginas_permitidas)
+    )
+
+
+def _coletar_metricas_dashboard_tempo_real():
+    agora = datetime.utcnow()
+    inicio_dia = agora.replace(hour=0, minute=0, second=0, microsecond=0)
+    try:
+        pedidos_ultimos_15_min = Pedido.query.filter(Pedido.criado_em >= (agora - timedelta(minutes=15))).count()
+        faturamento_dia = db.session.query(db.func.sum(Pedido.total)).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0.0
+        produtos_vendidos_turno = db.session.query(db.func.sum(ItemPedido.quantidade)).join(
+            Pedido, Pedido.id == ItemPedido.pedido_id
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0
+    except (OperationalError, ProgrammingError):
+        app.logger.warning('metricas_dashboard_tempo_real indisponiveis por schema/banco inconsistente', exc_info=True)
+        db.session.rollback()
+        pedidos_ultimos_15_min = 0
+        faturamento_dia = 0.0
+        produtos_vendidos_turno = 0
+    return {
+        'pedidos_ultimos_15_min': int(pedidos_ultimos_15_min or 0),
+        'faturamento_dia': float(faturamento_dia or 0.0),
+        'produtos_vendidos_turno': int(produtos_vendidos_turno or 0),
+    }
+
+
+def _montar_indicadores_contexto_usuario(funcionario, paginas_permitidas):
+    indicadores = []
+    metricas_tempo_real = _coletar_metricas_dashboard_tempo_real()
+    analytics = _coletar_dashboard_analytics(datetime.utcnow() - timedelta(days=7), datetime.utcnow() + timedelta(days=1))
+
+    if funcionario.role in {'admin', 'gerente'}:
+        indicadores.extend([
+            {
+                'titulo': 'Pedidos em aberto',
+                'valor': Pedido.query.filter(Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO])).count(),
+                'detalhe': 'Fila operacional atual.',
+                'metric_key': 'pedidos_ultimos_15_min',
+            },
+            {
+                'titulo': 'Faturamento do dia',
+                'valor': f"R$ {metricas_tempo_real['faturamento_dia']:.2f}",
+                'detalhe': 'Fechamentos confirmados hoje.',
+                'metric_key': 'faturamento_dia',
+            },
+            {
+                'titulo': 'Tempo medio de preparo',
+                'valor': f"{analytics['tempo_medio_preparo_minutos']:.1f} min",
+                'detalhe': 'Media de criado ate fechado.',
+                'metric_key': 'tempo_medio_preparo_minutos',
+            },
+        ])
+    elif funcionario.role in {'operador', 'caixa'}:
+        top_produto = analytics['top_produtos_vendidos'][0]['nome'] if analytics.get('top_produtos_vendidos') else '-'
+        indicadores.extend([
+            {
+                'titulo': 'Pedidos em aberto',
+                'valor': Pedido.query.filter(Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO])).count(),
+                'detalhe': 'Fila para atendimento imediato.',
+                'metric_key': 'pedidos_ultimos_15_min',
+            },
+            {
+                'titulo': 'Faturamento do turno',
+                'valor': f"R$ {metricas_tempo_real['faturamento_dia']:.2f}",
+                'detalhe': 'Acumulado de hoje.',
+                'metric_key': 'faturamento_dia',
+            },
+            {
+                'titulo': 'Top vendido',
+                'valor': top_produto,
+                'detalhe': 'Produto lider no periodo.',
+                'metric_key': 'produtos_vendidos_turno',
+            },
+        ])
+    elif _perfil_estoquista(funcionario, paginas_permitidas):
+        produtos_em_falta = Produto.query.filter(
+            Produto.ativo.is_(True),
+            Produto.quantidade_estoque < Produto.quantidade_minima,
+        ).count()
+        recebimentos_pendentes = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.status == RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        ).count()
+        total_enderecos_ativos = EnderecoEstoque.query.filter_by(ativo=True).count()
+        enderecos_ocupados = db.session.query(EnderecoEstoque.id).join(
+            Produto, Produto.endereco_id == EnderecoEstoque.id
+        ).filter(
+            EnderecoEstoque.ativo.is_(True),
+            Produto.ativo.is_(True),
+        ).distinct().count()
+        taxa_ocupacao = ((enderecos_ocupados / total_enderecos_ativos) * 100.0) if total_enderecos_ativos > 0 else 0.0
+        indicadores.extend([
+            {
+                'titulo': 'Produtos em falta',
+                'valor': produtos_em_falta,
+                'detalhe': 'Abaixo do estoque minimo.',
+                'metric_key': 'produtos_em_falta',
+            },
+            {
+                'titulo': 'Recebimentos pendentes',
+                'valor': recebimentos_pendentes,
+                'detalhe': 'Aguardando armazenagem.',
+                'metric_key': 'recebimentos_pendentes',
+            },
+            {
+                'titulo': 'Ocupacao de enderecos',
+                'valor': f'{taxa_ocupacao:.1f}%',
+                'detalhe': 'Endereco ocupado x ativo.',
+                'metric_key': 'ocupacao_enderecos',
+            },
+        ])
+    return indicadores
+
+
+def _montar_alertas_acionaveis_dashboard(paginas_permitidas):
+    alertas = []
+    analytics = _coletar_dashboard_analytics(datetime.utcnow() - timedelta(days=7), datetime.utcnow() + timedelta(days=1))
+    produto_ruptura = Produto.query.filter(
+        Produto.ativo.is_(True),
+        Produto.quantidade_estoque < Produto.quantidade_minima,
+    ).order_by((Produto.quantidade_estoque - Produto.quantidade_minima).asc()).first()
+    if produto_ruptura and 'recebimentos' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'warning',
+            'mensagem': f'Produto {produto_ruptura.nome} em ruptura ou abaixo do minimo.',
+            'acao_label': 'Reabastecer',
+            'acao_url': url_for('novo_recebimento_fornecedor'),
+        })
+
+    if analytics['margem_bruta_pct'] < 25 and 'produtos' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'danger',
+            'mensagem': 'Margem bruta abaixo da meta de 25% no periodo.',
+            'acao_label': 'Revisar precos',
+            'acao_url': url_for('listar_produtos'),
+        })
+
+    total_mesas = Mesa.query.count()
+    mesas_ocupadas = Mesa.query.filter(Mesa.status == 'ocupada').count()
+    ocupacao_mesas = ((mesas_ocupadas / total_mesas) * 100.0) if total_mesas > 0 else 0.0
+    if ocupacao_mesas > 90 and 'mesas' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'info',
+            'mensagem': 'Alta demanda no salao. Mais de 90% das mesas estao ocupadas.',
+            'acao_label': 'Orientar garcons',
+            'acao_url': url_for('listar_mesas'),
+        })
+
+    pedidos_em_preparo = Pedido.query.filter(Pedido.status == Pedido.STATUS_EM_PREPARO).count()
+    if analytics['tempo_medio_preparo_minutos'] > 30 and pedidos_em_preparo > 0 and 'pedidos' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'warning',
+            'mensagem': 'Tempo medio de preparo acima de 30 minutos.',
+            'acao_label': 'Abrir fila de producao',
+            'acao_url': url_for('listar_pedidos', status='em_preparo'),
+        })
+
+    return alertas
+
+
 @app.route('/boas-vindas')
 @login_required
 def boas_vindas():
@@ -2895,6 +3637,9 @@ def boas_vindas():
     prioridades = _montar_prioridades_home(funcionario, paginas_permitidas, empresa)
     atalhos = _montar_atalhos_home(paginas_permitidas, empresa)
     fluxos = _montar_fluxos_home(paginas_permitidas, empresa)
+    indicadores_contexto_usuario = _montar_indicadores_contexto_usuario(funcionario, paginas_permitidas)
+    alertas_dashboard = _montar_alertas_acionaveis_dashboard(paginas_permitidas)
+    metricas_tempo_real = _coletar_metricas_dashboard_tempo_real()
 
     return render_template(
         'sistema/boas_vindas.html',
@@ -2911,6 +3656,9 @@ def boas_vindas():
         estoque_contexto_atual=estoque_contexto_atual,
         estoques_disponiveis=estoques_disponiveis,
         paginas_liberadas=len(paginas_permitidas),
+        indicadores_contexto_usuario=indicadores_contexto_usuario,
+        alertas_dashboard=alertas_dashboard,
+        metricas_tempo_real=metricas_tempo_real,
     )
 
 
@@ -3264,31 +4012,32 @@ AJUDA_TOPICOS = {
         'slug': 'ecommerce-config',
         'titulo': 'Configuracao do e-commerce',
         'resumo': 'Separa ativacao da loja online da configuracao visual, comercial e tecnica da vitrine.',
-        'paginas': ['ecommerce_config'],
-        'objetivo': 'Manter a loja online ativa quando necessario e ajustar a vitrine com identidade, campanhas e integracoes.',
+        'paginas': ['ecommerce_config', 'ecommerce_marketing'],
+        'objetivo': 'Manter a loja online ativa, ajustar a vitrine e organizar campanhas, cupons e sazonalidades sem misturar configuracao visual com calendario comercial.',
         'checklist': [
             'Validar se a ativacao da loja online esta ligada antes de divulgar o link para clientes.',
             'Separar banners, logos e textos oficiais antes da configuracao.',
-            'Definir periodo de vigencia para campanhas e promocoes.',
+            'Definir periodo de vigencia para campanhas, cupons e temas sazonais.',
             'Verificar cores, rodape e imagem padrao de produto em mobile e desktop.',
         ],
         'passos': [
             'Acesse E-commerce > Ativacao da Loja e confirme se o canal publico esta liberado.',
             'Acesse E-commerce > Tema e Loja Online.',
-            'Defina cores da vitrine e mensagem principal.',
-            'Configure multiplos banners com periodo de vigencia.',
-            'Cadastre campanhas programadas com inicio e fim.',
+            'Defina cores da vitrine, banners e checkout.',
+            'Acesse E-commerce > Promocoes e Campanhas.',
+            'Cadastre a mensagem promocional principal, campanhas e cupons com vigencia.',
+            'Associe cada campanha a um tema sazonal quando houver data especial.',
             'Ajuste rodape, favicon e imagem padrao de produto.',
         ],
         'fluxograma': {
             'imagem': 'img/ajuda/fluxo-ecommerce.svg',
             'alt': 'Fluxograma da configuracao do e-commerce.',
-            'legenda': 'Sequencia sugerida para ajustar tema, vitrine, campanhas e revisao visual da loja.',
+            'legenda': 'Sequencia sugerida para ajustar a vitrine, separar marketing sazonal e revisar a experiencia final da loja.',
         },
         'alertas': [
             'Imagens fora do tamanho recomendado podem prejudicar a leitura da vitrine no celular.',
             'Campanhas sem vigencia clara podem continuar aparecendo fora do periodo esperado.',
-            'Sempre revise a loja publica depois de alterar tema, favicon ou banner.',
+            'Sempre revise a loja publica depois de alterar tema, banner, promocao ou cupom.',
         ],
         'duvidas': [
             {
@@ -3297,7 +4046,7 @@ AJUDA_TOPICOS = {
             },
             {
                 'pergunta': 'Posso agendar campanhas automaticamente?',
-                'resposta': 'Sim. Configure inicio/fim de vigencia para promocoes e campanhas programadas.',
+                'resposta': 'Sim. Configure inicio/fim de vigencia para promocoes, cupons e campanhas programadas na tela de marketing.',
             },
         ],
         'problemas': [
@@ -3622,15 +4371,16 @@ AJUDA_ETAPAS = {
             'passos': [
                 'Verifique na ativacao da loja se o canal publico esta liberado.',
                 'Separe logos, banners, textos e imagens oficiais antes da configuracao.',
-                'Defina a vigencia esperada para campanhas e promocoes que vao entrar no ar.',
+                'Defina a vigencia esperada para campanhas, cupons e datas sazonais que vao entrar no ar.',
             ],
         },
         {
-            'titulo': 'Configurar a vitrine e as campanhas',
-            'descricao': 'Ajuste identidade visual, banners e comunicacao comercial do site.',
+            'titulo': 'Separar vitrine e marketing',
+            'descricao': 'Ajuste a identidade visual em uma tela e concentre o calendario promocional em outra.',
             'passos': [
-                'Configure tema, paleta, mensagem principal e rodape da loja online.',
-                'Cadastre banners e campanhas com inicio e fim definidos.',
+                'Configure tema, paleta, banners e rodape da loja online.',
+                'Cadastre a mensagem promocional principal, campanhas e cupons na tela de marketing.',
+                'Use temas sazonais para Natal, Pascoa, Black Friday e outras datas relevantes.',
                 'Revise favicon, imagem padrao de produto e demais elementos visuais de apoio.',
             ],
         },
@@ -3796,7 +4546,7 @@ AJUDA_MENU_DESCRICOES = {
     'Recebimento': 'Entradas de fornecedores, conferencia e armazenagem por tipo de recebimento.',
     'Expedicao': 'Separacao, transferencias entre lojas/CDs e entrega de pedidos.',
     'Meu RH': 'Equipe, acessos, perfis, auditoria e estrutura organizacional.',
-    'E-commerce': 'Ativacao da loja online, identidade visual, campanhas e integracoes.',
+    'E-commerce': 'Ativacao da loja online, identidade visual, campanhas, cupons e integracoes.',
     'Servicos': 'Chamados internos, suporte tecnico e atendimentos de manutencao.',
 }
 
@@ -4998,11 +5748,18 @@ def indicadores_rh():
         db.func.sum(db.case((Funcionario.ativo.is_(True), 1), else_=0)).label('ativos')
     ).group_by(Funcionario.cargo).order_by(db.desc('quantidade')).all()
 
-    pedidos_pendentes = Pedido.query.filter(
-        Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE])
-    ).count()
-    pedidos_hoje = Pedido.query.filter(Pedido.criado_em >= inicio_hoje).count()
-    pedidos_30_dias = Pedido.query.filter(Pedido.criado_em >= data_limite).count()
+    try:
+        pedidos_pendentes = Pedido.query.filter(
+            Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE])
+        ).count()
+        pedidos_hoje = Pedido.query.filter(Pedido.criado_em >= inicio_hoje).count()
+        pedidos_30_dias = Pedido.query.filter(Pedido.criado_em >= data_limite).count()
+    except (OperationalError, ProgrammingError):
+        app.logger.warning('indicadores_rh: contadores de pedidos indisponiveis por schema/banco inconsistente', exc_info=True)
+        db.session.rollback()
+        pedidos_pendentes = 0
+        pedidos_hoje = 0
+        pedidos_30_dias = 0
     media_pedidos_dia_30 = (pedidos_30_dias / 30.0) if pedidos_30_dias else 0.0
 
     equipe_operacao_ativa = Funcionario.query.filter(
@@ -5177,15 +5934,103 @@ def organograma_rh():
         for f in funcionarios_base
         if (f.departamento or '').strip()
     }, key=str.lower)
+    cargos_disponiveis = sorted({
+        (f.cargo or '').strip()
+        for f in funcionarios_base
+        if (f.cargo or '').strip()
+    }, key=str.lower)
+    times_disponiveis = sorted({
+        (f.time_nome or '').strip()
+        for f in funcionarios_base
+        if (f.time_nome or '').strip()
+    }, key=str.lower)
+    niveis_disponiveis = sorted({
+        (f.nivel_organograma or '').strip()
+        for f in funcionarios_base
+        if (f.nivel_organograma or '').strip()
+    }, key=str.lower)
+    roles_disponiveis = sorted({
+        (f.role or '').strip().lower()
+        for f in funcionarios_base
+        if (f.role or '').strip()
+    })
+    perfis_disponiveis = sorted({
+        (f.perfil_acesso.nome or '').strip()
+        for f in funcionarios_base
+        if getattr(f, 'perfil_acesso', None) and (f.perfil_acesso.nome or '').strip()
+    }, key=str.lower)
 
     departamento_filtro = (request.args.get('departamento') or '').strip()
+    cargo_filtro = (request.args.get('cargo') or '').strip()
+    time_filtro = (request.args.get('time') or '').strip()
+    nivel_filtro = (request.args.get('nivel') or '').strip()
+    role_filtro = (request.args.get('role') or '').strip().lower()
+    perfil_filtro = (request.args.get('perfil') or '').strip()
+    lideranca_filtro = (request.args.get('lideranca') or '').strip().lower()
+    vinculo_filtro = (request.args.get('vinculo') or '').strip().lower()
+    acesso_filtro = (request.args.get('acesso') or '').strip().lower()
+    busca_filtro = (request.args.get('busca') or '').strip()
+
+    funcionarios = funcionarios_base
     if departamento_filtro:
         funcionarios = [
-            f for f in funcionarios_base
+            f for f in funcionarios
             if (f.departamento or '').strip() == departamento_filtro
         ]
-    else:
-        funcionarios = funcionarios_base
+    if cargo_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.cargo or '').strip() == cargo_filtro
+        ]
+    if time_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.time_nome or '').strip() == time_filtro
+        ]
+    if nivel_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.nivel_organograma or '').strip() == nivel_filtro
+        ]
+    if role_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.role or '').strip().lower() == role_filtro
+        ]
+    if perfil_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if getattr(f, 'perfil_acesso', None) and (f.perfil_acesso.nome or '').strip() == perfil_filtro
+        ]
+    if lideranca_filtro == 'lideres':
+        funcionarios = [f for f in funcionarios if filhos_map_total.get(f.id)]
+    elif lideranca_filtro == 'sem_lideranca':
+        funcionarios = [f for f in funcionarios if not filhos_map_total.get(f.id)]
+    if vinculo_filtro == 'com_superior':
+        funcionarios = [
+            f for f in funcionarios
+            if f.superior_id and f.superior_id in ids_visiveis
+        ]
+    elif vinculo_filtro == 'sem_superior':
+        funcionarios = [
+            f for f in funcionarios
+            if not f.superior_id or f.superior_id not in ids_visiveis
+        ]
+    if acesso_filtro == 'controlado':
+        funcionarios = [f for f in funcionarios if f.controle_acesso_ativo]
+    elif acesso_filtro == 'livre':
+        funcionarios = [f for f in funcionarios if not f.controle_acesso_ativo]
+    if busca_filtro:
+        busca_normalizada = busca_filtro.lower()
+        funcionarios = [
+            f for f in funcionarios
+            if busca_normalizada in (f.nome or '').lower()
+            or busca_normalizada in (f.cargo or '').lower()
+            or busca_normalizada in (f.departamento or '').lower()
+            or busca_normalizada in (f.time_nome or '').lower()
+            or busca_normalizada in (f.role or '').lower()
+            or busca_normalizada in ((f.perfil_acesso.nome if getattr(f, 'perfil_acesso', None) else '') or '').lower()
+        ]
 
     funcionarios_map = {f.id: f for f in funcionarios}
 
@@ -5291,7 +6136,21 @@ def organograma_rh():
         camadas_organograma=camadas_organograma,
         subordinados_totais=subordinados_totais,
         departamentos_disponiveis=departamentos_disponiveis,
+        cargos_disponiveis=cargos_disponiveis,
+        times_disponiveis=times_disponiveis,
+        niveis_disponiveis=niveis_disponiveis,
+        roles_disponiveis=roles_disponiveis,
+        perfis_disponiveis=perfis_disponiveis,
         departamento_filtro=departamento_filtro,
+        cargo_filtro=cargo_filtro,
+        time_filtro=time_filtro,
+        nivel_filtro=nivel_filtro,
+        role_filtro=role_filtro,
+        perfil_filtro=perfil_filtro,
+        lideranca_filtro=lideranca_filtro,
+        vinculo_filtro=vinculo_filtro,
+        acesso_filtro=acesso_filtro,
+        busca_filtro=busca_filtro,
         profundidade_maxima=(max(camadas.keys()) + 1 if camadas else 0),
         resumo_departamentos=resumo_departamentos,
         total_colaboradores=len(funcionarios),
@@ -5315,8 +6174,15 @@ def analytics_rh_api():
         if cached_payload is not None:
             return jsonify(cached_payload)
 
-    data_limite = datetime.utcnow() - timedelta(days=periodo)
+    agora = datetime.utcnow()
+    data_limite = agora - timedelta(days=periodo)
     admissoes_periodo = Funcionario.query.filter(Funcionario.criado_em >= data_limite).count()
+    total_funcionarios = Funcionario.query.count()
+    funcionarios_ativos = Funcionario.query.filter(Funcionario.ativo.is_(True)).count()
+    funcionarios_inativos = Funcionario.query.filter(Funcionario.ativo.is_(False)).count()
+    acessos_controlados = Funcionario.query.filter(
+        Funcionario.controle_acesso_ativo.is_(True)
+    ).count()
 
     distribuicao_roles = db.session.query(
         Funcionario.role.label('role'),
@@ -5324,8 +6190,19 @@ def analytics_rh_api():
     ).group_by(Funcionario.role).order_by(db.desc('quantidade')).all()
     distribuicao_cargos = db.session.query(
         Funcionario.cargo.label('cargo'),
-        db.func.count(Funcionario.id).label('quantidade')
+        db.func.count(Funcionario.id).label('quantidade'),
+        db.func.sum(db.case((Funcionario.ativo.is_(True), 1), else_=0)).label('ativos')
     ).group_by(Funcionario.cargo).order_by(db.desc('quantidade')).all()
+    distribuicao_perfis = db.session.query(
+        PerfilAcesso.nome.label('perfil'),
+        db.func.count(Funcionario.id).label('quantidade')
+    ).outerjoin(
+        Funcionario, Funcionario.perfil_acesso_id == PerfilAcesso.id
+    ).group_by(
+        PerfilAcesso.id, PerfilAcesso.nome
+    ).order_by(
+        db.desc('quantidade'), PerfilAcesso.nome.asc()
+    ).all()
 
     pedidos_pendentes = Pedido.query.filter(
         Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE])
@@ -5338,39 +6215,154 @@ def analytics_rh_api():
         pedidos_pendentes / equipe_operacao_ativa
         if equipe_operacao_ativa > 0 else float(pedidos_pendentes)
     )
+    deficit_equipe = max(0, max(1, int((pedidos_pendentes + 7) // 8)) - equipe_operacao_ativa) if pedidos_pendentes else 0
 
-    ativos_por_dia_raw = db.session.query(
-        db.func.date(Funcionario.criado_em).label('dia'),
+    admissoes_por_mes_raw = db.session.query(
+        db.func.strftime('%Y-%m', Funcionario.criado_em).label('mes'),
         db.func.count(Funcionario.id).label('quantidade')
     ).filter(
-        Funcionario.criado_em >= data_limite
-    ).group_by(db.func.date(Funcionario.criado_em)).order_by(db.func.date(Funcionario.criado_em).asc()).all()
+        Funcionario.criado_em >= agora - timedelta(days=180)
+    ).group_by(
+        db.func.strftime('%Y-%m', Funcionario.criado_em)
+    ).order_by(
+        db.func.strftime('%Y-%m', Funcionario.criado_em).asc()
+    ).all()
+
+    admissoes_diarias = [
+        {'dia': item.mes, 'quantidade': int(item.quantidade or 0)}
+        for item in admissoes_por_mes_raw
+    ]
+
+    funcoes_ativas_lista = FuncaoRH.query.filter_by(ativo=True).all()
+    cargos_sem_cobertura = []
+    for funcao in funcoes_ativas_lista:
+        ativos_no_cargo = Funcionario.query.filter(
+            Funcionario.ativo.is_(True),
+            db.func.lower(Funcionario.cargo) == (funcao.nome or '').lower()
+        ).count()
+        if ativos_no_cargo == 0:
+            cargos_sem_cobertura.append({
+                'cargo': funcao.nome,
+                'ativos': 0,
+            })
+
+    funcionarios_recentes = Funcionario.query.order_by(Funcionario.criado_em.desc()).limit(5).all()
 
     payload = {
         'success': True,
         'message': 'Analytics RH carregado com sucesso.',
         'data': {
             'periodo_dias': periodo,
+            'kpis': {
+                'total_funcionarios': int(total_funcionarios or 0),
+                'funcionarios_ativos': int(funcionarios_ativos or 0),
+                'funcionarios_inativos': int(funcionarios_inativos or 0),
+                'acessos_controlados': int(acessos_controlados or 0),
+                'produtividade_media': 0.0,
+                'equipe_operacional_ativa': int(equipe_operacao_ativa or 0),
+                'deficit_equipe': int(deficit_equipe or 0),
+            },
             'admissoes_periodo': admissoes_periodo,
             'distribuicao_roles': [
                 {'role': item.role, 'quantidade': int(item.quantidade or 0)}
                 for item in distribuicao_roles
             ],
             'distribuicao_cargos': [
-                {'cargo': item.cargo or '-', 'quantidade': int(item.quantidade or 0)}
+                {'cargo': item.cargo or '-', 'quantidade': int(item.quantidade or 0), 'ativos': int(item.ativos or 0)}
                 for item in distribuicao_cargos
             ],
-            'admissoes_diarias': [
-                {'dia': str(item.dia), 'quantidade': int(item.quantidade or 0)}
-                for item in ativos_por_dia_raw
+            'distribuicao_perfis_acesso': [
+                {'perfil': item.perfil or 'Sem perfil padrao', 'quantidade': int(item.quantidade or 0)}
+                for item in distribuicao_perfis
             ],
+            'admissoes_diarias': admissoes_diarias,
             'pedidos_pendentes': pedidos_pendentes,
             'equipe_operacao_ativa': equipe_operacao_ativa,
             'pendencias_por_colaborador': round(pendencias_por_colaborador, 2),
+            'cargos_sem_cobertura': cargos_sem_cobertura,
+            'funcionarios_recentes': [
+                {
+                    'nome': item.nome,
+                    'cargo': item.cargo or item.role.upper(),
+                    'data_admissao': item.criado_em.strftime('%d/%m/%Y') if item.criado_em else '-',
+                }
+                for item in funcionarios_recentes
+            ],
+            'alertas': [],
+            'produtividade_vs_faturamento': [],
         }
     }
+
+    produtividade_map = {}
+    pedidos_fechados_periodo = Pedido.query.options(
+        selectinload(Pedido.garcom).selectinload(Garcom.funcionario),
+        selectinload(Pedido.caixa).selectinload(Caixa.funcionario),
+    ).filter(
+        Pedido.status == Pedido.STATUS_FECHADO,
+        Pedido.fechado_em.isnot(None),
+        Pedido.fechado_em >= data_limite
+    ).all()
+    for pedido in pedidos_fechados_periodo:
+        funcionario_produtividade = None
+        if pedido.garcom and pedido.garcom.funcionario:
+            funcionario_produtividade = pedido.garcom.funcionario
+        elif pedido.caixa and pedido.caixa.funcionario:
+            funcionario_produtividade = pedido.caixa.funcionario
+        if not funcionario_produtividade:
+            continue
+        registro = produtividade_map.setdefault(
+            funcionario_produtividade.id,
+            {
+                'nome': funcionario_produtividade.nome,
+                'cargo': funcionario_produtividade.cargo or funcionario_produtividade.role.upper(),
+                'pedidos': 0,
+                'faturamento': 0.0,
+            }
+        )
+        registro['pedidos'] += 1
+        registro['faturamento'] += float(pedido.total or 0.0)
+
+    produtividade_items = [
+        {
+            'nome': item['nome'],
+            'cargo': item['cargo'],
+            'pedidos': int(item['pedidos'] or 0),
+            'faturamento': float(item['faturamento'] or 0.0),
+            'ticket_medio': float((item['faturamento'] or 0.0) / item['pedidos']) if item['pedidos'] else 0.0,
+        }
+        for item in produtividade_map.values()
+    ]
+    produtividade_items.sort(key=lambda item: (item['pedidos'], item['faturamento']), reverse=True)
+    payload['data']['produtividade_vs_faturamento'] = produtividade_items
+    payload['data']['top_produtividade'] = produtividade_items[:5]
+    payload['data']['kpis']['produtividade_media'] = round(
+        (
+            sum(item['pedidos'] for item in produtividade_items) / len(produtividade_items)
+            if produtividade_items else 0.0
+        ),
+        2,
+    )
+    if cargos_sem_cobertura:
+        payload['data']['alertas'].append({
+            'nivel': 'warning',
+            'titulo': 'Cargos sem cobertura',
+            'descricao': f'{len(cargos_sem_cobertura)} cargo(s) ativo(s) sem colaborador ativo.',
+        })
+    if deficit_equipe > 0:
+        payload['data']['alertas'].append({
+            'nivel': 'danger',
+            'titulo': 'Deficit operacional',
+            'descricao': f'Deficit estimado de {deficit_equipe} colaborador(es) para a fila atual.',
+        })
+    perfis_sem_usuario = [item for item in payload['data']['distribuicao_perfis_acesso'] if item['quantidade'] == 0]
+    if perfis_sem_usuario:
+        payload['data']['alertas'].append({
+            'nivel': 'info',
+            'titulo': 'Perfis sem aplicacao',
+            'descricao': f'{len(perfis_sem_usuario)} perfil(is) ativo(s) sem usuarios vinculados.',
+        })
     if cache is not None:
-        cache.set(cache_key, payload, timeout=120)
+        cache.set(cache_key, payload, timeout=60)
     return jsonify(payload)
 
 
@@ -6307,6 +7299,29 @@ def registrar_auditoria_pos_resposta(response):
                     )
     except Exception:
         pass
+
+    try:
+        if request.method == 'GET':
+            endpoint = request.endpoint or ''
+            caminho = request.path or ''
+            if caminho == '/sw.js' or endpoint in {'pwa_manifest', 'store_pwa_manifest'}:
+                response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+            elif caminho.startswith('/static/'):
+                if request.args.get('v'):
+                    response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                else:
+                    response.headers['Cache-Control'] = 'no-cache, max-age=0, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = '0'
+            elif response.mimetype == 'text/html':
+                response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+    except Exception:
+        pass
+
     return response
 
 
@@ -6420,7 +7435,9 @@ def store_pwa_manifest():
 @app.route('/sw.js')
 def pwa_service_worker():
     response = send_from_directory(app.static_folder, 'sw.js', mimetype='application/javascript')
-    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
     return response
 
 
@@ -6433,6 +7450,7 @@ def inject_user():
     atendimento_mesas_ativo = not empresa_config or empresa_config.atendimento_mesas_ativo is not False
     secao_atual_nome, tela_atual_nome = _titulo_tela_atual()
     endpoint_atual = request.endpoint or ''
+    pagina_atual_menu = ENDPOINT_TO_PAGINA.get(endpoint_atual)
     estoques_contexto_disponiveis = _estoques_contexto_disponiveis(funcionario_logado) if funcionario_logado else []
     estoque_contexto_id = _estoque_contexto_selecionado_id(funcionario_logado) if funcionario_logado else None
     produto_imagem_padrao_path = (
@@ -6455,11 +7473,33 @@ def inject_user():
     )
     csrf_token_value = ensure_csrf_token()
     paginas_permitidas_usuario = _paginas_permitidas_para_funcionario(funcionario_logado) if funcionario_logado else set()
+    menu_paginas_usuario = _menu_agrupado_para_paginas(paginas_permitidas_usuario) if funcionario_logado else []
+    menu_navegacao_principal = _menu_navegacao_principal(
+        funcionario_logado,
+        empresa_config=empresa_config,
+        atendimento_mesas_ativo=atendimento_mesas_ativo,
+        current_page_key=pagina_atual_menu,
+    ) if funcionario_logado else []
+    user_agent_texto = (request.user_agent.string or '').lower()
+    acesso_mobile_web = any(token in user_agent_texto for token in ['android', 'iphone', 'ipad', 'ipod', 'mobile'])
+    apk_download_url = None
+    for candidato in ['downloads/app-release.apk', 'downloads/systemlr.apk', 'downloads/app-latest.apk']:
+        caminho = os.path.join(app.static_folder, candidato)
+        if os.path.exists(caminho):
+            apk_download_url = url_for('static', filename=candidato)
+            break
+
     assistente_status = (
         local_ai_assistant.status()
         if funcionario_logado and app.config.get('LOCAL_AI_ENABLED') and local_ai_assistant
         else {'enabled': False}
     )
+    indicadores_contexto_usuario = (
+        _montar_indicadores_contexto_usuario(funcionario_logado, paginas_permitidas_usuario)
+        if funcionario_logado else []
+    )
+    if funcionario_logado:
+        _registrar_debug_menu(funcionario_logado, paginas_permitidas_usuario, menu_paginas_usuario)
     return {
         'ano_atual': datetime.utcnow().year,
         'total_alertas': Produto.query.filter(
@@ -6474,12 +7514,18 @@ def inject_user():
         'store_favicon_path': store_favicon_path,
         'app_icon_path': app_icon_path,
         'paginas_permitidas_usuario': paginas_permitidas_usuario,
+        'menu_paginas_usuario': menu_paginas_usuario,
+        'menu_navegacao_principal': menu_navegacao_principal,
+        'pagina_atual_menu': pagina_atual_menu,
         'secao_atual_nome': secao_atual_nome,
         'tela_atual_nome': tela_atual_nome,
         'endpoint_atual': endpoint_atual,
         'estoques_contexto_disponiveis': estoques_contexto_disponiveis,
         'estoque_contexto_id': estoque_contexto_id,
         'assistente_local_status': assistente_status,
+        'indicadores_contexto_usuario': indicadores_contexto_usuario,
+        'apk_download_url': apk_download_url,
+        'show_apk_download_mobile_web': bool(apk_download_url and acesso_mobile_web),
         'csrf_token': csrf_token_value,
         'csrf_input': csrf_input_tag()
     }
@@ -6490,17 +7536,19 @@ def inject_user():
 @app.errorhandler(400)
 def bad_request(error):
     mensagem = getattr(error, 'description', None) or 'Requisicao invalida.'
+    acao = resolve_action(code='bad_request', status_code=400)
     if is_json_request():
-        return json_response(False, mensagem, status=400, code='bad_request')
-    return render_template('errors/500.html', error_message=mensagem), 400
+        return json_response(False, mensagem, status=400, code='bad_request', action=acao)
+    return render_template('errors/400.html', error_message=mensagem), 400
 
 
 @app.errorhandler(403)
 def forbidden(error):
     mensagem = getattr(error, 'description', None) or 'Acesso negado.'
+    acao = resolve_action(code='forbidden', status_code=403)
     if is_json_request():
-        return json_response(False, mensagem, status=403, code='forbidden')
-    return render_template('errors/500.html', error_message=mensagem), 403
+        return json_response(False, mensagem, status=403, code='forbidden', action=acao)
+    return render_template('errors/403.html', error_message=mensagem), 403
 
 
 @app.errorhandler(404)
@@ -6513,9 +7561,14 @@ def handle_app_error(error):
     mensagem = str(error)
     status_code = getattr(error, 'status_code', 500)
     code = getattr(error, 'code', 'app_error')
+    fields = getattr(error, 'fields', {}) or {}
+    acao = resolve_action(code=code, status_code=status_code, action=getattr(error, 'action', None))
     if is_json_request():
-        return json_response(False, mensagem, status=status_code, code=code)
-    flash(mensagem, 'danger' if status_code >= 400 else 'warning')
+        return json_response(False, mensagem, status=status_code, code=code, fields=fields, action=acao)
+    flash(
+        build_flash_message('Aviso' if status_code == 403 else 'Erro', mensagem, acao),
+        flash_category_for_status(status_code),
+    )
     destino = request.referrer
     if request.endpoint == 'login':
         destino = url_for('login')

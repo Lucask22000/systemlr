@@ -29,15 +29,14 @@
     </form>
 </div>
 
-<div class="table-responsive table-scroll-sticky">
-    <table class="table">
+<div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
+    <div class="table-responsive table-scroll-sticky" style="overflow-x: auto; overflow-y: visible; max-height: none;">
+        <table class="table">
         <thead>
             <tr>
                 <th>Nome</th>
                 <th>CNPJ/CPF</th>
                 <th>Contato</th>
-                <th>Telefone</th>
-                <th>Email</th>
                 <th>Status</th>
                 <th>Acoes</th>
             </tr>
@@ -47,9 +46,9 @@
             <tr>
                 <td data-label="Nome">{{ fornecedor.nome }}</td>
                 <td data-label="CNPJ/CPF">{{ fornecedor.documento or '-' }}</td>
-                <td data-label="Contato">{{ fornecedor.contato or '-' }}</td>
-                <td data-label="Telefone">{{ fornecedor.telefone or '-' }}</td>
-                <td data-label="Email">{{ fornecedor.email or '-' }}</td>
+                <td data-label="Contato">
+                    {{ fornecedor.contato or fornecedor.telefone or fornecedor.email or '-' }}
+                </td>
                 <td data-label="Status">
                     {% if fornecedor.ativo %}
                     <span class="badge badge-success">Ativo</span>
@@ -58,21 +57,17 @@
                     {% endif %}
                 </td>
                 <td data-label="Acoes" class="actions-cell">
-                    <a href="{{ url_for('detalhes_fornecedor', fornecedor_id=fornecedor.id) }}" class="btn-small btn-secondary">Detalhes</a>
-                    <a href="{{ url_for('editar_fornecedor', fornecedor_id=fornecedor.id) }}" class="btn-small btn-warning">Editar</a>
-                    <form method="POST" action="{{ url_for('deletar_fornecedor', fornecedor_id=fornecedor.id) }}" class="inline-form" data-confirm-message="Tem certeza que deseja remover este fornecedor?">
-                        {{ csrf_input|safe }}
-                        <button type="submit" class="btn-small btn-danger">Excluir</button>
-                    </form>
+                    <a href="{{ url_for('detalhes_fornecedor', fornecedor_id=fornecedor.id) }}" class="btn-small btn-secondary">Visualizar</a>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="text-center">Nenhum fornecedor cadastrado</td>
+                <td colspan="5" class="text-center">Nenhum fornecedor cadastrado</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 
 {% if pagination and pagination.pages > 1 %}

@@ -1,9 +1,8 @@
-from datetime import datetime
-
-from app.exceptions import BusinessRuleError, NotFound, ValidationError
-from app.services.transaction import atomic_transaction
+from app.exceptions import BusinessRuleError, ValidationError
+from app.services.traceability import record_process_event
+from app.services.venda_service import VendaService
 from app.services.workflow import transition_pedido_status
-from models import Caixa, ItemPedido, Movimentacao, MovimentacaoCaixa, Pedido, Produto, db
+from models import ItemPedido, Pedido, Produto, db
 
 
 def _normalizar_item_payload(item, *, produto_model=Produto):
@@ -19,6 +18,8 @@ def _normalizar_item_payload(item, *, produto_model=Produto):
     produto = produto_model.query.get(produto_id)
     if not produto or not produto.ativo:
         raise ValidationError('Produto invalido ou inativo.')
+    if produto.vencido:
+        raise ValidationError(f'Produto "{produto.nome}" esta vencido e nao pode entrar no pedido.')
     return {'produto': produto, 'quantidade': quantidade}, None
 
 
@@ -73,6 +74,7 @@ def create_order(
     totalizer=_recalcular_total_pedido,
     normalizar_item_payload=_normalizar_item_payload,
     empty_items_message='Adicione ao menos um item valido ao pedido.',
+    actor=None,
 ):
     if not caixa or not caixa.aberto:
         raise BusinessRuleError('Caixa nao esta aberta.')
@@ -101,6 +103,22 @@ def create_order(
 
     if atendimento_mesas_ativo and mesa:
         mesa.status = 'ocupada'
+
+    record_process_event(
+        processo_tipo='pedido_venda',
+        etapa='criacao',
+        acao='pedido_criado',
+        entidade='pedido',
+        entidade_id=pedido.id,
+        pedido_id=pedido.id,
+        actor=actor,
+        detalhes={
+            'status': pedido.status,
+            'total': float(pedido.total or 0.0),
+            'mesa_id': pedido.mesa_id,
+            'caixa_id': pedido.caixa_id,
+        },
+    )
 
     return pedido
 
@@ -163,55 +181,15 @@ def update_order(
     return pedido
 
 
-def _processar_fechamento_pedido(pedido, *, failure_hook=None):
-    with atomic_transaction():
-        if not pedido.itens:
-            raise ValidationError('Pedido sem itens nao pode ser fechado.')
-
-        if not pedido.estoque_processado:
-            for item in pedido.itens:
-                produto = item.produto or Produto.query.get(item.produto_id)
-                if not produto:
-                    raise NotFound(f'Produto do item {item.id} nao encontrado.')
-                if produto.quantidade_estoque < item.quantidade:
-                    raise BusinessRuleError(f'Estoque insuficiente para "{produto.nome}".')
-
-            for item in pedido.itens:
-                produto = item.produto or Produto.query.get(item.produto_id)
-                produto.quantidade_estoque -= item.quantidade
-                db.session.add(Movimentacao(
-                    produto_id=produto.id,
-                    tipo=Movimentacao.TIPO_SAIDA,
-                    quantidade=item.quantidade,
-                    motivo='venda',
-                    observacoes=f'Pedido {pedido.id} fechado'
-                ))
-            if failure_hook:
-                failure_hook('after_stock')
-            pedido.estoque_processado = True
-
-        if pedido.caixa_id and not pedido.financeiro_processado:
-            caixa = pedido.caixa or Caixa.query.get(pedido.caixa_id)
-            if not caixa:
-                raise NotFound('Caixa do pedido nao encontrada.')
-            if not caixa.aberto:
-                raise BusinessRuleError('Caixa do pedido esta fechada. Nao e possivel concluir o financeiro.')
-
-            valor_pedido = float(pedido.total or 0.0)
-            caixa.saldo_atual = float(caixa.saldo_atual or 0.0) + valor_pedido
-            db.session.add(MovimentacaoCaixa(
-                caixa_id=caixa.id,
-                tipo=MovimentacaoCaixa.TIPO_ENTRADA,
-                valor=valor_pedido,
-                descricao=f'Fechamento do pedido #{pedido.id}'
-            ))
-            if failure_hook:
-                failure_hook('after_cash')
-            pedido.financeiro_processado = True
-
-        pedido.fechado_em = datetime.utcnow()
-        if pedido.mesa:
-            pedido.mesa.status = 'livre'
+def _processar_fechamento_pedido(pedido, *, actor=None, failure_hook=None):
+    VendaService(session=db.session).processar_venda_rapida(
+        pedido,
+        metodo_pagamento=pedido.metodo_pagamento,
+        valor_pago=pedido.valor_pago,
+        actor=actor,
+        commit=False,
+        failure_hook=failure_hook,
+    )
 
 
 def _aplicar_transicao_status(pedido, novo_status, *, actor=None, detalhes=None, require_delivery_separation=False):
@@ -221,5 +199,5 @@ def _aplicar_transicao_status(pedido, novo_status, *, actor=None, detalhes=None,
         actor=actor,
         detalhes=detalhes,
         require_delivery_separation=require_delivery_separation,
-        on_fechamento=_processar_fechamento_pedido,
+        on_fechamento=lambda item: _processar_fechamento_pedido(item, actor=actor),
     )

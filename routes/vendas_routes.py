@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 from datetime import time
 from datetime import timedelta
@@ -5,10 +6,30 @@ import json
 import secrets
 import qrcode
 from io import BytesIO
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 from flask import render_template, request, redirect, url_for, flash, session, Response, jsonify
-from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.orm import selectinload, load_only
 
-from models import db, Caixa, Mesa, Pedido, Produto, ItemPedido, Movimentacao, MovimentacaoCaixa, Funcionario, Garcom, EmpresaConfig, PermissaoAcesso
+from app import extensions
+from models import (
+    db,
+    Caixa,
+    ClienteEndereco,
+    EnderecoEstoque,
+    EmpresaConfig,
+    FrotaVeiculo,
+    Funcionario,
+    Garcom,
+    ItemPedido,
+    Mesa,
+    Movimentacao,
+    MovimentacaoCaixa,
+    Pedido,
+    PermissaoAcesso,
+    Produto,
+)
 from realtime import publish_alert, sse_stream
 from security import json_response
 from app.constants import ENDPOINT_TO_PAGINA
@@ -18,18 +39,22 @@ from app.services.pedido_service import (
     _aplicar_transicao_status as service_aplicar_transicao_status,
     create_order as service_create_order,
     _normalizar_item_payload,
-    _processar_fechamento_pedido as service_processar_fechamento_pedido,
     _recalcular_total_pedido,
     update_order as service_update_order,
 )
+from app.services.transaction import atomic_transaction
+from app.services.venda_service import VendaService
 from app.services.workflow import ExpedicaoStatus, transition_expedicao_status
 from app.services.operational_rules import require_cancel_reason
 from app.services.utils_service import _to_float, _to_int
 from app.utils.payment_config import default_payment_id, infer_payment_method_id, load_payment_options, payment_methods_map
+from app.utils.responses import fail, ok
+from app.utils.validators import validar_cep
 
 ORDER_ALLOWED_TRANSITIONS = Pedido.TRANSICOES_PERMITIDAS
 ORDER_IMMUTABLE_STATUSES = Pedido.STATUS_IMUTAVEIS
 DELIVERY_SEPARATION_STATUSES = {Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE}
+venda_service = VendaService()
 
 
 def _obter_empresa_config():
@@ -87,6 +112,45 @@ def _pedido_pronto_para_roteirizacao(pedido):
     if pedido.status in {Pedido.STATUS_CANCELADO, Pedido.STATUS_FECHADO}:
         return False
     return True
+
+
+def _coletar_metricas_dashboard_tempo_real():
+    agora = datetime.utcnow()
+    inicio_dia = agora.replace(hour=0, minute=0, second=0, microsecond=0)
+    try:
+        pedidos_ultimos_15_min = Pedido.query.filter(Pedido.criado_em >= (agora - timedelta(minutes=15))).count()
+        faturamento_dia = db.session.query(db.func.sum(Pedido.total)).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0.0
+        produtos_vendidos_turno = db.session.query(db.func.sum(ItemPedido.quantidade)).join(
+            Pedido, Pedido.id == ItemPedido.pedido_id
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0
+    except (OperationalError, ProgrammingError):
+        db.session.rollback()
+        pedidos_ultimos_15_min = 0
+        faturamento_dia = 0.0
+        produtos_vendidos_turno = 0
+    return {
+        'pedidos_ultimos_15_min': int(pedidos_ultimos_15_min or 0),
+        'faturamento_dia': float(faturamento_dia or 0.0),
+        'produtos_vendidos_turno': int(produtos_vendidos_turno or 0),
+    }
+
+
+def _publicar_metricas_dashboard_tempo_real():
+    try:
+        publish_alert({
+            'event': 'dashboard_metrics',
+            'data': _coletar_metricas_dashboard_tempo_real(),
+        })
+    except Exception:
+        pass
 
 
 def _referencia_pedido_roteirizacao(pedido):
@@ -201,7 +265,22 @@ def _parse_veiculo_cadastrado(valor):
     return texto, None
 
 
-def _carregar_veiculos_config(valor_json):
+def _carregar_veiculos_config(valor_json=None, empresa=None):
+    empresa_ref = empresa
+    if isinstance(valor_json, EmpresaConfig):
+        empresa_ref = valor_json
+        valor_json = empresa_ref.entrega_veiculos_json
+
+    if empresa_ref is not None and _frota_relacional_disponivel():
+        veiculos_relacionais = _listar_veiculos_frota(empresa_ref)
+        if veiculos_relacionais:
+            return [_serializar_frota_veiculo(item) for item in veiculos_relacionais]
+        valor_json = valor_json or empresa_ref.entrega_veiculos_json
+
+    return _carregar_veiculos_config_legado(valor_json)
+
+
+def _carregar_veiculos_config_legado(valor_json):
     if not valor_json:
         return []
     try:
@@ -306,6 +385,75 @@ def _normalizar_veiculos_texto(texto):
     return veiculos
 
 
+def _frota_relacional_disponivel():
+    """Verifica se a tabela relacional da frota esta acessivel na conexao ativa."""
+    try:
+        return db.inspect(db.session.connection()).has_table('frota_veiculos')
+    except Exception:
+        try:
+            return db.inspect(db.engine).has_table('frota_veiculos')
+        except Exception:
+            return False
+
+
+def _listar_veiculos_frota(empresa, *, apenas_ativos=False):
+    if not empresa or not getattr(empresa, 'id', None) or not _frota_relacional_disponivel():
+        return []
+    query = FrotaVeiculo.query.filter(FrotaVeiculo.empresa_id == empresa.id)
+    if apenas_ativos:
+        query = query.filter(FrotaVeiculo.ativo.is_(True))
+    return query.order_by(FrotaVeiculo.nome.asc(), FrotaVeiculo.id.asc()).all()
+
+
+def _serializar_frota_veiculo(veiculo):
+    return {
+        'id': veiculo.id,
+        'nome': veiculo.nome,
+        'placa': (veiculo.placa or '').strip().upper() or None,
+        'categoria': veiculo.tipo or 'geral',
+        'tipo': veiculo.tipo or 'geral',
+        'tipo_entrega': (veiculo.tipo_entrega or 'todos').strip().lower(),
+        'capacidade_pedidos': int(veiculo.capacidade_pedidos or 0),
+        'capacidade_kg': float(veiculo.capacidade_kg or 0) if veiculo.capacidade_kg is not None else None,
+        'capacidade_volume': float(veiculo.capacidade_volume or 0) if veiculo.capacidade_volume is not None else None,
+        'motorista_padrao': veiculo.motorista_padrao,
+        'empresa': veiculo.empresa_terceirizada,
+        'ativo': veiculo.ativo is not False,
+    }
+
+
+def _opcoes_veiculos_cadastrados(empresa):
+    if empresa and _frota_relacional_disponivel():
+        return _listar_veiculos_frota(empresa, apenas_ativos=True)
+    return [
+        {
+            'id': '',
+            'nome': item.get('nome'),
+            'placa': item.get('placa'),
+        }
+        for item in _carregar_veiculos_config_legado(empresa.entrega_veiculos_json if empresa else None)
+        if item.get('ativo', True)
+    ]
+
+
+def _obter_veiculo_frota(empresa, veiculo_id):
+    if not empresa or not veiculo_id or not _frota_relacional_disponivel():
+        return None
+    return FrotaVeiculo.query.filter_by(id=veiculo_id, empresa_id=empresa.id).first()
+
+
+def _sincronizar_frota_legada(empresa):
+    """Mantem o JSON legado atualizado enquanto a frota migra para tabela propria."""
+    if not empresa:
+        return
+    if _frota_relacional_disponivel():
+        veiculos = [
+            _serializar_frota_veiculo(item)
+            for item in _listar_veiculos_frota(empresa)
+        ]
+        empresa.entrega_veiculos_json = json.dumps(veiculos, ensure_ascii=False) if veiculos else None
+
+
 def _carregar_regras_roteirizacao(empresa):
     regras = {
         'prefixo_rota': 'Rota',
@@ -360,6 +508,8 @@ def _distribuir_pedidos_automaticamente(pedidos, veiculos, regras, empresa):
 
     if not pedidos_ordenados:
         return 0
+
+    pedidos_ordenados = _ordenar_pedidos_por_proximidade(pedidos_ordenados, getattr(empresa, 'cep', None))
 
     veiculos_ativos = [v for v in veiculos if v.get('ativo', True)]
     if tipo_entrega != 'todos':
@@ -448,6 +598,50 @@ def _pedido_na_fila_entrega(pedido, empresa=None):
         _separacao_entrega_ativa(empresa)
         and (pedido.origem or '').strip().lower() in _origens_separacao_entrega(empresa)
     )
+
+
+def _validar_pedido_para_separacao(pedido, funcionario=None):
+    """Garante que os itens estao em areas autorizadas para picking/expedicao."""
+    tipos_permitidos = {'picking', 'box_expedicao', 'expedicao'}
+    endereco_ids = {
+        item.produto.endereco_id
+        for item in (pedido.itens or [])
+        if item.produto and item.produto.endereco_id
+    }
+    enderecos = {}
+    if endereco_ids:
+        enderecos = {
+            endereco.id: endereco
+            for endereco in _endereco_query_permitida(funcionario).filter(EnderecoEstoque.id.in_(endereco_ids)).all()
+        }
+
+    produtos_sem_picking = []
+    produtos_vencidos = []
+    for item in pedido.itens or []:
+        produto = item.produto
+        if not produto:
+            produtos_sem_picking.append(f'Produto #{item.produto_id}')
+            continue
+        if produto.vencido:
+            produtos_vencidos.append(produto.nome)
+            continue
+        endereco = enderecos.get(produto.endereco_id) if produto.endereco_id else None
+        tipo_area = (getattr(endereco, 'tipo_area', None) or '').strip().lower()
+        if not endereco or tipo_area not in tipos_permitidos:
+            produtos_sem_picking.append(produto.nome)
+
+    if produtos_vencidos:
+        raise BusinessRuleError(
+            'Produtos vencidos nao podem ser separados: '
+            + ', '.join(dict.fromkeys(produtos_vencidos))
+            + '.'
+        )
+    if produtos_sem_picking:
+        raise BusinessRuleError(
+            'Os produtos a seguir precisam estar enderecados em areas de picking/expedicao antes da separacao: '
+            + ', '.join(dict.fromkeys(produtos_sem_picking))
+            + '.'
+        )
 
 
 def _visao_operacional_pedido(pedido, empresa=None):
@@ -751,6 +945,136 @@ def _coletar_progresso_expedicao_diario(empresa):
     }
 
 
+def _coletar_dashboard_expedicao(empresa):
+    agora = datetime.utcnow()
+    inicio_dia = agora.replace(hour=0, minute=0, second=0, microsecond=0)
+    fim_dia = inicio_dia + timedelta(days=1)
+    pedidos = Pedido.query.options(
+        selectinload(Pedido.caixa),
+        selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+    ).filter(
+        Pedido.origem.in_(_origens_separacao_entrega(empresa)),
+        Pedido.criado_em >= inicio_dia,
+        Pedido.criado_em < fim_dia,
+    ).order_by(Pedido.criado_em.asc()).all()
+
+    pedidos_fluxo = [pedido for pedido in pedidos if pedido.status in DELIVERY_SEPARATION_STATUSES]
+    por_hora = {f'{hora:02d}:00': {'separacao': 0, 'embalagem': 0, 'expedicao': 0, 'entregue': 0} for hora in range(24)}
+    fila_por_hora = {f'{hora:02d}:00': 0 for hora in range(24)}
+    status_rotas = {'em_rota': 0, 'entregues': 0, 'atrasadas': 0}
+    tempos_separacao = []
+    aderencia_ok = 0
+    aderencia_total = 0
+    pedidos_separacao = []
+    pedidos_rota = []
+
+    for pedido in pedidos_fluxo:
+        etapa = _resolver_etapa_expedicao(pedido)
+        hora_ref = (pedido.criado_em or inicio_dia).strftime('%H:00')
+        if etapa == 'separacao':
+            por_hora[hora_ref]['separacao'] += 1
+            fila_por_hora[hora_ref] += 1
+            espera_min = max((agora - pedido.criado_em).total_seconds() / 60.0, 0.0) if pedido.criado_em else 0.0
+            pedidos_separacao.append({
+                'id': pedido.id,
+                'cliente': pedido.cliente_nome or '-',
+                'rota': pedido.rota_entrega or '-',
+                'motorista': pedido.motorista_nome or '-',
+                'tempo_espera_min': round(espera_min, 1),
+            })
+        elif etapa == 'embalagem':
+            por_hora[hora_ref]['embalagem'] += 1
+        elif etapa == 'expedicao':
+            por_hora[hora_ref]['expedicao'] += 1
+        elif etapa == 'entregue':
+            por_hora[hora_ref]['entregue'] += 1
+
+        if pedido.separacao_entrega_em and pedido.criado_em:
+            tempos_separacao.append(max((pedido.separacao_entrega_em - pedido.criado_em).total_seconds() / 60.0, 0.0))
+
+        if pedido.saiu_para_entrega_em and not pedido.entrega_concluida_em:
+            status_rotas['em_rota'] += 1
+            previsao = pedido.saiu_para_entrega_em + timedelta(minutes=90)
+            pedidos_rota.append({
+                'id': pedido.id,
+                'cliente': pedido.cliente_nome or '-',
+                'rota': pedido.rota_entrega or '-',
+                'motorista': pedido.motorista_nome or '-',
+                'previsao_entrega': previsao.strftime('%H:%M'),
+            })
+        elif pedido.entrega_concluida_em:
+            status_rotas['entregues'] += 1
+            aderencia_total += 1
+            if pedido.saiu_para_entrega_em and (pedido.entrega_concluida_em - pedido.saiu_para_entrega_em) <= timedelta(minutes=90):
+                aderencia_ok += 1
+        elif pedido.rota_entrega and pedido.separacao_entrega_concluida:
+            status_rotas['atrasadas'] += 1
+
+    veiculos_config = _carregar_veiculos_config(empresa)
+    veiculos = []
+    for item in veiculos_config:
+        veiculos.append({
+            'nome': item.get('nome') or 'Veiculo',
+            'placa': item.get('placa') or '-',
+            'tipo': item.get('tipo') or '-',
+            'capacidade': item.get('capacidade_pedidos') or '-',
+        })
+
+    alertas = []
+    pedidos_separacao.sort(key=lambda item: item['tempo_espera_min'], reverse=True)
+    pedidos_rota.sort(key=lambda item: item['previsao_entrega'])
+    if pedidos_separacao and pedidos_separacao[0]['tempo_espera_min'] > 30:
+        alertas.append({
+            'nivel': 'warning',
+            'titulo': 'Pedidos parados na separacao',
+            'descricao': f'O pedido #{pedidos_separacao[0]["id"]} aguarda ha {pedidos_separacao[0]["tempo_espera_min"]:.1f} minutos.',
+        })
+    corte = _config_corte_roteirizacao(empresa, agora=agora)
+    if corte['ativo'] and not corte['janela_aberta']:
+        alertas.append({
+            'nivel': 'danger',
+            'titulo': 'Horario de fechamento da rota atingido',
+            'descricao': f'Roteirizacao fechada desde {corte["horario"]}.',
+        })
+    if any(str(item.get('nome') or '').strip() for item in veiculos_config) and not veiculos:
+        alertas.append({
+            'nivel': 'info',
+            'titulo': 'Frota sem cadastro estruturado',
+            'descricao': 'Revise os veiculos configurados para preencher tipo, placa e capacidade.',
+        })
+
+    return {
+        'kpis': {
+            'pedidos_dia_total': len(pedidos_fluxo),
+            'separados': sum(1 for pedido in pedidos_fluxo if pedido.separacao_entrega_concluida),
+            'embalados': sum(1 for pedido in pedidos_fluxo if pedido.etiqueta_entrega_emitida_em),
+            'expedidos': sum(1 for pedido in pedidos_fluxo if pedido.saiu_para_entrega_em),
+            'entregues': sum(1 for pedido in pedidos_fluxo if pedido.entrega_concluida_em),
+            'tempo_medio_separacao_min': round(sum(tempos_separacao) / len(tempos_separacao), 1) if tempos_separacao else 0.0,
+            'aderencia_rota_pct': round((aderencia_ok / aderencia_total) * 100.0, 1) if aderencia_total else 0.0,
+        },
+        'progresso_por_hora': [
+            {
+                'hora': hora,
+                'separacao': valores['separacao'],
+                'embalagem': valores['embalagem'],
+                'expedicao': valores['expedicao'],
+                'entregue': valores['entregue'],
+            }
+            for hora, valores in por_hora.items()
+        ],
+        'fila_separacao_por_hora': [
+            {'hora': hora, 'pendentes': qtd}
+            for hora, qtd in fila_por_hora.items()
+        ],
+        'status_rotas': status_rotas,
+        'pedidos_separacao': pedidos_separacao[:5],
+        'pedidos_rota': pedidos_rota[:5],
+        'veiculos': veiculos[:5],
+        'alertas': alertas,
+    }
+
+
 def _bloquear_se_atendimento_mesas_desativado():
     if _atendimento_mesas_ativo():
         return None
@@ -810,6 +1134,168 @@ def _paginas_efetivas_funcionario(funcionario):
     return permitidas
 
 
+def _estoques_permitidos_ids_base(funcionario=None):
+    funcionario = funcionario or _funcionario_logado_vendas()
+    if not funcionario or funcionario.role == 'admin' or not getattr(funcionario, 'restricao_estoques_ativa', False):
+        return None
+    ids = set()
+    if getattr(funcionario, 'estoque_principal_id', None):
+        ids.add(funcionario.estoque_principal_id)
+    for estoque in getattr(funcionario, 'estoques_permitidos', []) or []:
+        if getattr(estoque, 'id', None):
+            ids.add(estoque.id)
+    return ids
+
+
+def _estoque_contexto_selecionado_id(funcionario=None):
+    funcionario = funcionario or _funcionario_logado_vendas()
+    valor = session.get('estoque_contexto_id')
+    if valor in (None, '', 'all'):
+        return None
+    try:
+        estoque_id = int(valor)
+    except (TypeError, ValueError):
+        session.pop('estoque_contexto_id', None)
+        return None
+    ids_base = _estoques_permitidos_ids_base(funcionario)
+    if ids_base is not None and estoque_id not in ids_base:
+        session.pop('estoque_contexto_id', None)
+        return None
+    return estoque_id
+
+
+def _estoques_permitidos_ids(funcionario=None):
+    funcionario = funcionario or _funcionario_logado_vendas()
+    ids_base = _estoques_permitidos_ids_base(funcionario)
+    estoque_contexto_id = _estoque_contexto_selecionado_id(funcionario)
+    if estoque_contexto_id:
+        return {estoque_contexto_id}
+    return ids_base
+
+
+def _endereco_query_permitida(funcionario=None):
+    query = EnderecoEstoque.query
+    ids = _estoques_permitidos_ids(funcionario)
+    if ids is None:
+        return query
+    if not ids:
+        return query.filter(EnderecoEstoque.id == -1)
+    return query.filter(EnderecoEstoque.estoque_id.in_(ids))
+
+
+def _normalizar_cep_entrega(valor):
+    cep = validar_cep((valor or '').strip())
+    if not cep or cep == '__invalid__':
+        return None
+    return cep
+
+
+def _extrair_cep_pedido(pedido):
+    observacoes = {}
+    try:
+        observacoes = json.loads(pedido.observacoes) if pedido and pedido.observacoes else {}
+    except Exception:
+        observacoes = {}
+
+    if isinstance(observacoes, dict):
+        cliente_cadastro = observacoes.get('cliente_cadastro') or {}
+        cep = _normalizar_cep_entrega(cliente_cadastro.get('cep'))
+        if cep:
+            return cep
+        endereco_id = observacoes.get('cliente_endereco_id')
+        if endereco_id:
+            endereco = ClienteEndereco.query.filter_by(id=endereco_id).first()
+            if endereco:
+                cep = _normalizar_cep_entrega(endereco.cep)
+                if cep:
+                    return cep
+
+    cliente_publico = getattr(pedido, 'cliente_publico', None)
+    if cliente_publico:
+        endereco_principal = getattr(cliente_publico, 'endereco_principal', None)
+        if endereco_principal:
+            cep = _normalizar_cep_entrega(endereco_principal.cep)
+            if cep:
+                return cep
+        cep = _normalizar_cep_entrega(getattr(cliente_publico, 'cep', None))
+        if cep:
+            return cep
+    return None
+
+
+def _obter_coordenadas_cep(cep):
+    """Resolve coordenadas aproximadas via geocodificacao com cache local."""
+    cep_normalizado = _normalizar_cep_entrega(cep)
+    if not cep_normalizado:
+        return None
+
+    cache = extensions.cache
+    cache_key = f'geocode:cep:{cep_normalizado}'
+    if cache is not None:
+        cached = cache.get(cache_key)
+        if cached:
+            return tuple(cached)
+
+    query_string = urlencode({
+        'postalcode': cep_normalizado,
+        'country': 'Brazil',
+        'format': 'jsonv2',
+        'limit': 1,
+    })
+    request_obj = Request(
+        f'https://nominatim.openstreetmap.org/search?{query_string}',
+        headers={'User-Agent': 'SystemLR/1.0'},
+    )
+    try:
+        with urlopen(request_obj, timeout=2.5) as response:
+            payload = json.loads(response.read().decode('utf-8'))
+        if not payload:
+            return None
+        coordenadas = (float(payload[0]['lat']), float(payload[0]['lon']))
+    except Exception:
+        return None
+
+    if cache is not None:
+        cache.set(cache_key, coordenadas, timeout=86400)
+    return coordenadas
+
+
+def _distancia_haversine(origem, destino):
+    if not origem or not destino:
+        return float('inf')
+    lat1, lon1 = origem
+    lat2, lon2 = destino
+    raio_terra_km = 6371.0
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(delta_lon / 2) ** 2
+    )
+    return raio_terra_km * (2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
+
+
+def _ordenar_pedidos_por_proximidade(pedidos, cep_origem):
+    """Ordena pedidos pelo CEP mais proximo da loja usando Haversine."""
+    pedidos_base = list(pedidos or [])
+    coordenada_origem = _obter_coordenadas_cep(cep_origem)
+    if not coordenada_origem:
+        return sorted(pedidos_base, key=lambda item: (item.criado_em or datetime.utcnow(), item.id or 0))
+
+    def _sort_key(pedido):
+        coordenada_destino = _obter_coordenadas_cep(_extrair_cep_pedido(pedido))
+        sem_coordenada = coordenada_destino is None
+        distancia = _distancia_haversine(coordenada_origem, coordenada_destino)
+        return (
+            1 if sem_coordenada else 0,
+            distancia,
+            pedido.criado_em or datetime.utcnow(),
+            pedido.id or 0,
+        )
+
+    return sorted(pedidos_base, key=_sort_key)
+
+
 def _garcom_logado_id():
     funcionario_id = session.get('funcionario_id')
     if not funcionario_id:
@@ -847,62 +1333,6 @@ def _http_status_for_order_error(message):
     return 400, 'validation_error'
 
 
-def _processar_fechamento_pedido(pedido):
-    """Aplica regras de negócio para encerrar um pedido.
-
-    - Garante que há itens
-    - Calcula total e registra timestamps de fechamento
-    - Marca pedido como processado para estoque/financeiro quando aplicável
-    """
-    if not pedido.itens:
-        raise ValueError('Pedido sem itens nao pode ser fechado.')
-
-    if not pedido.estoque_processado:
-        for item in pedido.itens:
-            produto = item.produto or Produto.query.get(item.produto_id)
-            if not produto:
-                raise ValueError(f'Produto do item {item.id} nao encontrado.')
-            if produto.quantidade_estoque < item.quantidade:
-                raise ValueError(f'Estoque insuficiente para "{produto.nome}".')
-
-        for item in pedido.itens:
-            produto = item.produto or Produto.query.get(item.produto_id)
-            produto.quantidade_estoque -= item.quantidade
-            db.session.add(Movimentacao(
-                produto_id=produto.id,
-                tipo=Movimentacao.TIPO_SAIDA,
-                quantidade=item.quantidade,
-                motivo='venda',
-                observacoes=f'Pedido {pedido.id} fechado'
-            ))
-        pedido.estoque_processado = True
-
-    if pedido.caixa_id and not pedido.financeiro_processado:
-        caixa = pedido.caixa or Caixa.query.get(pedido.caixa_id)
-        if not caixa:
-            raise ValueError('Caixa do pedido nao encontrada.')
-        if not caixa.aberto:
-            raise ValueError('Caixa do pedido esta fechada. Nao e possivel concluir o financeiro.')
-
-        valor_pedido = float(pedido.total or 0.0)
-        caixa.saldo_atual = float(caixa.saldo_atual or 0.0) + valor_pedido
-        db.session.add(MovimentacaoCaixa(
-            caixa_id=caixa.id,
-            tipo=MovimentacaoCaixa.TIPO_ENTRADA,
-            valor=valor_pedido,
-            descricao=f'Fechamento do pedido #{pedido.id}'
-        ))
-        pedido.financeiro_processado = True
-
-    pedido.fechado_em = datetime.utcnow()
-    if pedido.mesa:
-        pedido.mesa.status = 'livre'
-
-
-def _processar_fechamento_pedido(pedido):
-    return service_processar_fechamento_pedido(pedido)
-
-
 def _aplicar_transicao_status(pedido, novo_status, *, actor=None, detalhes=None, require_delivery_separation=False):
     return service_aplicar_transicao_status(
         pedido,
@@ -928,11 +1358,13 @@ def register_vendas_routes(app, login_required, require_role):
             return redirect(url_for('listar_pedidos'))
 
         progresso = _coletar_progresso_expedicao_diario(empresa)
+        dashboard = _coletar_dashboard_expedicao(empresa)
         return render_template(
             'expedicao/central.html',
             empresa=empresa,
             progresso=progresso,
-            veiculos_cadastrados=_carregar_lista_config(empresa.entrega_veiculos_json),
+            dashboard=dashboard,
+            veiculos_cadastrados=_opcoes_veiculos_cadastrados(empresa),
             terceirizadas_cadastradas=_carregar_lista_config(empresa.entrega_terceirizadas_json),
             etiquetas_ativas=_emissao_etiqueta_entrega_ativa(empresa),
             emissao_nota_ativa=empresa.emissao_nota_entrega_ativa is not False,
@@ -942,40 +1374,85 @@ def register_vendas_routes(app, login_required, require_role):
     @require_role(*vendas_gestao_roles)
     def frota_expedicao():
         empresa = _obter_empresa_config()
+        veiculo_edicao = _obter_veiculo_frota(empresa, request.args.get('veiculo_id', type=int))
         if request.method == 'POST':
+            acao = (request.form.get('acao') or 'salvar_configuracao').strip().lower()
             try:
-                empresa.entrega_local_saida_padrao = (request.form.get('entrega_local_saida_padrao') or '').strip() or None
-                empresa.entrega_motorista_padrao = (request.form.get('entrega_motorista_padrao') or '').strip() or None
-                empresa.entrega_veiculo_padrao = (request.form.get('entrega_veiculo_padrao') or '').strip() or None
-                horario_fechamento_roteirizacao = _parse_horario_hhmm(request.form.get('entrega_horario_fechamento_roteirizacao'))
-                horario_fechamento_roteirizacao_txt = (request.form.get('entrega_horario_fechamento_roteirizacao') or '').strip()
-                if horario_fechamento_roteirizacao_txt and not horario_fechamento_roteirizacao:
-                    flash('Horario de fechamento da roteirizacao invalido. Use HH:MM.', 'error')
-                    return redirect(url_for('frota_expedicao'))
-                empresa.entrega_horario_fechamento_roteirizacao = (
-                    horario_fechamento_roteirizacao.strftime('%H:%M')
-                    if horario_fechamento_roteirizacao
-                    else None
-                )
+                with atomic_transaction(db.session):
+                    if acao == 'salvar_configuracao':
+                        empresa.entrega_local_saida_padrao = (request.form.get('entrega_local_saida_padrao') or '').strip() or None
+                        empresa.entrega_motorista_padrao = (request.form.get('entrega_motorista_padrao') or '').strip() or None
+                        empresa.entrega_veiculo_padrao = (request.form.get('entrega_veiculo_padrao') or '').strip() or None
+                        horario_fechamento_roteirizacao = _parse_horario_hhmm(request.form.get('entrega_horario_fechamento_roteirizacao'))
+                        horario_fechamento_roteirizacao_txt = (request.form.get('entrega_horario_fechamento_roteirizacao') or '').strip()
+                        if horario_fechamento_roteirizacao_txt and not horario_fechamento_roteirizacao:
+                            raise ValidationError('Horario de fechamento da roteirizacao invalido. Use HH:MM.')
+                        empresa.entrega_horario_fechamento_roteirizacao = (
+                            horario_fechamento_roteirizacao.strftime('%H:%M')
+                            if horario_fechamento_roteirizacao
+                            else None
+                        )
+                        terceirizadas_linhas = _normalizar_linhas_configuracao(request.form.get('entrega_terceirizadas_cadastro', ''))
+                        empresa.entrega_terceirizadas_json = json.dumps(terceirizadas_linhas, ensure_ascii=False) if terceirizadas_linhas else None
+                        _sincronizar_frota_legada(empresa)
+                        mensagem = 'Configuracao operacional da frota atualizada com sucesso.'
+                    elif acao == 'salvar_veiculo':
+                        if not _frota_relacional_disponivel():
+                            raise BusinessRuleError('A tabela de frota ainda nao esta disponivel. Execute a migration antes de cadastrar veiculos.')
+                        veiculo_id = request.form.get('veiculo_id', type=int)
+                        veiculo = _obter_veiculo_frota(empresa, veiculo_id) if veiculo_id else None
+                        if veiculo is None:
+                            veiculo = FrotaVeiculo(empresa_id=empresa.id)
+                            db.session.add(veiculo)
+                        nome = (request.form.get('nome') or '').strip()
+                        if not nome:
+                            raise ValidationError('Informe o nome do veiculo.')
+                        tipo = (request.form.get('tipo') or FrotaVeiculo.TIPO_CARRO).strip().lower()
+                        if tipo not in FrotaVeiculo.TIPOS_VALIDOS:
+                            raise ValidationError('Tipo de veiculo invalido. Use moto, carro, caminhao ou utilitario.')
 
-                veiculos_linhas = _normalizar_veiculos_texto(request.form.get('entrega_veiculos_cadastro', ''))
-                terceirizadas_linhas = _normalizar_linhas_configuracao(request.form.get('entrega_terceirizadas_cadastro', ''))
-
-                empresa.entrega_veiculos_json = json.dumps(veiculos_linhas, ensure_ascii=False) if veiculos_linhas else None
-                empresa.entrega_terceirizadas_json = json.dumps(terceirizadas_linhas, ensure_ascii=False) if terceirizadas_linhas else None
+                        veiculo.nome = nome
+                        veiculo.placa = (request.form.get('placa') or '').strip().upper() or None
+                        veiculo.tipo = tipo
+                        veiculo.capacidade_kg = _to_float(request.form.get('capacidade_kg'), None)
+                        veiculo.capacidade_volume = _to_float(request.form.get('capacidade_volume'), None)
+                        veiculo.motorista_padrao = (request.form.get('motorista_padrao') or '').strip() or None
+                        veiculo.tipo_entrega = (request.form.get('tipo_entrega') or 'todos').strip().lower() or 'todos'
+                        veiculo.capacidade_pedidos = max(int(_to_int(request.form.get('capacidade_pedidos'), 0) or 0), 0)
+                        veiculo.empresa_terceirizada = (request.form.get('empresa_terceirizada') or '').strip() or None
+                        veiculo.ativo = request.form.get('ativo') == 'on'
+                        if not empresa.entrega_veiculo_padrao and veiculo.ativo:
+                            empresa.entrega_veiculo_padrao = veiculo.nome
+                        _sincronizar_frota_legada(empresa)
+                        mensagem = f'Veiculo "{veiculo.nome}" salvo com sucesso.'
+                    elif acao == 'excluir_veiculo':
+                        if not _frota_relacional_disponivel():
+                            raise BusinessRuleError('A tabela de frota ainda nao esta disponivel. Execute a migration antes de excluir veiculos.')
+                        veiculo = _obter_veiculo_frota(empresa, request.form.get('veiculo_id', type=int))
+                        if not veiculo:
+                            raise ValidationError('Veiculo nao encontrado para exclusao.')
+                        nome_veiculo = veiculo.nome
+                        db.session.delete(veiculo)
+                        _sincronizar_frota_legada(empresa)
+                        mensagem = f'Veiculo "{nome_veiculo}" removido com sucesso.'
+                    else:
+                        raise ValidationError('Acao de frota invalida.')
                 db.session.commit()
-                flash('Cadastro de frota e terceiros atualizado com sucesso.', 'success')
+                flash(mensagem, 'success')
+            except AppError as e:
+                db.session.rollback()
+                flash(str(e), 'error')
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao atualizar cadastro de frota: {str(e)}', 'error')
             return redirect(url_for('frota_expedicao'))
 
-        veiculos_texto = _serializar_veiculos_config_texto(_carregar_veiculos_config(empresa.entrega_veiculos_json))
         terceirizadas_texto = '\n'.join(_carregar_lista_config(empresa.entrega_terceirizadas_json))
         return render_template(
             'expedicao/frota.html',
             empresa=empresa,
-            veiculos_texto=veiculos_texto,
+            veiculos_frota=_carregar_veiculos_config(empresa),
+            veiculo_em_edicao=veiculo_edicao,
             terceirizadas_texto=terceirizadas_texto,
         )
 
@@ -1456,10 +1933,20 @@ def register_vendas_routes(app, login_required, require_role):
                     Pedido.saiu_para_entrega_em,
                     Pedido.entrega_concluida_em,
                 ),
-                selectinload(Pedido.mesa),
-                selectinload(Pedido.caixa),
-                selectinload(Pedido.garcom),
-                selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+                selectinload(Pedido.mesa).load_only(Mesa.id, Mesa.numero, Mesa.status),
+                selectinload(Pedido.caixa).load_only(Caixa.id, Caixa.nome),
+                selectinload(Pedido.garcom).load_only(Garcom.id, Garcom.nome, Garcom.ativo),
+                selectinload(Pedido.itens).load_only(
+                    ItemPedido.id,
+                    ItemPedido.pedido_id,
+                    ItemPedido.produto_id,
+                    ItemPedido.quantidade,
+                    ItemPedido.preco_unitario,
+                ).selectinload(ItemPedido.produto).load_only(
+                    Produto.id,
+                    Produto.nome,
+                    Produto.codigo,
+                ),
             )
             .order_by(Pedido.criado_em.desc())
             .paginate(page=page, per_page=per_page, error_out=False)
@@ -1499,9 +1986,33 @@ def register_vendas_routes(app, login_required, require_role):
         pendente = (request.args.get('pendente') or '1').strip().lower()
 
         query = Pedido.query.options(
-            selectinload(Pedido.caixa),
-            selectinload(Pedido.mesa),
-            selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+            load_only(
+                Pedido.id,
+                Pedido.caixa_id,
+                Pedido.mesa_id,
+                Pedido.cliente_nome,
+                Pedido.cliente_celular,
+                Pedido.status,
+                Pedido.origem,
+                Pedido.total,
+                Pedido.criado_em,
+                Pedido.separacao_entrega_concluida,
+                Pedido.separacao_entrega_em,
+                Pedido.etiqueta_entrega_emitida_em,
+                Pedido.rota_entrega,
+                Pedido.motorista_nome,
+                Pedido.saiu_para_entrega_em,
+                Pedido.entrega_concluida_em,
+            ),
+            selectinload(Pedido.caixa).load_only(Caixa.id, Caixa.nome),
+            selectinload(Pedido.mesa).load_only(Mesa.id, Mesa.numero),
+            selectinload(Pedido.itens).load_only(
+                ItemPedido.id,
+                ItemPedido.pedido_id,
+                ItemPedido.produto_id,
+                ItemPedido.quantidade,
+                ItemPedido.preco_unitario,
+            ).selectinload(ItemPedido.produto).load_only(Produto.id, Produto.nome, Produto.codigo),
         ).filter(
             Pedido.status.in_(DELIVERY_SEPARATION_STATUSES),
             Pedido.origem.in_(_origens_separacao_entrega(empresa)),
@@ -1528,7 +2039,7 @@ def register_vendas_routes(app, login_required, require_role):
             )
 
         pagination = query.order_by(Pedido.criado_em.desc()).paginate(page=page, per_page=per_page, error_out=False)
-        veiculos_cadastrados = _carregar_lista_config(empresa.entrega_veiculos_json)
+        veiculos_cadastrados = _opcoes_veiculos_cadastrados(empresa)
         terceirizadas_cadastradas = _carregar_lista_config(empresa.entrega_terceirizadas_json)
         return render_template(
             'vendas/pedidos/separacao_entrega.html',
@@ -1651,6 +2162,27 @@ def register_vendas_routes(app, login_required, require_role):
         data['iniciado_em'] = session.get('expedicao_iniciada_em')
         return jsonify({'success': True, 'data': data})
 
+    @app.route('/api/expedicao/analytics')
+    @require_role(*vendas_operacao_roles)
+    def analytics_expedicao_api():
+        empresa = _obter_empresa_config()
+        if not _separacao_entrega_ativa(empresa):
+            return jsonify({'success': False, 'message': 'Separacao de entrega desativada.'}), 409
+        cache = extensions.cache
+        cache_key = f'analytics:expedicao:{datetime.utcnow().strftime("%Y%m%d")}'
+        if cache is not None:
+            cached_payload = cache.get(cache_key)
+            if cached_payload is not None:
+                return jsonify(cached_payload)
+        payload = {
+            'success': True,
+            'message': 'Analytics de expedicao carregado com sucesso.',
+            'data': _coletar_dashboard_expedicao(empresa),
+        }
+        if cache is not None:
+            cache.set(cache_key, payload, timeout=60)
+        return jsonify(payload)
+
     @app.route('/pedidos/roteirizacao-entrega')
     @require_role(*separacao_entrega_roles)
     def listar_roteirizacao_entrega():
@@ -1704,7 +2236,7 @@ def register_vendas_routes(app, login_required, require_role):
         )
         rotas_disponiveis = [r[0] for r in rotas_disponiveis if r and r[0]]
         regras_roteirizacao = _carregar_regras_roteirizacao(empresa)
-        veiculos_configurados = _carregar_veiculos_config(empresa.entrega_veiculos_json)
+        veiculos_configurados = _carregar_veiculos_config(empresa)
         resumo_roteirizacao = {
             'total_pedidos': len(pedidos),
             'aguardando': 0,
@@ -1772,7 +2304,7 @@ def register_vendas_routes(app, login_required, require_role):
                     else:
                         flash('Nenhum pedido disponivel para roteirizacao automatica.', 'warning')
                     return redirect(url_for('listar_roteirizacao_entrega'))
-                veiculos = _carregar_veiculos_config(empresa.entrega_veiculos_json)
+                veiculos = _carregar_veiculos_config(empresa)
                 total_alocados = _distribuir_pedidos_automaticamente(
                     pedidos_disponiveis,
                     veiculos,
@@ -1877,75 +2409,90 @@ def register_vendas_routes(app, login_required, require_role):
             flash('Separacao para entrega esta desativada na configuracao da empresa.', 'warning')
             return redirect(request.referrer or url_for('listar_pedidos'))
 
-        pedido = Pedido.query.get_or_404(pedido_id)
+        pedido = Pedido.query.options(
+            selectinload(Pedido.itens).selectinload(ItemPedido.produto).selectinload(Produto.endereco),
+        ).get_or_404(pedido_id)
         if pedido.origem not in _origens_separacao_entrega(empresa):
             flash('Pedido fora da fila configurada para separacao de entrega.', 'warning')
             return redirect(request.referrer or url_for('listar_separacao_entrega'))
 
         acao = (request.form.get('acao') or 'concluir').strip().lower()
+        actor = _funcionario_logado_vendas()
         try:
-            if acao == 'reabrir':
-                transition_expedicao_status(
-                    pedido,
-                    ExpedicaoStatus.PENDENTE_SEPARACAO,
-                    actor=_funcionario_logado_vendas(),
-                    enabled=_separacao_entrega_ativa(empresa),
-                    allowed_origins=_origens_separacao_entrega(empresa),
-                    detalhes='Reabertura da separacao de entrega.',
-                )
-                mensagem = f'Pedido #{pedido.id} retornou para fila de separacao.'
-            else:
-                rota_entrega = (request.form.get('rota_entrega') or '').strip() or None
-                ordem_rota = _to_int(request.form.get('ordem_rota'), None)
-                local_saida = (request.form.get('local_saida') or '').strip() or None
-                veiculo_tipo = (request.form.get('veiculo_tipo') or '').strip() or None
-                veiculo_placa = (request.form.get('veiculo_placa') or '').strip().upper() or None
-                veiculo_cadastrado = (request.form.get('veiculo_cadastrado') or '').strip()
-                motorista_nome = (request.form.get('motorista_nome') or '').strip() or None
-                empresa_terceirizada = (request.form.get('empresa_terceirizada') or '').strip() or None
-                nota_fiscal_numero = (request.form.get('nota_fiscal_numero') or '').strip() or None
-                nota_fiscal_chave = (request.form.get('nota_fiscal_chave') or '').strip() or None
-                emitir_nota = (request.form.get('emitir_nota') == 'on')
+            with atomic_transaction(db.session):
+                if acao == 'reabrir':
+                    transition_expedicao_status(
+                        pedido,
+                        ExpedicaoStatus.PENDENTE_SEPARACAO,
+                        actor=actor,
+                        enabled=_separacao_entrega_ativa(empresa),
+                        allowed_origins=_origens_separacao_entrega(empresa),
+                        detalhes='Reabertura da separacao de entrega.',
+                    )
+                    mensagem = f'Pedido #{pedido.id} retornou para fila de separacao.'
+                else:
+                    _validar_pedido_para_separacao(pedido, actor)
+                    rota_entrega = (request.form.get('rota_entrega') or '').strip() or None
+                    ordem_rota = _to_int(request.form.get('ordem_rota'), None)
+                    local_saida = (request.form.get('local_saida') or '').strip() or None
+                    veiculo_tipo = (request.form.get('veiculo_tipo') or '').strip() or None
+                    veiculo_placa = (request.form.get('veiculo_placa') or '').strip().upper() or None
+                    motorista_nome = (request.form.get('motorista_nome') or '').strip() or None
+                    empresa_terceirizada = (request.form.get('empresa_terceirizada') or '').strip() or None
+                    nota_fiscal_numero = (request.form.get('nota_fiscal_numero') or '').strip() or None
+                    nota_fiscal_chave = (request.form.get('nota_fiscal_chave') or '').strip() or None
+                    emitir_nota = (request.form.get('emitir_nota') == 'on')
 
-                if veiculo_cadastrado:
-                    nome_veiculo_cfg, placa_veiculo_cfg = _parse_veiculo_cadastrado(veiculo_cadastrado)
-                    if nome_veiculo_cfg:
-                        veiculo_tipo = nome_veiculo_cfg
-                    if placa_veiculo_cfg and not veiculo_placa:
-                        veiculo_placa = placa_veiculo_cfg
+                    veiculo_cadastrado = _obter_veiculo_frota(empresa, request.form.get('veiculo_cadastrado_id', type=int))
+                    if veiculo_cadastrado:
+                        veiculo_tipo = veiculo_cadastrado.nome or veiculo_tipo
+                        veiculo_placa = veiculo_placa or veiculo_cadastrado.placa
+                        motorista_nome = motorista_nome or veiculo_cadastrado.motorista_padrao
+                        empresa_terceirizada = empresa_terceirizada or veiculo_cadastrado.empresa_terceirizada
+                    else:
+                        veiculo_cadastrado_legacy = (request.form.get('veiculo_cadastrado') or '').strip()
+                        if veiculo_cadastrado_legacy:
+                            nome_veiculo_cfg, placa_veiculo_cfg = _parse_veiculo_cadastrado(veiculo_cadastrado_legacy)
+                            if nome_veiculo_cfg:
+                                veiculo_tipo = nome_veiculo_cfg
+                            if placa_veiculo_cfg and not veiculo_placa:
+                                veiculo_placa = placa_veiculo_cfg
 
-                transition_expedicao_status(
-                    pedido,
-                    ExpedicaoStatus.SEPARADO,
-                    actor=_funcionario_logado_vendas(),
-                    enabled=_separacao_entrega_ativa(empresa),
-                    allowed_origins=_origens_separacao_entrega(empresa),
-                    detalhes='Separacao de entrega concluida.',
-                    metadata={
-                        'rota_entrega': rota_entrega,
-                        'ordem_rota': ordem_rota,
-                        'local_saida': local_saida or empresa.entrega_local_saida_padrao,
-                        'veiculo_tipo': veiculo_tipo or empresa.entrega_veiculo_padrao,
-                        'veiculo_placa': veiculo_placa,
-                        'motorista_nome': motorista_nome or empresa.entrega_motorista_padrao,
-                        'empresa_terceirizada': empresa_terceirizada,
-                        'nota_fiscal_numero': nota_fiscal_numero,
-                        'nota_fiscal_chave': nota_fiscal_chave,
-                        'nota_fiscal_emitida': bool(emitir_nota and empresa.emissao_nota_entrega_ativa is not False),
-                    },
-                )
-                mensagem = f'Pedido #{pedido.id} marcado como separado.'
-                corte_roteirizacao = _config_corte_roteirizacao(empresa)
-                referencia_roteirizacao = _referencia_pedido_roteirizacao(pedido)
-                if (
-                    corte_roteirizacao['ativo']
-                    and referencia_roteirizacao
-                    and referencia_roteirizacao > corte_roteirizacao['corte_do_dia']
-                ):
-                    mensagem += f' Ficara disponivel para o proximo ciclo de roteirizacao apos o corte das {corte_roteirizacao["horario"]}.'
+                    transition_expedicao_status(
+                        pedido,
+                        ExpedicaoStatus.SEPARADO,
+                        actor=actor,
+                        enabled=_separacao_entrega_ativa(empresa),
+                        allowed_origins=_origens_separacao_entrega(empresa),
+                        detalhes='Separacao de entrega concluida.',
+                        metadata={
+                            'rota_entrega': rota_entrega,
+                            'ordem_rota': ordem_rota,
+                            'local_saida': local_saida or empresa.entrega_local_saida_padrao,
+                            'veiculo_tipo': veiculo_tipo or empresa.entrega_veiculo_padrao,
+                            'veiculo_placa': veiculo_placa,
+                            'motorista_nome': motorista_nome or empresa.entrega_motorista_padrao,
+                            'empresa_terceirizada': empresa_terceirizada,
+                            'nota_fiscal_numero': nota_fiscal_numero,
+                            'nota_fiscal_chave': nota_fiscal_chave,
+                            'nota_fiscal_emitida': bool(emitir_nota and empresa.emissao_nota_entrega_ativa is not False),
+                        },
+                    )
+                    mensagem = f'Pedido #{pedido.id} marcado como separado.'
+                    corte_roteirizacao = _config_corte_roteirizacao(empresa)
+                    referencia_roteirizacao = _referencia_pedido_roteirizacao(pedido)
+                    if (
+                        corte_roteirizacao['ativo']
+                        and referencia_roteirizacao
+                        and referencia_roteirizacao > corte_roteirizacao['corte_do_dia']
+                    ):
+                        mensagem += f' Ficara disponivel para o proximo ciclo de roteirizacao apos o corte das {corte_roteirizacao["horario"]}.'
             db.session.commit()
             _publicar_evento_expedicao(pedido, f'separacao_{acao}')
             flash(mensagem, 'success')
+        except AppError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao atualizar separacao de entrega: {str(e)}', 'error')
@@ -1978,6 +2525,60 @@ def register_vendas_routes(app, login_required, require_role):
         return render_template(
             'vendas/pedidos/etiqueta_entrega.html',
             pedido=pedido,
+            empresa=empresa,
+        )
+
+    @app.route('/pedidos/etiquetas-entrega/lote')
+    @require_role(*separacao_entrega_roles)
+    def imprimir_etiquetas_entrega_lote():
+        empresa = _obter_empresa_config()
+        if not _emissao_etiqueta_entrega_ativa(empresa):
+            flash('Emissao de etiquetas de entrega esta desativada na configuracao da empresa.', 'warning')
+            return redirect(request.referrer or url_for('listar_pedidos'))
+
+        ids_brutos = (request.args.get('ids') or '').strip()
+        ids = []
+        for valor in ids_brutos.split(','):
+            valor = valor.strip()
+            if not valor or not valor.isdigit():
+                continue
+            pedido_id = int(valor)
+            if pedido_id not in ids:
+                ids.append(pedido_id)
+
+        if not ids:
+            flash('Nenhum pedido valido foi informado para impressao das etiquetas.', 'warning')
+            return redirect(request.referrer or url_for('listar_separacao_entrega'))
+
+        pedidos_base = Pedido.query.options(
+            selectinload(Pedido.caixa),
+            selectinload(Pedido.mesa),
+            selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+        ).filter(
+            Pedido.id.in_(ids),
+            Pedido.origem.in_(_origens_separacao_entrega(empresa)),
+            Pedido.status.in_(DELIVERY_SEPARATION_STATUSES),
+        ).all()
+
+        pedidos_por_id = {pedido.id: pedido for pedido in pedidos_base}
+        pedidos = [pedidos_por_id[pedido_id] for pedido_id in ids if pedido_id in pedidos_por_id]
+
+        if not pedidos:
+            flash('Nenhum pedido da fila de separacao foi encontrado para impressao.', 'warning')
+            return redirect(request.referrer or url_for('listar_separacao_entrega'))
+
+        try:
+            for pedido in pedidos:
+                pedido.marcar_etiqueta_entrega_emitida()
+            db.session.commit()
+            for pedido in pedidos:
+                _publicar_evento_expedicao(pedido, 'etiqueta_emitida_lote')
+        except Exception:
+            db.session.rollback()
+
+        return render_template(
+            'vendas/pedidos/etiquetas_entrega_lote.html',
+            pedidos=pedidos,
             empresa=empresa,
         )
 
@@ -2028,7 +2629,7 @@ def register_vendas_routes(app, login_required, require_role):
     @app.route('/pedidos/novo', methods=['GET', 'POST'])
     @require_role(*vendas_operacao_roles)
     def novo_pedido():
-        produtos = Produto.query.filter_by(ativo=True).all()
+        produtos = Produto.query.filter(Produto.ativo.is_(True), Produto.filtro_nao_vencidos()).all()
         atendimento_mesas_ativo = _atendimento_mesas_ativo()
         mesas = Mesa.query.all() if atendimento_mesas_ativo else []
         caixas = Caixa.query.filter_by(aberto=True).all()
@@ -2057,6 +2658,7 @@ def register_vendas_routes(app, login_required, require_role):
                     garcom_id=_garcom_logado_id(),
                     atendimento_mesas_ativo=atendimento_mesas_ativo,
                     normalizar_item_payload=_normalizar_item_payload,
+                    actor=_funcionario_logado_vendas(),
                 )
                 pedido.observacoes = observacoes
                 db.session.commit()
@@ -2080,7 +2682,7 @@ def register_vendas_routes(app, login_required, require_role):
         if _parse_status(pedido.status) in ORDER_IMMUTABLE_STATUSES and request.method == 'POST':
             flash('Pedido finalizado/cancelado nao pode ser editado.', 'danger')
             return redirect(url_for('listar_pedidos'))
-        produtos = Produto.query.filter_by(ativo=True).all()
+        produtos = Produto.query.filter(Produto.ativo.is_(True), Produto.filtro_nao_vencidos()).all()
         atendimento_mesas_ativo = _atendimento_mesas_ativo()
         mesas = Mesa.query.all() if atendimento_mesas_ativo else []
         caixas = Caixa.query.all()
@@ -2089,6 +2691,7 @@ def register_vendas_routes(app, login_required, require_role):
         metodos_pagamento_pdv_map = payment_methods_map(empresa.pagamentos_pdv_json, 'pdv')
         if request.method == 'POST':
             try:
+                actor = _funcionario_logado_vendas()
                 status_atual = _parse_status(pedido.status)
                 novo_status = _parse_status(request.form.get('status', pedido.status), default=status_atual)
                 caixa_id = request.form.get('caixa_id', type=int) or None
@@ -2128,23 +2731,49 @@ def register_vendas_routes(app, login_required, require_role):
                 detalhes = None
                 if novo_status == Pedido.STATUS_CANCELADO:
                     detalhes = require_cancel_reason(request.form.get('motivo_cancelamento'), entity_label='pedido')
-
-                service_update_order(
-                    pedido,
-                    novo_status=novo_status,
-                    caixa=caixa,
-                    mesa=mesa,
-                    atendimento_mesas_ativo=atendimento_mesas_ativo,
-                    observacoes=request.form.get('observacoes', pedido.observacoes),
-                    itens_payload=itens_payload,
-                    metodo_pagamento=pedido.metodo_pagamento,
-                    valor_pago=pedido.valor_pago,
-                    actor=_funcionario_logado_vendas(),
-                    detalhes=detalhes,
-                    require_delivery_separation=_pedido_na_fila_entrega(pedido, empresa),
-                    normalizar_item_payload=_normalizar_item_payload,
-                    status_transition=_aplicar_transicao_status,
-                )
+                if novo_status == Pedido.STATUS_FECHADO:
+                    service_update_order(
+                        pedido,
+                        novo_status=status_atual,
+                        caixa=caixa,
+                        mesa=mesa,
+                        atendimento_mesas_ativo=atendimento_mesas_ativo,
+                        observacoes=request.form.get('observacoes', pedido.observacoes),
+                        itens_payload=itens_payload,
+                        metodo_pagamento=pedido.metodo_pagamento,
+                        valor_pago=pedido.valor_pago,
+                        actor=actor,
+                        detalhes=detalhes,
+                        require_delivery_separation=_pedido_na_fila_entrega(pedido, empresa),
+                        normalizar_item_payload=_normalizar_item_payload,
+                        status_transition=_aplicar_transicao_status,
+                    )
+                    venda_service.processar_venda_rapida(
+                        pedido,
+                        metodo_pagamento=pedido.metodo_pagamento,
+                        valor_pago=pedido.valor_pago,
+                        desconto_total=request.form.get('desconto_total') or 0.0,
+                        incluir_contabilidade=(request.form.get('incluir_contabilidade') == 'on'),
+                        actor=actor,
+                        commit=False,
+                    )
+                else:
+                    service_update_order(
+                        pedido,
+                        novo_status=novo_status,
+                        caixa=caixa,
+                        mesa=mesa,
+                        atendimento_mesas_ativo=atendimento_mesas_ativo,
+                        observacoes=request.form.get('observacoes', pedido.observacoes),
+                        itens_payload=itens_payload,
+                        metodo_pagamento=pedido.metodo_pagamento,
+                        valor_pago=pedido.valor_pago,
+                        actor=actor,
+                        detalhes=detalhes,
+                        require_delivery_separation=_pedido_na_fila_entrega(pedido, empresa),
+                        normalizar_item_payload=_normalizar_item_payload,
+                        status_transition=_aplicar_transicao_status,
+                    )
                 db.session.commit()
                 flash('Pedido atualizado com sucesso!', 'success')
                 return redirect(url_for('listar_pedidos'))
@@ -2229,7 +2858,7 @@ def register_vendas_routes(app, login_required, require_role):
         """Interface de PDV (Ponto de Venda) para o operador de caixa"""
         atendimento_mesas_ativo = _atendimento_mesas_ativo()
         empresa = _obter_empresa_config()
-        produtos = Produto.query.filter_by(ativo=True).order_by(Produto.nome).all()
+        produtos = Produto.query.filter(Produto.ativo.is_(True), Produto.filtro_nao_vencidos()).order_by(Produto.nome).all()
         caixas_abertas = Caixa.query.filter_by(aberto=True).all()
         mesas = Mesa.query.all() if atendimento_mesas_ativo else []
         garcons = Garcom.query.filter_by(ativo=True).order_by(Garcom.nome.asc()).all() if atendimento_mesas_ativo else []
@@ -2271,6 +2900,7 @@ def register_vendas_routes(app, login_required, require_role):
                 atendimento_mesas_ativo=atendimento_mesas_ativo,
                 normalizar_item_payload=_normalizar_item_payload,
                 empty_items_message='Nenhum item valido para criar o pedido.',
+                actor=_funcionario_logado_vendas(),
             )
 
             db.session.commit()
@@ -2286,6 +2916,7 @@ def register_vendas_routes(app, login_required, require_role):
                 })
             except Exception:
                 pass
+            _publicar_metricas_dashboard_tempo_real()
 
             return json_response(
                 True,
@@ -2309,7 +2940,7 @@ def register_vendas_routes(app, login_required, require_role):
     def finalizar_pedido_api(pedido_id):
         """API para finalizar pedido via AJAX."""
         try:
-            pedido = Pedido.query.get_or_404(pedido_id)
+            pedido = venda_service.carregar_pedido_pdv(pedido_id)
             if _parse_status(pedido.status) in ORDER_IMMUTABLE_STATUSES:
                 return json_response(False, f'Pedido ja esta {pedido.status}.', status=409, code='business_rule')
 
@@ -2326,21 +2957,24 @@ def register_vendas_routes(app, login_required, require_role):
                     split_raw=dados.get('split_pagamento'),
                     cliente_crediario=dados.get('cliente_crediario', '')
                 )
-                pedido.metodo_pagamento = metodo_texto
-                pedido.valor_pago = valor_pago
+            else:
+                metodo_texto = pedido.metodo_pagamento
+                valor_pago = pedido.valor_pago
 
-            _aplicar_transicao_status(pedido, 'fechado', actor=_funcionario_logado_vendas())
-            db.session.commit()
+            payload = venda_service.processar_venda_rapida(
+                pedido_id,
+                metodo_pagamento=metodo_texto,
+                valor_pago=valor_pago,
+                desconto_total=dados.get('desconto_total') or 0.0,
+                incluir_contabilidade=bool(dados.get('incluir_contabilidade')),
+                actor=_funcionario_logado_vendas(),
+            )
+            _publicar_metricas_dashboard_tempo_real()
 
             return json_response(
                 True,
                 'Pedido finalizado com sucesso.',
-                data={
-                    'pedido_id': pedido_id,
-                    'metodo_pagamento': pedido.metodo_pagamento,
-                    'valor_pago': pedido.valor_pago,
-                    'status': pedido.status
-                }
+                data=payload
             )
         except AppError as e:
             db.session.rollback()
@@ -2349,6 +2983,28 @@ def register_vendas_routes(app, login_required, require_role):
         except Exception as e:
             db.session.rollback()
             return json_response(False, str(e), status=500, code='internal_error')
+
+    @app.route('/api/pdv/produtos/buscar')
+    @require_role(*vendas_operacao_roles)
+    def buscar_produtos_pdv_api():
+        termo = (request.args.get('q') or '').strip()
+        if not termo:
+            return fail('Informe um termo de busca.', code='validation_error', status=400, fields={'q': 'obrigatorio'})
+
+        try:
+            produtos = venda_service.buscar_produtos_pdv(termo, limit=request.args.get('limit', type=int) or 12)
+            return ok(
+                {
+                    'query': termo,
+                    'items': produtos,
+                    'latency_target_ms': 100,
+                    'search_strategy': 'barcode_first_then_ranked_text',
+                },
+                message='Busca de produtos processada com sucesso.',
+                code='pdv_search_ok',
+            )
+        except AppError as e:
+            return fail(str(e), code=getattr(e, 'code', 'app_error'), status=getattr(e, 'status_code', 400))
 
     @app.route('/api/pedidos/aberto/<int:caixa_id>')
     @require_role(*vendas_operacao_roles)
@@ -2527,6 +3183,7 @@ def register_vendas_routes(app, login_required, require_role):
 
             _recalcular_total_pedido(pedido)
             db.session.commit()
+            _publicar_metricas_dashboard_tempo_real()
             return json_response(
                 True,
                 'Itens adicionados com sucesso.',

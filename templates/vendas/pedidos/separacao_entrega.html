@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Separacao de Entrega - SystemLR{% endblock %}
 
@@ -6,6 +6,9 @@
 <div class="page-header">
     <h1>Separação para Entrega</h1>
     <div class="header-actions">
+        {% if etiquetas_ativas and pedidos %}
+        <a href="{{ url_for('imprimir_etiquetas_entrega_lote', ids=(pedidos | map(attribute='id') | join(','))) }}" class="btn btn-outline-primary" target="_blank">Imprimir etiquetas da pagina</a>
+        {% endif %}
         <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-primary">Roteirizacao</a>
         <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar para Pedidos</a>
     </div>
@@ -28,45 +31,50 @@
     </form>
 </div>
 
-<div class="table-responsive table-scroll-sticky">
-    <table class="table">
+<div class="table-responsive table-scroll-sticky separacao-entrega-table-wrap">
+    <table class="table separacao-entrega-table">
         <thead>
             <tr>
                 <th>Pedido</th>
-                <th>Origem</th>
                 <th>Cliente</th>
-                <th>Celular</th>
                 <th>Itens</th>
                 <th>Status</th>
                 <th>Separacao</th>
-                <th>Roteiro</th>
                 <th>Criado em</th>
                 <th>Acoes</th>
             </tr>
         </thead>
         <tbody>
             {% for pedido in pedidos %}
-            <tr>
-                <td data-label="Pedido">#{{ pedido.id }}</td>
-                <td data-label="Origem">
-                    {% if pedido.origem == 'site' %}
-                        Online
-                    {% elif pedido.origem == 'interno' %}
-                        Off
-                    {% elif pedido.origem == 'qr' %}
-                        QR
-                    {% else %}
-                        {{ pedido.origem or '-' }}
-                    {% endif %}
+            <tr class="separacao-summary-row">
+                <td data-label="Pedido">
+                    <div class="separacao-pedido-id">#{{ pedido.id }}</div>
+                    <div class="separacao-pedido-meta">
+                        {% if pedido.origem == 'site' %}
+                            Online
+                        {% elif pedido.origem == 'interno' %}
+                            Off
+                        {% elif pedido.origem == 'qr' %}
+                            QR
+                        {% else %}
+                            {{ pedido.origem or '-' }}
+                        {% endif %}
+                    </div>
                 </td>
-                <td data-label="Cliente">{{ pedido.cliente_nome or '-' }}</td>
-                <td data-label="Celular">{{ pedido.cliente_celular or '-' }}</td>
+                <td data-label="Cliente">
+                    <div>{{ pedido.cliente_nome or '-' }}</div>
+                    <div class="separacao-pedido-meta">{{ pedido.cliente_celular or '-' }}</div>
+                </td>
                 <td data-label="Itens">
-                    {% for item in pedido.itens %}
-                    <div>{{ item.quantidade }}x {{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</div>
-                    {% else %}
-                    <div>-</div>
-                    {% endfor %}
+                    <div>{{ pedido.itens|length }} item(ns)</div>
+                    <div class="separacao-pedido-meta">
+                        {% if pedido.itens %}
+                            {{ pedido.itens[0].quantidade }}x {{ pedido.itens[0].produto.nome if pedido.itens[0].produto else ('Produto #' ~ pedido.itens[0].produto_id) }}
+                            {% if pedido.itens|length > 1 %}+ {{ pedido.itens|length - 1 }}{% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
                 </td>
                 <td data-label="Status">
                     {% if pedido.status == 'aberto' %}
@@ -87,67 +95,151 @@
                         <span class="badge text-bg-warning">Pendente</span>
                     {% endif %}
                 </td>
-                <td data-label="Roteiro">
-                    <div><strong>Rota:</strong> {{ pedido.rota_entrega or '-' }}</div>
-                    <div><strong>Ordem:</strong> {{ pedido.ordem_rota if pedido.ordem_rota else '-' }}</div>
-                    <div><strong>Saída:</strong> {{ pedido.local_saida or '-' }}</div>
-                    <div><strong>Veículo:</strong> {{ pedido.veiculo_tipo or '-' }}{% if pedido.veiculo_placa %} ({{ pedido.veiculo_placa }}){% endif %}</div>
-                    <div><strong>Motorista:</strong> {{ pedido.motorista_nome or '-' }}</div>
-                    <div><strong>Terceirizada:</strong> {{ pedido.empresa_terceirizada or '-' }}</div>
-                    <div><strong>NF:</strong> {{ pedido.nota_fiscal_numero or '-' }}</div>
-                </td>
                 <td data-label="Criado em">{{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</td>
-                <td data-label="Acoes" class="actions-cell">
-                    {% if etiquetas_ativas %}
-                    <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn-small btn-info" target="_blank">Etiqueta</a>
-                    {% endif %}
-                    <form method="POST" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}" class="inline-form">
-                        {{ csrf_input|safe }}
-                        {% if roteirizacao_ativa %}
-                        <input type="text" name="rota_entrega" class="input-text" placeholder="Rota" value="{{ pedido.rota_entrega or '' }}" style="min-width:110px;">
-                        <input type="number" name="ordem_rota" class="input-text" placeholder="Ordem" min="1" value="{{ pedido.ordem_rota or '' }}" style="width:90px;">
-                        <input type="text" name="local_saida" class="input-text" placeholder="Local de saída" value="{{ pedido.local_saida or (empresa.entrega_local_saida_padrao if empresa else '') or '' }}" style="min-width:150px;">
-                        {% if veiculos_cadastrados %}
-                        <select name="veiculo_cadastrado" class="input-text" style="min-width:180px;">
-                            <option value="">Veiculo cadastrado</option>
-                            {% for veiculo_item in veiculos_cadastrados %}
-                            <option value="{{ veiculo_item }}">{{ veiculo_item }}</option>
-                            {% endfor %}
-                        </select>
+                <td data-label="Acoes" class="actions-cell separacao-actions-cell">
+                    <div class="separacao-actions-compact">
+                        {% if etiquetas_ativas %}
+                        <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn-small btn-info" target="_blank">Etiqueta</a>
                         {% endif %}
-                        <input type="text" name="veiculo_tipo" class="input-text" placeholder="Veículo" value="{{ pedido.veiculo_tipo or (empresa.entrega_veiculo_padrao if empresa else '') or '' }}" style="min-width:130px;">
-                        <input type="text" name="veiculo_placa" class="input-text" placeholder="Placa" value="{{ pedido.veiculo_placa or '' }}" style="width:110px;">
-                        <input type="text" name="motorista_nome" class="input-text" placeholder="Motorista" value="{{ pedido.motorista_nome or (empresa.entrega_motorista_padrao if empresa else '') or '' }}" style="min-width:140px;">
-                        {% if terceirizadas_cadastradas %}
-                        <select name="empresa_terceirizada" class="input-text" style="min-width:170px;">
-                            <option value="">Sem terceirizada</option>
-                            {% for terceirizada_item in terceirizadas_cadastradas %}
-                            <option value="{{ terceirizada_item }}" {% if pedido.empresa_terceirizada == terceirizada_item %}selected{% endif %}>{{ terceirizada_item }}</option>
-                            {% endfor %}
-                        </select>
-                        {% else %}
-                        <input type="text" name="empresa_terceirizada" class="input-text" placeholder="Empresa terceirizada" value="{{ pedido.empresa_terceirizada or '' }}" style="min-width:170px;">
-                        {% endif %}
-                        {% endif %}
-                        {% if emissao_nota_ativa %}
-                        <input type="text" name="nota_fiscal_numero" class="input-text" placeholder="NF número" value="{{ pedido.nota_fiscal_numero or '' }}" style="min-width:120px;">
-                        <input type="text" name="nota_fiscal_chave" class="input-text" placeholder="Chave NF" value="{{ pedido.nota_fiscal_chave or '' }}" style="min-width:180px;">
-                        <label class="checkbox-inline" style="margin-right:8px;">
-                            <input type="checkbox" name="emitir_nota" {% if pedido.nota_fiscal_emitida_em %}checked{% endif %}>
-                            Emitir NF
-                        </label>
-                        {% endif %}
-                        <input type="hidden" name="acao" value="{% if pedido.separacao_entrega_concluida %}reabrir{% else %}concluir{% endif %}">
-                        <button type="submit" class="btn-small {% if pedido.separacao_entrega_concluida %}btn-warning{% else %}btn-success{% endif %}">
-                            {% if pedido.separacao_entrega_concluida %}Reabrir{% else %}Separar{% endif %}
+                        <button
+                            type="button"
+                            class="btn-small btn-secondary"
+                            data-separacao-toggle="separacao-details-{{ pedido.id }}"
+                            aria-expanded="false"
+                        >
+                            Ver
                         </button>
-                    </form>
-                    <a href="{{ url_for('detalhes_pedido', pedido_id=pedido.id) }}" class="btn-small btn-secondary">Detalhes</a>
+                    </div>
+                </td>
+            </tr>
+            <tr id="separacao-details-{{ pedido.id }}" class="separacao-details-row" hidden>
+                <td colspan="7">
+                    <div class="separacao-details-panel">
+                        <div class="separacao-details-grid">
+                            <div class="separacao-details-card">
+                                <h3>Resumo</h3>
+                                <div><strong>Origem:</strong> {{ pedido.origem or '-' }}</div>
+                                <div><strong>Cliente:</strong> {{ pedido.cliente_nome or '-' }}</div>
+                                <div><strong>Celular:</strong> {{ pedido.cliente_celular or '-' }}</div>
+                                <div><strong>Criado em:</strong> {{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</div>
+                            </div>
+                            <div class="separacao-details-card">
+                                <h3>Roteiro atual</h3>
+                                <div><strong>Rota:</strong> {{ pedido.rota_entrega or '-' }}</div>
+                                <div><strong>Ordem:</strong> {{ pedido.ordem_rota if pedido.ordem_rota else '-' }}</div>
+                                <div><strong>Saída:</strong> {{ pedido.local_saida or '-' }}</div>
+                                <div><strong>Veículo:</strong> {{ pedido.veiculo_tipo or '-' }}{% if pedido.veiculo_placa %} ({{ pedido.veiculo_placa }}){% endif %}</div>
+                                <div><strong>Motorista:</strong> {{ pedido.motorista_nome or '-' }}</div>
+                                <div><strong>Terceirizada:</strong> {{ pedido.empresa_terceirizada or '-' }}</div>
+                                <div><strong>NF:</strong> {{ pedido.nota_fiscal_numero or '-' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="separacao-details-card">
+                            <h3>Itens do pedido</h3>
+                            <div class="separacao-itens-lista">
+                                {% for item in pedido.itens %}
+                                <div>{{ item.quantidade }}x {{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</div>
+                                {% else %}
+                                <div>-</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="separacao-details-card">
+                            <div class="separacao-details-header">
+                                <h3>Ações</h3>
+                                <div class="separacao-details-links">
+                                    {% if etiquetas_ativas %}
+                                    <a href="{{ url_for('imprimir_etiqueta_entrega_pedido', pedido_id=pedido.id) }}" class="btn-small btn-info" target="_blank">Imprimir etiqueta</a>
+                                    {% endif %}
+                                    <a href="{{ url_for('detalhes_pedido', pedido_id=pedido.id) }}" class="btn-small btn-secondary">Detalhes</a>
+                                </div>
+                            </div>
+
+                            <form method="POST" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}" class="separacao-form-grid">
+                                {{ csrf_input|safe }}
+                                {% if roteirizacao_ativa %}
+                                <label>
+                                    <span>Rota</span>
+                                    <input type="text" name="rota_entrega" class="input-text" placeholder="Rota" value="{{ pedido.rota_entrega or '' }}">
+                                </label>
+                                <label>
+                                    <span>Ordem</span>
+                                    <input type="number" name="ordem_rota" class="input-text" placeholder="Ordem" min="1" value="{{ pedido.ordem_rota or '' }}">
+                                </label>
+                                <label class="separacao-form-span-2">
+                                    <span>Local de saída</span>
+                                    <input type="text" name="local_saida" class="input-text" placeholder="Local de saída" value="{{ pedido.local_saida or (empresa.entrega_local_saida_padrao if empresa else '') or '' }}">
+                                </label>
+                                {% if veiculos_cadastrados %}
+                                <label>
+                                    <span>Veículo cadastrado</span>
+                                    <select name="veiculo_cadastrado_id" class="input-text">
+                                        <option value="">Selecionar</option>
+                                        {% for veiculo_item in veiculos_cadastrados %}
+                                        <option value="{{ veiculo_item.id }}" {% if pedido.veiculo_placa and veiculo_item.placa == pedido.veiculo_placa %}selected{% elif pedido.veiculo_tipo == veiculo_item.nome %}selected{% endif %}>{{ veiculo_item.nome }}{% if veiculo_item.placa %} ({{ veiculo_item.placa }}){% endif %}</option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
+                                {% endif %}
+                                <label>
+                                    <span>Veículo</span>
+                                    <input type="text" name="veiculo_tipo" class="input-text" placeholder="Veículo" value="{{ pedido.veiculo_tipo or (empresa.entrega_veiculo_padrao if empresa else '') or '' }}">
+                                </label>
+                                <label>
+                                    <span>Placa</span>
+                                    <input type="text" name="veiculo_placa" class="input-text" placeholder="Placa" value="{{ pedido.veiculo_placa or '' }}">
+                                </label>
+                                <label>
+                                    <span>Motorista</span>
+                                    <input type="text" name="motorista_nome" class="input-text" placeholder="Motorista" value="{{ pedido.motorista_nome or (empresa.entrega_motorista_padrao if empresa else '') or '' }}">
+                                </label>
+                                {% if terceirizadas_cadastradas %}
+                                <label class="separacao-form-span-2">
+                                    <span>Terceirizada</span>
+                                    <select name="empresa_terceirizada" class="input-text">
+                                        <option value="">Sem terceirizada</option>
+                                        {% for terceirizada_item in terceirizadas_cadastradas %}
+                                        <option value="{{ terceirizada_item }}" {% if pedido.empresa_terceirizada == terceirizada_item %}selected{% endif %}>{{ terceirizada_item }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </label>
+                                {% else %}
+                                <label class="separacao-form-span-2">
+                                    <span>Terceirizada</span>
+                                    <input type="text" name="empresa_terceirizada" class="input-text" placeholder="Empresa terceirizada" value="{{ pedido.empresa_terceirizada or '' }}">
+                                </label>
+                                {% endif %}
+                                {% endif %}
+                                {% if emissao_nota_ativa %}
+                                <label>
+                                    <span>NF número</span>
+                                    <input type="text" name="nota_fiscal_numero" class="input-text" placeholder="NF número" value="{{ pedido.nota_fiscal_numero or '' }}">
+                                </label>
+                                <label class="separacao-form-span-2">
+                                    <span>Chave NF</span>
+                                    <input type="text" name="nota_fiscal_chave" class="input-text" placeholder="Chave NF" value="{{ pedido.nota_fiscal_chave or '' }}">
+                                </label>
+                                <label class="checkbox-inline separacao-checkbox">
+                                    <input type="checkbox" name="emitir_nota" {% if pedido.nota_fiscal_emitida_em %}checked{% endif %}>
+                                    Emitir NF
+                                </label>
+                                {% endif %}
+                                <input type="hidden" name="acao" value="{% if pedido.separacao_entrega_concluida %}reabrir{% else %}concluir{% endif %}">
+                                <div class="separacao-form-actions separacao-form-span-2">
+                                    <button type="submit" class="btn-small {% if pedido.separacao_entrega_concluida %}btn-warning{% else %}btn-success{% endif %}">
+                                        {% if pedido.separacao_entrega_concluida %}Reabrir{% else %}Separar{% endif %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="10" class="text-center">Nenhum pedido encontrado para separacao.</td>
+                <td colspan="7" class="text-center">Nenhum pedido encontrado para separacao.</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -178,3 +270,25 @@
 {% endif %}
 {% endblock %}
 
+{% block extra_js %}
+{{ super() }}
+<script>
+document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-separacao-toggle]');
+    if (!button) {
+        return;
+    }
+
+    var rowId = button.getAttribute('data-separacao-toggle');
+    var detailsRow = document.getElementById(rowId);
+    if (!detailsRow) {
+        return;
+    }
+
+    var expanded = button.getAttribute('aria-expanded') === 'true';
+    detailsRow.hidden = expanded;
+    button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+    button.textContent = expanded ? 'Ver' : 'Ocultar';
+});
+</script>
+{% endblock %}

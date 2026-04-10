@@ -16,6 +16,7 @@ CARGOS_PERMANENTES = (
 )
 
 PAGINAS_SISTEMA = {
+    'api': 'APIs Administrativas',
     'inicio': 'Meu Perfil',
     'gestao_negocio': 'Gestao do Negocio',
     'financeiro': 'Financeiro',
@@ -42,12 +43,20 @@ PAGINAS_SISTEMA = {
     'rh_organograma': 'RH - Organograma',
     'auditoria': 'Auditoria',
     'empresa': 'Empresa',
-    'ecommerce_config': 'E-commerce - Ativacao e Configuracao',
+    'ecommerce_config': 'E-commerce - Tema e Operacao',
+    'ecommerce_marketing': 'E-commerce - Promocoes e Campanhas',
     'servicos_tecnicos': 'Servicos Tecnicos',
     'chamados_internos': 'Chamados Internos',
     'garcons': 'Garcons',
     'ajuda': 'Ajuda e Treinamento',
 }
+
+API_FALLBACK_ACCESS_PAGES = (
+    'empresa',
+    'auditoria',
+    'funcionarios',
+    'rh_funcoes',
+)
 
 PAGINAS_SISTEMA_MENU_ORDEM = (
     ('Dashboard', ('inicio',)),
@@ -58,7 +67,7 @@ PAGINAS_SISTEMA_MENU_ORDEM = (
     ('Recebimento', ('fornecedores', 'recebimentos')),
     ('Expedicao', ('expedicao', 'transferencias_estoque')),
     ('Meu RH', ('rh_indicadores', 'rh_organograma', 'funcionarios', 'rh_funcoes', 'auditoria')),
-    ('E-commerce', ('ecommerce_config',)),
+    ('E-commerce', ('ecommerce_config', 'ecommerce_marketing')),
     ('Servicos', ('servicos_tecnicos', 'chamados_internos')),
     ('Ajuda', ('ajuda',)),
 )
@@ -173,6 +182,7 @@ PAGINA_ENDPOINTS = {
     'auditoria': {'auditoria_sistema'},
     'empresa': {'editar_empresa', 'preview_cardapio_empresa'},
     'ecommerce_config': {'configurar_ecommerce', 'configurar_ativacao_ecommerce'},
+    'ecommerce_marketing': {'configurar_marketing_ecommerce'},
     'servicos_tecnicos': {
         'listar_ordens_servico',
         'minhas_ordens_servico',

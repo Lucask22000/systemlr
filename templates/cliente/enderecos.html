@@ -1,0 +1,60 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'cliente' %}
+{% set store_nav = 'cliente' %}
+{% set store_title = 'Meus endereços | SystemLR' %}
+
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Endereços</span>
+    <h1>Gerenciar endereços</h1>
+    <p>Cadastre mais de um endereço e deixe um principal para o checkout.</p>
+</section>
+
+<section class="store-grid store-grid--commerce">
+    <article class="store-panel">
+        <div class="store-panel-header">
+            <div>
+                <h2 class="store-card-title">Novo endereço</h2>
+            </div>
+        </div>
+        <form method="POST" action="{{ url_for('public.cliente_enderecos') }}">
+            {{ csrf_input|safe }}
+            <div class="store-form-grid">
+                <div class="store-field"><label for="apelido">Apelido</label><input id="apelido" name="apelido" type="text" placeholder="Casa, trabalho..."></div>
+                <div class="store-field"><label for="cep">CEP</label><input id="cep" name="cep" type="text" required></div>
+                <div class="store-field store-field--full"><label for="endereco">Endereço</label><input id="endereco" name="endereco" type="text" required></div>
+                <div class="store-field"><label for="numero">Número</label><input id="numero" name="numero" type="text" required></div>
+                <div class="store-field"><label for="complemento">Complemento</label><input id="complemento" name="complemento" type="text"></div>
+                <div class="store-field"><label for="bairro">Bairro</label><input id="bairro" name="bairro" type="text" required></div>
+                <div class="store-field"><label for="cidade">Cidade</label><input id="cidade" name="cidade" type="text" required></div>
+                <div class="store-field"><label for="estado">Estado</label><input id="estado" name="estado" type="text" maxlength="2" required></div>
+                <div class="store-field store-field--full"><label for="referencia">Referência</label><input id="referencia" name="referencia" type="text"></div>
+                <div class="store-field store-field--full store-field--check">
+                    <input type="checkbox" id="principal" name="principal">
+                    <label for="principal">Definir como endereço principal</label>
+                </div>
+            </div>
+            <div class="store-grid-actions" style="margin-top: 14px;">
+                <button type="submit" class="store-btn store-btn-primary">Salvar endereço</button>
+            </div>
+        </form>
+    </article>
+
+    <article class="store-panel">
+        <h2 class="store-card-title">Endereços salvos</h2>
+        {% for endereco in enderecos %}
+        <div class="store-note-box" style="margin-bottom: 12px;">
+            <p class="store-item-title">{{ endereco.apelido or 'Endereço' }} {% if endereco.principal %}<strong>(principal)</strong>{% endif %}</p>
+            <p class="store-note">{{ endereco.endereco }}, {{ endereco.numero }}{% if endereco.complemento %} - {{ endereco.complemento }}{% endif %}</p>
+            <p class="store-note">{{ endereco.bairro }} • {{ endereco.cidade }}/{{ endereco.estado }} • CEP {{ endereco.cep }}</p>
+            <form method="POST" action="{{ url_for('public.cliente_endereco_deletar', id=endereco.id) }}">
+                {{ csrf_input|safe }}
+                <button type="submit" class="store-btn store-btn-danger">Remover</button>
+            </form>
+        </div>
+        {% else %}
+        <p class="store-note">Nenhum endereço cadastrado.</p>
+        {% endfor %}
+    </article>
+</section>
+{% endblock %}

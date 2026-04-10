@@ -51,10 +51,10 @@ def require_role(*roles):
     return decorator
 
 
-def _limit(rule):
+def _limit(rule, *args, **kwargs):
     def decorator(func):
         if extensions.limiter is None:
             return func
-        return extensions.limiter.limit(rule)(func)
+        return extensions.limiter.limit(rule, *args, **kwargs)(func)
 
     return decorator

@@ -6,16 +6,22 @@
 {% block store_content %}
 <section class="store-page-intro">
     <span class="store-kicker">Cadastro</span>
-    <h1>Cadastro completo do cliente</h1>
-    <p>Salve seus dados para agilizar pedidos, carrinho e pagamentos na próxima visita.</p>
+    <h1>{{ 'Minha conta' if cliente_logado else 'Cadastro completo do cliente' }}</h1>
+    <p>Salve seus dados para agilizar pedidos, carrinho e pagamentos nas próximas compras.</p>
 </section>
+
+{% if not cliente_logado %}
+<div class="store-note-box" style="margin-bottom: 18px;">
+    Já tem conta? <a href="{{ url_for('public.cliente_login_site', next=proximo_seguro or url_for('public.cliente_dashboard')) }}">Entrar na área do cliente</a>
+</div>
+{% endif %}
 
 <section class="store-grid store-grid--commerce">
     <article class="store-panel">
         <div class="store-panel-header">
             <div>
                 <h2 class="store-card-title">Seus dados</h2>
-                <p class="store-note">Informações organizadas em um único fluxo, sem excesso visual.</p>
+                <p class="store-note">Informações prontas para reaproveitar no checkout e no histórico da conta.</p>
             </div>
         </div>
 
@@ -34,6 +40,16 @@
                     <label for="email">E-mail</label>
                     <input id="email" name="email" type="email" value="{{ cliente_dados.email }}" required>
                 </div>
+                {% if not cliente_logado %}
+                <div class="store-field">
+                    <label for="senha">Senha</label>
+                    <input id="senha" name="senha" type="password" minlength="6" required>
+                </div>
+                <div class="store-field">
+                    <label for="confirmar_senha">Confirmar senha</label>
+                    <input id="confirmar_senha" name="confirmar_senha" type="password" minlength="6" required>
+                </div>
+                {% endif %}
                 <div class="store-field">
                     <label for="celular">Celular</label>
                     <input id="celular" name="celular" type="text" value="{{ cliente_dados.celular }}" required>
@@ -85,7 +101,7 @@
             </div>
 
             <div class="store-grid-actions" style="margin-top: 14px;">
-                <button type="submit" class="store-btn store-btn-primary">Salvar cadastro</button>
+                <button type="submit" class="store-btn store-btn-primary">{{ 'Atualizar conta' if cliente_logado else 'Criar conta' }}</button>
                 <a href="{{ url_for('public.checkout_site') }}" class="store-btn store-btn-secondary">Ir para checkout</a>
             </div>
         </form>
@@ -95,7 +111,7 @@
         <div class="store-panel-header">
             <div>
                 <h2 class="store-card-title">Resumo rápido</h2>
-                <p class="store-note">O checkout já aproveita essas informações.</p>
+                <p class="store-note">A conta reaproveita os dados no checkout, pedidos e favoritos.</p>
             </div>
         </div>
 
@@ -105,13 +121,17 @@
                 <strong>{{ resumo_carrinho.quantidade_itens }}</strong>
             </div>
             <div class="store-summary-line total">
-                <span>Subtotal atual</span>
-                <strong>R$ {{ '%.2f'|format(resumo_carrinho.subtotal)|replace('.', ',') }}</strong>
+                <span>Total atual</span>
+                <strong>R$ {{ '%.2f'|format(resumo_carrinho.total or resumo_carrinho.subtotal)|replace('.', ',') }}</strong>
             </div>
         </div>
 
         <div class="store-note-box">
-            Com o cadastro salvo, o checkout já vem preenchido com seus dados.
+            {% if cliente_logado %}
+            Sua conta já está ativa. Você também pode gerenciar endereços e favoritos pela área do cliente.
+            {% else %}
+            Depois do cadastro, seu histórico de pedidos e os endereços ficam salvos para as próximas compras.
+            {% endif %}
         </div>
     </aside>
 </section>

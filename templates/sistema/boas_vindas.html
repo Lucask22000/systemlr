@@ -47,6 +47,71 @@
         </article>
     </section>
 
+    {% if alertas_dashboard %}
+    <section class="section home-op-section">
+        <div class="page-header">
+            <div>
+                <h2>Alertas acionaveis</h2>
+                <p class="text-muted mb-0">Sinais automaticos para agir antes que a operacao degrade.</p>
+            </div>
+        </div>
+        <div class="home-op-alert-list">
+            {% for alerta in alertas_dashboard %}
+            <div class="home-op-alert home-op-alert-{{ alerta.tipo }}">
+                <span>{{ alerta.mensagem }}</span>
+                <a href="{{ alerta.acao_url }}" class="btn btn-sm btn-outline-secondary">{{ alerta.acao_label }}</a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if indicadores_contexto_usuario %}
+    <section class="section home-op-section">
+        <div class="page-header">
+            <div>
+                <h2>Indicadores do seu perfil</h2>
+                <p class="text-muted mb-0">Resumo adaptado conforme a sua rotina operacional.</p>
+            </div>
+        </div>
+        <div class="home-op-context-grid">
+            {% for item in indicadores_contexto_usuario %}
+            <article class="home-op-context-card" {% if item.metric_key %}data-live-metric="{{ item.metric_key }}"{% endif %}>
+                <small>{{ item.titulo }}</small>
+                <strong>{{ item.valor }}</strong>
+                <span>{{ item.detalhe }}</span>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <section class="section home-op-section">
+        <div class="page-header">
+            <div>
+                <h2>Pulso em tempo real</h2>
+                <p class="text-muted mb-0">Atualizacoes automaticas sem recarregar a tela.</p>
+            </div>
+        </div>
+        <div class="home-op-context-grid">
+            <article class="home-op-context-card" data-live-metric="pedidos_ultimos_15_min">
+                <small>Pedidos ultimos 15 min</small>
+                <strong>{{ metricas_tempo_real.pedidos_ultimos_15_min }}</strong>
+                <span>Janela movel da operacao.</span>
+            </article>
+            <article class="home-op-context-card" data-live-metric="faturamento_dia">
+                <small>Faturamento do dia</small>
+                <strong>R$ {{ '%.2f'|format(metricas_tempo_real.faturamento_dia) }}</strong>
+                <span>Somente vendas fechadas.</span>
+            </article>
+            <article class="home-op-context-card" data-live-metric="produtos_vendidos_turno">
+                <small>Produtos vendidos no turno</small>
+                <strong>{{ metricas_tempo_real.produtos_vendidos_turno }}</strong>
+                <span>Itens confirmados hoje.</span>
+            </article>
+        </div>
+    </section>
+
     <section class="section home-op-section">
         <div class="page-header">
             <div>
@@ -122,4 +187,31 @@
         {% endif %}
     </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (!window.EventSource) {
+        return;
+    }
+    var es = new EventSource('{{ url_for("sse_pedidos") }}');
+    es.addEventListener('dashboard_metrics', function (event) {
+        var data = JSON.parse(event.data || '{}');
+        Object.keys(data).forEach(function (key) {
+            document.querySelectorAll('[data-live-metric="' + key + '"] strong').forEach(function (el) {
+                if (key === 'faturamento_dia') {
+                    el.textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data[key] || 0);
+                    return;
+                }
+                if (key === 'tempo_medio_preparo_minutos') {
+                    el.textContent = (Number(data[key] || 0)).toFixed(1) + ' min';
+                    return;
+                }
+                el.textContent = String(data[key] || 0);
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

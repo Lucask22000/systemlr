@@ -1,6 +1,11 @@
 import os
 from datetime import timedelta
 
+try:
+    import redis
+except Exception:  # pragma: no cover - redis e opcional no bootstrap local
+    redis = None
+
 DEV_FALLBACK_SECRET = 'dev-secret-key-change-in-production'
 
 
@@ -20,6 +25,9 @@ class Config:
     CACHE_DEFAULT_TIMEOUT = int(os.environ.get('CACHE_DEFAULT_TIMEOUT', '60'))
     CACHE_REDIS_URL = os.environ.get('CACHE_REDIS_URL')
     RATELIMIT_STORAGE_URI = os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
+    REDIS_URL = os.environ.get('REDIS_URL')
+    SESSION_TYPE = 'redis' if REDIS_URL else 'filesystem'
+    SESSION_REDIS = redis.from_url(REDIS_URL) if (REDIS_URL and redis is not None) else None
 
 
 class DevelopmentConfig(Config):

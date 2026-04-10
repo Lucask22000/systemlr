@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Promoções e Campanhas - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Promoções e Campanhas</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Escopo desta tela</h2>
+            <p style="margin: 0 0 12px; color: #5b6575;">
+                Organize aqui mensagens promocionais, cupons e temas sazonais para datas como Natal, Páscoa, Black Friday e outras campanhas do calendário comercial.
+            </p>
+            <div class="form-actions" style="margin-top: 0;">
+                <a href="{{ url_for('configurar_ativacao_ecommerce') }}" class="btn btn-secondary">Abrir ativação da loja</a>
+                <a href="{{ url_for('configurar_ecommerce') }}" class="btn btn-secondary">Abrir tema e loja online</a>
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização das promoções da loja"
+                    data-preview-description="Veja em sobreposição os pontos promocionais da vitrine e onde campanhas ativas costumam aparecer."
+                    data-preview-tags="Promoção|Campanhas|Carrossel"
+                    data-preview-focus=".store-home-hero-copy|.store-kicker|.store-campaign-grid|.store-carousel"
+                >Visualizar alteração</button>
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Mensagem promocional principal</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização da mensagem promocional"
+                    data-preview-description="A prévia destaca a chamada principal da home e os textos de campanha que ganham mais visibilidade."
+                    data-preview-tags="Chamada principal|Hero"
+                    data-preview-focus=".store-home-hero-copy|.store-kicker"
+                >Visualizar alteração</button>
+            </div>
+            <div class="form-group">
+                <label for="ecom_texto_promocao">Texto de destaque</label>
+                <input
+                    type="text"
+                    id="ecom_texto_promocao"
+                    name="ecom_texto_promocao"
+                    value="{{ empresa.ecom_texto_promocao if empresa else '' }}"
+                    class="input-text"
+                    placeholder="Ex.: 20% OFF em itens selecionados nesta semana">
+            </div>
+            <small class="text-muted">Esse texto pode aparecer como chamada principal da vitrine quando houver campanha ativa.</small>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Campanhas programadas</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização das campanhas"
+                    data-preview-description="A sobreposição mostra onde a vitrine exibe campanhas ativas e ajuda a revisar o impacto sazonal."
+                    data-preview-tags="Campanhas|Tema sazonal"
+                    data-preview-focus=".store-campaign-grid|.store-campaign-card|.store-kicker"
+                >Visualizar alteração</button>
+            </div>
+            {% for campanha in campanhas_config %}
+            <div style="border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin-bottom:10px;">
+                <h3 style="margin:0 0 10px;">Campanha {{ loop.index }}</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="campanha_nome_{{ loop.index0 }}">Nome da campanha</label>
+                        <input type="text" id="campanha_nome_{{ loop.index0 }}" name="campanha_nome_{{ loop.index0 }}" value="{{ campanha.nome }}" class="input-text" placeholder="Ex.: Semana de Natal">
+                    </div>
+                    <div class="form-group">
+                        <label for="campanha_tema_{{ loop.index0 }}">Tema sazonal</label>
+                        <select id="campanha_tema_{{ loop.index0 }}" name="campanha_tema_{{ loop.index0 }}" class="input-text">
+                            {% for valor, rotulo in temas_sazonais %}
+                            <option value="{{ valor }}" {% if campanha.tema_sazonal == valor %}selected{% endif %}>{{ rotulo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="campanha_texto_{{ loop.index0 }}">Texto promocional</label>
+                    <input type="text" id="campanha_texto_{{ loop.index0 }}" name="campanha_texto_{{ loop.index0 }}" value="{{ campanha.texto }}" class="input-text" placeholder="Ex.: Monte sua cesta com ofertas especiais de fim de ano">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="campanha_inicio_{{ loop.index0 }}">Inicio da vigência</label>
+                        <input type="date" id="campanha_inicio_{{ loop.index0 }}" name="campanha_inicio_{{ loop.index0 }}" value="{{ campanha.inicio_em }}" class="input-text">
+                    </div>
+                    <div class="form-group">
+                        <label for="campanha_fim_{{ loop.index0 }}">Fim da vigência</label>
+                        <input type="date" id="campanha_fim_{{ loop.index0 }}" name="campanha_fim_{{ loop.index0 }}" value="{{ campanha.fim_em }}" class="input-text">
+                    </div>
+                </div>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="campanha_ativa_{{ loop.index0 }}" {% if campanha.ativo %}checked{% endif %}>
+                    Campanha ativa
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Cupons planejados</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização dos cupons e ofertas"
+                    data-preview-description="A loja em sobreposição destaca as áreas promocionais relacionadas a cupons e ofertas, mesmo quando o cupom ainda está em planejamento."
+                    data-preview-tags="Cupons|Ofertas"
+                    data-preview-focus=".store-home-links|#ofertas|.store-product-grid"
+                >Visualizar alteração</button>
+            </div>
+            <p style="margin: 0 0 12px; color: #5b6575;">
+                Cadastre os cupons e deixe o calendário comercial organizado. A aplicação automática no checkout pode ser conectada depois sem perder esse planejamento.
+            </p>
+            {% for cupom in cupons_config %}
+            <div style="border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin-bottom:10px;">
+                <h3 style="margin:0 0 10px;">Cupom {{ loop.index }}</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cupom_codigo_{{ loop.index0 }}">Código</label>
+                        <input type="text" id="cupom_codigo_{{ loop.index0 }}" name="cupom_codigo_{{ loop.index0 }}" value="{{ cupom.codigo }}" class="input-text" placeholder="Ex.: NATAL20">
+                    </div>
+                    <div class="form-group">
+                        <label for="cupom_tipo_{{ loop.index0 }}">Tipo de desconto</label>
+                        <select id="cupom_tipo_{{ loop.index0 }}" name="cupom_tipo_{{ loop.index0 }}" class="input-text">
+                            {% for valor, rotulo in tipos_desconto_cupom %}
+                            <option value="{{ valor }}" {% if cupom.tipo_desconto == valor %}selected{% endif %}>{{ rotulo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="cupom_valor_{{ loop.index0 }}">Valor</label>
+                        <input type="text" id="cupom_valor_{{ loop.index0 }}" name="cupom_valor_{{ loop.index0 }}" value="{{ cupom.valor }}" class="input-text" placeholder="Ex.: 20 ou 15.90">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cupom_descricao_{{ loop.index0 }}">Descrição</label>
+                    <input type="text" id="cupom_descricao_{{ loop.index0 }}" name="cupom_descricao_{{ loop.index0 }}" value="{{ cupom.descricao }}" class="input-text" placeholder="Ex.: Desconto para cesta de Páscoa e chocolates">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cupom_inicio_{{ loop.index0 }}">Inicio da vigência</label>
+                        <input type="date" id="cupom_inicio_{{ loop.index0 }}" name="cupom_inicio_{{ loop.index0 }}" value="{{ cupom.inicio_em }}" class="input-text">
+                    </div>
+                    <div class="form-group">
+                        <label for="cupom_fim_{{ loop.index0 }}">Fim da vigência</label>
+                        <input type="date" id="cupom_fim_{{ loop.index0 }}" name="cupom_fim_{{ loop.index0 }}" value="{{ cupom.fim_em }}" class="input-text">
+                    </div>
+                </div>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="cupom_ativo_{{ loop.index0 }}" {% if cupom.ativo %}checked{% endif %}>
+                    Cupom ativo
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Preview rápido</h2>
+            <div style="border-radius:12px;padding:14px;background:#fff7f2;border:1px solid rgba(255, 120, 72, 0.16);color:#8f3c18;">
+                <strong style="display:block;font-size:1.05rem;">{{ empresa.ecom_texto_promocao if empresa and empresa.ecom_texto_promocao else 'Texto principal da promoção' }}</strong>
+                <span style="display:block;opacity:.86;margin-top:6px;">Use campanhas com tema sazonal para preparar a vitrine em datas especiais sem misturar tudo na configuração visual.</span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Salvar promoções e campanhas</button>
+            <a href="{{ url_for('configurar_ecommerce') }}" class="btn btn-secondary">Voltar para tema e loja online</a>
+            <button
+                type="button"
+                class="btn btn-secondary"
+                data-store-preview-open
+                data-preview-url="{{ url_for('index') }}"
+                data-preview-title="Visualização das alterações de marketing"
+                data-preview-description="Use a sobreposição para revisar promoções, campanhas e áreas de ofertas sem sair da tela."
+                data-preview-tags="Marketing|Campanhas|Ofertas"
+                data-preview-focus=".store-home-hero-copy|.store-campaign-grid|#ofertas"
+            >Visualizar alteração</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

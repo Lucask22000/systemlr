@@ -7,7 +7,7 @@
 <section class="store-page-intro">
     <span class="store-kicker">Carrinho</span>
     <h1>Carrinho de compras</h1>
-    <p>Revise quantidades, ajuste itens e siga para a confirmação do pedido.</p>
+    <p>Revise quantidades, aplique cupom e siga para a confirmação do pedido.</p>
 </section>
 
 <section class="store-grid store-grid--commerce">
@@ -26,7 +26,7 @@
                 {% for item in resumo_carrinho.itens %}
                 <div class="store-cart-item">
                     <div>
-                        <p class="store-item-title">{{ item.produto.nome }}</p>
+                        <p class="store-item-title"><a href="{{ url_for('public.produto_detalhe_site', produto_id=item.produto.id) }}">{{ item.produto.nome }}</a></p>
                         <p class="store-item-meta">
                             R$ {{ '%.2f'|format(item.produto.preco_venda)|replace('.', ',') }} cada |
                             Total R$ {{ '%.2f'|format(item.total_item)|replace('.', ',') }}
@@ -71,24 +71,47 @@
             </div>
         </div>
 
+        <form method="POST" action="{{ url_for('public.aplicar_cupom_carrinho_site') }}" style="margin-bottom: 18px;">
+            {{ csrf_input|safe }}
+            <div class="store-field">
+                <label for="codigo_cupom">Cupom</label>
+                <input id="codigo_cupom" name="codigo_cupom" type="text" value="{{ resumo_carrinho.cupom.codigo if resumo_carrinho.cupom else '' }}" placeholder="Digite seu cupom">
+            </div>
+            <div class="store-inline-actions" style="margin-top: 10px;">
+                <button type="submit" class="store-btn store-btn-secondary">Aplicar cupom</button>
+            </div>
+        </form>
+
         <div class="store-summary-list">
             <div class="store-summary-line">
                 <span>Itens</span>
                 <strong>{{ resumo_carrinho.quantidade_itens }}</strong>
             </div>
-            <div class="store-summary-line total">
+            <div class="store-summary-line">
                 <span>Subtotal</span>
                 <strong>R$ {{ '%.2f'|format(resumo_carrinho.subtotal)|replace('.', ',') }}</strong>
+            </div>
+            <div class="store-summary-line">
+                <span>Desconto</span>
+                <strong>R$ {{ '%.2f'|format(resumo_carrinho.desconto)|replace('.', ',') }}</strong>
+            </div>
+            <div class="store-summary-line total">
+                <span>Total</span>
+                <strong>R$ {{ '%.2f'|format(resumo_carrinho.total)|replace('.', ',') }}</strong>
             </div>
         </div>
 
         <div class="store-note-box">
-            O total final pode incluir troco quando o método de pagamento escolhido for dinheiro.
+            {% if cliente_publico %}
+            Você está comprando como {{ cliente_publico.nome }}.
+            {% else %}
+            Entre na sua conta para usar cupons de primeira compra e reaproveitar endereços salvos.
+            {% endif %}
         </div>
 
         <div class="store-grid-actions" style="margin-top: 14px;">
             <a href="{{ url_for('public.checkout_site') }}" class="store-btn store-btn-primary store-btn-wide">Finalizar pedido</a>
-            <a href="{{ url_for('index') }}" class="store-btn store-btn-secondary store-btn-wide">Continuar comprando</a>
+            <a href="{{ url_for('public.listar_produtos_site') }}" class="store-btn store-btn-secondary store-btn-wide">Continuar comprando</a>
         </div>
     </aside>
 </section>

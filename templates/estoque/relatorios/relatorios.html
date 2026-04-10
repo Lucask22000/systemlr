@@ -1,321 +1,68 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
-{% block title %}Relatórios de Estoque - SystemLR{% endblock %}
+{% block title %}Relatorios de Estoque - SystemLR{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Relatórios de Estoque</h1>
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Dashboard de Estoque</h1>
+        <p class="text-muted mb-0">Cobertura, giro, enderecamento e risco de ruptura.</p>
+    </div>
+    <div class="header-actions">
+        <select id="estoquePeriodo" class="input-select">
+            <option value="7">Ultimos 7 dias</option>
+            <option value="30" selected>Ultimos 30 dias</option>
+            <option value="90">Ultimos 90 dias</option>
+        </select>
+    </div>
 </div>
 
 <div class="cards-container analytics-cards">
-    <div class="card card-primary">
-        <div class="card-content">
-            <h3>Total de Produtos</h3>
-            <p class="card-value">{{ total_produtos }}</p>
-            <p class="card-meta">{{ produtos_ativos }} ativos / {{ produtos_inativos }} inativos</p>
-        </div>
-    </div>
-    <div class="card card-info">
-        <div class="card-content">
-            <h3>Unidades em Estoque</h3>
-            <p class="card-value">{{ total_unidades }}</p>
-            <p class="card-meta">{{ produtos_sem_estoque }} produtos com saldo zerado</p>
-        </div>
-    </div>
-    <div class="card card-success">
-        <div class="card-content">
-            <h3>Valor Total do Estoque</h3>
-            <p class="card-value">R$ {{ valor_total_estoque }}</p>
-            <p class="card-meta">Custo medio unitario: R$ {{ custo_medio_estoque }}</p>
-        </div>
-    </div>
-    <div class="card card-warning">
-        <div class="card-content">
-            <h3>Movimentações (30 dias)</h3>
-            <p class="card-value">{{ movimentacoes_mes }}</p>
-            <p class="card-meta">{{ entradas_mes }} entradas / {{ saidas_mes }} saidas</p>
-        </div>
-    </div>
-    <div class="card card-secondary">
-        <div class="card-content">
-            <h3>Ocupacao de Enderecos</h3>
-            <p class="card-value">{{ '%.1f'|format(taxa_ocupacao_enderecos) }}%</p>
-            <p class="card-meta">{{ enderecos_ocupados }} ocupados de {{ total_enderecos_ativos }} ativos</p>
-        </div>
-    </div>
-    <div class="card card-info">
-        <div class="card-content">
-            <h3>Reposicao Necessaria</h3>
-            <p class="card-value">{{ '%.1f'|format(taxa_reposicao_necessaria) }}%</p>
-            <p class="card-meta">{{ produtos_em_falta|length }} produto(s) abaixo do minimo</p>
-        </div>
-    </div>
-    <div class="card card-danger">
-        <div class="card-content">
-            <h3>Risco Operacional</h3>
-            <p class="card-value">{{ risco_operacional_score }}/25</p>
-            <p class="card-meta">{{ produtos_risco_ruptura }} em risco de ruptura</p>
-        </div>
-    </div>
+    <div class="card card-primary"><div class="card-content"><h3>Giro de estoque</h3><p class="card-value" id="kpiGiro">0,00x</p><p class="card-meta">Vendas / estoque medio</p></div></div>
+    <div class="card card-info"><div class="card-content"><h3>Dias de cobertura</h3><p class="card-value" id="kpiCobertura">0,0</p><p class="card-meta">Baseado no periodo selecionado</p></div></div>
+    <div class="card card-warning"><div class="card-content"><h3>Produtos em ruptura</h3><p class="card-value" id="kpiRuptura">0</p><p class="card-meta">Abaixo do minimo</p></div></div>
+    <div class="card card-secondary"><div class="card-content"><h3>Ocupacao de enderecos</h3><p class="card-value" id="kpiOcupacao">0,0%</p><p class="card-meta" id="metaOcupacao">0 / 0 ocupados</p></div></div>
+    <div class="card card-danger"><div class="card-content"><h3>Recebimentos pendentes</h3><p class="card-value" id="kpiRecebimentosPendentes">0</p><p class="card-meta">Aguardando armazenagem</p></div></div>
 </div>
+
+<section class="section mb-3">
+    <h2>Alertas</h2>
+    <div id="estoqueAlertas" class="d-grid gap-2">
+        <p class="text-muted mb-0">Nenhum alerta carregado.</p>
+    </div>
+</section>
+
+<div class="analytics-grid">
+    <section class="section"><h2>Pareto 80/20</h2><div class="chart-container"><canvas id="chartParetoEstoque"></canvas></div></section>
+    <section class="section"><h2>Ocupacao de Enderecos</h2><div class="chart-container"><canvas id="chartOcupacaoEnderecos"></canvas></div></section>
+</div>
+
+<section class="section"><h2>Movimentacoes Diarias</h2><div class="chart-container"><canvas id="chartMovimentacoesEstoque"></canvas></div></section>
 
 <div class="analytics-grid">
     <section class="section">
-        <h2>Indicadores de Entrada, Saida e Risco</h2>
+        <h2>Produtos em risco de ruptura</h2>
         <div class="table-responsive">
             <table class="table">
-                <tbody>
-                    <tr>
-                        <td>Entradas (30 dias)</td>
-                        <td>{{ entradas_mes }}</td>
-                    </tr>
-                    <tr>
-                        <td>Saidas (30 dias)</td>
-                        <td>{{ saidas_mes }}</td>
-                    </tr>
-                    <tr>
-                        <td>Saldo operacional (entradas - saidas)</td>
-                        <td>{{ saldo_movimentacao_mes }}</td>
-                    </tr>
-                    <tr>
-                        <td>Produtos sem endereco</td>
-                        <td>{{ produtos_sem_endereco }}</td>
-                    </tr>
-                    <tr>
-                        <td>Produtos fora de picking</td>
-                        <td>{{ produtos_fora_picking }}</td>
-                    </tr>
-                    <tr>
-                        <td>Produtos com risco de ruptura</td>
-                        <td>{{ produtos_risco_ruptura }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-    <section class="section">
-        <h2>Dicas de Estoque Inteligente</h2>
-        <ul>
-            {% for dica in dicas_estoque_inteligente %}
-            <li>{{ dica }}</li>
-            {% endfor %}
-        </ul>
-        <div class="action-buttons" style="margin-top:8px;">
-            <a href="{{ url_for('enderecos_inteligentes') }}" class="btn btn-primary">Aplicar no Enderecamento Inteligente</a>
-            <a href="{{ url_for('listar_produtos', fora_picking='sim') }}" class="btn btn-secondary">Ver produtos fora de picking</a>
-            {% if not empresa or empresa.emissao_etiqueta_loja_ativa != False %}
-            <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="btn btn-secondary" target="_blank">Etiquetas de Loja</a>
-            {% endif %}
-            {% if not empresa or empresa.emissao_etiqueta_endereco_ativa != False %}
-            <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="btn btn-secondary" target="_blank">Etiquetas de Endereco</a>
-            {% endif %}
-        </div>
-    </section>
-</div>
-
-<div class="section">
-    <div class="page-header">
-        <h2>Graficos Dinamicos de Estoque</h2>
-        <div class="header-actions">
-            <select id="estoquePeriodo" class="input-select">
-                <option value="7">Ultimos 7 dias</option>
-                <option value="30" selected>Ultimos 30 dias</option>
-                <option value="90">Ultimos 90 dias</option>
-            </select>
-        </div>
-    </div>
-    <div class="analytics-grid">
-        <section class="section">
-            <h2>Movimentações Diarias</h2>
-            <div class="chart-container">
-                <canvas id="chartMovimentaçõesEstoque"></canvas>
-            </div>
-        </section>
-        <section class="section">
-            <h2>Valor por Categoria</h2>
-            <div class="chart-container">
-                <canvas id="chartValorCategoriaEstoque"></canvas>
-            </div>
-        </section>
-    </div>
-</div>
-
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Produtos em Falta</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Codigo</th>
-                        <th>Produto</th>
-                        <th>Categoria</th>
-                        <th>Endereco</th>
-                        <th>Atual</th>
-                        <th>Minimo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for prod in produtos_em_falta %}
-                    <tr class="row-warning">
-                        <td data-label="Codigo"><code>{{ prod.código }}</code></td>
-                        <td data-label="Produto">
-                            <div class="product-name-cell">
-                                {% if prod.imagem_path %}
-                                <img src="{{ url_for('static', filename=prod.imagem_path) }}" alt="{{ prod.nome }}" class="product-thumb product-thumb-sm">
-                                {% endif %}
-                                <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}">{{ prod.nome }}</a>
-                            </div>
-                        </td>
-                        <td data-label="Categoria">{{ prod.categoria.nome if prod.categoria else '-' }}</td>
-                        <td data-label="Endereco">{{ prod.endereco.nome if prod.endereco else '-' }}</td>
-                        <td data-label="Atual">{{ prod.quantidade_estoque }}</td>
-                        <td data-label="Minimo">{{ prod.quantidade_minima }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="text-center">Nenhum produto abaixo do estoque minimo.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2>Produtos com Maior Valor em Estoque</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Codigo</th>
-                        <th>Produto</th>
-                        <th>Qtd</th>
-                        <th>Custo Unit.</th>
-                        <th>Valor Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for prod, valor in produtos_maior_valor %}
-                    <tr>
-                        <td data-label="Codigo"><code>{{ prod.código }}</code></td>
-                        <td data-label="Produto">{{ prod.nome }}</td>
-                        <td data-label="Qtd">{{ prod.quantidade_estoque }}</td>
-                        <td data-label="Custo Unit.">R$ {{ "%.2f"|format(prod.preco_custo) }}</td>
-                        <td data-label="Valor Total">R$ {{ "%.2f"|format(valor or 0) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="5" class="text-center">Sem dados de valor em estoque.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                <thead><tr><th>SKU</th><th>Produto</th><th>Atual</th><th>Minimo</th><th>Fornecedor</th></tr></thead>
+                <tbody id="tableRuptura"></tbody>
             </table>
         </div>
     </section>
 </div>
 
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Valor de Estoque por Categoria</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Categoria</th>
-                        <th>Produtos</th>
-                        <th>Unidades</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in valor_por_categoria %}
-                    <tr>
-                        <td data-label="Categoria">{{ item.categoria_nome }}</td>
-                        <td data-label="Produtos">{{ item.produtos or 0 }}</td>
-                        <td data-label="Unidades">{{ item.qtd_total or 0 }}</td>
-                        <td data-label="Valor">R$ {{ "%.2f"|format(item.valor_total or 0) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="text-center">Sem dados por categoria.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2>Distribuicao por Endereco</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Endereco</th>
-                        <th>Produtos</th>
-                        <th>Unidades</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in valor_por_endereco %}
-                    <tr>
-                        <td data-label="Endereco">{{ item.endereco_nome }}</td>
-                        <td data-label="Produtos">{{ item.produtos or 0 }}</td>
-                        <td data-label="Unidades">{{ item.qtd_total or 0 }}</td>
-                        <td data-label="Valor">R$ {{ "%.2f"|format(item.valor_total or 0) }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="text-center">Nenhum endereco vinculado a produtos.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-</div>
-
-<div class="section">
-    <h2>Produtos sem Giro (60 dias)</h2>
+<section class="section">
+    <h2>Produtos sem giro (60 dias)</h2>
     <div class="table-responsive">
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Codigo</th>
-                    <th>Produto</th>
-                    <th>Categoria</th>
-                    <th>Endereco</th>
-                    <th>Estoque</th>
-                    <th>Ação</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for prod in produtos_sem_giro %}
-                <tr>
-                    <td data-label="Codigo"><code>{{ prod.código }}</code></td>
-                    <td data-label="Produto">{{ prod.nome }}</td>
-                    <td data-label="Categoria">{{ prod.categoria.nome if prod.categoria else '-' }}</td>
-                    <td data-label="Endereco">{{ prod.endereco.nome if prod.endereco else '-' }}</td>
-                    <td data-label="Estoque">{{ prod.quantidade_estoque }}</td>
-                    <td data-label="Ação">
-                        <a href="{{ url_for('visualizar_produto', produto_id=prod.id) }}" class="btn-small btn-info">Ver Produto</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="text-center">Todos os produtos tiveram movimentacao recente.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            <thead><tr><th>SKU</th><th>Produto</th><th>Ultima movimentacao</th></tr></thead>
+            <tbody id="tableSemGiro"></tbody>
         </table>
     </div>
-</div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/pages/estoque_analytics.js') }}"></script>
 {% endblock %}
-

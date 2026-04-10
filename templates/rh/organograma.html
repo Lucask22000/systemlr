@@ -471,9 +471,82 @@
                 {% endfor %}
             </select>
         </div>
+        <div class="org-filter-field">
+            <label for="cargo">Filtrar por cargo</label>
+            <select id="cargo" name="cargo" class="input-select">
+                <option value="">Todos os cargos</option>
+                {% for cargo in cargos_disponiveis %}
+                    <option value="{{ cargo }}" {% if cargo_filtro == cargo %}selected{% endif %}>{{ cargo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="time">Filtrar por time</label>
+            <select id="time" name="time" class="input-select">
+                <option value="">Todos os times</option>
+                {% for time in times_disponiveis %}
+                    <option value="{{ time }}" {% if time_filtro == time %}selected{% endif %}>{{ time }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="nivel">Filtrar por nivel</label>
+            <select id="nivel" name="nivel" class="input-select">
+                <option value="">Todos os niveis</option>
+                {% for nivel in niveis_disponiveis %}
+                    <option value="{{ nivel }}" {% if nivel_filtro == nivel %}selected{% endif %}>{{ nivel }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="role">Filtrar por perfil operacional</label>
+            <select id="role" name="role" class="input-select">
+                <option value="">Todos os perfis</option>
+                {% for role in roles_disponiveis %}
+                    <option value="{{ role }}" {% if role_filtro == role %}selected{% endif %}>{{ role|upper }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="perfil">Filtrar por perfil de acesso</label>
+            <select id="perfil" name="perfil" class="input-select">
+                <option value="">Todos os perfis de acesso</option>
+                {% for perfil in perfis_disponiveis %}
+                    <option value="{{ perfil }}" {% if perfil_filtro == perfil %}selected{% endif %}>{{ perfil }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="lideranca">Filtrar por lideranca</label>
+            <select id="lideranca" name="lideranca" class="input-select">
+                <option value="">Todos</option>
+                <option value="lideres" {% if lideranca_filtro == 'lideres' %}selected{% endif %}>Apenas lideres</option>
+                <option value="sem_lideranca" {% if lideranca_filtro == 'sem_lideranca' %}selected{% endif %}>Sem lideranca</option>
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="vinculo">Filtrar por vinculacao hierarquica</label>
+            <select id="vinculo" name="vinculo" class="input-select">
+                <option value="">Todos</option>
+                <option value="com_superior" {% if vinculo_filtro == 'com_superior' %}selected{% endif %}>Com superior</option>
+                <option value="sem_superior" {% if vinculo_filtro == 'sem_superior' %}selected{% endif %}>Sem superior</option>
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="acesso">Filtrar por controle de acesso</label>
+            <select id="acesso" name="acesso" class="input-select">
+                <option value="">Todos</option>
+                <option value="controlado" {% if acesso_filtro == 'controlado' %}selected{% endif %}>Acesso controlado</option>
+                <option value="livre" {% if acesso_filtro == 'livre' %}selected{% endif %}>Sem controle ativo</option>
+            </select>
+        </div>
+        <div class="org-filter-field">
+            <label for="busca">Buscar colaborador</label>
+            <input id="busca" name="busca" type="text" class="input-control" value="{{ busca_filtro or '' }}" placeholder="Nome, cargo, time ou departamento">
+        </div>
         <div class="header-actions">
             <button type="submit" class="btn btn-secondary">Aplicar</button>
-            {% if departamento_filtro %}
+            {% if departamento_filtro or cargo_filtro or time_filtro or nivel_filtro or role_filtro or perfil_filtro or lideranca_filtro or vinculo_filtro or acesso_filtro or busca_filtro %}
                 <a href="{{ url_for('organograma_rh') }}" class="btn btn-secondary">Limpar</a>
             {% endif %}
         </div>

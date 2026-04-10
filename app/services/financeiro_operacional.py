@@ -2,6 +2,7 @@ from datetime import datetime
 
 from app.exceptions import ValidationError
 from app.services.operational_rules import validate_financial_entry_payload
+from app.services.traceability import record_process_event
 from app.services.transaction import atomic_transaction
 from app.services.workflow import FundoStatus, transition_fundo_status
 from models import FundoSolicitacao, LancamentoFinanceiro, db
@@ -17,6 +18,7 @@ def criar_solicitacao_fundo(
     centro_custo=None,
     referencia_documento=None,
     fundo_model=FundoSolicitacao,
+    actor=None,
 ):
     tipo_normalizado = (tipo or '').strip().lower()
     descricao = (descricao or '').strip()
@@ -40,6 +42,21 @@ def criar_solicitacao_fundo(
         solicitado_por_id=solicitado_por_id,
     )
     db.session.add(fundo)
+    db.session.flush()
+    record_process_event(
+        processo_tipo='financeiro_operacional',
+        etapa='fundos',
+        acao='solicitacao_fundo_criada',
+        entidade='fundo',
+        entidade_id=fundo.id,
+        fundo_solicitacao_id=fundo.id,
+        actor=actor,
+        detalhes={
+            'tipo': fundo.tipo,
+            'valor': fundo.valor,
+            'centro_custo': fundo.centro_custo,
+        },
+    )
     return fundo
 
 
@@ -88,6 +105,9 @@ def criar_lancamento_financeiro(
     criado_por_id=None,
     lancamento_model=LancamentoFinanceiro,
     failure_hook=None,
+    actor=None,
+    pedido_id=None,
+    recebimento_id=None,
 ):
     with atomic_transaction():
         tipo = (tipo or '').strip().lower()
@@ -131,11 +151,31 @@ def criar_lancamento_financeiro(
             incluir_contabilidade=bool(incluir_contabilidade),
             referencia_documento=referencia_documento,
             centro_custo=centro_custo,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
             produto_id=(produto.id if produto else produto_id),
             quantidade=quantidade if quantidade and quantidade > 0 else None,
             criado_por_id=criado_por_id,
         )
         db.session.add(lancamento)
+        db.session.flush()
+        record_process_event(
+            processo_tipo='financeiro_operacional',
+            etapa='lancamento',
+            acao='lancamento_financeiro_criado',
+            entidade='lancamento_financeiro',
+            entidade_id=lancamento.id,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
+            lancamento_financeiro_id=lancamento.id,
+            actor=actor,
+            detalhes={
+                'tipo': lancamento.tipo,
+                'valor': lancamento.valor,
+                'centro_custo': lancamento.centro_custo,
+                'referencia_documento': lancamento.referencia_documento,
+            },
+        )
         if failure_hook:
             failure_hook('after_lancamento')
     return lancamento

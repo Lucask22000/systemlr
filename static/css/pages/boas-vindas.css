@@ -53,6 +53,37 @@
     gap: 12px;
 }
 
+.home-op-alert-list {
+    display: grid;
+    gap: 10px;
+}
+
+.home-op-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+}
+
+.home-op-alert-warning {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.home-op-alert-danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.home-op-alert-info {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+}
+
 .home-op-context-card,
 .home-op-priority-card,
 .home-op-shortcut-card {
@@ -182,5 +213,10 @@
 
     .home-op-flow-item {
         grid-template-columns: 1fr;
+    }
+
+    .home-op-alert {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

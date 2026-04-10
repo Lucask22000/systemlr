@@ -14,15 +14,38 @@
         <div class="section" style="margin: 0 0 16px;">
             <h2>Escopo desta tela</h2>
             <p style="margin: 0 0 12px; color: #5b6575;">
-                Esta view concentra identidade visual, banners, campanhas, pagamentos e integrações da loja online.
+                Esta view concentra identidade visual, banners, checkout e integrações da loja online.
             </p>
             <div class="form-actions" style="margin-top: 0;">
                 <a href="{{ url_for('configurar_ativacao_ecommerce') }}" class="btn btn-secondary">Abrir ativação da loja</a>
+                <a href="{{ url_for('configurar_marketing_ecommerce') }}" class="btn btn-secondary">Abrir promoções e campanhas</a>
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização da loja"
+                    data-preview-description="Veja a vitrine em sobreposição e confira os pontos principais desta tela."
+                    data-preview-tags="Hero|Carrossel|Cards|Rodapé"
+                    data-preview-focus=".store-home-hero|.store-carousel|.store-product-card|.store-footer"
+                >Visualizar alteração</button>
             </div>
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
             <h2>Tema da vitrine</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização do tema da vitrine"
+                    data-preview-description="Confira onde as cores e o fundo dos cards aparecem na loja."
+                    data-preview-tags="Tema|Cards|Ações"
+                    data-preview-focus=".store-home-hero-copy|.store-btn-primary|.store-product-card|.store-link-card"
+                >Visualizar alteração</button>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="ecom_cor_primaria">Cor primária</label>
@@ -30,7 +53,7 @@
                         type="color"
                         id="ecom_cor_primaria"
                         name="ecom_cor_primaria"
-                        value="{{ empresa.ecom_cor_primaria if empresa and empresa.ecom_cor_primaria else '#ff7848' }}"
+                        value="{{ empresa.ecom_cor_primaria if empresa and empresa.ecom_cor_primaria else '#ee4d2d' }}"
                         class="input-text">
                 </div>
                 <div class="form-group">
@@ -39,14 +62,26 @@
                         type="color"
                         id="ecom_cor_secundaria"
                         name="ecom_cor_secundaria"
-                        value="{{ empresa.ecom_cor_secundaria if empresa and empresa.ecom_cor_secundaria else '#ff5a2a' }}"
+                        value="{{ empresa.ecom_cor_secundaria if empresa and empresa.ecom_cor_secundaria else '#ff7337' }}"
                         class="input-text">
                 </div>
+                <div class="form-group">
+                    <label for="ecom_card_bg">Fundo dos cards</label>
+                    <input
+                        type="color"
+                        id="ecom_card_bg"
+                        name="ecom_card_bg"
+                        value="{{ empresa.ecom_card_bg if empresa and empresa.ecom_card_bg else '#ffffff' }}"
+                        class="input-text">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar tema da vitrine</button>
             </div>
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
-            <h2>Promoções e mensagem principal</h2>
+            <h2>Mensagem principal do banner</h2>
             <div class="form-group">
                 <label for="ecom_titulo_banner">Título do banner</label>
                 <input
@@ -55,7 +90,7 @@
                     name="ecom_titulo_banner"
                     value="{{ empresa.ecom_titulo_banner if empresa else '' }}"
                     class="input-text"
-                    placeholder="Ex.: Ofertas imperdiveis da semana">
+                    placeholder="Ex.: Loja leve, compra rápida e acesso direto no celular">
             </div>
             <div class="form-group">
                 <label for="ecom_subtitulo_banner">Subtítulo do banner</label>
@@ -65,22 +100,31 @@
                     name="ecom_subtitulo_banner"
                     value="{{ empresa.ecom_subtitulo_banner if empresa else '' }}"
                     class="input-text"
-                    placeholder="Ex.: Aproveite cupons e frete promocional">
+                    placeholder="Ex.: Uma vitrine limpa, objetiva e pronta para o celular">
             </div>
-            <div class="form-group">
-                <label for="ecom_texto_promocao">Texto de promocao</label>
-                <input
-                    type="text"
-                    id="ecom_texto_promocao"
-                    name="ecom_texto_promocao"
-                    value="{{ empresa.ecom_texto_promocao if empresa else '' }}"
-                    class="input-text"
-                    placeholder="Ex.: 20% OFF em itens selecionados">
+            <small class="text-muted">Textos promocionais, campanhas, cupons e datas sazonais agora ficam em uma tela separada.</small>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar mensagem principal</button>
             </div>
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
             <h2>Banner principal</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização do banner principal"
+                    data-preview-description="A prévia destaca a área hero da home, onde título, subtítulo e banner principal ganham mais atenção."
+                    data-preview-tags="Hero|Banner principal"
+                    data-preview-focus=".store-home-hero|.store-home-hero-copy|.store-home-hero-side"
+                >Visualizar alteração</button>
+            </div>
+            <p class="text-muted" style="margin: 0 0 12px;">
+                Recomendado: proporção 16:9, com pelo menos 1600x900 px. Aparece no destaque principal da home da loja e no carrossel quando não houver banners múltiplos ativos.
+            </p>
             <div class="form-group">
                 <label for="ecom_banner">Imagem do banner</label>
                 <input type="file" id="ecom_banner" name="ecom_banner" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
@@ -94,12 +138,28 @@
                 </label>
             </div>
             {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar banner principal</button>
+            </div>
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
             <h2>Identidade visual (favicon e imagem padrão)</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização da identidade visual"
+                    data-preview-description="A prévia destaca logo, topo e os cards onde a imagem padrão dos produtos aparece."
+                    data-preview-tags="Logo|Cards|Imagem padrão"
+                    data-preview-focus=".store-header|.store-brand|.store-product-grid|.store-product-media"
+                >Visualizar alteração</button>
+            </div>
             <div class="form-group">
                 <label for="ecom_favicon">Favicon da loja</label>
+                <small class="text-muted" style="display:block;margin:4px 0 8px;">Recomendado: imagem quadrada de 512x512 px. Aparece na aba do navegador, atalhos e instalação da loja no celular.</small>
                 <input type="file" id="ecom_favicon" name="ecom_favicon" accept=".ico,.png,.svg,.jpg,.jpeg,.webp" class="input-text">
             </div>
             {% if empresa and empresa.ecom_favicon_path %}
@@ -114,6 +174,7 @@
 
             <div class="form-group" style="margin-top: 10px;">
                 <label for="ecom_produto_placeholder">Imagem padrão para produtos sem foto</label>
+                <small class="text-muted" style="display:block;margin:4px 0 8px;">Recomendado: proporção 1:1, com 1200x1200 px. Aparece nos cards e listas quando o produto não tiver imagem própria.</small>
                 <input type="file" id="ecom_produto_placeholder" name="ecom_produto_placeholder" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
             </div>
             {% if empresa and empresa.ecom_produto_placeholder_path %}
@@ -125,10 +186,28 @@
                 </label>
             </div>
             {% endif %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar identidade visual</button>
+            </div>
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
             <h2>Multiplos banners com carrossel (ate 5)</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização do carrossel"
+                    data-preview-description="A sobreposição destaca o carrossel da home e ajuda a validar banner, transição e link de destino."
+                    data-preview-tags="Carrossel|Banner clicável|Ofertas"
+                    data-preview-focus=".store-carousel|.store-carousel-item|.store-carousel-overlay"
+                >Visualizar alteração</button>
+            </div>
+            <p class="text-muted" style="margin: 0 0 12px;">
+                Recomendado: proporção 16:9, com 1600x900 px ou maior. Esses banners aparecem no carrossel da home da loja. Você também pode informar um link para levar o cliente direto para uma âncora, página de ofertas ou carrinho.
+            </p>
             {% for banner in banners_config %}
             <div style="border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin-bottom:10px;">
                 <h3 style="margin:0 0 10px;">Banner {{ loop.index }}</h3>
@@ -142,6 +221,17 @@
                     <div class="form-group">
                         <label for="banner_subtitulo_{{ loop.index0 }}">Subtítulo</label>
                         <input type="text" id="banner_subtitulo_{{ loop.index0 }}" name="banner_subtitulo_{{ loop.index0 }}" value="{{ banner.subtitulo }}" class="input-text">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="banner_link_url_{{ loop.index0 }}">Link de destino</label>
+                        <input type="text" id="banner_link_url_{{ loop.index0 }}" name="banner_link_url_{{ loop.index0 }}" value="{{ banner.link_url }}" class="input-text" placeholder="Ex.: #ofertas, /cadastro-cliente ou {{ url_for('public.carrinho_site') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="banner_link_label_{{ loop.index0 }}">Texto do botão</label>
+                        <input type="text" id="banner_link_label_{{ loop.index0 }}" name="banner_link_label_{{ loop.index0 }}" value="{{ banner.link_label }}" class="input-text" placeholder="Ex.: Ver ofertas">
                     </div>
                 </div>
 
@@ -165,6 +255,7 @@
                     <img src="{{ url_for('static', filename=banner.image_path) }}" alt="Banner {{ loop.index }}">
                 </div>
                 {% endif %}
+                <small class="text-muted" style="display:block;margin-top:8px;">Dica: use links como `#ofertas` para rolar até a seção de ofertas, ou uma rota da loja como `{{ url_for('public.cadastro_cliente_site') }}`.</small>
                 <div class="form-row">
                     <label class="checkbox-inline">
                         <input type="checkbox" name="banner_ativo_{{ loop.index0 }}" {% if banner.ativo %}checked{% endif %}>
@@ -177,41 +268,9 @@
                 </div>
             </div>
             {% endfor %}
-        </div>
-
-        <div class="section" style="margin: 0 0 16px;">
-            <h2>Campanhas programadas (agendamento automático)</h2>
-            {% for campanha in campanhas_config %}
-            <div style="border:1px solid #dbe3ef;border-radius:10px;padding:12px;margin-bottom:10px;">
-                <h3 style="margin:0 0 10px;">Campanha {{ loop.index }}</h3>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="campanha_nome_{{ loop.index0 }}">Nome da campanha</label>
-                        <input type="text" id="campanha_nome_{{ loop.index0 }}" name="campanha_nome_{{ loop.index0 }}" value="{{ campanha.nome }}" class="input-text">
-                    </div>
-                    <div class="form-group">
-                        <label for="campanha_texto_{{ loop.index0 }}">Texto promocional</label>
-                        <input type="text" id="campanha_texto_{{ loop.index0 }}" name="campanha_texto_{{ loop.index0 }}" value="{{ campanha.texto }}" class="input-text">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="campanha_inicio_{{ loop.index0 }}">Inicio da vigência</label>
-                        <input type="date" id="campanha_inicio_{{ loop.index0 }}" name="campanha_inicio_{{ loop.index0 }}" value="{{ campanha.inicio_em }}" class="input-text">
-                    </div>
-                    <div class="form-group">
-                        <label for="campanha_fim_{{ loop.index0 }}">Fim da vigência</label>
-                        <input type="date" id="campanha_fim_{{ loop.index0 }}" name="campanha_fim_{{ loop.index0 }}" value="{{ campanha.fim_em }}" class="input-text">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <label class="checkbox-inline">
-                        <input type="checkbox" name="campanha_ativa_{{ loop.index0 }}" {% if campanha.ativo %}checked{% endif %}>
-                        Campanha ativa
-                    </label>
-                </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar carrossel</button>
             </div>
-            {% endfor %}
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
@@ -238,10 +297,25 @@
                 >{{ integracoes_ecommerce_texto or '' }}</textarea>
                 <small class="text-muted">Cadastre gateways de pagamento, antifraude, frete, ERP ou APIs externas da vitrine.</small>
             </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar pagamentos e integrações</button>
+            </div>
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
             <h2>Rodapé da loja</h2>
+            <div class="form-actions" style="margin: 0 0 12px;">
+                <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-store-preview-open
+                    data-preview-url="{{ url_for('index') }}"
+                    data-preview-title="Visualização do rodapé"
+                    data-preview-description="A sobreposição rola a loja até o rodapé para facilitar a revisão do fundo e dos textos de contato."
+                    data-preview-tags="Rodapé|Contato|Créditos"
+                    data-preview-focus=".store-footer|.store-footer-copy"
+                >Visualizar alteração</button>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="ecom_footer_bg">Cor do rodapé</label>
@@ -283,6 +357,9 @@
                     class="input-text"
                     placeholder="Ex.: Desenvolvido por SuaEmpresa Digital">
             </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Salvar rodapé</button>
+            </div>
         </div>
 
         <div class="section" style="margin: 0 0 16px;">
@@ -290,7 +367,7 @@
             <div style="
                 border-radius: 12px;
                 padding: 14px;
-                background: linear-gradient(90deg, {{ empresa.ecom_cor_primaria if empresa and empresa.ecom_cor_primaria else '#ff7848' }} 0%, {{ empresa.ecom_cor_secundaria if empresa and empresa.ecom_cor_secundaria else '#ff5a2a' }} 100%);
+                background: linear-gradient(90deg, {{ empresa.ecom_cor_primaria if empresa and empresa.ecom_cor_primaria else '#ee4d2d' }} 0%, {{ empresa.ecom_cor_secundaria if empresa and empresa.ecom_cor_secundaria else '#ff7337' }} 100%);
                 color: #fff;
             ">
                 <strong style="display:block;font-size:1.1rem;">
@@ -300,8 +377,19 @@
                     {{ empresa.ecom_subtitulo_banner if empresa and empresa.ecom_subtitulo_banner else 'Subtítulo promocional para chamar atenção do cliente' }}
                 </span>
                 <small style="display:inline-block;margin-top:8px;background:rgba(255,255,255,.2);padding:4px 8px;border-radius:999px;">
-                    {{ empresa.ecom_texto_promocao if empresa and empresa.ecom_texto_promocao else 'Texto de promocao' }}
+                    {{ 'Espaco para chamada promocional configurada na tela de marketing' }}
                 </small>
+            </div>
+            <div style="
+                margin-top: 10px;
+                border-radius: 12px;
+                padding: 14px;
+                background: {{ empresa.ecom_card_bg if empresa and empresa.ecom_card_bg else '#ffffff' }};
+                color: #17212b;
+                border: 1px solid rgba(255, 120, 72, 0.12);
+            ">
+                <strong style="display:block;">Card de produto</strong>
+                <span style="display:block;opacity:.82;margin-top:4px;">Cor de fundo aplicada aos cards da vitrine.</span>
             </div>
             <div style="
                 margin-top: 10px;
@@ -318,7 +406,17 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-success">Salvar configuracoes</button>
-            <a href="{{ url_for('index') }}" class="btn btn-secondary">Ver vitrine</a>
+            <a href="{{ url_for('configurar_marketing_ecommerce') }}" class="btn btn-secondary">Editar promoções e campanhas</a>
+            <button
+                type="button"
+                class="btn btn-secondary"
+                data-store-preview-open
+                data-preview-url="{{ url_for('index') }}"
+                data-preview-title="Visualização completa da loja"
+                data-preview-description="Confira a vitrine em sobreposição e use o botão para fechar a visualização quando terminar."
+                data-preview-tags="Loja completa|Hero|Carrossel|Cards|Rodapé"
+                data-preview-focus=".store-home-hero|.store-carousel|.store-product-grid|.store-footer"
+            >Visualizar alteração</button>
         </div>
     </form>
 </div>

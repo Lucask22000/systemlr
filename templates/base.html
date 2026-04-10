@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/assistant.css') }}">
     {% block extra_css %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/app-theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/internal-navbar.css') }}">
 </head>
 <body
     class="app-body"
@@ -33,261 +34,262 @@
     data-current-screen="{{ tela_atual_nome or '' }}"
     data-assistant-enabled="{{ '1' if assistente_local_status and assistente_local_status.enabled else '0' }}"
 >
+    {% macro nav_icon(name) -%}
+    <span class="nav-icon" aria-hidden="true">
+        {% if name == 'profile' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+        {% elif name == 'management' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9"/><path d="M4 17h16"/><path d="M15 7h5"/><path d="M4 12h16"/><circle cx="10" cy="7" r="2"/><circle cx="16" cy="17" r="2"/><circle cx="8" cy="12" r="2"/></svg>
+        {% elif name == 'finance' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/><path d="M8 15h4"/></svg>
+        {% elif name == 'sales' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 8h-11z"/><path d="M6 6 5 3H3"/><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/></svg>
+        {% elif name == 'inventory' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7l8 4 8-4Z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></svg>
+        {% elif name == 'receiving' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v10H3z"/><path d="M14 10h3l3 3v4h-6"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
+        {% elif name == 'shipping' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10v8H3z"/><path d="M13 10h4l4 4v1h-8"/><path d="M7 18h.01"/><path d="M18 18h.01"/></svg>
+        {% elif name == 'hr' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="7" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M15 18a4 4 0 0 1 6 0"/></svg>
+        {% elif name == 'ecommerce' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16"/><path d="M6 10V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/><path d="M5 10h14v9H5z"/></svg>
+        {% elif name == 'services' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3 3 3"/><path d="m5 19 4.6-1.2L18.8 8.6a2.1 2.1 0 1 0-3-3L6.6 14.8 5 19Z"/></svg>
+        {% elif name == 'help' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 1 1 4.8 2.4c-.9.7-1.4 1.2-1.4 2.6"/><path d="M12 17h.01"/></svg>
+        {% elif name == 'login' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16l4-4-4-4"/><path d="M14 12H4"/><path d="M20 5v14"/></svg>
+        {% elif name == 'register' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 1 0-3-3 3 3 0 0 0 3 3Z"/><path d="M6 20a6 6 0 0 1 12 0"/><path d="M19 8v6"/><path d="M16 11h6"/></svg>
+        {% endif %}
+    </span>
+    {%- endmacro %}
+    {% macro render_nav_group(grupo, mode='desktop') -%}
+    {% set button_class = 'desktop-nav-group-toggle' if mode == 'desktop' else 'mobile-nav-group-toggle' %}
+    {% set submenu_class = 'desktop-nav-submenu' if mode == 'desktop' else 'mobile-nav-submenu' %}
+    <div class="nav-group nav-group-{{ mode }} {% if grupo['current'] %}is-current{% endif %}" data-nav-group="{{ grupo['id'] }}">
+        <button type="button" class="{{ button_class }}" aria-expanded="{% if mode == 'mobile' and grupo['current'] %}true{% else %}false{% endif %}" aria-controls="{{ mode }}-submenu-{{ grupo['id'] }}">
+            <span class="nav-toggle-content">{{ nav_icon(grupo['icon']) }}<span class="nav-label">{{ grupo['label'] }}</span></span>
+        </button>
+        <div id="{{ mode }}-submenu-{{ grupo['id'] }}" class="{{ submenu_class }}{% if mode == 'mobile' and grupo['current'] %} is-open{% endif %}"{% if mode == 'mobile' and not grupo['current'] %} hidden{% endif %}>
+            {% for item in grupo['items'] %}
+            <a href="{{ item['url'] }}" class="nav-link nav-sublink {% if item['current'] %}is-current{% endif %}">{{ item['label'] }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    {%- endmacro %}
+    {% macro render_desktop_sidebar_group(grupo) -%}
+    <section class="admin-sidebar-group {% if grupo['current'] %}is-current{% endif %}" aria-labelledby="admin-group-{{ grupo['id'] }}">
+        <header class="admin-sidebar-group-head">
+            <div class="admin-sidebar-group-icon">{{ nav_icon(grupo['icon']) }}</div>
+            <div class="admin-sidebar-group-copy">
+                <h2 id="admin-group-{{ grupo['id'] }}" class="admin-sidebar-group-title">{{ grupo['label'] }}</h2>
+                <span class="admin-sidebar-group-count">{{ grupo['items']|length }} item{% if grupo['items']|length != 1 %}s{% endif %}</span>
+            </div>
+        </header>
+        <div class="admin-sidebar-links">
+            {% for item in grupo['items'] %}
+            <a href="{{ item['url'] }}" class="admin-sidebar-link {% if item['current'] %}is-current{% endif %}">
+                <span class="admin-sidebar-link-label">{{ item['label'] }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {%- endmacro %}
     <header class="navbar app-navbar">
         <div class="container navbar-container">
-            <a href="{{ url_for('boas_vindas') }}" class="navbar-brand brand-link d-flex align-items-center gap-2 me-2">
-                {% if empresa_config and empresa_config.logo_path %}
-                <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
-                {% endif %}
-                <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' }}</span>
-            </a>
+            {% if funcionario_logado %}
+            <div class="app-navbar-mobile-bar">
+                <div class="app-navbar-mobile-main">
+                    <button class="menu-toggle navbar-toggler" id="menuToggle" type="button" aria-label="Abrir menu" aria-controls="navbarMobileDrawer" aria-expanded="false">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <a href="{{ url_for('boas_vindas') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-mobile">
+                        {% if empresa_config and empresa_config.logo_path %}
+                        <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
+                        {% endif %}
+                        <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                    </a>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="mobile-quick-action" aria-label="Abrir meu cadastro">
+                    {% if funcionario_logado.imagem_perfil_path %}
+                    <span class="nav-user-avatar"><img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image"></span>
+                    {% else %}
+                    <span class="nav-user-avatar nav-user-avatar-fallback">{{ (funcionario_logado.nome or 'U')[:1]|upper }}</span>
+                    {% endif %}
+                </a>
+            </div>
 
-            <button class="menu-toggle navbar-toggler" id="menuToggle" type="button" aria-label="Abrir menu" aria-controls="navbarMenu" aria-expanded="false">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <div class="navbar-desktop-shell" aria-label="Cabecalho administrativo desktop">
+                <div class="navbar-desktop-top navbar-desktop-top-admin">
+                    <div class="navbar-desktop-brand-panel">
+                        <a href="{{ url_for('boas_vindas') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-desktop">
+                            {% if empresa_config and empresa_config.logo_path %}
+                            <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
+                            {% endif %}
+                            <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                        </a>
+                        <div class="navbar-desktop-screen">
+                            <span class="navbar-desktop-kicker">Area administrativa</span>
+                            <strong>{{ tela_atual_nome if tela_atual_nome else 'Painel operacional' }}</strong>
+                            <span>{{ secao_atual_nome if secao_atual_nome else 'Navegue pelos modulos liberados para seu perfil.' }}</span>
+                        </div>
+                    </div>
 
-            <nav class="navbar-menu" id="navbarMenu">
-                {% if funcionario_logado %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Meu Perfil</button>
-                    <div class="nav-submenu">
-                        <a href="{{ url_for('boas_vindas') }}" class="nav-link nav-sublink">Home Operacional</a>
-                        <a href="{{ url_for('dashboard') }}" class="nav-link nav-sublink">Meu Cadastro</a>
+                    <div class="navbar-desktop-tools">
+                        {% if estoques_contexto_disponiveis %}
+                        <form method="POST" action="{{ url_for('atualizar_contexto_filial') }}" class="nav-context-form nav-context-form-desktop">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+                            <label for="navEstoqueContextoDesktop" class="nav-context-label">Filial</label>
+                            <select id="navEstoqueContextoDesktop" name="estoque_contexto_id" class="nav-context-select" data-auto-submit-context>
+                                <option value="all" {% if not estoque_contexto_id %}selected{% endif %}>Todas as filiais</option>
+                                {% for estoque in estoques_contexto_disponiveis %}
+                                <option value="{{ estoque.id }}" {% if estoque_contexto_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        {% endif %}
+
+                        <div class="nav-group nav-group-desktop nav-dropdown-user" data-nav-group="user-menu">
+                            <button type="button" class="desktop-nav-group-toggle nav-user-toggle" aria-expanded="false" aria-controls="desktop-user-submenu">
+                                {% if funcionario_logado.imagem_perfil_path %}
+                                <span class="nav-user-avatar"><img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image"></span>
+                                {% else %}
+                                <span class="nav-user-avatar nav-user-avatar-fallback">{{ (funcionario_logado.nome or 'U')[:1]|upper }}</span>
+                                {% endif %}
+                                <span class="nav-user-meta">
+                                    <span class="nav-user-name">{{ funcionario_logado.nome }}</span>
+                                    <span class="nav-user-matricula">{{ funcionario_logado.matricula or 'Matrícula não definida' }}</span>
+                                </span>
+                            </button>
+                            <div id="desktop-user-submenu" class="desktop-nav-submenu desktop-nav-submenu-user">
+                                <a href="{{ url_for('boas_vindas') }}" class="nav-link nav-sublink {% if endpoint_atual == 'boas_vindas' %}is-current{% endif %}">Home Operacional</a>
+                                <a href="{{ url_for('dashboard') }}" class="nav-link nav-sublink {% if endpoint_atual == 'dashboard' %}is-current{% endif %}">Meu Cadastro</a>
+                                {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                                <a href="{{ url_for('organograma_rh') }}" class="nav-link nav-sublink {% if pagina_atual_menu == 'rh_organograma' %}is-current{% endif %}">Árvore de Hierarquia</a>
+                                {% endif %}
+                                <a href="{{ url_for('logout') }}" class="nav-link nav-sublink">Sair</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                {% if 'gestao_negocio' in paginas_permitidas_usuario or 'empresa' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Gestao</button>
-                    <div class="nav-submenu">
-                        {% if 'gestao_negocio' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('gestao_negocio') }}" class="nav-link nav-sublink">Central do Negocio</a>
-                        {% endif %}
-                        {% if 'empresa' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('editar_empresa') }}" class="nav-link nav-sublink">Empresa</a>
-                        {% endif %}
+            <aside class="navbar-mobile-drawer" id="navbarMobileDrawer" aria-label="Menu lateral do sistema">
+                <div class="navbar-mobile-head">
+                    <div class="navbar-mobile-head-copy">
+                        <span class="navbar-mobile-kicker">Navegação</span>
+                        <strong>{{ tela_atual_nome if tela_atual_nome else 'Painel interno' }}</strong>
                     </div>
+                    <button type="button" class="navbar-menu-close" data-close-menu aria-label="Fechar menu">×</button>
                 </div>
-                {% endif %}
 
-                {% if 'financeiro' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Financeiro</button>
-                    <div class="nav-submenu">
-                        <a href="{{ url_for('financeiro') }}" class="nav-link nav-sublink">Visão Financeira</a>
-                        <a href="{{ url_for('financeiro_lancamentos') }}" class="nav-link nav-sublink">Lançamentos Contábeis</a>
-                        <a href="{{ url_for('financeiro_fundos') }}" class="nav-link nav-sublink">Gestao Monetaria e Fundos</a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if 'pdv' in paginas_permitidas_usuario or 'pedidos' in paginas_permitidas_usuario or 'mesas' in paginas_permitidas_usuario or 'caixas' in paginas_permitidas_usuario or 'garcons' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Vendas</button>
-                    <div class="nav-submenu">
-                        {% if 'pdv' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('pdv') }}" class="nav-link nav-sublink">PDV</a>
-                        {% endif %}
-                        {% if 'pedidos' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_pedidos') }}" class="nav-link nav-sublink">Pedidos</a>
-                        {% endif %}
-                        {% if atendimento_mesas_ativo and 'mesas' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_mesas') }}" class="nav-link nav-sublink">Mesas</a>
-                        {% endif %}
-                        {% if 'caixas' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_caixas') }}" class="nav-link nav-sublink">Caixas</a>
-                        {% endif %}
-                        {% if atendimento_mesas_ativo and 'garcons' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_garcons') }}" class="nav-link nav-sublink">Garçons</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if 'produtos' in paginas_permitidas_usuario or 'estoques' in paginas_permitidas_usuario or 'categorias' in paginas_permitidas_usuario or 'movimentacoes' in paginas_permitidas_usuario or 'almoxarifado' in paginas_permitidas_usuario or 'relatorios' in paginas_permitidas_usuario or 'equipamentos_estoque' in paginas_permitidas_usuario or 'enderecos_inteligentes' in paginas_permitidas_usuario or 'enderecos_estoque' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Estoque</button>
-                    <div class="nav-submenu">
-                        {% if 'produtos' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_produtos') }}" class="nav-link nav-sublink">Produtos</a>
-                        {% if not empresa_config or empresa_config.emissao_etiqueta_loja_ativa != False %}
-                        <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="nav-link nav-sublink">Etiquetas de Loja</a>
-                        {% endif %}
-                        {% endif %}
-                        {% if 'estoques' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_estoques') }}" class="nav-link nav-sublink">Estoques</a>
-                        {% endif %}
-                        {% if 'categorias' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_categorias') }}" class="nav-link nav-sublink">Categorias</a>
-                        {% endif %}
-                        {% if 'enderecos_estoque' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_enderecos_estoque') }}" class="nav-link nav-sublink">Endereços de Estoque</a>
-                        {% endif %}
-                        {% if 'equipamentos_estoque' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_equipamentos_movimentacao') }}" class="nav-link nav-sublink">Equipamentos</a>
-                        {% endif %}
-                        {% if 'enderecos_inteligentes' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('enderecos_inteligentes') }}" class="nav-link nav-sublink">Enderecos Inteligentes</a>
-                        {% endif %}
-                        {% if 'enderecos_estoque' in paginas_permitidas_usuario and (not empresa_config or empresa_config.emissao_etiqueta_endereco_ativa != False) %}
-                        <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="nav-link nav-sublink">Etiquetas de Endereco</a>
-                        {% endif %}
-                        {% if 'movimentacoes' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_movimentacoes') }}" class="nav-link nav-sublink">Entradas e Saídas Internas</a>
-                        {% endif %}
-                        {% if 'almoxarifado' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_almoxarifado') }}" class="nav-link nav-sublink">Almoxarifado</a>
-                        {% endif %}
-                        {% if 'relatorios' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('relatorios') }}" class="nav-link nav-sublink">Relatórios</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if 'recebimentos' in paginas_permitidas_usuario or 'fornecedores' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Recebimento</button>
-                    <div class="nav-submenu">
-                        {% if 'recebimentos' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="nav-link nav-sublink">Central de Recebimentos</a>
-                        <a href="{{ url_for('novo_recebimento_fornecedor') }}" class="nav-link nav-sublink">Novo Recebimento</a>
-                        {% endif %}
-                        {% if 'fornecedores' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_fornecedores') }}" class="nav-link nav-sublink">Fornecedores</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if 'expedicao' in paginas_permitidas_usuario or 'transferencias_estoque' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Expedicao</button>
-                    <div class="nav-submenu">
-                        {% if 'expedicao' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('central_expedicao') }}" class="nav-link nav-sublink">Central de Expedicao</a>
-                        <a href="{{ url_for('listar_separacao_entrega') }}" class="nav-link nav-sublink">Separacao e Entrega</a>
-                        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="nav-link nav-sublink">Roteirizacao</a>
-                        <a href="{{ url_for('painel_expedicao') }}" class="nav-link nav-sublink">Painel em Tempo Real</a>
-                        <a href="{{ url_for('coletor_estoque') }}" class="nav-link nav-sublink">Coletor Operacional</a>
-                        <a href="{{ url_for('frota_expedicao') }}" class="nav-link nav-sublink">Frota Propria e Terceiros</a>
-                        {% endif %}
-                        {% if 'transferencias_estoque' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_transferencias_estoque') }}" class="nav-link nav-sublink">Historico de Transferencias</a>
-                        <a href="{{ url_for('transferir_armazenamento') }}" class="nav-link nav-sublink">Nova Transferencia entre Lojas/CDs</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if 'rh_indicadores' in paginas_permitidas_usuario or 'rh_organograma' in paginas_permitidas_usuario or 'funcionarios' in paginas_permitidas_usuario or 'rh_funcoes' in paginas_permitidas_usuario or 'auditoria' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Meu RH</button>
-                    <div class="nav-submenu">
-                        {% if 'rh_indicadores' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('indicadores_rh') }}" class="nav-link nav-sublink">Indicadores RH</a>
-                        {% endif %}
-                        {% if 'rh_organograma' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('organograma_rh') }}" class="nav-link nav-sublink">Organograma</a>
-                        {% endif %}
-                        {% if 'funcionarios' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_funcionarios') }}" class="nav-link nav-sublink">Funcionarios</a>
-                        {% endif %}
-                        {% if 'rh_funcoes' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_funcoes_rh') }}" class="nav-link nav-sublink">Cargos</a>
-                        <a href="{{ url_for('listar_perfis_rh') }}" class="nav-link nav-sublink">Perfis de Acesso</a>
-                        {% endif %}
-                        {% if 'auditoria' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('auditoria_sistema') }}" class="nav-link nav-sublink">Auditoria</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if 'ecommerce_config' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">E-commerce</button>
-                    <div class="nav-submenu">
-                        <a href="{{ url_for('configurar_ativacao_ecommerce') }}" class="nav-link nav-sublink">Ativação da Loja</a>
-                        <a href="{{ url_for('configurar_ecommerce') }}" class="nav-link nav-sublink">Tema e Loja Online</a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if 'servicos_tecnicos' in paginas_permitidas_usuario or 'chamados_internos' in paginas_permitidas_usuario %}
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Servicos</button>
-                    <div class="nav-submenu">
-                        {% if 'chamados_internos' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_chamados_internos') }}" class="nav-link nav-sublink">Chamados Internos</a>
-                        {% endif %}
-                        {% if 'servicos_tecnicos' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('minhas_ordens_servico') }}" class="nav-link nav-sublink">Minhas Ordens</a>
-                        <a href="{{ url_for('listar_ordens_servico') }}" class="nav-link nav-sublink">Ordens de Servico</a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endif %}
-
-                <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Ajuda</button>
-                    <div class="nav-submenu">
-                        <a href="{{ url_for('central_ajuda') }}" class="nav-link nav-sublink">Guia do Sistema</a>
+                <div class="navbar-mobile-profile">
+                    {% if funcionario_logado.imagem_perfil_path %}
+                    <span class="nav-user-avatar"><img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image"></span>
+                    {% else %}
+                    <span class="nav-user-avatar nav-user-avatar-fallback">{{ (funcionario_logado.nome or 'U')[:1]|upper }}</span>
+                    {% endif %}
+                    <div class="nav-user-meta">
+                        <span class="nav-user-name">{{ funcionario_logado.nome }}</span>
+                        <span class="nav-user-matricula">{{ funcionario_logado.matricula or 'Matrícula não definida' }}</span>
                     </div>
                 </div>
 
                 {% if estoques_contexto_disponiveis %}
-                <form method="POST" action="{{ url_for('atualizar_contexto_filial') }}" class="nav-context-form">
+                <form method="POST" action="{{ url_for('atualizar_contexto_filial') }}" class="nav-context-form nav-context-form-mobile">
                     {{ csrf_input|safe }}
                     <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
                     <div class="nav-context-meta">
-                        <label for="navEstoqueContexto" class="nav-context-label">Filial do estoque</label>
-                        <span class="nav-context-helper">Aplica-se a estoque, recebimento e armazenagem.</span>
+                        <label for="navEstoqueContextoMobile" class="nav-context-label">Filial do estoque</label>
+                        <span class="nav-context-helper">Filtro separado da navegação principal.</span>
                     </div>
-                    <select id="navEstoqueContexto" name="estoque_contexto_id" class="nav-context-select" data-auto-submit-context>
+                    <select id="navEstoqueContextoMobile" name="estoque_contexto_id" class="nav-context-select" data-auto-submit-context>
                         <option value="all" {% if not estoque_contexto_id %}selected{% endif %}>Todas as filiais</option>
                         {% for estoque in estoques_contexto_disponiveis %}
-                        <option value="{{ estoque.id }}" {% if estoque_contexto_id == estoque.id %}selected{% endif %}>
-                            {{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}
-                        </option>
+                        <option value="{{ estoque.id }}" {% if estoque_contexto_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}</option>
                         {% endfor %}
                     </select>
                 </form>
                 {% endif %}
 
-                <div class="nav-dropdown nav-dropdown-user">
-                    <button type="button" class="nav-dropdown-toggle nav-user-toggle" aria-expanded="false">
-                        {% if funcionario_logado.imagem_perfil_path %}
-                        <span class="nav-user-avatar">
-                            <img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image">
-                        </span>
-                        {% else %}
-                        <span class="nav-user-avatar nav-user-avatar-fallback">
-                            {{ (funcionario_logado.nome or 'U')[:1]|upper }}
-                        </span>
+                <nav class="navbar-mobile-nav" aria-label="Navegação principal mobile">
+                    {% for grupo in menu_navegacao_principal %}
+                        {{ render_nav_group(grupo, 'mobile') }}
+                    {% endfor %}
+                </nav>
+
+                <div class="navbar-mobile-user">
+                    <a href="{{ url_for('boas_vindas') }}" class="nav-link {% if endpoint_atual == 'boas_vindas' %}is-current{% endif %}">Home Operacional</a>
+                    <a href="{{ url_for('dashboard') }}" class="nav-link {% if endpoint_atual == 'dashboard' %}is-current{% endif %}">Meu Cadastro</a>
+                    {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                    <a href="{{ url_for('organograma_rh') }}" class="nav-link {% if pagina_atual_menu == 'rh_organograma' %}is-current{% endif %}">Árvore de Hierarquia</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="nav-link">Sair</a>
+                </div>
+            </aside>
+            {% else %}
+            <div class="app-navbar-mobile-bar app-navbar-mobile-bar-auth">
+                <a href="{{ url_for('login') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-mobile">
+                    {% if empresa_config and empresa_config.logo_path %}
+                    <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
+                    {% endif %}
+                    <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                </a>
+            </div>
+
+            <div class="navbar-desktop-shell navbar-desktop-shell-auth" aria-label="Acesso ao sistema">
+                <div class="navbar-desktop-top">
+                    <a href="{{ url_for('login') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-desktop">
+                        {% if empresa_config and empresa_config.logo_path %}
+                        <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
                         {% endif %}
-                        <span class="nav-user-meta">
-                            <span class="nav-user-name">{{ funcionario_logado.nome }}</span>
-                            <span class="nav-user-matricula">{{ funcionario_logado.matricula or 'Matrícula não definida' }}</span>
-                        </span>
-                    </button>
-                    <div class="nav-submenu">
-                        {% if 'rh_organograma' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('organograma_rh') }}" class="nav-link nav-sublink">Arvore de Hierarquia</a>
-                        {% endif %}
-                        <a href="{{ url_for('logout') }}" class="nav-link nav-sublink">Sair</a>
+                        <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                    </a>
+                    <div class="navbar-desktop-tools navbar-desktop-tools-auth">
+                        <a href="{{ url_for('login') }}" class="nav-link nav-link-with-icon">{{ nav_icon('login') }}<span>Login</span></a>
                     </div>
                 </div>
-                {% else %}
-                <a href="{{ url_for('login') }}" class="nav-link">Login</a>
-                <a href="{{ url_for('registro') }}" class="nav-link">Registrar</a>
-                {% endif %}
-            </nav>
+            </div>
+            {% endif %}
         </div>
     </header>
+    <div class="navbar-backdrop" id="navbarBackdrop" hidden></div>
 
-    <main class="main-content">
-        <div class="container content-shell">
+    <main class="main-content {% if funcionario_logado %}main-content-admin{% endif %}">
+        <div class="container content-shell {% if funcionario_logado %}content-shell-admin{% endif %}">
+            {% if funcionario_logado %}
+            <div class="admin-shell">
+                <aside class="admin-sidebar" aria-label="Menu administrativo desktop">
+                    <div class="admin-sidebar-inner">
+                        <div class="admin-sidebar-summary">
+                            <span class="admin-sidebar-kicker">Painel operacional</span>
+                            <strong>{{ secao_atual_nome if secao_atual_nome else 'Operacao' }}</strong>
+                            <p>{{ tela_atual_nome if tela_atual_nome else 'Acesse os modulos disponiveis para o seu perfil e mantenha o fluxo do dia sob controle.' }}</p>
+                        </div>
+
+                        <nav class="admin-sidebar-nav" aria-label="Navegacao principal desktop">
+                            {% for grupo in menu_navegacao_principal %}
+                                {{ render_desktop_sidebar_group(grupo) }}
+                            {% endfor %}
+                        </nav>
+
+                        <div class="admin-sidebar-utility">
+                            <a href="{{ url_for('boas_vindas') }}" class="admin-sidebar-utility-link {% if endpoint_atual == 'boas_vindas' %}is-current{% endif %}">Home Operacional</a>
+                            <a href="{{ url_for('dashboard') }}" class="admin-sidebar-utility-link {% if endpoint_atual == 'dashboard' %}is-current{% endif %}">Meu Cadastro</a>
+                            {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                            <a href="{{ url_for('organograma_rh') }}" class="admin-sidebar-utility-link {% if pagina_atual_menu == 'rh_organograma' %}is-current{% endif %}">Arvore de Hierarquia</a>
+                            {% endif %}
+                            <a href="{{ url_for('logout') }}" class="admin-sidebar-utility-link">Sair</a>
+                        </div>
+                    </div>
+                </aside>
+
+                <section class="admin-main">
+            {% endif %}
+
             {% if funcionario_logado and tela_atual_nome %}
             <div class="app-context-strip">
                 <div class="app-context-screen">
@@ -309,9 +311,14 @@
                 {% endif %}
             {% endwith %}
 
-            <div class="container page-container">
+            <div class="{% if funcionario_logado %}page-container page-container-admin{% else %}container page-container{% endif %}">
                 {% block content %}{% endblock %}
             </div>
+
+            {% if funcionario_logado %}
+                </section>
+            </div>
+            {% endif %}
         </div>
     </main>
 

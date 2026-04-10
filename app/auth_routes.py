@@ -1,17 +1,17 @@
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import current_app, flash, redirect, render_template, request, session, url_for
 
-from models import FuncaoRH, Funcionario, PerfilAcesso, db
+from app.services.auth_service import AuthService
+from app.validators.auth_validators import LoginSchema, RegistroSchema
+from models import FuncaoRH, PerfilAcesso, db
 
 
 def register_routes(app, context):
-    login_required = context['login_required']
     limit = context['_limit']
     client_ip = context['_client_ip']
     is_login_rate_limited = context['_is_login_rate_limited']
     register_login_attempt = context['_register_login_attempt']
     get_funcionario_logado = context['get_funcionario_logado']
     normalizar_texto = context['_normalizar_texto']
-    normalizar_matricula = context['_normalizar_matricula']
     normalizar_cpf = context['_normalizar_cpf']
     normalizar_campo_organograma = context['_normalizar_campo_organograma']
     normalizar_estado = context['_normalizar_estado']
@@ -21,6 +21,7 @@ def register_routes(app, context):
     gerar_numero_cadastro_unico = context['_gerar_numero_cadastro_unico']
     gerar_matricula_unica = context['_gerar_matricula_unica']
     listar_cadastros_organograma = context['_listar_cadastros_organograma']
+    paginas_permitidas_para_funcionario = context['_paginas_permitidas_para_funcionario']
     sincronizar_garcom_funcionario = context['sincronizar_garcom_funcionario']
     registrar_evento_auditoria = context['registrar_evento_auditoria']
     bootstrap_admin_configurado = context['_bootstrap_admin_configurado']
@@ -28,9 +29,27 @@ def register_routes(app, context):
     roles_permitidos = context['ROLES_PERMITIDOS']
     niveis_organograma = context['NIVEIS_ORGANOGRAMA']
     extensions = context['extensions']
+    auth_service = AuthService(
+        normalizar_matricula=context['_normalizar_matricula'],
+        normalizar_texto=normalizar_texto,
+        normalizar_cpf=normalizar_cpf,
+    )
+
+    def _pode_registrar_funcionarios(funcionario):
+        if not funcionario:
+            return False
+        paginas_rh_gestao = {'funcionarios', 'rh_funcoes'}
+        return bool(set(paginas_permitidas_para_funcionario(funcionario)).intersection(paginas_rh_gestao))
+
+    def _login_rate_limit_rule():
+        attempts = int(current_app.config.get('LOGIN_MAX_ATTEMPTS', 5))
+        window_seconds = int(current_app.config.get('LOGIN_WINDOW_SECONDS', 300))
+        if window_seconds % 60 == 0:
+            return f'{attempts} per {max(1, window_seconds // 60)} minute'
+        return f'{attempts} per {window_seconds} second'
 
     @app.route('/login', methods=['GET', 'POST'])
-    @limit('10 per 5 minute')
+    @limit(_login_rate_limit_rule, methods=['POST'])
     def login():
         if request.method == 'POST':
             ip_addr = client_ip()
@@ -41,27 +60,21 @@ def register_routes(app, context):
                     acao='login_rate_limited',
                     entidade='autenticacao',
                     detalhes=f'ip={ip_addr}',
-                    status_code=429
+                    status_code=429,
                 )
+                return redirect(url_for('login'))
+
+            is_valid, errors = LoginSchema().validate(request.form)
+            if not is_valid:
+                for error in errors.values():
+                    flash(error, 'danger')
                 return redirect(url_for('login'))
 
             identificador = (request.form.get('login') or request.form.get('email') or '').strip()
             senha = request.form.get('senha', '')
+            funcionario, erro_login = auth_service.login(identificador, senha)
 
-            if not identificador or not senha:
-                flash('Matricula/email e senha sao obrigatorios.', 'danger')
-                return redirect(url_for('login'))
-
-            identificador_norm = identificador.lower()
-            matricula_norm = normalizar_matricula(identificador)
-            funcionario = Funcionario.query.filter(
-                db.or_(
-                    db.func.lower(Funcionario.email) == identificador_norm,
-                    db.func.lower(Funcionario.matricula) == (matricula_norm.lower() if matricula_norm else identificador_norm),
-                )
-            ).first()
-
-            if funcionario and funcionario.check_password(senha):
+            if funcionario:
                 if not funcionario.ativo:
                     register_login_attempt(ip_addr, success=False)
                     registrar_evento_auditoria(
@@ -69,9 +82,9 @@ def register_routes(app, context):
                         acao='login_bloqueado_inativo',
                         entidade='autenticacao',
                         detalhes=f'identificador={identificador}',
-                        status_code=403
+                        status_code=403,
                     )
-                    flash('Usuário inativo. Contate um administrador.', 'danger')
+                    flash('Usuario inativo. Contate um administrador.', 'danger')
                     return redirect(url_for('login'))
 
                 session['funcionario_id'] = funcionario.id
@@ -84,7 +97,7 @@ def register_routes(app, context):
                     acao='login_sucesso',
                     entidade='autenticacao',
                     detalhes=f'identificador={identificador}',
-                    status_code=200
+                    status_code=200,
                 )
 
                 if getattr(funcionario, 'senha_provisoria', False):
@@ -100,19 +113,17 @@ def register_routes(app, context):
                 acao='login_falha',
                 entidade='autenticacao',
                 detalhes=f'identificador={identificador}',
-                status_code=401
+                status_code=401,
             )
-            flash('Matricula/email ou senha incorretos.', 'danger')
+            flash(erro_login or 'Matricula/email ou senha incorretos.', 'danger')
             return redirect(url_for('login'))
 
-        funcionario_admin_inicial = Funcionario.query.filter(
-            db.func.lower(Funcionario.email) == primeiro_acesso_email.lower()
-        ).order_by(Funcionario.id.asc()).first()
+        funcionario_admin_inicial = auth_service.get_primeiro_admin(primeiro_acesso_email)
         mostrar_credenciais_iniciais = bool(
             bootstrap_admin_configurado()
             and getattr(funcionario_admin_inicial, 'senha_provisoria', False)
             and funcionario_admin_inicial
-            and Funcionario.query.count() == 1
+            and auth_service.total_funcionarios() == 1
         )
         return render_template(
             'sistema/login.html',
@@ -128,32 +139,34 @@ def register_routes(app, context):
             acao='logout',
             entidade='autenticacao',
             detalhes=f'usuario={funcionario.nome if funcionario else "desconhecido"}',
-            status_code=200
+            status_code=200,
         )
-        nome = session.get('funcionario_nome', 'Usuário')
+        nome = session.get('funcionario_nome', 'Usuario')
         session.clear()
         flash(f'Ate logo, {nome}!', 'info')
         return redirect(url_for('index'))
 
     @app.route('/registro', methods=['GET', 'POST'])
     def registro():
-        total_funcionarios = Funcionario.query.count()
+        total_funcionarios = auth_service.total_funcionarios()
+        funcionario_logado = get_funcionario_logado()
+
+        if total_funcionarios > 0 and not _pode_registrar_funcionarios(funcionario_logado):
+            flash('A criacao de contas e restrita a usuarios com acesso de RH.', 'danger')
+            if funcionario_logado:
+                return redirect(url_for('dashboard'))
+            return redirect(url_for('login'))
 
         if request.method == 'POST':
-            if total_funcionarios > 0 and 'funcionario_id' not in session:
-                flash('Acesso negado. Faca login como administrador.', 'danger')
-                return redirect(url_for('login'))
-
-            if total_funcionarios > 0:
-                funcionario_logado = get_funcionario_logado()
-                if not funcionario_logado or funcionario_logado.role != 'admin':
-                    flash('Apenas administradores podem registrar novos funcionarios.', 'danger')
-                    return redirect(url_for('dashboard'))
+            is_valid, errors = RegistroSchema().validate(request.form)
+            if not is_valid:
+                for error in errors.values():
+                    flash(error, 'danger')
+                return redirect(url_for('registro'))
 
             nome = request.form.get('nome', '').strip()
             email = request.form.get('email', '').strip()
             senha = request.form.get('senha', '')
-            confirmacao_senha = request.form.get('confirmacao_senha', '')
             role = normalizar_texto(request.form.get('role', 'operador'))
             cargo = (request.form.get('cargo') or '').strip()
             cpf = normalizar_cpf(request.form.get('cpf'))
@@ -170,39 +183,19 @@ def register_routes(app, context):
             nivel_organograma = normalizar_campo_organograma(request.form.get('nivel_organograma'))
             permitir_editar_imagem_perfil = (request.form.get('permitir_editar_imagem_perfil') == 'on')
             perfil_acesso_id = request.form.get('perfil_acesso_id', type=int)
-            perfil_acesso = None
 
-            if not nome or not email or not senha:
-                flash('Nome, email e senha são obrigatórios.', 'danger')
-                return redirect(url_for('registro'))
-            if senha != confirmacao_senha:
-                flash('As senhas não conferem.', 'danger')
-                return redirect(url_for('registro'))
-            if len(senha) < 6:
-                flash('A senha deve ter no minimo 6 caracteres.', 'danger')
-                return redirect(url_for('registro'))
-            if Funcionario.query.filter_by(email=email).first():
-                flash('Email ja cadastrado.', 'danger')
-                return redirect(url_for('registro'))
-            if cpf == '__invalid__':
-                flash('CPF invalido. Informe 11 digitos.', 'danger')
-                return redirect(url_for('registro'))
-            if cpf and Funcionario.query.filter_by(cpf=cpf).first():
-                flash('CPF ja cadastrado para outro funcionario.', 'danger')
-                return redirect(url_for('registro'))
-            if nivel_organograma and nivel_organograma not in niveis_organograma:
-                flash('Nivel de organograma invalido.', 'danger')
+            perfil_acesso, erro_registro = auth_service.validar_registro_basico(
+                email=email,
+                cpf=cpf,
+                perfil_acesso_id=perfil_acesso_id,
+                niveis_organograma=niveis_organograma,
+                nivel_organograma=nivel_organograma,
+            )
+            if erro_registro:
+                flash(erro_registro, 'danger')
                 return redirect(url_for('registro'))
 
-            if perfil_acesso_id:
-                perfil_acesso = PerfilAcesso.query.get(perfil_acesso_id)
-                if not perfil_acesso:
-                    flash('Perfil de acesso invalido.', 'danger')
-                    return redirect(url_for('registro'))
-
-            novo_funcionario = Funcionario(nome=nome, email=email)
-            novo_funcionario.set_password(senha)
-            novo_funcionario.matricula = None
+            novo_funcionario = auth_service.build_novo_funcionario(nome=nome, email=email, senha=senha)
             novo_funcionario.cpf = cpf if cpf != '__invalid__' else None
             novo_funcionario.rg = rg
             novo_funcionario.data_nascimento = data_nascimento

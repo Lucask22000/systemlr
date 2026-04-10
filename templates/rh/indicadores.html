@@ -1,330 +1,77 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Indicadores RH - SystemLR{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Indicadores RH</h1>
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Dashboard de RH</h1>
+        <p class="text-muted mb-0">Quadro ativo, produtividade e cobertura operacional.</p>
+    </div>
+    <div class="header-actions">
+        <select id="rhPeriodo" class="input-select">
+            <option value="30" selected>Ultimos 30 dias</option>
+            <option value="90">Ultimos 90 dias</option>
+            <option value="365">Ultimos 365 dias</option>
+        </select>
+    </div>
 </div>
 
 <div class="cards-container analytics-cards">
-    <div class="card card-primary">
-        <div class="card-content">
-            <h3>Total de Funcionarios</h3>
-            <p class="card-value">{{ total_funcionarios }}</p>
-            <p class="card-meta">{{ funcionarios_ativos }} ativos / {{ funcionarios_inativos }} inativos</p>
-        </div>
+    <div class="card card-primary"><div class="card-content"><h3>Total de funcionarios</h3><p class="card-value" id="kpiFuncionarios">0</p><p class="card-meta" id="metaFuncionarios">0 ativos / 0 inativos</p></div></div>
+    <div class="card card-info"><div class="card-content"><h3>Acessos controlados</h3><p class="card-value" id="kpiAcessos">0</p><p class="card-meta">Perfil ativo e acesso customizado</p></div></div>
+    <div class="card card-success"><div class="card-content"><h3>Produtividade media</h3><p class="card-value" id="kpiProdutividade">0,00</p><p class="card-meta">Pedidos por colaborador ativo</p></div></div>
+    <div class="card card-secondary"><div class="card-content"><h3>Equipe operacional ativa</h3><p class="card-value" id="kpiEquipe">0</p><p class="card-meta">Caixa, operador, garcom e gerente</p></div></div>
+    <div class="card card-danger"><div class="card-content"><h3>Deficit de equipe</h3><p class="card-value" id="kpiDeficit">0</p><p class="card-meta">Baseado na fila atual</p></div></div>
+</div>
+
+<section class="section mb-3">
+    <h2>Alertas</h2>
+    <div id="rhAlertas" class="d-grid gap-2">
+        <p class="text-muted mb-0">Nenhum alerta carregado.</p>
     </div>
-    <div class="card card-success">
-        <div class="card-content">
-            <h3>Admissoes (30 dias)</h3>
-            <p class="card-value">{{ admissoes_30_dias }}</p>
-            <p class="card-meta">Novos cadastros de funcionarios</p>
-        </div>
-    </div>
-    <div class="card card-info">
-        <div class="card-content">
-            <h3>Estrutura RH</h3>
-            <p class="card-value">{{ funcoes_total }}</p>
-            <p class="card-meta">{{ funcoes_ativas }} cargos ativos | {{ perfis_acesso_ativos }} perfis ativos</p>
-        </div>
-    </div>
-    <div class="card card-warning">
-        <div class="card-content">
-            <h3>Controle de Acesso</h3>
-            <p class="card-value">{{ acessos_controlados }}</p>
-            <p class="card-meta">Funcionarios com acesso customizado</p>
-        </div>
-    </div>
-    <div class="card card-info">
-        <div class="card-content">
-            <h3>Pedidos Pendentes</h3>
-            <p class="card-value">{{ pedidos_pendentes }}</p>
-            <p class="card-meta">{{ '%.2f'|format(pendencias_por_colaborador) }} por colaborador ativo</p>
-        </div>
-    </div>
-    <div class="card card-primary">
-        <div class="card-content">
-            <h3>Equipe Operacao</h3>
-            <p class="card-value">{{ equipe_operacao_ativa }}</p>
-            <p class="card-meta">Minimo recomendado: {{ equipe_minima_recomendada }}</p>
-        </div>
-    </div>
-    <div class="card card-danger">
-        <div class="card-content">
-            <h3>Deficit de Equipe</h3>
-            <p class="card-value">{{ deficit_equipe }}</p>
-            <p class="card-meta">Ajuste de escala para fila atual</p>
-        </div>
-    </div>
-    <div class="card card-success">
-        <div class="card-content">
-            <h3>Produtividade media</h3>
-            <p class="card-value">{{ '%.2f'|format(media_pedidos_produtividade) }}</p>
-            <p class="card-meta">Pedidos fechados por colaborador (30 dias)</p>
-        </div>
-    </div>
-    <div class="card card-secondary">
-        <div class="card-content">
-            <h3>Destaque produtividade</h3>
-            {% if top_produtividade %}
-            <p class="card-value">{{ top_produtividade.nome }}</p>
-            <p class="card-meta">{{ top_produtividade.pedidos }} pedidos | Indice {{ '%.2f'|format(top_produtividade.indice_produtividade) }}</p>
-            {% else %}
-            <p class="card-value">-</p>
-            <p class="card-meta">Sem dados no periodo</p>
-            {% endif %}
-        </div>
-    </div>
+</section>
+
+<div class="analytics-grid">
+    <section class="section"><h2>Distribuicao por cargo</h2><div class="chart-container"><canvas id="chartRhCargos"></canvas></div></section>
+    <section class="section"><h2>Evolucao de admissoes</h2><div class="chart-container"><canvas id="chartRhAdmissoes"></canvas></div></section>
+</div>
+
+<div class="analytics-grid">
+    <section class="section"><h2>Produtividade por colaborador</h2><div class="chart-container"><canvas id="chartRhProdutividadeScatter"></canvas></div></section>
+    <section class="section"><h2>Distribuicao por perfil de acesso</h2><div class="chart-container"><canvas id="chartRhPerfis"></canvas></div></section>
 </div>
 
 <div class="analytics-grid">
     <section class="section">
-        <h2>Demanda Operacional</h2>
+        <h2>Top produtividade</h2>
         <div class="table-responsive">
             <table class="table">
-                <tbody>
-                    <tr>
-                        <td>Pedidos hoje</td>
-                        <td>{{ pedidos_hoje }}</td>
-                    </tr>
-                    <tr>
-                        <td>Pedidos ultimos 30 dias</td>
-                        <td>{{ pedidos_30_dias }}</td>
-                    </tr>
-                    <tr>
-                        <td>Media diaria (30 dias)</td>
-                        <td>{{ '%.2f'|format(media_pedidos_dia_30) }}</td>
-                    </tr>
-                    <tr>
-                        <td>Pedidos pendentes por colaborador</td>
-                        <td>{{ '%.2f'|format(pendencias_por_colaborador) }}</td>
-                    </tr>
-                </tbody>
+                <thead><tr><th>Nome</th><th>Cargo</th><th>Pedidos</th><th>Faturamento</th><th>Ticket medio</th></tr></thead>
+                <tbody id="tableTopProdutividade"></tbody>
             </table>
         </div>
     </section>
-
     <section class="section">
-        <h2>Cargos sem Cobertura</h2>
-        {% if cargos_sem_cobertura %}
-        <ul class="mb-0">
-            {% for cargo in cargos_sem_cobertura %}
-            <li>{{ cargo }}</li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="mb-0">Todos os cargos ativos possuem ao menos um colaborador ativo.</p>
-        {% endif %}
-    </section>
-</div>
-
-<div class="section">
-    <h2>Plano de Acao RH</h2>
-    <ul class="mb-0">
-        {% for acao in acoes_rh %}
-        <li>{{ acao }}</li>
-        {% endfor %}
-    </ul>
-</div>
-
-<div class="section">
-    <div class="page-header">
-        <h2>Graficos Dinamicos RH</h2>
-        <div class="header-actions">
-            <select id="rhPeriodo" class="input-select">
-                <option value="30" selected>Ultimos 30 dias</option>
-                <option value="90">Ultimos 90 dias</option>
-                <option value="365">Ultimos 365 dias</option>
-            </select>
-        </div>
-    </div>
-    <div class="analytics-grid">
-        <section class="section">
-            <h2>Distribuicao por Tipo de Usuario</h2>
-            <div class="chart-container">
-                <canvas id="chartRhPerfis"></canvas>
-            </div>
-        </section>
-        <section class="section">
-            <h2>Admissoes no Periodo</h2>
-            <div class="chart-container">
-                <canvas id="chartRhAdmissoes"></canvas>
-            </div>
-        </section>
-    </div>
-</div>
-
-<div class="section">
-    <h2>Distribuicao por Cargo RH</h2>
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Cargo</th>
-                    <th>Total</th>
-                    <th>Ativos</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in distribuicao_cargos %}
-                <tr>
-                    <td data-label="Cargo">{{ item.cargo or '-' }}</td>
-                    <td data-label="Total">{{ item.quantidade or 0 }}</td>
-                    <td data-label="Ativos">{{ item.ativos or 0 }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="3" class="text-center">Sem dados de cargos.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Distribuicao por Tipo de Usuario</h2>
+        <h2>Funcionarios recentes</h2>
         <div class="table-responsive">
             <table class="table">
-                <thead>
-                    <tr>
-                        <th>Tipo</th>
-                        <th>Quantidade</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in distribuicao_roles %}
-                    <tr>
-                        <td data-label="Tipo">{{ item.role|upper }}</td>
-                        <td data-label="Quantidade">{{ item.quantidade }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="2" class="text-center">Sem dados de tipos de usuario.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="section">
-        <h2>Perfis de Acesso Aplicados</h2>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Perfil</th>
-                        <th>Quantidade</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in distribuicao_perfis_acesso %}
-                    <tr>
-                        <td data-label="Perfil">{{ item.perfil or 'Sem perfil padrao' }}</td>
-                        <td data-label="Quantidade">{{ item.quantidade or 0 }}</td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="2" class="text-center">Sem dados de perfis de acesso.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
+                <thead><tr><th>Nome</th><th>Cargo</th><th>Data de admissao</th></tr></thead>
+                <tbody id="tableFuncionariosRecentes"></tbody>
             </table>
         </div>
     </section>
 </div>
 
-<div class="section">
-    <h2>Ultimos Funcionarios Cadastrados</h2>
+<section class="section">
+    <h2>Cargos sem cobertura</h2>
     <div class="table-responsive">
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Matricula</th>
-                    <th>Email</th>
-                    <th>Tipo</th>
-                    <th>Perfil de acesso</th>
-                    <th>Status</th>
-                    <th>Cadastro</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for funcionario in funcionarios_recentes %}
-                <tr>
-                    <td data-label="Nome">{{ funcionario.nome }}</td>
-                    <td data-label="Matricula">{{ funcionario.matricula or '-' }}</td>
-                    <td data-label="Email">{{ funcionario.email }}</td>
-                    <td data-label="Tipo">{{ funcionario.role|upper }}</td>
-                    <td data-label="Perfil de acesso">{{ funcionario.perfil_acesso.nome if funcionario.perfil_acesso else '-' }}</td>
-                    <td data-label="Status">
-                        {% if funcionario.ativo %}
-                        <span class="badge badge-success">Ativo</span>
-                        {% else %}
-                        <span class="badge badge-danger">Inativo</span>
-                        {% endif %}
-                    </td>
-                    <td data-label="Cadastro">{{ funcionario.criado_em.strftime('%d/%m/%Y %H:%M') if funcionario.criado_em else '-' }}</td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" class="text-center">Nenhum funcionario cadastrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            <thead><tr><th>Cargo</th><th>Quantidade de ativos</th></tr></thead>
+            <tbody id="tableCargosSemCobertura"></tbody>
         </table>
     </div>
-</div>
-
-<div class="analytics-grid">
-    <section class="section">
-        <h2>Observacao Operacional</h2>
-        <p class="mb-0">Use a central de funcionarios para revisar o cadastro completo, o cargo e o perfil de acesso de cada colaborador.</p>
-    </section>
-</div>
-
-<div class="section">
-    <h2>Produtividade por Colaborador (ultimos 30 dias)</h2>
-    {% if produtividade_colaboradores %}
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Colaborador</th>
-                    <th>Cargo</th>
-                    <th>Pedidos</th>
-                    <th>Itens</th>
-                    <th>Faturamento</th>
-                    <th>Ticket Medio</th>
-                    <th>Pedidos/dia</th>
-                    <th>Indice</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in produtividade_colaboradores %}
-                <tr>
-                    <td data-label="#">{{ loop.index }}</td>
-                    <td data-label="Colaborador">{{ item.nome }}</td>
-                    <td data-label="Cargo">{{ item.cargo }}</td>
-                    <td data-label="Pedidos">{{ item.pedidos }}</td>
-                    <td data-label="Itens">{{ item.itens }}</td>
-                    <td data-label="Faturamento">R$ {{ '%.2f'|format(item.faturamento) }}</td>
-                    <td data-label="Ticket Medio">R$ {{ '%.2f'|format(item.ticket_medio) }}</td>
-                    <td data-label="Pedidos/dia">{{ '%.2f'|format(item.pedidos_dia) }}</td>
-                    <td data-label="Indice">{{ '%.2f'|format(item.indice_produtividade) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <p class="mb-0">Sem dados de produtividade no periodo analisado.</p>
-    {% endif %}
-</div>
+</section>
 
 <div class="action-buttons">
     <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-primary">Funcionarios</a>
@@ -338,5 +85,3 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/pages/rh_analytics.js') }}"></script>
 {% endblock %}
-
-

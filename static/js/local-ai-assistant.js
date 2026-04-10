@@ -16,8 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const currentEndpoint = document.body.dataset.currentEndpoint || '';
     const currentScreen = document.body.dataset.currentScreen || '';
+    const navbar = document.querySelector('.app-navbar');
     const historyKey = 'systemlr.marcia.history';
     const openKey = 'systemlr.marcia.open';
+    let reopenAfterMenuClose = false;
 
     const initialMessage = {
         role: 'assistant',
@@ -98,6 +100,11 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             subtitle.textContent = 'Sua assistente de IA';
         }
+    }
+
+    function syncAssistantViewport() {
+        const navbarHeight = navbar ? Math.ceil(navbar.getBoundingClientRect().height) : 0;
+        document.documentElement.style.setProperty('--assistant-navbar-offset', `${navbarHeight}px`);
     }
 
     function syncSuggestionsVisibility() {
@@ -672,8 +679,30 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    document.addEventListener('systemlr:mobile-menu-state', function (event) {
+        const isOpen = Boolean(event.detail && event.detail.open);
+        if (isOpen) {
+            reopenAfterMenuClose = !panel.hidden;
+            input.blur();
+            if (reopenAfterMenuClose) {
+                setPanelOpen(false);
+            }
+            return;
+        }
+
+        if (reopenAfterMenuClose) {
+            reopenAfterMenuClose = false;
+            setPanelOpen(true);
+        }
+    });
+
+    syncAssistantViewport();
     syncInitialState();
     loadStatus();
     window.setInterval(loadStatus, 20000);
+    window.addEventListener('resize', syncAssistantViewport);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', syncAssistantViewport);
+    }
     focusInputToEnd();
 });

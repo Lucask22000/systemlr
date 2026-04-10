@@ -1,0 +1,25 @@
+{
+  "seed_tag": "[seed_mercado_lucas]",
+  "date_range": {
+    "start": "2026-01-27",
+    "end": "2026-03-27",
+    "days": 60
+  },
+  "funcionarios": 31,
+  "clientes": 10,
+  "fornecedores": 6,
+  "produtos": 30,
+  "caixas": 4,
+  "pedidos_criados": 668,
+  "pedidos_fechados": 424,
+  "recebimentos_criados": 80,
+  "fundos_criados": 20,
+  "sangrias_criadas": 101,
+  "imagens_produtos_vinculadas": 30,
+  "coherence": {
+    "passed": true,
+    "error_count": 0,
+    "warning_count": 0,
+    "report_path": "C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\logs\\operational_coherence_seed_mercado_lucas.json"
+  }
+}

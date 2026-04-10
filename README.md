@@ -107,6 +107,24 @@ Se necessario, ajuste:
 - `SECRET_KEY`
 - configuracoes de cache/Redis em producao
 
+## Banco e Migrations
+
+O projeto usa `Flask-Migrate/Alembic` como caminho oficial de evolucao de schema.
+
+Antes de subir a aplicacao em ambiente novo ou apos atualizar codigo com mudancas estruturais, rode:
+
+```bash
+.venv\Scripts\flask.exe db upgrade
+```
+
+Existe documentacao de rollout e compatibilidade em [docs/database_migrations.md](c:/Users/lucas/OneDrive/Desktop/conveniencia/docs/database_migrations.md).
+
+Fallback legado:
+
+- `SYSTEMLR_ENABLE_RUNTIME_SCHEMA_PATCHES=1`
+
+Use apenas como contingencia temporaria para ambientes antigos enquanto a migracao formal nao foi aplicada.
+
 ## Relatorios e Documentacao
 
 Gerar relatorios de apoio:

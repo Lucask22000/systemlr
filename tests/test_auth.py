@@ -33,6 +33,12 @@ def test_login_rate_limit_with_missing_credentials(client, csrf_token):
     assert response.status_code == 302
 
 
+def test_login_get_does_not_consume_rate_limit(client):
+    for _ in range(6):
+        response = client.get('/login')
+        assert response.status_code == 200
+
+
 def test_registro_requires_required_fields(authenticated_client, csrf_token):
     response = authenticated_client.post('/registro', data={
         'nome': '',

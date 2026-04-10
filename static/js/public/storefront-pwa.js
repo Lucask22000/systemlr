@@ -20,6 +20,17 @@
         return isIos && isSafari;
     }
 
+    function getInstallFlavor() {
+        const ua = window.navigator.userAgent || '';
+        if (/Android/i.test(ua) && /Chrome|EdgA|SamsungBrowser/i.test(ua)) {
+            return 'android-browser';
+        }
+        if (isIosSafari()) {
+            return 'ios-safari';
+        }
+        return 'generic-browser';
+    }
+
     function isStandaloneMode() {
         return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     }
@@ -81,15 +92,29 @@
             copies: Array.from(document.querySelectorAll('[data-store-install-copy]')),
             actionButtons: Array.from(document.querySelectorAll('[data-store-install-action], [data-store-install-shortcut]')),
             dismissButton: document.querySelector('[data-store-install-dismiss]'),
+            apkLinks: Array.from(document.querySelectorAll('[data-apk-download-link]')),
         };
     }
 
+    function refreshApkVisibility(nodes) {
+        const shouldShowApk = isMobileDevice() && !isStandaloneMode();
+        nodes.apkLinks.forEach(function (link) {
+            link.hidden = !shouldShowApk;
+        });
+    }
+
     function refreshCopy(nodes) {
-        const titleText = 'Baixar app da loja';
-        const actionText = deferredPrompt ? 'Baixar app' : (isIosSafari() ? 'Como instalar' : 'Baixar app');
-        const copyText = deferredPrompt
-            ? ('Adicione ' + getAppName() + ' na tela inicial do celular e use a loja como web-app, direto pelo navegador.')
-            : 'No iPhone, toque em Compartilhar e depois em Adicionar a Tela de Inicio para criar o atalho da loja.';
+        const flavor = getInstallFlavor();
+        const titleText = 'Instalar app da loja';
+        const canOfferInstall = Boolean(deferredPrompt) || isIosSafari();
+        const actionText = deferredPrompt ? 'Instalar app' : (isIosSafari() ? 'Como instalar' : 'Instalar app');
+        let copyText = 'Adicione ' + getAppName() + ' na tela inicial do celular e use a loja como um app, com abertura instantanea e experiencia em tela cheia.';
+
+        if (flavor === 'ios-safari') {
+            copyText = 'Toque em Compartilhar > Adicionar à Tela de Início para criar o ícone da loja no iPhone.';
+        } else if (flavor === 'android-browser' && deferredPrompt) {
+            copyText = 'Instale ' + getAppName() + ' e adicione um atalho na tela inicial para usar a loja como app.';
+        }
 
         nodes.titles.forEach(function (node) {
             node.textContent = titleText;
@@ -99,7 +124,7 @@
         });
         nodes.actionButtons.forEach(function (button) {
             button.textContent = actionText;
-            button.hidden = false;
+            button.hidden = !canOfferInstall;
         });
     }
 
@@ -115,6 +140,7 @@
         nodes.panels.forEach(function (panel) {
             panel.hidden = true;
         });
+        refreshApkVisibility(nodes);
     }
 
     function showPrompt() {
@@ -126,6 +152,7 @@
             return;
         }
         refreshCopy(nodes);
+        refreshApkVisibility(nodes);
         nodes.banner.hidden = false;
         nodes.banner.classList.add('is-visible');
         nodes.panels.forEach(function (panel) {
@@ -179,7 +206,11 @@
         }
 
         window.addEventListener('load', function () {
-            navigator.serviceWorker.register('/sw.js').catch(function () {
+            navigator.serviceWorker.register('/sw.js').then(function (registration) {
+                registration.update().catch(function () {
+                    return;
+                });
+            }).catch(function () {
                 return;
             });
         });
@@ -203,6 +234,7 @@
         if (shouldShowPrompt()) {
             const nodes = getNodes();
             refreshCopy(nodes);
+            refreshApkVisibility(nodes);
             if (isIosSafari()) {
                 window.setTimeout(showPrompt, 900);
             }

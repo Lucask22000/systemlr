@@ -7,6 +7,7 @@ from flask import has_request_context, request
 
 from app.exceptions import BusinessRuleError, PermissionDenied, ValidationError
 from app.services.operational_rules import require_cancel_reason
+from app.services.traceability import record_process_event
 from app.services.transaction import atomic_transaction
 from models import AuditoriaEvento, FundoSolicitacao, LancamentoFinanceiro, Pedido, RecebimentoFornecedor, db
 
@@ -171,6 +172,20 @@ def transition_pedido_status(
         actor=actor,
         detalhes=detalhes,
     )
+    record_process_event(
+        processo_tipo='pedido_venda',
+        etapa='status',
+        acao='status_alterado',
+        entidade='pedido',
+        entidade_id=pedido.id,
+        pedido_id=pedido.id,
+        actor=actor,
+        detalhes={
+            'de': status_atual,
+            'para': status_destino,
+            'observacao': detalhes,
+        },
+    )
     return pedido.status
 
 
@@ -212,6 +227,20 @@ def transition_recebimento_status(recebimento, novo_status, *, actor=None, detal
         transicao=f'{status_atual}->{status_destino}',
         actor=actor,
         detalhes=detalhes,
+    )
+    record_process_event(
+        processo_tipo='recebimento',
+        etapa='status',
+        acao='status_alterado',
+        entidade='recebimento',
+        entidade_id=recebimento.id,
+        recebimento_id=recebimento.id,
+        actor=actor,
+        detalhes={
+            'de': status_atual,
+            'para': status_destino,
+            'observacao': detalhes,
+        },
     )
     return recebimento.status
 
@@ -295,6 +324,21 @@ def transition_expedicao_status(
         actor=actor,
         detalhes=detalhes,
     )
+    record_process_event(
+        processo_tipo='expedicao',
+        etapa='expedicao',
+        acao=f'expedicao_{status_destino}',
+        entidade='pedido',
+        entidade_id=pedido.id,
+        pedido_id=pedido.id,
+        actor=actor,
+        detalhes={
+            'de': status_atual,
+            'para': status_destino,
+            'metadata': metadata,
+            'observacao': detalhes,
+        },
+    )
     return status_destino
 
 
@@ -317,6 +361,7 @@ def transition_fundo_status(
         if status_destino in {FundoStatus.APROVADA, FundoStatus.REJEITADA, FundoStatus.LIBERADA} and role not in {'admin', 'gerente'}:
             raise PermissionDenied('Somente admin/gerente pode alterar esta etapa da solicitacao.')
 
+        lancamento_id = fundo.lancamento_financeiro_id
         if status_destino == FundoStatus.APROVADA:
             fundo.aprovado_por_id = getattr(actor, 'id', None)
             fundo.aprovado_em = fundo.aprovado_em or datetime.utcnow()
@@ -359,6 +404,7 @@ def transition_fundo_status(
             fundo.liberado_por_id = getattr(actor, 'id', None)
             fundo.liberado_em = datetime.utcnow()
             fundo.lancamento_financeiro_id = lancamento.id
+            lancamento_id = lancamento.id
             fundo.motivo_rejeicao = None
 
         fundo.status = status_destino
@@ -368,5 +414,20 @@ def transition_fundo_status(
             transicao=f'{status_atual}->{status_destino}',
             actor=actor,
             detalhes=detalhes,
+        )
+        record_process_event(
+            processo_tipo='financeiro_operacional',
+            etapa='fundos',
+            acao=f'fundo_{status_destino}',
+            entidade='fundo',
+            entidade_id=fundo.id,
+            fundo_solicitacao_id=fundo.id,
+            lancamento_financeiro_id=lancamento_id,
+            actor=actor,
+            detalhes={
+                'de': status_atual,
+                'para': status_destino,
+                'observacao': detalhes,
+            },
         )
         return fundo.status

@@ -1,10 +1,10 @@
 # Relatorio Completo do Backend (para IA)
 
-- Gerado em: 2026-03-19 19:57:41
+- Gerado em: 2026-04-06 12:39:26
 
 - Projeto base: `C:/Users/lucas/OneDrive/Desktop/conveniencia`
 
-- Total de arquivos Python mapeados: **51**
+- Total de arquivos Python mapeados: **73**
 
 
 ## 1) Escopo
@@ -43,23 +43,45 @@
   - app/rh_routes.py
   - app/services/analytics.py
   - app/services/assistente_service.py
+  - app/services/auth_service.py
   - app/services/estoque.py
   - app/services/estoque_service.py
   - app/services/financeiro.py
+  - app/services/financeiro_operacional.py
   - app/services/financeiro_service.py
   - app/services/local_ai.py
+  - app/services/master_data.py
+  - app/services/operational_rules.py
   - app/services/pedido.py
   - app/services/pedido_service.py
+  - app/services/permissao_service.py
+  - app/services/recebimento.py
+  - app/services/recebimento_service.py
   - app/services/rh.py
   - app/services/rh_service.py
+  - app/services/traceability.py
+  - app/services/transaction.py
   - app/services/utils.py
   - app/services/utils_service.py
+  - app/services/venda_service.py
+  - app/services/workflow.py
   - app/services_routes.py
+  - app/user_messages.py
   - app/utils/data.py
   - app/utils/helpers.py
   - app/utils/operational_flow.py
   - app/utils/payment_config.py
+  - app/utils/responses.py
+  - app/utils/validation.py
   - app/utils/validators.py
+  - app/validators/__init__.py
+  - app/validators/auth_validators.py
+  - app/validators/common.py
+  - app/validators/datas.py
+  - app/validators/documentos.py
+  - app/validators/estoque.py
+  - app/validators/rh_validators.py
+  - app/validators/vendas_validators.py
 - routes/
   - routes/__init__.py
   - routes/estoque_routes.py
@@ -73,59 +95,81 @@
 
 | Arquivo | Linhas | Tamanho (KB) | Hash (sha256-16) |
 |---|---:|---:|---|
-| `app/__init__.py` | 6527 | 285.5 | `e07e73bea646e788` |
-| `app/api_routes.py` | 144 | 6.5 | `2e56d487549b8395` |
-| `app/auth_routes.py` | 267 | 13.1 | `280931eea8524d96` |
+| `app/__init__.py` | 7617 | 344.4 | `a479c3f136471b08` |
+| `app/api_routes.py` | 204 | 8.3 | `cb502270bf0af58e` |
+| `app/auth_routes.py` | 253 | 12.1 | `7ddfa12ae28cac53` |
 | `app/blueprints/__init__.py` | 7 | 0.2 | `005d430cecfb715d` |
-| `app/blueprints/auth_bp.py` | 5 | 0.1 | `59c3816d462d5708` |
+| `app/blueprints/auth_bp.py` | 7 | 0.1 | `2c8e278b1badeaaa` |
 | `app/blueprints/estoque_bp.py` | 5 | 0.1 | `eaf3379106993a93` |
 | `app/blueprints/rh_bp.py` | 5 | 0.1 | `b4f2db4f22ee79e0` |
 | `app/blueprints/sistema_bp.py` | 5 | 0.1 | `18483a05cd11b629` |
 | `app/blueprints/vendas_bp.py` | 5 | 0.1 | `ef9d3102be9f5399` |
-| `app/cli.py` | 56 | 2.0 | `d2e251f0b7afced6` |
-| `app/constants.py` | 199 | 7.1 | `c8c1120cde5cbf65` |
+| `app/cli.py` | 102 | 3.9 | `b8aa2ceed3a7b2e1` |
+| `app/constants.py` | 209 | 7.3 | `5f05511c4f5787d6` |
 | `app/dashboard_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
 | `app/decorators.py` | 61 | 2.1 | `69669f232ba0bd43` |
 | `app/empresa_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
-| `app/exceptions.py` | 31 | 0.6 | `a88b74fa482fa33b` |
+| `app/exceptions.py` | 33 | 0.7 | `9fbe0aa5d2b49af0` |
 | `app/extensions.py` | 72 | 2.1 | `3c4218b2ab8e9448` |
-| `app/factory.py` | 76 | 3.0 | `4db67e55e8dd53d5` |
-| `app/helpers.py` | 69 | 2.0 | `abb4f795ca8ba4af` |
+| `app/factory.py` | 102 | 3.9 | `3839aaa61511cafc` |
+| `app/helpers.py` | 112 | 3.6 | `8e805e4e51a83608` |
 | `app/rh_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
-| `app/services/analytics.py` | 313 | 12.2 | `825e0b4a921792f9` |
+| `app/services/analytics.py` | 602 | 23.3 | `0865c4b1344035a0` |
 | `app/services/assistente_service.py` | 5 | 0.1 | `6fe31aabda8282e1` |
-| `app/services/estoque.py` | 158 | 5.0 | `4c1834eaa83dc6e5` |
-| `app/services/estoque_service.py` | 25 | 0.6 | `8b9e66e8ad786b39` |
-| `app/services/financeiro.py` | 60 | 2.5 | `c15f6f98ae49208f` |
+| `app/services/auth_service.py` | 66 | 2.8 | `c6b541cc3629b56f` |
+| `app/services/estoque.py` | 300 | 9.8 | `3e4a697db5fd1814` |
+| `app/services/estoque_service.py` | 29 | 0.7 | `951848fd730424b9` |
+| `app/services/financeiro.py` | 78 | 3.2 | `d57bd4822ea11420` |
+| `app/services/financeiro_operacional.py` | 182 | 6.3 | `af2da2435b729744` |
 | `app/services/financeiro_service.py` | 23 | 0.5 | `2a9c27a9eddf234e` |
-| `app/services/local_ai.py` | 1557 | 63.3 | `faf5b831fd9b48dd` |
-| `app/services/pedido.py` | 76 | 2.9 | `9368e253db0e0c4f` |
-| `app/services/pedido_service.py` | 25 | 0.6 | `87f5dd990df7f75c` |
-| `app/services/rh.py` | 55 | 1.5 | `23d4f8058627636a` |
+| `app/services/local_ai.py` | 1574 | 64.3 | `97f927dacb290429` |
+| `app/services/master_data.py` | 182 | 5.7 | `333533515479902c` |
+| `app/services/operational_rules.py` | 90 | 3.7 | `fb623122b283e98c` |
+| `app/services/pedido.py` | 204 | 6.1 | `8691dcd5849aeaf0` |
+| `app/services/pedido_service.py` | 33 | 0.9 | `bc86ea1cecae9e65` |
+| `app/services/permissao_service.py` | 32 | 1.1 | `efbd5740dbf33889` |
+| `app/services/recebimento.py` | 269 | 10.7 | `3e9bde768f745fb9` |
+| `app/services/recebimento_service.py` | 13 | 0.2 | `954269014498b283` |
+| `app/services/rh.py` | 41 | 1.3 | `5bce05cb5fb4304b` |
 | `app/services/rh_service.py` | 17 | 0.4 | `64fd392456c2a6d7` |
+| `app/services/traceability.py` | 83 | 2.6 | `b80f0da004289c96` |
+| `app/services/transaction.py` | 11 | 0.2 | `77a660319107bf91` |
 | `app/services/utils.py` | 35 | 0.8 | `834db089c93fe9e9` |
 | `app/services/utils_service.py` | 92 | 1.9 | `d704d43e3fe072cf` |
+| `app/services/venda_service.py` | 603 | 23.8 | `e4bffba14f421717` |
+| `app/services/workflow.py` | 434 | 16.7 | `5aa969270f30de0d` |
 | `app/services_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
+| `app/user_messages.py` | 70 | 2.6 | `ea22533d801fe9a0` |
 | `app/utils/data.py` | 38 | 1.5 | `134a7ea208ac22eb` |
 | `app/utils/helpers.py` | 18 | 0.4 | `611e5a7b506abf6c` |
 | `app/utils/operational_flow.py` | 103 | 3.1 | `47852305f17a171b` |
 | `app/utils/payment_config.py` | 199 | 7.3 | `0a6ed1e979bd5372` |
+| `app/utils/responses.py` | 26 | 0.6 | `d914fd8ce4d3ed16` |
+| `app/utils/validation.py` | 25 | 0.7 | `52649fccce89c280` |
 | `app/utils/validators.py` | 106 | 2.6 | `a18b0ba69427ee4d` |
-| `config.py` | 57 | 1.4 | `855d0f2f355a7721` |
+| `app/validators/__init__.py` | 21 | 0.6 | `63649bf653fdd753` |
+| `app/validators/auth_validators.py` | 38 | 1.3 | `3ff8e5b224767192` |
+| `app/validators/common.py` | 7 | 0.2 | `88ef6681e88ff6e1` |
+| `app/validators/datas.py` | 9 | 0.2 | `67e64cfa9137966b` |
+| `app/validators/documentos.py` | 9 | 0.2 | `bc750ec288b7a455` |
+| `app/validators/estoque.py` | 9 | 0.2 | `abec9b8118ec2c80` |
+| `app/validators/rh_validators.py` | 14 | 0.4 | `89b0196b7cd3aae5` |
+| `app/validators/vendas_validators.py` | 13 | 0.4 | `8d29465e33dc4c19` |
+| `config.py` | 65 | 1.7 | `f96bba2a1405838c` |
 | `fix_admin_access.py` | 48 | 1.4 | `b0fe4cf4de27aa58` |
-| `models.py` | 1151 | 51.5 | `29e26a37554c3d79` |
-| `realtime.py` | 30 | 0.7 | `004d2d4fd0c38805` |
+| `models.py` | 1423 | 64.4 | `0586b4b9e4aee349` |
+| `realtime.py` | 32 | 0.9 | `b6c9bc77daea6074` |
 | `routes/__init__.py` | 2 | 0.0 | `84b29b334b20301c` |
-| `routes/estoque_routes.py` | 3763 | 184.8 | `3f6ac15ae81d7d5f` |
-| `routes/public_routes.py` | 869 | 31.8 | `18718b91964bcf89` |
-| `routes/vendas_routes.py` | 2550 | 106.0 | `b1e387b7544b9ffe` |
+| `routes/estoque_routes.py` | 4166 | 201.5 | `b2358e063086bd21` |
+| `routes/public_routes.py` | 1778 | 72.0 | `e4ca8f34139aeb7b` |
+| `routes/vendas_routes.py` | 3204 | 134.3 | `6e0eee136cd3af21` |
 | `run.py` | 24 | 0.6 | `fa867285dce10aa1` |
-| `security.py` | 110 | 3.1 | `82be211f11ec6f6b` |
+| `security.py` | 116 | 3.3 | `c8d725f6a5f16fac` |
 | `seed_data.py` | 231 | 10.0 | `360da908ebbf99a8` |
 | `utils/__init__.py` | 2 | 0.0 | `870bc525a3cbeecd` |
 | `utils/endereco_codigo.py` | 502 | 17.8 | `8e379c1cde723bed` |
 
-**Total de linhas backend:** 19790
+**Total de linhas backend:** 26107
 
 
 ## 4) Codigo fonte consolidado
@@ -133,26 +177,28 @@ Observacao: arquivos muito grandes podem ser truncados para manter o relatorio u
 
 
 ### Arquivo: `app/__init__.py`
-- Linhas: 6527
-- Tamanho: 285.5 KB
+- Linhas: 7617
+- Tamanho: 344.4 KB
 - Status: completo
 
 ```python
 ﻿from datetime import datetime, timedelta
+from collections import deque
 import os
 import json
 import csv
 import io
 import re
+import unicodedata
 from urllib.parse import urlparse
 
-from flask import Response, flash, jsonify, redirect, render_template, request, send_from_directory, session, url_for
-from sqlalchemy.exc import OperationalError
+from flask import Response, flash, has_request_context, jsonify, redirect, render_template, request, send_from_directory, session, url_for
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import selectinload
 from werkzeug.utils import secure_filename
 
-from models import Categoria, ClientePublico, EnderecoEstoque, Estoque, Fornecedor, Funcionario, FuncaoRH, PerfilAcesso, LancamentoFinanceiro, Movimentacao, Produto, PermissaoAcesso, Caixa, MovimentacaoCaixa, Pedido, ItemPedido, Garcom, EmpresaConfig, AuditoriaEvento, AssistenteLocalFeedback, EquipamentoMovimentacao, ManutencaoEquipamento, OrdemServico, ChamadoInterno, FundoSolicitacao, RecebimentoFornecedor, AlmoxarifadoAtribuicao, funcionario_estoques, db
+from models import Categoria, ClientePublico, EnderecoEstoque, Estoque, Fornecedor, Funcionario, FuncaoRH, PerfilAcesso, LancamentoFinanceiro, Mesa, Movimentacao, ProcessoEvento, Produto, PermissaoAcesso, Caixa, MovimentacaoCaixa, Pedido, ItemPedido, Garcom, EmpresaConfig, AuditoriaEvento, AssistenteLocalFeedback, EquipamentoMovimentacao, ManutencaoEquipamento, OrdemServico, ChamadoInterno, FundoSolicitacao, RecebimentoFornecedor, AlmoxarifadoAtribuicao, funcionario_estoques, db
 from routes.estoque_routes import register_estoque_routes
 from routes.vendas_routes import register_vendas_routes
 from routes.public_routes import obter_resumo_carrinho_site, register_public_routes
@@ -173,10 +219,20 @@ from app.helpers import (
     _register_login_attempt,
     get_funcionario_logado,
 )
+from app.user_messages import build_flash_message, flash_category_for_status, resolve_action
 from app.services.assistente_service import LocalAIAssistant
+from app.services.permissao_service import PermissaoService
 from app.services.estoque_service import aplicar_movimentacao_estoque
+from app.services.financeiro_operacional import aplicar_acao_fundo, criar_lancamento_financeiro, criar_solicitacao_fundo
+from app.services.master_data import (
+    normalize_cost_center,
+    validate_employee_payload,
+    validate_payment_options_configuration,
+)
 from app.services.rh_service import sincronizar_garcom_funcionario
+from app.services.traceability import build_timeline
 from app.constants import (
+    API_FALLBACK_ACCESS_PAGES,
     CARGOS_PERMANENTES,
     ENDPOINT_TO_PAGINA,
     NIVEIS_ORGANOGRAMA,
@@ -319,14 +375,13 @@ def _paginas_efetivas_funcionario(funcionario):
         permitidas = set(PAGINAS_SISTEMA.keys())
     else:
         mapa_personalizado = _mapa_permissoes_personalizadas_funcionario(funcionario)
+        paginas_base = _paginas_perfil_acesso(funcionario.perfil_acesso)
         bloqueadas = {
             pagina
             for pagina, permitido in mapa_personalizado.items()
             if not permitido
         }
-        permitidas = _carregar_paginas_json(
-            getattr(funcionario.perfil_acesso, 'permissoes_padrao', None)
-        )
+        permitidas = set(paginas_base)
         permitidas.update(
             pagina
             for pagina, permitido in mapa_personalizado.items()
@@ -334,6 +389,17 @@ def _paginas_efetivas_funcionario(funcionario):
         )
         permitidas.difference_update(bloqueadas)
         permitidas = _expandir_paginas_relacionadas(permitidas, bloqueadas=bloqueadas)
+        if not permitidas and has_request_context():
+            app.logger.warning(
+                'menu_debug_empty funcionario_id=%s role=%s controle=%s perfil_acesso_id=%s endpoint=%s mapa_personalizado=%s paginas_base=%s',
+                getattr(funcionario, 'id', None),
+                getattr(funcionario, 'role', None),
+                getattr(funcionario, 'controle_acesso_ativo', None),
+                getattr(funcionario, 'perfil_acesso_id', None),
+                request.endpoint,
+                mapa_personalizado,
+                sorted(paginas_base),
+            )
 
     permitidas.add('ajuda')
     return permitidas
@@ -475,238 +541,298 @@ def _garantir_admin_primeiro_acesso():
         raise
 
 
+def _runtime_schema_patches_enabled():
+    configurado = os.environ.get('SYSTEMLR_ENABLE_RUNTIME_SCHEMA_PATCHES')
+    if configurado is None:
+        return app.config.get('ENV_NAME') == 'testing'
+    return configurado.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 with app.app_context():
-    # A estrutura do schema deve ser aplicada via Flask-Migrate/Alembic.
     inspector = inspect(db.engine)
-    colunas_funcoes = {col['name'] for col in inspector.get_columns('funcoes_rh')}
-    if 'permissoes_padrao' not in colunas_funcoes:
-        try:
-            db.session.execute(text('ALTER TABLE funcoes_rh ADD COLUMN permissoes_padrao TEXT'))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-    if not inspector.has_table('perfis_acesso'):
-        PerfilAcesso.__table__.create(bind=db.engine, checkfirst=True)
-    if inspector.has_table('funcionarios'):
-        colunas_funcionarios = {col['name'] for col in inspector.get_columns('funcionarios')}
-        if 'superior_id' not in colunas_funcionarios:
-            try:
-                db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN superior_id INTEGER'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-        colunas_novas_funcionarios = {
-            'numero_cadastro': 'INTEGER',
-            'matricula': 'VARCHAR(30)',
-            'cpf': 'VARCHAR(14)',
-            'rg': 'VARCHAR(20)',
-            'data_nascimento': 'DATE',
-            'celular': 'VARCHAR(30)',
-            'cep': 'VARCHAR(12)',
-            'endereco': 'VARCHAR(180)',
-            'bairro': 'VARCHAR(100)',
-            'cidade': 'VARCHAR(100)',
-            'estado': 'VARCHAR(2)',
-            'imagem_perfil_path': 'VARCHAR(255)',
-            'permitir_editar_imagem_perfil': 'INTEGER DEFAULT 0',
-            'senha_provisoria': 'INTEGER DEFAULT 0',
-            'departamento': 'VARCHAR(80)',
-            'time_nome': 'VARCHAR(80)',
-            'nivel_organograma': 'VARCHAR(40)',
-            'pagina_inicial': "VARCHAR(30) DEFAULT 'dashboard'",
-            'receber_alertas': 'INTEGER DEFAULT 1',
-            'restricao_estoques_ativa': 'INTEGER DEFAULT 0',
-            'estoque_principal_id': 'INTEGER',
-            'perfil_acesso_id': 'INTEGER',
-        }
-        for coluna_nome, definicao in colunas_novas_funcionarios.items():
-            if coluna_nome in colunas_funcionarios:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE funcionarios ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('permissoes_acesso'):
-        colunas_permissoes_acesso = {col['name'] for col in inspector.get_columns('permissoes_acesso')}
-        if 'permitido' not in colunas_permissoes_acesso:
-            try:
-                db.session.execute(text('ALTER TABLE permissoes_acesso ADD COLUMN permitido INTEGER DEFAULT 1'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('estoques'):
-        colunas_estoques = {col['name'] for col in inspector.get_columns('estoques')}
-        colunas_novas_estoques = {
-            'codigo_filial': 'VARCHAR(20)',
-        }
-        for coluna_nome, definicao in colunas_novas_estoques.items():
-            if coluna_nome in colunas_estoques:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE estoques ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('empresa_config'):
-        colunas_empresa = {col['name'] for col in inspector.get_columns('empresa_config')}
-        colunas_novas_empresa = {
-            'codigo_empresa': 'VARCHAR(20)',
-            'favicon_path': 'VARCHAR(255)',
-            'app_icon_path': 'VARCHAR(255)',
-            'separacao_entrega_ativa': 'INTEGER DEFAULT 1',
-            'emissao_etiqueta_entrega_ativa': 'INTEGER DEFAULT 1',
-            'separacao_entrega_unir_vendas_off': 'INTEGER DEFAULT 0',
-            'roteirizacao_entrega_ativa': 'INTEGER DEFAULT 1',
-            'emissao_nota_entrega_ativa': 'INTEGER DEFAULT 1',
-            'entrega_local_saida_padrao': 'VARCHAR(160)',
-            'entrega_veiculo_padrao': 'VARCHAR(80)',
-            'entrega_motorista_padrao': 'VARCHAR(120)',
-            'entrega_horario_fechamento_roteirizacao': 'VARCHAR(5)',
-            'entrega_veiculos_json': 'TEXT',
-            'entrega_terceirizadas_json': 'TEXT',
-            'entrega_regras_roteirizacao_json': 'TEXT',
-            'servicos_tecnicos_ativos': 'INTEGER DEFAULT 0',
-            'servico_montagem_instalacao_ativo': 'INTEGER DEFAULT 0',
-            'tipo_negocio': "VARCHAR(30) DEFAULT 'conveniencia'",
-            'canal_operacao': "VARCHAR(30) DEFAULT 'hibrido'",
-            'ecommerce_ativo': 'INTEGER DEFAULT 1',
-            'ecom_cor_primaria': "VARCHAR(20) DEFAULT '#ff7848'",
-            'ecom_cor_secundaria': "VARCHAR(20) DEFAULT '#ff5a2a'",
-            'ecom_titulo_banner': 'VARCHAR(140)',
-            'ecom_subtitulo_banner': 'VARCHAR(255)',
-            'ecom_texto_promocao': 'VARCHAR(255)',
-            'ecom_banner_path': 'VARCHAR(255)',
-            'ecom_favicon_path': 'VARCHAR(255)',
-            'ecom_produto_placeholder_path': 'VARCHAR(255)',
-            'ecom_banners_json': 'TEXT',
-            'ecom_campanhas_json': 'TEXT',
-            'ecom_footer_bg': "VARCHAR(20) DEFAULT '#1f2b38'",
-            'ecom_footer_texto': 'VARCHAR(255)',
-            'ecom_footer_contato': 'VARCHAR(255)',
-            'ecom_footer_creditos': 'VARCHAR(255)',
-            'pagamentos_pdv_json': 'TEXT',
-            'pagamentos_ecommerce_json': 'TEXT',
-            'integracoes_pdv_json': 'TEXT',
-            'integracoes_ecommerce_json': 'TEXT',
-            'reposicao_loja_fisica_ativa': 'INTEGER DEFAULT 1',
-            'emissao_etiqueta_loja_ativa': 'INTEGER DEFAULT 1',
-            'emissao_etiqueta_endereco_ativa': 'INTEGER DEFAULT 1',
-        }
-        for coluna_nome, definicao in colunas_novas_empresa.items():
-            if coluna_nome in colunas_empresa:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE empresa_config ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if not inspector.has_table('funcionario_estoques'):
-        funcionario_estoques.create(bind=db.engine, checkfirst=True)
-    if inspector.has_table('pedidos'):
-        colunas_pedidos = {col['name'] for col in inspector.get_columns('pedidos')}
-        colunas_novas_pedidos = {
-            'separacao_entrega_concluida': 'INTEGER DEFAULT 0',
-            'separacao_entrega_em': 'DATETIME',
-            'etiqueta_entrega_emitida_em': 'DATETIME',
-            'rota_entrega': 'VARCHAR(120)',
-            'ordem_rota': 'INTEGER',
-            'local_saida': 'VARCHAR(160)',
-            'veiculo_tipo': 'VARCHAR(80)',
-            'veiculo_placa': 'VARCHAR(20)',
-            'motorista_nome': 'VARCHAR(120)',
-            'empresa_terceirizada': 'VARCHAR(150)',
-            'nota_fiscal_numero': 'VARCHAR(60)',
-            'nota_fiscal_chave': 'VARCHAR(120)',
-            'nota_fiscal_emitida_em': 'DATETIME',
-            'saiu_para_entrega_em': 'DATETIME',
-            'entrega_concluida_em': 'DATETIME',
-        }
-        for coluna_nome, definicao in colunas_novas_pedidos.items():
-            if coluna_nome in colunas_pedidos:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE pedidos ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('produtos'):
-        colunas_produtos = {col['name'] for col in inspector.get_columns('produtos')}
-        colunas_novas_produtos = {
-            'tipo_movimentacao': "VARCHAR(20) DEFAULT 'manual'",
-            'fora_picking': 'INTEGER DEFAULT 0',
-            'prioridade_reabastecimento': 'INTEGER',
-            'ultima_baixa_picking_em': 'DATETIME',
-            'servico_montagem_disponivel': 'INTEGER DEFAULT 0',
-            'servico_instalacao_disponivel': 'INTEGER DEFAULT 0',
-        }
-        for coluna_nome, definicao in colunas_novas_produtos.items():
-            if coluna_nome in colunas_produtos:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE produtos ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if inspector.has_table('recebimentos_fornecedor'):
-        colunas_recebimentos = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
-        if 'tipo_recebimento' not in colunas_recebimentos:
-            try:
-                db.session.execute(
-                    text(
-                        "ALTER TABLE recebimentos_fornecedor "
-                        "ADD COLUMN tipo_recebimento VARCHAR(40) DEFAULT 'compra_revenda'"
+    if _runtime_schema_patches_enabled():
+        app.logger.warning(
+            'Runtime schema patches habilitados. Use apenas como contingencia temporaria e aplique '
+            '`flask db upgrade` para manter o schema via migrations formais.'
+        )
+        if inspector.has_table('funcoes_rh'):
+            colunas_funcoes = {col['name'] for col in inspector.get_columns('funcoes_rh')}
+            if 'permissoes_padrao' not in colunas_funcoes:
+                try:
+                    db.session.execute(text('ALTER TABLE funcoes_rh ADD COLUMN permissoes_padrao TEXT'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('perfis_acesso'):
+            PerfilAcesso.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('processo_eventos'):
+            ProcessoEvento.__table__.create(bind=db.engine, checkfirst=True)
+        if inspector.has_table('funcionarios'):
+            colunas_funcionarios = {col['name'] for col in inspector.get_columns('funcionarios')}
+            if 'superior_id' not in colunas_funcionarios:
+                try:
+                    db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN superior_id INTEGER'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            colunas_novas_funcionarios = {
+                'numero_cadastro': 'INTEGER',
+                'matricula': 'VARCHAR(30)',
+                'cpf': 'VARCHAR(14)',
+                'rg': 'VARCHAR(20)',
+                'data_nascimento': 'DATE',
+                'celular': 'VARCHAR(30)',
+                'cep': 'VARCHAR(12)',
+                'endereco': 'VARCHAR(180)',
+                'bairro': 'VARCHAR(100)',
+                'cidade': 'VARCHAR(100)',
+                'estado': 'VARCHAR(2)',
+                'imagem_perfil_path': 'VARCHAR(255)',
+                'permitir_editar_imagem_perfil': 'INTEGER DEFAULT 0',
+                'senha_provisoria': 'INTEGER DEFAULT 0',
+                'departamento': 'VARCHAR(80)',
+                'time_nome': 'VARCHAR(80)',
+                'nivel_organograma': 'VARCHAR(40)',
+                'pagina_inicial': "VARCHAR(30) DEFAULT 'dashboard'",
+                'receber_alertas': 'INTEGER DEFAULT 1',
+                'restricao_estoques_ativa': 'INTEGER DEFAULT 0',
+                'estoque_principal_id': 'INTEGER',
+                'perfil_acesso_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_funcionarios.items():
+                if coluna_nome in colunas_funcionarios:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE funcionarios ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('permissoes_acesso'):
+            colunas_permissoes_acesso = {col['name'] for col in inspector.get_columns('permissoes_acesso')}
+            if 'permitido' not in colunas_permissoes_acesso:
+                try:
+                    db.session.execute(text('ALTER TABLE permissoes_acesso ADD COLUMN permitido INTEGER DEFAULT 1'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('estoques'):
+            colunas_estoques = {col['name'] for col in inspector.get_columns('estoques')}
+            colunas_novas_estoques = {
+                'codigo_filial': 'VARCHAR(20)',
+            }
+            for coluna_nome, definicao in colunas_novas_estoques.items():
+                if coluna_nome in colunas_estoques:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE estoques ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('movimentacoes'):
+            colunas_movimentacoes = {col['name'] for col in inspector.get_columns('movimentacoes')}
+            colunas_novas_movimentacoes = {
+                'pedido_id': 'INTEGER',
+                'recebimento_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_movimentacoes.items():
+                if coluna_nome in colunas_movimentacoes:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE movimentacoes ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('lancamentos_financeiros'):
+            colunas_lancamentos = {col['name'] for col in inspector.get_columns('lancamentos_financeiros')}
+            colunas_novas_lancamentos = {
+                'pedido_id': 'INTEGER',
+                'recebimento_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_lancamentos.items():
+                if coluna_nome in colunas_lancamentos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE lancamentos_financeiros ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('empresa_config'):
+            colunas_empresa = {col['name'] for col in inspector.get_columns('empresa_config')}
+            colunas_novas_empresa = {
+                'codigo_empresa': 'VARCHAR(20)',
+                'favicon_path': 'VARCHAR(255)',
+                'app_icon_path': 'VARCHAR(255)',
+                'separacao_entrega_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_entrega_ativa': 'INTEGER DEFAULT 1',
+                'separacao_entrega_unir_vendas_off': 'INTEGER DEFAULT 0',
+                'roteirizacao_entrega_ativa': 'INTEGER DEFAULT 1',
+                'emissao_nota_entrega_ativa': 'INTEGER DEFAULT 1',
+                'entrega_local_saida_padrao': 'VARCHAR(160)',
+                'entrega_veiculo_padrao': 'VARCHAR(80)',
+                'entrega_motorista_padrao': 'VARCHAR(120)',
+                'entrega_horario_fechamento_roteirizacao': 'VARCHAR(5)',
+                'entrega_veiculos_json': 'TEXT',
+                'entrega_terceirizadas_json': 'TEXT',
+                'entrega_regras_roteirizacao_json': 'TEXT',
+                'servicos_tecnicos_ativos': 'INTEGER DEFAULT 0',
+                'servico_montagem_instalacao_ativo': 'INTEGER DEFAULT 0',
+                'tipo_negocio': "VARCHAR(30) DEFAULT 'conveniencia'",
+                'canal_operacao': "VARCHAR(30) DEFAULT 'hibrido'",
+                'ecommerce_ativo': 'INTEGER DEFAULT 1',
+                'ecom_cor_primaria': "VARCHAR(20) DEFAULT '#ff7848'",
+                'ecom_cor_secundaria': "VARCHAR(20) DEFAULT '#ff5a2a'",
+                'ecom_card_bg': "VARCHAR(20) DEFAULT '#ffffff'",
+                'ecom_titulo_banner': 'VARCHAR(140)',
+                'ecom_subtitulo_banner': 'VARCHAR(255)',
+                'ecom_texto_promocao': 'VARCHAR(255)',
+                'ecom_banner_path': 'VARCHAR(255)',
+                'ecom_favicon_path': 'VARCHAR(255)',
+                'ecom_produto_placeholder_path': 'VARCHAR(255)',
+                'ecom_banners_json': 'TEXT',
+                'ecom_campanhas_json': 'TEXT',
+                'ecom_cupons_json': 'TEXT',
+                'ecom_footer_bg': "VARCHAR(20) DEFAULT '#1f2b38'",
+                'ecom_footer_texto': 'VARCHAR(255)',
+                'ecom_footer_contato': 'VARCHAR(255)',
+                'ecom_footer_creditos': 'VARCHAR(255)',
+                'pagamentos_pdv_json': 'TEXT',
+                'pagamentos_ecommerce_json': 'TEXT',
+                'integracoes_pdv_json': 'TEXT',
+                'integracoes_ecommerce_json': 'TEXT',
+                'reposicao_loja_fisica_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_loja_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_endereco_ativa': 'INTEGER DEFAULT 1',
+            }
+            for coluna_nome, definicao in colunas_novas_empresa.items():
+                if coluna_nome in colunas_empresa:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE empresa_config ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('funcionario_estoques'):
+            funcionario_estoques.create(bind=db.engine, checkfirst=True)
+        if inspector.has_table('pedidos'):
+            colunas_pedidos = {col['name'] for col in inspector.get_columns('pedidos')}
+            colunas_novas_pedidos = {
+                'cliente_publico_id': 'INTEGER',
+                'codigo_rastreio': 'VARCHAR(100)',
+                'transportadora': 'VARCHAR(100)',
+                'data_estimada_entrega': 'DATE',
+                'separacao_entrega_concluida': 'INTEGER DEFAULT 0',
+                'separacao_entrega_em': 'DATETIME',
+                'etiqueta_entrega_emitida_em': 'DATETIME',
+                'rota_entrega': 'VARCHAR(120)',
+                'ordem_rota': 'INTEGER',
+                'local_saida': 'VARCHAR(160)',
+                'veiculo_tipo': 'VARCHAR(80)',
+                'veiculo_placa': 'VARCHAR(20)',
+                'motorista_nome': 'VARCHAR(120)',
+                'empresa_terceirizada': 'VARCHAR(150)',
+                'nota_fiscal_numero': 'VARCHAR(60)',
+                'nota_fiscal_chave': 'VARCHAR(120)',
+                'nota_fiscal_emitida_em': 'DATETIME',
+                'saiu_para_entrega_em': 'DATETIME',
+                'entrega_concluida_em': 'DATETIME',
+            }
+            for coluna_nome, definicao in colunas_novas_pedidos.items():
+                if coluna_nome in colunas_pedidos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE pedidos ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('produtos'):
+            colunas_produtos = {col['name'] for col in inspector.get_columns('produtos')}
+            colunas_novas_produtos = {
+                'tipo_movimentacao': "VARCHAR(20) DEFAULT 'manual'",
+                'fora_picking': 'INTEGER DEFAULT 0',
+                'prioridade_reabastecimento': 'INTEGER',
+                'ultima_baixa_picking_em': 'DATETIME',
+                'servico_montagem_disponivel': 'INTEGER DEFAULT 0',
+                'servico_instalacao_disponivel': 'INTEGER DEFAULT 0',
+            }
+            for coluna_nome, definicao in colunas_novas_produtos.items():
+                if coluna_nome in colunas_produtos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE produtos ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('recebimentos_fornecedor'):
+            colunas_recebimentos = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+            if 'tipo_recebimento' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN tipo_recebimento VARCHAR(40) DEFAULT 'compra_revenda'"
+                        )
                     )
-                )
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-        if 'recebedor_funcionario_id' not in colunas_recebimentos:
-            try:
-                db.session.execute(
-                    text(
-                        "ALTER TABLE recebimentos_fornecedor "
-                        "ADD COLUMN recebedor_funcionario_id INTEGER"
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            if 'local_recebimento_id' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN local_recebimento_id INTEGER"
+                        )
                     )
-                )
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            if 'recebedor_funcionario_id' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN recebedor_funcionario_id INTEGER"
+                        )
+                    )
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('clientes_publicos'):
+            ClientePublico.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('lancamentos_financeiros'):
+            LancamentoFinanceiro.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('fundos_solicitacoes'):
+            FundoSolicitacao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('equipamentos_movimentacao'):
+            EquipamentoMovimentacao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('manutencoes_equipamento'):
+            ManutencaoEquipamento.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('ordens_servico'):
+            OrdemServico.__table__.create(bind=db.engine, checkfirst=True)
+        else:
+            colunas_ordens_servico = {col['name'] for col in inspector.get_columns('ordens_servico')}
+            colunas_novas_ordens_servico = {
+                'pedido_id': 'INTEGER',
+                'iniciado_em': 'DATETIME',
+                'retorno_tecnico': 'TEXT',
+            }
+            for coluna_nome, definicao in colunas_novas_ordens_servico.items():
+                if coluna_nome in colunas_ordens_servico:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE ordens_servico ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('chamados_internos'):
+            ChamadoInterno.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('almoxarifado_atribuicoes'):
+            AlmoxarifadoAtribuicao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('assistente_local_feedback'):
+            AssistenteLocalFeedback.__table__.create(bind=db.engine, checkfirst=True)
+
     _garantir_cargos_permanentes()
     _migrar_funcoes_legadas_para_perfis()
-    if not inspector.has_table('clientes_publicos'):
-        ClientePublico.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('lancamentos_financeiros'):
-        LancamentoFinanceiro.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('fundos_solicitacoes'):
-        FundoSolicitacao.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('equipamentos_movimentacao'):
-        EquipamentoMovimentacao.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('manutencoes_equipamento'):
-        ManutencaoEquipamento.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('ordens_servico'):
-        OrdemServico.__table__.create(bind=db.engine, checkfirst=True)
-    else:
-        colunas_ordens_servico = {col['name'] for col in inspector.get_columns('ordens_servico')}
-        colunas_novas_ordens_servico = {
-            'pedido_id': 'INTEGER',
-            'iniciado_em': 'DATETIME',
-            'retorno_tecnico': 'TEXT',
-        }
-        for coluna_nome, definicao in colunas_novas_ordens_servico.items():
-            if coluna_nome in colunas_ordens_servico:
-                continue
-            try:
-                db.session.execute(text(f'ALTER TABLE ordens_servico ADD COLUMN {coluna_nome} {definicao}'))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-    if not inspector.has_table('chamados_internos'):
-        ChamadoInterno.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('almoxarifado_atribuicoes'):
-        AlmoxarifadoAtribuicao.__table__.create(bind=db.engine, checkfirst=True)
-    if not inspector.has_table('assistente_local_feedback'):
-        AssistenteLocalFeedback.__table__.create(bind=db.engine, checkfirst=True)
     try:
         db.session.query(Produto).filter(
             Produto.imagem_path == 'img/placeholders/produto-sem-foto.svg'
@@ -1018,6 +1144,205 @@ def _paginas_ordenadas_menu():
     return paginas_ordenadas_menu
 
 
+def _menu_agrupado_para_paginas(paginas_permitidas):
+    paginas_permitidas = set(paginas_permitidas or [])
+    menu_agrupado = []
+    for secao_nome, secao_paginas in PAGINAS_SISTEMA_MENU_ORDEM:
+        itens_secao = [
+            {
+                'key': pagina_key,
+                'label': PAGINAS_SISTEMA[pagina_key],
+            }
+            for pagina_key in secao_paginas
+            if pagina_key in paginas_permitidas and pagina_key in PAGINAS_SISTEMA
+        ]
+        if itens_secao:
+            menu_agrupado.append({
+                'secao': secao_nome,
+                'paginas': itens_secao,
+            })
+    return menu_agrupado
+
+
+def _url_for_safe(endpoint, **values):
+    try:
+        return url_for(endpoint, **values)
+    except Exception:
+        return '#'
+
+
+def _item_menu_interno(*, label, endpoint, page_keys, current_page_key=None, visible=True):
+    if not visible:
+        return None
+    page_keys = tuple(page_keys or ())
+    current = bool(current_page_key and current_page_key in page_keys)
+    return {
+        'label': label,
+        'url': _url_for_safe(endpoint),
+        'current': current,
+        'page_keys': page_keys,
+    }
+
+
+def _menu_navegacao_principal(funcionario, empresa_config=None, atendimento_mesas_ativo=True, current_page_key=None):
+    paginas_permitidas = _paginas_permitidas_para_funcionario(funcionario)
+    menu = []
+
+    definicoes = [
+        {
+            'id': 'gestao',
+            'label': 'Gestão',
+            'icon': 'management',
+            'items': [
+                _item_menu_interno(label='Central do Negócio', endpoint='gestao_negocio', page_keys=('gestao_negocio',), current_page_key=current_page_key, visible='gestao_negocio' in paginas_permitidas),
+                _item_menu_interno(label='Empresa', endpoint='editar_empresa', page_keys=('empresa',), current_page_key=current_page_key, visible='empresa' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'financeiro',
+            'label': 'Financeiro',
+            'icon': 'finance',
+            'items': [
+                _item_menu_interno(label='Visão Financeira', endpoint='financeiro', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+                _item_menu_interno(label='Lançamentos Contábeis', endpoint='financeiro_lancamentos', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+                _item_menu_interno(label='Gestão Monetária e Fundos', endpoint='financeiro_fundos', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'vendas',
+            'label': 'Vendas',
+            'icon': 'sales',
+            'items': [
+                _item_menu_interno(label='PDV', endpoint='pdv', page_keys=('pdv',), current_page_key=current_page_key, visible='pdv' in paginas_permitidas),
+                _item_menu_interno(label='Pedidos', endpoint='listar_pedidos', page_keys=('pedidos',), current_page_key=current_page_key, visible='pedidos' in paginas_permitidas),
+                _item_menu_interno(label='Mesas', endpoint='listar_mesas', page_keys=('mesas',), current_page_key=current_page_key, visible=atendimento_mesas_ativo and 'mesas' in paginas_permitidas),
+                _item_menu_interno(label='Caixas', endpoint='listar_caixas', page_keys=('caixas',), current_page_key=current_page_key, visible='caixas' in paginas_permitidas),
+                _item_menu_interno(label='Garçons', endpoint='listar_garcons', page_keys=('garcons',), current_page_key=current_page_key, visible=atendimento_mesas_ativo and 'garcons' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'estoque',
+            'label': 'Estoque',
+            'icon': 'inventory',
+            'items': [
+                _item_menu_interno(label='Produtos', endpoint='listar_produtos', page_keys=('produtos',), current_page_key=current_page_key, visible='produtos' in paginas_permitidas),
+                _item_menu_interno(label='Etiquetas de Loja', endpoint='imprimir_etiquetas_loja', page_keys=('produtos',), current_page_key=current_page_key, visible='produtos' in paginas_permitidas and (not empresa_config or empresa_config.emissao_etiqueta_loja_ativa is not False)),
+                _item_menu_interno(label='Estoques', endpoint='listar_estoques', page_keys=('estoques',), current_page_key=current_page_key, visible='estoques' in paginas_permitidas),
+                _item_menu_interno(label='Categorias', endpoint='listar_categorias', page_keys=('categorias',), current_page_key=current_page_key, visible='categorias' in paginas_permitidas),
+                _item_menu_interno(label='Endereços de Estoque', endpoint='listar_enderecos_estoque', page_keys=('enderecos_estoque',), current_page_key=current_page_key, visible='enderecos_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Equipamentos', endpoint='listar_equipamentos_movimentacao', page_keys=('equipamentos_estoque',), current_page_key=current_page_key, visible='equipamentos_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Endereços Inteligentes', endpoint='enderecos_inteligentes', page_keys=('enderecos_inteligentes',), current_page_key=current_page_key, visible='enderecos_inteligentes' in paginas_permitidas),
+                _item_menu_interno(label='Etiquetas de Endereço', endpoint='imprimir_etiquetas_enderecos_estoque', page_keys=('enderecos_estoque',), current_page_key=current_page_key, visible='enderecos_estoque' in paginas_permitidas and (not empresa_config or empresa_config.emissao_etiqueta_endereco_ativa is not False)),
+                _item_menu_interno(label='Entradas e Saídas Internas', endpoint='listar_movimentacoes', page_keys=('movimentacoes',), current_page_key=current_page_key, visible='movimentacoes' in paginas_permitidas),
+                _item_menu_interno(label='Almoxarifado', endpoint='listar_almoxarifado', page_keys=('almoxarifado',), current_page_key=current_page_key, visible='almoxarifado' in paginas_permitidas),
+                _item_menu_interno(label='Relatórios', endpoint='relatorios', page_keys=('relatorios',), current_page_key=current_page_key, visible='relatorios' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'recebimento',
+            'label': 'Recebimento',
+            'icon': 'receiving',
+            'items': [
+                _item_menu_interno(label='Central de Recebimentos', endpoint='listar_recebimentos_fornecedor', page_keys=('recebimentos',), current_page_key=current_page_key, visible='recebimentos' in paginas_permitidas),
+                _item_menu_interno(label='Novo Recebimento', endpoint='novo_recebimento_fornecedor', page_keys=('recebimentos',), current_page_key=current_page_key, visible='recebimentos' in paginas_permitidas),
+                _item_menu_interno(label='Fornecedores', endpoint='listar_fornecedores', page_keys=('fornecedores',), current_page_key=current_page_key, visible='fornecedores' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'expedicao',
+            'label': 'Expedição',
+            'icon': 'shipping',
+            'items': [
+                _item_menu_interno(label='Central de Expedição', endpoint='central_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Separação e Entrega', endpoint='listar_separacao_entrega', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Roteirização', endpoint='listar_roteirizacao_entrega', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Painel em Tempo Real', endpoint='painel_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Coletor Operacional', endpoint='coletor_estoque', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Frota Própria e Terceiros', endpoint='frota_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Histórico de Transferências', endpoint='listar_transferencias_estoque', page_keys=('transferencias_estoque',), current_page_key=current_page_key, visible='transferencias_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Nova Transferência entre Lojas/CDs', endpoint='transferir_armazenamento', page_keys=('transferencias_estoque',), current_page_key=current_page_key, visible='transferencias_estoque' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'meu-rh',
+            'label': 'Meu RH',
+            'icon': 'hr',
+            'items': [
+                _item_menu_interno(label='Indicadores RH', endpoint='indicadores_rh', page_keys=('rh_indicadores',), current_page_key=current_page_key, visible='rh_indicadores' in paginas_permitidas),
+                _item_menu_interno(label='Organograma', endpoint='organograma_rh', page_keys=('rh_organograma',), current_page_key=current_page_key, visible='rh_organograma' in paginas_permitidas),
+                _item_menu_interno(label='Funcionários', endpoint='listar_funcionarios', page_keys=('funcionarios',), current_page_key=current_page_key, visible='funcionarios' in paginas_permitidas),
+                _item_menu_interno(label='Cargos', endpoint='listar_funcoes_rh', page_keys=('rh_funcoes',), current_page_key=current_page_key, visible='rh_funcoes' in paginas_permitidas),
+                _item_menu_interno(label='Perfis de Acesso', endpoint='listar_perfis_rh', page_keys=('rh_funcoes',), current_page_key=current_page_key, visible='rh_funcoes' in paginas_permitidas),
+                _item_menu_interno(label='Auditoria', endpoint='auditoria_sistema', page_keys=('auditoria',), current_page_key=current_page_key, visible='auditoria' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'ecommerce',
+            'label': 'E-commerce',
+            'icon': 'ecommerce',
+            'items': [
+                _item_menu_interno(label='Ativação da Loja', endpoint='configurar_ativacao_ecommerce', page_keys=('ecommerce_config',), current_page_key=current_page_key, visible='ecommerce_config' in paginas_permitidas),
+                _item_menu_interno(label='Tema e Loja Online', endpoint='configurar_ecommerce', page_keys=('ecommerce_config',), current_page_key=current_page_key, visible='ecommerce_config' in paginas_permitidas),
+                _item_menu_interno(label='Marketing, Campanhas e Cupons', endpoint='configurar_marketing_ecommerce', page_keys=('ecommerce_marketing',), current_page_key=current_page_key, visible='ecommerce_marketing' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'servicos',
+            'label': 'Serviços',
+            'icon': 'services',
+            'items': [
+                _item_menu_interno(label='Chamados Internos', endpoint='listar_chamados_internos', page_keys=('chamados_internos',), current_page_key=current_page_key, visible='chamados_internos' in paginas_permitidas),
+                _item_menu_interno(label='Minhas Ordens', endpoint='minhas_ordens_servico', page_keys=('servicos_tecnicos',), current_page_key=current_page_key, visible='servicos_tecnicos' in paginas_permitidas),
+                _item_menu_interno(label='Ordens de Serviço', endpoint='listar_ordens_servico', page_keys=('servicos_tecnicos',), current_page_key=current_page_key, visible='servicos_tecnicos' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'ajuda',
+            'label': 'Ajuda',
+            'icon': 'help',
+            'items': [
+                _item_menu_interno(label='Guia do Sistema', endpoint='central_ajuda', page_keys=('ajuda',), current_page_key=current_page_key, visible='ajuda' in paginas_permitidas),
+            ],
+        },
+    ]
+
+    for grupo in definicoes:
+        itens = [item for item in grupo['items'] if item]
+        if not itens:
+            continue
+        menu.append({
+            'id': grupo['id'],
+            'label': grupo['label'],
+            'icon': grupo['icon'],
+            'items': itens,
+            'current': any(item['current'] for item in itens),
+        })
+    return menu
+
+
+def _registrar_debug_menu(funcionario, paginas_permitidas, menu_agrupado=None):
+    if not funcionario or not app.config.get('MENU_DEBUG_ENABLED'):
+        return
+    if not has_request_context():
+        return
+
+    menu_agrupado = menu_agrupado if menu_agrupado is not None else _menu_agrupado_para_paginas(paginas_permitidas)
+    secoes_resumo = {
+        item['secao']: [pagina['key'] for pagina in item['paginas']]
+        for item in menu_agrupado
+    }
+    app.logger.info(
+        'menu_debug funcionario_id=%s role=%s controle=%s perfil_acesso_id=%s endpoint=%s paginas=%s secoes=%s',
+        getattr(funcionario, 'id', None),
+        getattr(funcionario, 'role', None),
+        getattr(funcionario, 'controle_acesso_ativo', None),
+        getattr(funcionario, 'perfil_acesso_id', None),
+        request.endpoint,
+        sorted(set(paginas_permitidas or [])),
+        secoes_resumo,
+    )
+
+
 def _tabela_existe(nome_tabela):
     try:
         return inspect(db.engine).has_table(nome_tabela)
@@ -1039,23 +1364,48 @@ def _extrair_permissoes_padrao_form():
 
 
 def funcionario_tem_acesso(funcionario, endpoint):
-    if not funcionario:
-        return False
-    if funcionario.role == 'admin':
-        return True
-    if not funcionario.controle_acesso_ativo:
-        return True
-
-    pagina = ENDPOINT_TO_PAGINA.get(endpoint)
-    if not pagina:
-        if request.path.startswith('/api/'):
-            return False
-        return True
-
-    return pagina in _paginas_efetivas_funcionario(funcionario)
+    permissao_service = PermissaoService(resolver_paginas=_paginas_efetivas_funcionario)
+    return permissao_service.tem_acesso(
+        funcionario,
+        endpoint,
+        is_api_request=request.path.startswith('/api/'),
+    )
 
 
 def _resumir_payload_requisicao():
+    chaves_sensiveis = {
+        'senha',
+        'confirmacao_senha',
+        'password',
+        'cpf',
+        'rg',
+        'celular',
+        'telefone',
+        'cep',
+        'endereco',
+        'token',
+        'csrf_token',
+    }
+
+    def _is_sensitive_key(chave):
+        chave_norm = (chave or '').strip().lower()
+        return any(item in chave_norm for item in chaves_sensiveis)
+
+    def _flatten_payload(payload, prefix=''):
+        if isinstance(payload, dict):
+            for chave, valor in payload.items():
+                chave_composta = f'{prefix}.{chave}' if prefix else str(chave)
+                if _is_sensitive_key(chave_composta) or _is_sensitive_key(chave):
+                    continue
+                yield from _flatten_payload(valor, chave_composta)
+            return
+        if isinstance(payload, list):
+            for idx, item in enumerate(payload):
+                chave_composta = f'{prefix}[{idx}]' if prefix else f'[{idx}]'
+                yield from _flatten_payload(item, chave_composta)
+            return
+        yield prefix, payload
+
     dados = {}
     try:
         if request.is_json:
@@ -1067,11 +1417,9 @@ def _resumir_payload_requisicao():
     except Exception:
         dados = {}
 
-    chaves_sensiveis = {'senha', 'confirmacao_senha', 'password', 'token', 'csrf_token'}
     resumo = []
-    for chave, valor in dados.items():
-        chave_norm = (chave or '').strip().lower()
-        if chave_norm in chaves_sensiveis:
+    for chave, valor in _flatten_payload(dados):
+        if not chave or _is_sensitive_key(chave):
             continue
         texto_valor = str(valor)
         if len(texto_valor) > 80:
@@ -1197,6 +1545,7 @@ def _titulo_tela_atual():
         'financeiro_fundos': 'Gestão Monetária e Fundos',
         'pdv': 'PDV',
         'configurar_ecommerce': 'Tema e Loja Online',
+        'configurar_marketing_ecommerce': 'Promocoes e Campanhas',
         'configurar_ativacao_ecommerce': 'Ativação da Loja',
         'central_expedicao': 'Central de Expedição',
         'frota_expedicao': 'Frota Própria e Terceiros',
@@ -1276,6 +1625,61 @@ def _normalizar_linhas_configuracao(valor_texto, tamanho_max=200):
     return linhas
 
 
+def _count_recebimentos_by_status_safe(status):
+    try:
+        inspector = inspect(db.engine)
+        if not inspector.has_table('recebimentos_fornecedor'):
+            return 0
+        colunas = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+        if 'status' not in colunas:
+            return 0
+        resultado = db.session.execute(
+            text("SELECT COUNT(*) FROM recebimentos_fornecedor WHERE status = :status"),
+            {'status': status},
+        ).scalar()
+        return int(resultado or 0)
+    except Exception:
+        return 0
+
+
+def _oldest_pending_storage_recebimento_safe():
+    try:
+        inspector = inspect(db.engine)
+        if not inspector.has_table('recebimentos_fornecedor'):
+            return None
+        colunas = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+        if 'status' not in colunas:
+            return None
+
+        order_parts = []
+        if 'conferido_em' in colunas:
+            order_parts.append('conferido_em ASC')
+        if 'criado_em' in colunas:
+            order_parts.append('criado_em ASC')
+        if not order_parts:
+            order_parts.append('id ASC')
+
+        select_cols = ['id']
+        if 'conferido_em' in colunas:
+            select_cols.append('conferido_em')
+        if 'criado_em' in colunas:
+            select_cols.append('criado_em')
+
+        sql = (
+            f"SELECT {', '.join(select_cols)} "
+            "FROM recebimentos_fornecedor "
+            "WHERE status = :status "
+            f"ORDER BY {', '.join(order_parts)} "
+            "LIMIT 1"
+        )
+        return db.session.execute(
+            text(sql),
+            {'status': RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM},
+        ).mappings().first()
+    except Exception:
+        return None
+
+
 def _parse_datetime_local(valor):
     valor = (valor or '').strip()
     if not valor:
@@ -1337,6 +1741,7 @@ register_auth_routes(app, {
     '_gerar_numero_cadastro_unico': _gerar_numero_cadastro_unico,
     '_gerar_matricula_unica': _gerar_matricula_unica,
     '_listar_cadastros_organograma': _listar_cadastros_organograma,
+    '_paginas_permitidas_para_funcionario': _paginas_permitidas_para_funcionario,
     'sincronizar_garcom_funcionario': sincronizar_garcom_funcionario,
     'registrar_evento_auditoria': registrar_evento_auditoria,
     '_bootstrap_admin_configurado': _bootstrap_admin_configurado,
@@ -1384,7 +1789,18 @@ def index():
         if session.get('funcionario_id'):
             return redirect(url_for('boas_vindas'))
         return redirect(url_for('login'))
-    resumo_carrinho = obter_resumo_carrinho_site()
+    cliente_publico = None
+    cliente_publico_id = session.get('site_cliente_id')
+    if cliente_publico_id:
+        query_cliente_publico = ClientePublico.query
+        inspector = inspect(db.engine)
+        tabelas = set(inspector.get_table_names())
+        if 'clientes_enderecos' in tabelas:
+            query_cliente_publico = query_cliente_publico.options(selectinload(ClientePublico.enderecos))
+        if 'clientes_favoritos' in tabelas:
+            query_cliente_publico = query_cliente_publico.options(selectinload(ClientePublico.favoritos))
+        cliente_publico = query_cliente_publico.get(cliente_publico_id)
+    resumo_carrinho = obter_resumo_carrinho_site(cliente_publico)
     produtos_disponiveis = Produto.query.filter(
         Produto.ativo.is_(True),
         Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES)
@@ -1417,6 +1833,8 @@ def index():
         banners_ativos.append({
             'titulo': (banner.get('titulo') or '').strip(),
             'subtitulo': (banner.get('subtitulo') or '').strip(),
+            'link_url': (banner.get('link_url') or '').strip(),
+            'link_label': (banner.get('link_label') or '').strip(),
             'image_path': image_path,
         })
 
@@ -1424,6 +1842,8 @@ def index():
         banners_ativos.append({
             'titulo': empresa.ecom_titulo_banner or 'Destaque da loja',
             'subtitulo': empresa.ecom_subtitulo_banner or '',
+            'link_url': '#ofertas',
+            'link_label': 'Ver ofertas',
             'image_path': empresa.ecom_banner_path,
         })
 
@@ -1447,6 +1867,61 @@ def index():
     if not campanha_principal and empresa:
         campanha_principal = empresa.ecom_texto_promocao
 
+    def _normalizar_chave_categoria_imagem(valor):
+        texto = unicodedata.normalize('NFKD', (valor or '').strip())
+        texto = ''.join(ch for ch in texto if not unicodedata.combining(ch))
+        texto = re.sub(r'[^a-zA-Z0-9]+', ' ', texto).strip().lower()
+        return texto
+
+    def _mapear_imagens_categoria_existentes():
+        relative_dir = os.path.join('uploads', 'categorias')
+        absolute_dir = os.path.join(app.static_folder, relative_dir)
+        imagens = {}
+        if not os.path.isdir(absolute_dir):
+            return imagens
+
+        for nome_arquivo in sorted(os.listdir(absolute_dir)):
+            caminho_absoluto = os.path.join(absolute_dir, nome_arquivo)
+            if not os.path.isfile(caminho_absoluto):
+                continue
+            _, ext = os.path.splitext(nome_arquivo.lower())
+            if ext not in {'.png', '.jpg', '.jpeg', '.webp', '.gif'}:
+                continue
+            chave = _normalizar_chave_categoria_imagem(
+                os.path.splitext(nome_arquivo)[0].replace('_', ' ').replace('-', ' ')
+            )
+            if not chave:
+                continue
+            imagens.setdefault(chave, os.path.join(relative_dir, nome_arquivo).replace('\\', '/'))
+        return imagens
+
+    def _resolver_imagem_categoria_vitrine(categoria, imagens_existentes):
+        caminho_salvo = (getattr(categoria, 'imagem_path', None) or '').strip().replace('\\', '/')
+        if caminho_salvo:
+            return caminho_salvo
+        return imagens_existentes.get(_normalizar_chave_categoria_imagem(getattr(categoria, 'nome', '')))
+
+    categorias_vitrine = []
+    imagens_categoria_existentes = _mapear_imagens_categoria_existentes()
+    categorias_home = Categoria.query.order_by(Categoria.nome.asc()).all()
+    for categoria in categorias_home:
+        produtos_categoria = Produto.query.filter(
+            Produto.categoria_id == categoria.id,
+            Produto.ativo.is_(True),
+            Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES)
+        ).order_by(
+            Produto.atualizado_em.desc(),
+            Produto.criado_em.desc()
+        ).limit(8).all()
+        if not produtos_categoria:
+            continue
+        categorias_vitrine.append({
+            'categoria': categoria,
+            'categoria_imagem_path': _resolver_imagem_categoria_vitrine(categoria, imagens_categoria_existentes),
+            'produtos': produtos_categoria,
+            'ancora': f'categoria-{categoria.id}',
+        })
+
     return render_template(
         'public/home_varejo.html',
         app_name=APP_NAME,
@@ -1456,6 +1931,8 @@ def index():
         banners_ativos=banners_ativos,
         campanhas_ativas=campanhas_ativas,
         campanha_principal=campanha_principal,
+        categorias_vitrine=categorias_vitrine,
+        cliente_publico=cliente_publico,
     )
 
 
@@ -1614,23 +2091,18 @@ def gestao_negocio():
     cargos_rh_ativos = FuncaoRH.query.filter_by(ativo=True).count()
     perfis_acesso_ativos = PerfilAcesso.query.filter_by(ativo=True).count()
     pedidos_abertos = Pedido.query.filter(Pedido.status.in_(['aberto', 'em_preparo', 'entregue'])).count()
-    pendencias_armazenagem = RecebimentoFornecedor.query.filter_by(
-        status=RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-    ).count()
-    recebimento_armazenagem_mais_antigo = RecebimentoFornecedor.query.filter_by(
-        status=RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-    ).order_by(
-        RecebimentoFornecedor.conferido_em.asc(),
-        RecebimentoFornecedor.criado_em.asc(),
-    ).first()
+    pendencias_armazenagem = _count_recebimentos_by_status_safe(
+        RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+    )
+    recebimento_armazenagem_mais_antigo = _oldest_pending_storage_recebimento_safe()
     if recebimento_armazenagem_mais_antigo:
         referencia_pendencia_armazenagem = (
-            recebimento_armazenagem_mais_antigo.conferido_em
-            or recebimento_armazenagem_mais_antigo.criado_em
+            recebimento_armazenagem_mais_antigo.get('conferido_em')
+            or recebimento_armazenagem_mais_antigo.get('criado_em')
         )
         detalhe_pendencia_armazenagem = (
             f'{pendencias_armazenagem} recebimento(s) aguardando armazenagem. '
-            f'Mais antigo desde {referencia_pendencia_armazenagem.strftime("%d/%m/%Y %H:%M")}.'
+            f'Mais antigo desde {referencia_pendencia_armazenagem.strftime("%d/%m/%Y %H:%M") if referencia_pendencia_armazenagem else "data indisponivel"}.'
         )
     else:
         detalhe_pendencia_armazenagem = 'Nenhum recebimento aguardando armazenagem.'
@@ -1701,7 +2173,8 @@ def gestao_negocio():
     atalhos_dono = [
         {'titulo': 'Configuracoes da Empresa', 'descricao': 'Dados, operacao, entrega e servicos.', 'url': url_for('editar_empresa')},
         {'titulo': 'Ativacao da Loja Online', 'descricao': 'Liga ou desliga a vitrine publica do e-commerce.', 'url': url_for('configurar_ativacao_ecommerce')},
-        {'titulo': 'Tema e Loja Online', 'descricao': 'Cores, banners, promocoes, checkout e rodape.', 'url': url_for('configurar_ecommerce')},
+        {'titulo': 'Tema e Loja Online', 'descricao': 'Cores, banners, checkout e rodape da vitrine.', 'url': url_for('configurar_ecommerce')},
+        {'titulo': 'Promocoes e Campanhas', 'descricao': 'Campanhas, cupons e temas sazonais para datas especiais.', 'url': url_for('configurar_marketing_ecommerce')},
         {'titulo': 'Cargos da Equipe', 'descricao': 'Estrutura organizacional usada nos cadastros e no organograma.', 'url': url_for('listar_funcoes_rh')},
         {'titulo': 'Perfis de Acesso', 'descricao': 'Conjuntos padrao de paginas para aplicar por colaborador.', 'url': url_for('listar_perfis_rh')},
         {'titulo': 'Central de Expedicao', 'descricao': 'Separacao, rotas, etiquetas e frota.', 'url': url_for('central_expedicao')},
@@ -1735,8 +2208,14 @@ def financeiro():
         default_days=7
     )
     analytics = _coletar_dashboard_analytics(inicio_periodo, fim_periodo)
+    cache = extensions.cache
+    cache_key = f'view:financeiro:{inicio_periodo.strftime("%Y%m%d")}:{fim_periodo.strftime("%Y%m%d")}'
+    if cache is not None:
+        html = cache.get(cache_key)
+        if html is not None:
+            return html
 
-    return render_template(
+    html = render_template(
         'financeiro/index.html',
         periodo_dias=analytics['periodo_dias'],
         data_inicial=data_inicial_str,
@@ -1753,6 +2232,8 @@ def financeiro():
         lucro_bruto_periodo=analytics['lucro_bruto_periodo'],
         margem_bruta_pct=analytics['margem_bruta_pct'],
         despesas_operacionais_periodo=analytics['despesas_operacionais_periodo'],
+        movimentacoes_financeiras_excluidas_periodo=analytics['movimentacoes_financeiras_excluidas_periodo'],
+        categorias_excluidas_resultado=analytics['categorias_excluidas_resultado'],
         ajustes_financeiros_periodo=analytics['ajustes_financeiros_periodo'],
         resultado_operacional_periodo=analytics['resultado_operacional_periodo'],
         margem_operacional_pct=analytics['margem_operacional_pct'],
@@ -1770,6 +2251,9 @@ def financeiro():
         desempenho_caixas=analytics['desempenho_caixas'],
         metodos_pagamento=analytics['metodos_pagamento']
     )
+    if cache is not None:
+        cache.set(cache_key, html, timeout=300)
+    return html
 
 
 @app.route('/financeiro/fundos', methods=['GET', 'POST'])
@@ -1781,39 +2265,23 @@ def financeiro_fundos():
         fundo_id = request.form.get('fundo_id', type=int)
 
         if acao == 'solicitar':
-            tipo = (request.form.get('tipo') or '').strip().lower()
-            descricao = (request.form.get('descricao') or '').strip()
-            categoria = (request.form.get('categoria') or '').strip() or None
-            centro_custo = (request.form.get('centro_custo') or '').strip() or None
-            referencia_documento = (request.form.get('referencia_documento') or '').strip() or None
             valor_texto = (request.form.get('valor') or '').strip().replace('.', '').replace(',', '.')
             try:
                 valor = float(valor_texto)
             except Exception:
                 valor = 0.0
 
-            if tipo not in FundoSolicitacao.TIPOS_VALIDOS:
-                flash('Tipo de fundo invalido.', 'danger')
-                return redirect(url_for('financeiro_fundos'))
-            if not descricao:
-                flash('Descricao da solicitacao e obrigatoria.', 'danger')
-                return redirect(url_for('financeiro_fundos'))
-            if valor <= 0:
-                flash('Valor deve ser maior que zero.', 'danger')
-                return redirect(url_for('financeiro_fundos'))
-
-            fundo = FundoSolicitacao(
-                tipo=tipo,
-                descricao=descricao,
-                categoria=categoria,
-                valor=valor,
-                centro_custo=centro_custo,
-                referencia_documento=referencia_documento,
-                status=FundoSolicitacao.STATUS_SOLICITADA,
-                solicitado_por_id=(funcionario.id if funcionario else None),
-            )
             try:
-                db.session.add(fundo)
+                fundo = criar_solicitacao_fundo(
+                    tipo=request.form.get('tipo'),
+                    descricao=request.form.get('descricao'),
+                    categoria=request.form.get('categoria'),
+                    centro_custo=normalize_cost_center(request.form.get('centro_custo')),
+                    referencia_documento=request.form.get('referencia_documento'),
+                    valor=valor,
+                    solicitado_por_id=(funcionario.id if funcionario else None),
+                    actor=funcionario,
+                )
                 db.session.commit()
                 flash(f'Solicitacao de fundo #{fundo.id} registrada.', 'success')
             except Exception as exc:
@@ -1826,62 +2294,52 @@ def financeiro_fundos():
             if funcionario.role not in {'admin', 'gerente'}:
                 flash('Somente admin/gerente pode aprovar solicitacoes.', 'danger')
                 return redirect(url_for('financeiro_fundos'))
-            if fundo.status != FundoSolicitacao.STATUS_SOLICITADA:
-                flash('Apenas solicitacoes pendentes podem ser aprovadas.', 'warning')
-                return redirect(url_for('financeiro_fundos'))
-            fundo.status = FundoSolicitacao.STATUS_APROVADA
-            fundo.aprovado_por_id = funcionario.id if funcionario else None
-            fundo.aprovado_em = datetime.utcnow()
-            db.session.commit()
-            flash(f'Solicitacao #{fundo.id} aprovada.', 'success')
+            try:
+                aplicar_acao_fundo(
+                    fundo,
+                    acao='aprovar',
+                    actor=funcionario,
+                )
+                db.session.commit()
+                flash(f'Solicitacao #{fundo.id} aprovada.', 'success')
+            except AppError as exc:
+                db.session.rollback()
+                flash(str(exc), 'warning')
             return redirect(url_for('financeiro_fundos'))
 
         if acao == 'rejeitar':
             if funcionario.role not in {'admin', 'gerente'}:
                 flash('Somente admin/gerente pode rejeitar solicitacoes.', 'danger')
                 return redirect(url_for('financeiro_fundos'))
-            if fundo.status != FundoSolicitacao.STATUS_SOLICITADA:
-                flash('Apenas solicitacoes pendentes podem ser rejeitadas.', 'warning')
-                return redirect(url_for('financeiro_fundos'))
-            fundo.status = FundoSolicitacao.STATUS_REJEITADA
-            fundo.aprovado_por_id = funcionario.id if funcionario else None
-            fundo.aprovado_em = datetime.utcnow()
-            fundo.motivo_rejeicao = (request.form.get('motivo_rejeicao') or '').strip() or None
-            db.session.commit()
-            flash(f'Solicitacao #{fundo.id} rejeitada.', 'warning')
+            try:
+                aplicar_acao_fundo(
+                    fundo,
+                    acao='rejeitar',
+                    actor=funcionario,
+                    motivo_rejeicao=request.form.get('motivo_rejeicao'),
+                )
+                db.session.commit()
+                flash(f'Solicitacao #{fundo.id} rejeitada.', 'warning')
+            except AppError as exc:
+                db.session.rollback()
+                flash(str(exc), 'warning')
             return redirect(url_for('financeiro_fundos'))
 
         if acao == 'liberar':
             if funcionario.role not in {'admin', 'gerente'}:
                 flash('Somente admin/gerente pode liberar fundos.', 'danger')
                 return redirect(url_for('financeiro_fundos'))
-            if fundo.status not in {FundoSolicitacao.STATUS_APROVADA, FundoSolicitacao.STATUS_SOLICITADA}:
-                flash('Somente solicitacao aprovada/presente pode ser liberada.', 'warning')
-                return redirect(url_for('financeiro_fundos'))
             try:
-                tipo_lanc = LancamentoFinanceiro.TIPO_RECEITA if fundo.tipo == FundoSolicitacao.TIPO_APORTE else LancamentoFinanceiro.TIPO_DESPESA
-                lancamento = LancamentoFinanceiro(
-                    tipo=tipo_lanc,
-                    categoria=fundo.categoria or 'liberacao_fundos',
-                    descricao=f'Liberacao de fundo #{fundo.id} - {fundo.descricao}',
-                    valor=float(fundo.valor or 0.0),
-                    data_competencia=datetime.utcnow().date(),
-                    incluir_contabilidade=True,
-                    referencia_documento=fundo.referencia_documento,
-                    centro_custo=fundo.centro_custo,
-                    criado_por_id=(funcionario.id if funcionario else None),
+                aplicar_acao_fundo(
+                    fundo,
+                    acao='liberar',
+                    actor=funcionario,
                 )
-                db.session.add(lancamento)
-                db.session.flush()
-                fundo.status = FundoSolicitacao.STATUS_LIBERADA
-                if not fundo.aprovado_por_id:
-                    fundo.aprovado_por_id = funcionario.id if funcionario else None
-                    fundo.aprovado_em = datetime.utcnow()
-                fundo.liberado_por_id = funcionario.id if funcionario else None
-                fundo.liberado_em = datetime.utcnow()
-                fundo.lancamento_financeiro_id = lancamento.id
                 db.session.commit()
                 flash(f'Fundo #{fundo.id} liberado e lancamento financeiro gerado.', 'success')
+            except AppError as exc:
+                db.session.rollback()
+                flash(str(exc), 'warning')
             except Exception as exc:
                 db.session.rollback()
                 flash(f'Erro ao liberar fundo: {str(exc)}', 'danger')
@@ -1922,7 +2380,11 @@ def financeiro_lancamentos():
         descricao = (request.form.get('descricao') or '').strip()
         categoria = (request.form.get('categoria') or '').strip() or None
         referencia_documento = (request.form.get('referencia_documento') or '').strip() or None
-        centro_custo = (request.form.get('centro_custo') or '').strip() or None
+        try:
+            centro_custo = normalize_cost_center(request.form.get('centro_custo'))
+        except ValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(url_for('financeiro_lancamentos'))
         data_competencia = _parse_date_iso(request.form.get('data_competencia')) or datetime.utcnow().date()
         incluir_contabilidade = (request.form.get('incluir_contabilidade') == 'on')
 
@@ -1965,21 +2427,22 @@ def financeiro_lancamentos():
             flash('Ajuste deve ter valor diferente de zero.', 'danger')
             return redirect(url_for('financeiro_lancamentos'))
 
-        novo = LancamentoFinanceiro(
-            tipo=tipo,
-            categoria=categoria,
-            descricao=descricao,
-            valor=valor,
-            data_competencia=data_competencia,
-            incluir_contabilidade=incluir_contabilidade,
-            referencia_documento=referencia_documento,
-            centro_custo=centro_custo,
-            produto_id=(produto.id if produto else produto_id),
-            quantidade=quantidade if quantidade and quantidade > 0 else None,
-            criado_por_id=(funcionario.id if funcionario else None),
-        )
         try:
-            db.session.add(novo)
+            criar_lancamento_financeiro(
+                tipo=tipo,
+                categoria=categoria,
+                descricao=descricao,
+                valor=valor,
+                data_competencia=data_competencia,
+                incluir_contabilidade=incluir_contabilidade,
+                referencia_documento=referencia_documento,
+                centro_custo=centro_custo,
+                produto=produto,
+                produto_id=produto_id,
+                quantidade=quantidade,
+                criado_por_id=(funcionario.id if funcionario else None),
+                actor=funcionario,
+            )
             db.session.commit()
             flash('Lancamento financeiro registrado com sucesso.', 'success')
         except Exception as exc:
@@ -2033,6 +2496,34 @@ def financeiro_lancamentos():
         total_ajustes=total_ajustes,
         saldo_periodo=saldo_periodo,
     )
+
+
+@app.route('/api/rastreabilidade/pedidos/<int:pedido_id>/timeline')
+@require_role('admin', 'gerente', 'caixa', 'operador')
+def api_timeline_pedido(pedido_id):
+    pedido = Pedido.query.get_or_404(pedido_id)
+    timeline = build_timeline(pedido=pedido)
+    return jsonify({
+        'pedido_id': pedido.id,
+        'timeline': [
+            {**item, 'quando': (item['quando'].isoformat() if item.get('quando') else None)}
+            for item in timeline
+        ],
+    })
+
+
+@app.route('/api/rastreabilidade/recebimentos/<int:recebimento_id>/timeline')
+@require_role('admin', 'gerente', 'caixa', 'operador')
+def api_timeline_recebimento(recebimento_id):
+    recebimento = RecebimentoFornecedor.query.get_or_404(recebimento_id)
+    timeline = build_timeline(recebimento=recebimento)
+    return jsonify({
+        'recebimento_id': recebimento.id,
+        'timeline': [
+            {**item, 'quando': (item['quando'].isoformat() if item.get('quando') else None)}
+            for item in timeline
+        ],
+    })
 
 
 @app.route('/financeiro/lancamentos/<int:lancamento_id>/marcar-enviado', methods=['POST'])
@@ -2260,9 +2751,9 @@ def editar_empresa():
             )
             empresa.entrega_veiculos_json = json.dumps(veiculos_linhas, ensure_ascii=False) if veiculos_linhas else None
             empresa.entrega_terceirizadas_json = json.dumps(terceirizadas_linhas, ensure_ascii=False) if terceirizadas_linhas else None
-            empresa.pagamentos_pdv_json = payment_text_to_json(
+            empresa.pagamentos_pdv_json = validate_payment_options_configuration(
                 request.form.get('pagamentos_pdv_config', ''),
-                'pdv'
+                channel='pdv',
             )
             empresa.integracoes_pdv_json = api_integrations_text_to_json(
                 request.form.get('integracoes_pdv_config', '')
@@ -2442,23 +2933,11 @@ def configurar_ecommerce():
             slots.append({
                 'titulo': item.get('titulo') or '',
                 'subtitulo': item.get('subtitulo') or '',
+                'link_url': item.get('link_url') or '',
+                'link_label': item.get('link_label') or '',
                 'inicio_em': item.get('inicio_em') or '',
                 'fim_em': item.get('fim_em') or '',
                 'image_path': item.get('image_path') or '',
-                'ativo': bool(item.get('ativo', False)),
-            })
-        return slots
-
-    def _montar_slots_campanhas():
-        slots = []
-        origem = _carregar_json_lista(empresa.ecom_campanhas_json)
-        for i in range(5):
-            item = origem[i] if i < len(origem) and isinstance(origem[i], dict) else {}
-            slots.append({
-                'nome': item.get('nome') or '',
-                'texto': item.get('texto') or '',
-                'inicio_em': item.get('inicio_em') or '',
-                'fim_em': item.get('fim_em') or '',
                 'ativo': bool(item.get('ativo', False)),
             })
         return slots
@@ -2481,9 +2960,12 @@ def configurar_ecommerce():
                 request.form.get('ecom_cor_secundaria'),
                 empresa.ecom_cor_secundaria or '#ff5a2a'
             )
+            empresa.ecom_card_bg = _normalizar_cor_hex(
+                request.form.get('ecom_card_bg'),
+                empresa.ecom_card_bg or '#ffffff'
+            )
             empresa.ecom_titulo_banner = request.form.get('ecom_titulo_banner', '').strip() or None
             empresa.ecom_subtitulo_banner = request.form.get('ecom_subtitulo_banner', '').strip() or None
-            empresa.ecom_texto_promocao = request.form.get('ecom_texto_promocao', '').strip() or None
             empresa.ecom_footer_bg = _normalizar_cor_hex(
                 request.form.get('ecom_footer_bg'),
                 empresa.ecom_footer_bg or '#1f2b38'
@@ -2491,9 +2973,9 @@ def configurar_ecommerce():
             empresa.ecom_footer_texto = request.form.get('ecom_footer_texto', '').strip() or None
             empresa.ecom_footer_contato = request.form.get('ecom_footer_contato', '').strip() or None
             empresa.ecom_footer_creditos = request.form.get('ecom_footer_creditos', '').strip() or None
-            empresa.pagamentos_ecommerce_json = payment_text_to_json(
+            empresa.pagamentos_ecommerce_json = validate_payment_options_configuration(
                 request.form.get('pagamentos_ecommerce_config', ''),
-                'ecommerce'
+                channel='ecommerce',
             )
             empresa.integracoes_ecommerce_json = api_integrations_text_to_json(
                 request.form.get('integracoes_ecommerce_config', '')
@@ -2559,6 +3041,8 @@ def configurar_ecommerce():
             for idx in range(5):
                 titulo = (request.form.get(f'banner_titulo_{idx}') or '').strip()
                 subtitulo = (request.form.get(f'banner_subtitulo_{idx}') or '').strip()
+                link_url = (request.form.get(f'banner_link_url_{idx}') or '').strip()
+                link_label = (request.form.get(f'banner_link_label_{idx}') or '').strip()
                 inicio_em = (request.form.get(f'banner_inicio_{idx}') or '').strip()
                 fim_em = (request.form.get(f'banner_fim_{idx}') or '').strip()
                 image_path_atual = (request.form.get(f'banner_path_{idx}') or '').strip() or None
@@ -2591,45 +3075,21 @@ def configurar_ecommerce():
                     flash(f'Banner {idx + 1}: o fim da vigência não pode ser menor que o início.', 'error')
                     return redirect(url_for('configurar_ecommerce'))
 
-                if not any([titulo, subtitulo, image_path_slot, inicio_em, fim_em]):
+                if not any([titulo, subtitulo, link_url, link_label, image_path_slot, inicio_em, fim_em]):
                     continue
 
                 banners_slots.append({
                     'titulo': titulo,
                     'subtitulo': subtitulo,
+                    'link_url': link_url,
+                    'link_label': link_label,
                     'inicio_em': inicio_em,
                     'fim_em': fim_em,
                     'image_path': image_path_slot,
                     'ativo': ativo,
                 })
 
-            campanhas_slots = []
-            for idx in range(5):
-                nome = (request.form.get(f'campanha_nome_{idx}') or '').strip()
-                texto = (request.form.get(f'campanha_texto_{idx}') or '').strip()
-                inicio_em = (request.form.get(f'campanha_inicio_{idx}') or '').strip()
-                fim_em = (request.form.get(f'campanha_fim_{idx}') or '').strip()
-                ativo = (request.form.get(f'campanha_ativa_{idx}') == 'on')
-
-                if not any([nome, texto, inicio_em, fim_em]):
-                    continue
-
-                inicio_data = _parse_date_iso(inicio_em)
-                fim_data = _parse_date_iso(fim_em)
-                if fim_data and inicio_data and fim_data < inicio_data:
-                    flash(f'Campanha {idx + 1}: o fim da vigência não pode ser menor que o início.', 'error')
-                    return redirect(url_for('configurar_ecommerce'))
-
-                campanhas_slots.append({
-                    'nome': nome,
-                    'texto': texto,
-                    'inicio_em': inicio_em,
-                    'fim_em': fim_em,
-                    'ativo': ativo,
-                })
-
             empresa.ecom_banners_json = json.dumps(banners_slots, ensure_ascii=False)
-            empresa.ecom_campanhas_json = json.dumps(campanhas_slots, ensure_ascii=False)
 
             placeholder_alvos = [None, '', 'img/placeholders/imgindisponivel.png']
             if produto_placeholder_anterior:
@@ -2702,9 +3162,159 @@ def configurar_ecommerce():
         'sistema/ecommerce_config.html',
         empresa=empresa,
         banners_config=_montar_slots_banners(),
-        campanhas_config=_montar_slots_campanhas(),
         pagamentos_ecommerce_texto=payment_options_to_text(empresa.pagamentos_ecommerce_json, 'ecommerce'),
         integracoes_ecommerce_texto=api_integrations_to_text(empresa.integracoes_ecommerce_json),
+    )
+
+
+@app.route('/ecommerce-marketing', methods=['GET', 'POST'])
+@require_role('admin', 'gerente')
+def configurar_marketing_ecommerce():
+    empresa = EmpresaConfig.query.first()
+    if not empresa:
+        empresa = EmpresaConfig()
+        db.session.add(empresa)
+        db.session.commit()
+
+    temas_sazonais = [
+        ('neutro', 'Neutro'),
+        ('natal', 'Natal'),
+        ('pascoa', 'Pascoa'),
+        ('ano_novo', 'Ano Novo'),
+        ('dia_das_maes', 'Dia das Maes'),
+        ('dia_dos_pais', 'Dia dos Pais'),
+        ('black_friday', 'Black Friday'),
+        ('volta_as_aulas', 'Volta as aulas'),
+        ('festa_junina', 'Festa junina'),
+    ]
+
+    tipos_desconto_cupom = [
+        ('percentual', 'Percentual (%)'),
+        ('fixo', 'Valor fixo (R$)'),
+        ('frete', 'Frete promocional'),
+    ]
+
+    def _montar_slots_campanhas():
+        slots = []
+        origem = _carregar_json_lista(empresa.ecom_campanhas_json)
+        for i in range(5):
+            item = origem[i] if i < len(origem) and isinstance(origem[i], dict) else {}
+            slots.append({
+                'nome': item.get('nome') or '',
+                'texto': item.get('texto') or '',
+                'tema_sazonal': item.get('tema_sazonal') or 'neutro',
+                'inicio_em': item.get('inicio_em') or '',
+                'fim_em': item.get('fim_em') or '',
+                'ativo': bool(item.get('ativo', False)),
+            })
+        return slots
+
+    def _montar_slots_cupons():
+        slots = []
+        origem = _carregar_json_lista(empresa.ecom_cupons_json)
+        for i in range(5):
+            item = origem[i] if i < len(origem) and isinstance(origem[i], dict) else {}
+            slots.append({
+                'codigo': item.get('codigo') or '',
+                'descricao': item.get('descricao') or '',
+                'tipo_desconto': item.get('tipo_desconto') or 'percentual',
+                'valor': item.get('valor') or '',
+                'inicio_em': item.get('inicio_em') or '',
+                'fim_em': item.get('fim_em') or '',
+                'ativo': bool(item.get('ativo', False)),
+            })
+        return slots
+
+    if request.method == 'POST':
+        try:
+            empresa.ecom_texto_promocao = request.form.get('ecom_texto_promocao', '').strip() or None
+
+            campanhas_slots = []
+            for idx in range(5):
+                nome = (request.form.get(f'campanha_nome_{idx}') or '').strip()
+                texto = (request.form.get(f'campanha_texto_{idx}') or '').strip()
+                tema_sazonal = (request.form.get(f'campanha_tema_{idx}') or 'neutro').strip() or 'neutro'
+                inicio_em = (request.form.get(f'campanha_inicio_{idx}') or '').strip()
+                fim_em = (request.form.get(f'campanha_fim_{idx}') or '').strip()
+                ativo = (request.form.get(f'campanha_ativa_{idx}') == 'on')
+
+                if not any([nome, texto, inicio_em, fim_em]):
+                    continue
+
+                inicio_data = _parse_date_iso(inicio_em)
+                fim_data = _parse_date_iso(fim_em)
+                if fim_data and inicio_data and fim_data < inicio_data:
+                    flash(f'Campanha {idx + 1}: o fim da vigencia nao pode ser menor que o inicio.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                campanhas_slots.append({
+                    'nome': nome,
+                    'texto': texto,
+                    'tema_sazonal': tema_sazonal,
+                    'inicio_em': inicio_em,
+                    'fim_em': fim_em,
+                    'ativo': ativo,
+                })
+
+            cupons_slots = []
+            for idx in range(5):
+                codigo = (request.form.get(f'cupom_codigo_{idx}') or '').strip().upper()
+                descricao = (request.form.get(f'cupom_descricao_{idx}') or '').strip()
+                tipo_desconto = (request.form.get(f'cupom_tipo_{idx}') or 'percentual').strip() or 'percentual'
+                valor = (request.form.get(f'cupom_valor_{idx}') or '').strip()
+                inicio_em = (request.form.get(f'cupom_inicio_{idx}') or '').strip()
+                fim_em = (request.form.get(f'cupom_fim_{idx}') or '').strip()
+                ativo = (request.form.get(f'cupom_ativo_{idx}') == 'on')
+
+                if not any([codigo, descricao, valor, inicio_em, fim_em]):
+                    continue
+
+                if tipo_desconto not in {item[0] for item in tipos_desconto_cupom}:
+                    flash(f'Cupom {idx + 1}: tipo de desconto invalido.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                try:
+                    valor_numerico = float(valor.replace(',', '.')) if valor else 0.0
+                except ValueError:
+                    flash(f'Cupom {idx + 1}: informe um valor numerico valido.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                if valor_numerico < 0:
+                    flash(f'Cupom {idx + 1}: o valor nao pode ser negativo.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                inicio_data = _parse_date_iso(inicio_em)
+                fim_data = _parse_date_iso(fim_em)
+                if fim_data and inicio_data and fim_data < inicio_data:
+                    flash(f'Cupom {idx + 1}: o fim da vigencia nao pode ser menor que o inicio.', 'error')
+                    return redirect(url_for('configurar_marketing_ecommerce'))
+
+                cupons_slots.append({
+                    'codigo': codigo,
+                    'descricao': descricao,
+                    'tipo_desconto': tipo_desconto,
+                    'valor': f'{valor_numerico:.2f}',
+                    'inicio_em': inicio_em,
+                    'fim_em': fim_em,
+                    'ativo': ativo,
+                })
+
+            empresa.ecom_campanhas_json = json.dumps(campanhas_slots, ensure_ascii=False)
+            empresa.ecom_cupons_json = json.dumps(cupons_slots, ensure_ascii=False)
+            db.session.commit()
+            flash('Promocoes, cupons e temas sazonais salvos com sucesso.', 'success')
+            return redirect(url_for('configurar_marketing_ecommerce'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erro ao salvar configuracoes de marketing do e-commerce: {str(e)}', 'error')
+
+    return render_template(
+        'sistema/ecommerce_marketing.html',
+        empresa=empresa,
+        campanhas_config=_montar_slots_campanhas(),
+        cupons_config=_montar_slots_cupons(),
+        temas_sazonais=temas_sazonais,
+        tipos_desconto_cupom=tipos_desconto_cupom,
     )
 
 
@@ -2849,12 +3459,12 @@ def _montar_prioridades_home(funcionario, paginas_permitidas, empresa):
         })
 
     if 'recebimentos' in paginas_permitidas:
-        recebimentos_conferencia = RecebimentoFornecedor.query.filter_by(
-            status=RecebimentoFornecedor.STATUS_CRIADO
-        ).count()
-        pendencias_armazenagem = RecebimentoFornecedor.query.filter_by(
-            status=RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-        ).count()
+        recebimentos_conferencia = _count_recebimentos_by_status_safe(
+            RecebimentoFornecedor.STATUS_CRIADO
+        )
+        pendencias_armazenagem = _count_recebimentos_by_status_safe(
+            RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        )
         prioridades.append({
             'titulo': 'Recebimentos operacionais',
             'quantidade': recebimentos_conferencia,
@@ -3015,6 +3625,177 @@ def _montar_fluxos_home(paginas_permitidas, empresa):
     return passos
 
 
+def _perfil_estoquista(funcionario, paginas_permitidas):
+    cargo = (getattr(funcionario, 'cargo', '') or '').strip().lower()
+    return 'estoqu' in cargo or 'almox' in cargo or (
+        {'recebimentos', 'relatorios', 'movimentacoes'}.intersection(paginas_permitidas)
+        and not {'financeiro', 'pdv'}.intersection(paginas_permitidas)
+    )
+
+
+def _coletar_metricas_dashboard_tempo_real():
+    agora = datetime.utcnow()
+    inicio_dia = agora.replace(hour=0, minute=0, second=0, microsecond=0)
+    try:
+        pedidos_ultimos_15_min = Pedido.query.filter(Pedido.criado_em >= (agora - timedelta(minutes=15))).count()
+        faturamento_dia = db.session.query(db.func.sum(Pedido.total)).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0.0
+        produtos_vendidos_turno = db.session.query(db.func.sum(ItemPedido.quantidade)).join(
+            Pedido, Pedido.id == ItemPedido.pedido_id
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0
+    except (OperationalError, ProgrammingError):
+        app.logger.warning('metricas_dashboard_tempo_real indisponiveis por schema/banco inconsistente', exc_info=True)
+        db.session.rollback()
+        pedidos_ultimos_15_min = 0
+        faturamento_dia = 0.0
+        produtos_vendidos_turno = 0
+    return {
+        'pedidos_ultimos_15_min': int(pedidos_ultimos_15_min or 0),
+        'faturamento_dia': float(faturamento_dia or 0.0),
+        'produtos_vendidos_turno': int(produtos_vendidos_turno or 0),
+    }
+
+
+def _montar_indicadores_contexto_usuario(funcionario, paginas_permitidas):
+    indicadores = []
+    metricas_tempo_real = _coletar_metricas_dashboard_tempo_real()
+    analytics = _coletar_dashboard_analytics(datetime.utcnow() - timedelta(days=7), datetime.utcnow() + timedelta(days=1))
+
+    if funcionario.role in {'admin', 'gerente'}:
+        indicadores.extend([
+            {
+                'titulo': 'Pedidos em aberto',
+                'valor': Pedido.query.filter(Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO])).count(),
+                'detalhe': 'Fila operacional atual.',
+                'metric_key': 'pedidos_ultimos_15_min',
+            },
+            {
+                'titulo': 'Faturamento do dia',
+                'valor': f"R$ {metricas_tempo_real['faturamento_dia']:.2f}",
+                'detalhe': 'Fechamentos confirmados hoje.',
+                'metric_key': 'faturamento_dia',
+            },
+            {
+                'titulo': 'Tempo medio de preparo',
+                'valor': f"{analytics['tempo_medio_preparo_minutos']:.1f} min",
+                'detalhe': 'Media de criado ate fechado.',
+                'metric_key': 'tempo_medio_preparo_minutos',
+            },
+        ])
+    elif funcionario.role in {'operador', 'caixa'}:
+        top_produto = analytics['top_produtos_vendidos'][0]['nome'] if analytics.get('top_produtos_vendidos') else '-'
+        indicadores.extend([
+            {
+                'titulo': 'Pedidos em aberto',
+                'valor': Pedido.query.filter(Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO])).count(),
+                'detalhe': 'Fila para atendimento imediato.',
+                'metric_key': 'pedidos_ultimos_15_min',
+            },
+            {
+                'titulo': 'Faturamento do turno',
+                'valor': f"R$ {metricas_tempo_real['faturamento_dia']:.2f}",
+                'detalhe': 'Acumulado de hoje.',
+                'metric_key': 'faturamento_dia',
+            },
+            {
+                'titulo': 'Top vendido',
+                'valor': top_produto,
+                'detalhe': 'Produto lider no periodo.',
+                'metric_key': 'produtos_vendidos_turno',
+            },
+        ])
+    elif _perfil_estoquista(funcionario, paginas_permitidas):
+        produtos_em_falta = Produto.query.filter(
+            Produto.ativo.is_(True),
+            Produto.quantidade_estoque < Produto.quantidade_minima,
+        ).count()
+        recebimentos_pendentes = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.status == RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        ).count()
+        total_enderecos_ativos = EnderecoEstoque.query.filter_by(ativo=True).count()
+        enderecos_ocupados = db.session.query(EnderecoEstoque.id).join(
+            Produto, Produto.endereco_id == EnderecoEstoque.id
+        ).filter(
+            EnderecoEstoque.ativo.is_(True),
+            Produto.ativo.is_(True),
+        ).distinct().count()
+        taxa_ocupacao = ((enderecos_ocupados / total_enderecos_ativos) * 100.0) if total_enderecos_ativos > 0 else 0.0
+        indicadores.extend([
+            {
+                'titulo': 'Produtos em falta',
+                'valor': produtos_em_falta,
+                'detalhe': 'Abaixo do estoque minimo.',
+                'metric_key': 'produtos_em_falta',
+            },
+            {
+                'titulo': 'Recebimentos pendentes',
+                'valor': recebimentos_pendentes,
+                'detalhe': 'Aguardando armazenagem.',
+                'metric_key': 'recebimentos_pendentes',
+            },
+            {
+                'titulo': 'Ocupacao de enderecos',
+                'valor': f'{taxa_ocupacao:.1f}%',
+                'detalhe': 'Endereco ocupado x ativo.',
+                'metric_key': 'ocupacao_enderecos',
+            },
+        ])
+    return indicadores
+
+
+def _montar_alertas_acionaveis_dashboard(paginas_permitidas):
+    alertas = []
+    analytics = _coletar_dashboard_analytics(datetime.utcnow() - timedelta(days=7), datetime.utcnow() + timedelta(days=1))
+    produto_ruptura = Produto.query.filter(
+        Produto.ativo.is_(True),
+        Produto.quantidade_estoque < Produto.quantidade_minima,
+    ).order_by((Produto.quantidade_estoque - Produto.quantidade_minima).asc()).first()
+    if produto_ruptura and 'recebimentos' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'warning',
+            'mensagem': f'Produto {produto_ruptura.nome} em ruptura ou abaixo do minimo.',
+            'acao_label': 'Reabastecer',
+            'acao_url': url_for('novo_recebimento_fornecedor'),
+        })
+
+    if analytics['margem_bruta_pct'] < 25 and 'produtos' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'danger',
+            'mensagem': 'Margem bruta abaixo da meta de 25% no periodo.',
+            'acao_label': 'Revisar precos',
+            'acao_url': url_for('listar_produtos'),
+        })
+
+    total_mesas = Mesa.query.count()
+    mesas_ocupadas = Mesa.query.filter(Mesa.status == 'ocupada').count()
+    ocupacao_mesas = ((mesas_ocupadas / total_mesas) * 100.0) if total_mesas > 0 else 0.0
+    if ocupacao_mesas > 90 and 'mesas' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'info',
+            'mensagem': 'Alta demanda no salao. Mais de 90% das mesas estao ocupadas.',
+            'acao_label': 'Orientar garcons',
+            'acao_url': url_for('listar_mesas'),
+        })
+
+    pedidos_em_preparo = Pedido.query.filter(Pedido.status == Pedido.STATUS_EM_PREPARO).count()
+    if analytics['tempo_medio_preparo_minutos'] > 30 and pedidos_em_preparo > 0 and 'pedidos' in paginas_permitidas:
+        alertas.append({
+            'tipo': 'warning',
+            'mensagem': 'Tempo medio de preparo acima de 30 minutos.',
+            'acao_label': 'Abrir fila de producao',
+            'acao_url': url_for('listar_pedidos', status='em_preparo'),
+        })
+
+    return alertas
+
+
 @app.route('/boas-vindas')
 @login_required
 def boas_vindas():
@@ -3040,6 +3821,9 @@ def boas_vindas():
     prioridades = _montar_prioridades_home(funcionario, paginas_permitidas, empresa)
     atalhos = _montar_atalhos_home(paginas_permitidas, empresa)
     fluxos = _montar_fluxos_home(paginas_permitidas, empresa)
+    indicadores_contexto_usuario = _montar_indicadores_contexto_usuario(funcionario, paginas_permitidas)
+    alertas_dashboard = _montar_alertas_acionaveis_dashboard(paginas_permitidas)
+    metricas_tempo_real = _coletar_metricas_dashboard_tempo_real()
 
     return render_template(
         'sistema/boas_vindas.html',
@@ -3056,6 +3840,9 @@ def boas_vindas():
         estoque_contexto_atual=estoque_contexto_atual,
         estoques_disponiveis=estoques_disponiveis,
         paginas_liberadas=len(paginas_permitidas),
+        indicadores_contexto_usuario=indicadores_contexto_usuario,
+        alertas_dashboard=alertas_dashboard,
+        metricas_tempo_real=metricas_tempo_real,
     )
 
 
@@ -3409,31 +4196,32 @@ AJUDA_TOPICOS = {
         'slug': 'ecommerce-config',
         'titulo': 'Configuracao do e-commerce',
         'resumo': 'Separa ativacao da loja online da configuracao visual, comercial e tecnica da vitrine.',
-        'paginas': ['ecommerce_config'],
-        'objetivo': 'Manter a loja online ativa quando necessario e ajustar a vitrine com identidade, campanhas e integracoes.',
+        'paginas': ['ecommerce_config', 'ecommerce_marketing'],
+        'objetivo': 'Manter a loja online ativa, ajustar a vitrine e organizar campanhas, cupons e sazonalidades sem misturar configuracao visual com calendario comercial.',
         'checklist': [
             'Validar se a ativacao da loja online esta ligada antes de divulgar o link para clientes.',
             'Separar banners, logos e textos oficiais antes da configuracao.',
-            'Definir periodo de vigencia para campanhas e promocoes.',
+            'Definir periodo de vigencia para campanhas, cupons e temas sazonais.',
             'Verificar cores, rodape e imagem padrao de produto em mobile e desktop.',
         ],
         'passos': [
             'Acesse E-commerce > Ativacao da Loja e confirme se o canal publico esta liberado.',
             'Acesse E-commerce > Tema e Loja Online.',
-            'Defina cores da vitrine e mensagem principal.',
-            'Configure multiplos banners com periodo de vigencia.',
-            'Cadastre campanhas programadas com inicio e fim.',
+            'Defina cores da vitrine, banners e checkout.',
+            'Acesse E-commerce > Promocoes e Campanhas.',
+            'Cadastre a mensagem promocional principal, campanhas e cupons com vigencia.',
+            'Associe cada campanha a um tema sazonal quando houver data especial.',
             'Ajuste rodape, favicon e imagem padrao de produto.',
         ],
         'fluxograma': {
             'imagem': 'img/ajuda/fluxo-ecommerce.svg',
             'alt': 'Fluxograma da configuracao do e-commerce.',
-            'legenda': 'Sequencia sugerida para ajustar tema, vitrine, campanhas e revisao visual da loja.',
+            'legenda': 'Sequencia sugerida para ajustar a vitrine, separar marketing sazonal e revisar a experiencia final da loja.',
         },
         'alertas': [
             'Imagens fora do tamanho recomendado podem prejudicar a leitura da vitrine no celular.',
             'Campanhas sem vigencia clara podem continuar aparecendo fora do periodo esperado.',
-            'Sempre revise a loja publica depois de alterar tema, favicon ou banner.',
+            'Sempre revise a loja publica depois de alterar tema, banner, promocao ou cupom.',
         ],
         'duvidas': [
             {
@@ -3442,7 +4230,7 @@ AJUDA_TOPICOS = {
             },
             {
                 'pergunta': 'Posso agendar campanhas automaticamente?',
-                'resposta': 'Sim. Configure inicio/fim de vigencia para promocoes e campanhas programadas.',
+                'resposta': 'Sim. Configure inicio/fim de vigencia para promocoes, cupons e campanhas programadas na tela de marketing.',
             },
         ],
         'problemas': [
@@ -3767,15 +4555,16 @@ AJUDA_ETAPAS = {
             'passos': [
                 'Verifique na ativacao da loja se o canal publico esta liberado.',
                 'Separe logos, banners, textos e imagens oficiais antes da configuracao.',
-                'Defina a vigencia esperada para campanhas e promocoes que vao entrar no ar.',
+                'Defina a vigencia esperada para campanhas, cupons e datas sazonais que vao entrar no ar.',
             ],
         },
         {
-            'titulo': 'Configurar a vitrine e as campanhas',
-            'descricao': 'Ajuste identidade visual, banners e comunicacao comercial do site.',
+            'titulo': 'Separar vitrine e marketing',
+            'descricao': 'Ajuste a identidade visual em uma tela e concentre o calendario promocional em outra.',
             'passos': [
-                'Configure tema, paleta, mensagem principal e rodape da loja online.',
-                'Cadastre banners e campanhas com inicio e fim definidos.',
+                'Configure tema, paleta, banners e rodape da loja online.',
+                'Cadastre a mensagem promocional principal, campanhas e cupons na tela de marketing.',
+                'Use temas sazonais para Natal, Pascoa, Black Friday e outras datas relevantes.',
                 'Revise favicon, imagem padrao de produto e demais elementos visuais de apoio.',
             ],
         },
@@ -3941,7 +4730,7 @@ AJUDA_MENU_DESCRICOES = {
     'Recebimento': 'Entradas de fornecedores, conferencia e armazenagem por tipo de recebimento.',
     'Expedicao': 'Separacao, transferencias entre lojas/CDs e entrega de pedidos.',
     'Meu RH': 'Equipe, acessos, perfis, auditoria e estrutura organizacional.',
-    'E-commerce': 'Ativacao da loja online, identidade visual, campanhas e integracoes.',
+    'E-commerce': 'Ativacao da loja online, identidade visual, campanhas, cupons e integracoes.',
     'Servicos': 'Chamados internos, suporte tecnico e atendimentos de manutencao.',
 }
 
@@ -4649,6 +5438,27 @@ def criar_funcionario():
             flash(erro_vinculos_estoque, 'danger')
             return redirect(url_for('criar_funcionario'))
 
+        try:
+            validate_employee_payload(
+                nome=nome,
+                email=email,
+                role=role,
+                cargo=(cargo or _role_para_cargo_padrao(role)),
+                departamento=departamento,
+                ativo=True,
+                controle_acesso_ativo=bool(perfil_acesso),
+                perfil_acesso_id=(perfil_acesso.id if perfil_acesso else None),
+                restricao_estoques_ativa=bool(vinculos_estoque and vinculos_estoque['restricao_estoques_ativa']),
+                estoque_principal_id=(
+                    vinculos_estoque['estoque_principal'].id
+                    if vinculos_estoque and vinculos_estoque['estoque_principal']
+                    else None
+                ),
+            )
+        except ValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(url_for('criar_funcionario'))
+
         nivel_hierarquico = nivel_organograma or _role_para_nivel_organograma(role)
         if not superior_id and _deve_exigir_superior_hierarquico(role, nivel_hierarquico):
             flash('Informe o responsavel direto do colaborador para manter o organograma organizado.', 'danger')
@@ -4788,6 +5598,27 @@ def editar_funcionario(funcionario_id):
             if not perfil_acesso:
                 flash('Perfil de acesso padrao invalido.', 'danger')
                 return redirect(url_for('editar_funcionario', funcionario_id=funcionario_id))
+
+        try:
+            validate_employee_payload(
+                nome=nome,
+                email=email,
+                role=(role if funcionario_logado.role == 'admin' else funcionario.role),
+                cargo=(cargo or funcionario.cargo or _role_para_cargo_padrao(funcionario.role)),
+                departamento=departamento,
+                ativo=ativo,
+                controle_acesso_ativo=bool(perfil_acesso or funcionario.controle_acesso_ativo),
+                perfil_acesso_id=(perfil_acesso.id if perfil_acesso else funcionario.perfil_acesso_id),
+                restricao_estoques_ativa=bool(vinculos_estoque and vinculos_estoque['restricao_estoques_ativa']),
+                estoque_principal_id=(
+                    vinculos_estoque['estoque_principal'].id
+                    if vinculos_estoque and vinculos_estoque['estoque_principal']
+                    else None
+                ),
+            )
+        except ValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(url_for('editar_funcionario', funcionario_id=funcionario_id))
 
         funcionario.nome = nome
         funcionario.email = email
@@ -5101,11 +5932,18 @@ def indicadores_rh():
         db.func.sum(db.case((Funcionario.ativo.is_(True), 1), else_=0)).label('ativos')
     ).group_by(Funcionario.cargo).order_by(db.desc('quantidade')).all()
 
-    pedidos_pendentes = Pedido.query.filter(
-        Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE])
-    ).count()
-    pedidos_hoje = Pedido.query.filter(Pedido.criado_em >= inicio_hoje).count()
-    pedidos_30_dias = Pedido.query.filter(Pedido.criado_em >= data_limite).count()
+    try:
+        pedidos_pendentes = Pedido.query.filter(
+            Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE])
+        ).count()
+        pedidos_hoje = Pedido.query.filter(Pedido.criado_em >= inicio_hoje).count()
+        pedidos_30_dias = Pedido.query.filter(Pedido.criado_em >= data_limite).count()
+    except (OperationalError, ProgrammingError):
+        app.logger.warning('indicadores_rh: contadores de pedidos indisponiveis por schema/banco inconsistente', exc_info=True)
+        db.session.rollback()
+        pedidos_pendentes = 0
+        pedidos_hoje = 0
+        pedidos_30_dias = 0
     media_pedidos_dia_30 = (pedidos_30_dias / 30.0) if pedidos_30_dias else 0.0
 
     equipe_operacao_ativa = Funcionario.query.filter(
@@ -5280,15 +6118,103 @@ def organograma_rh():
         for f in funcionarios_base
         if (f.departamento or '').strip()
     }, key=str.lower)
+    cargos_disponiveis = sorted({
+        (f.cargo or '').strip()
+        for f in funcionarios_base
+        if (f.cargo or '').strip()
+    }, key=str.lower)
+    times_disponiveis = sorted({
+        (f.time_nome or '').strip()
+        for f in funcionarios_base
+        if (f.time_nome or '').strip()
+    }, key=str.lower)
+    niveis_disponiveis = sorted({
+        (f.nivel_organograma or '').strip()
+        for f in funcionarios_base
+        if (f.nivel_organograma or '').strip()
+    }, key=str.lower)
+    roles_disponiveis = sorted({
+        (f.role or '').strip().lower()
+        for f in funcionarios_base
+        if (f.role or '').strip()
+    })
+    perfis_disponiveis = sorted({
+        (f.perfil_acesso.nome or '').strip()
+        for f in funcionarios_base
+        if getattr(f, 'perfil_acesso', None) and (f.perfil_acesso.nome or '').strip()
+    }, key=str.lower)
 
     departamento_filtro = (request.args.get('departamento') or '').strip()
+    cargo_filtro = (request.args.get('cargo') or '').strip()
+    time_filtro = (request.args.get('time') or '').strip()
+    nivel_filtro = (request.args.get('nivel') or '').strip()
+    role_filtro = (request.args.get('role') or '').strip().lower()
+    perfil_filtro = (request.args.get('perfil') or '').strip()
+    lideranca_filtro = (request.args.get('lideranca') or '').strip().lower()
+    vinculo_filtro = (request.args.get('vinculo') or '').strip().lower()
+    acesso_filtro = (request.args.get('acesso') or '').strip().lower()
+    busca_filtro = (request.args.get('busca') or '').strip()
+
+    funcionarios = funcionarios_base
     if departamento_filtro:
         funcionarios = [
-            f for f in funcionarios_base
+            f for f in funcionarios
             if (f.departamento or '').strip() == departamento_filtro
         ]
-    else:
-        funcionarios = funcionarios_base
+    if cargo_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.cargo or '').strip() == cargo_filtro
+        ]
+    if time_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.time_nome or '').strip() == time_filtro
+        ]
+    if nivel_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.nivel_organograma or '').strip() == nivel_filtro
+        ]
+    if role_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if (f.role or '').strip().lower() == role_filtro
+        ]
+    if perfil_filtro:
+        funcionarios = [
+            f for f in funcionarios
+            if getattr(f, 'perfil_acesso', None) and (f.perfil_acesso.nome or '').strip() == perfil_filtro
+        ]
+    if lideranca_filtro == 'lideres':
+        funcionarios = [f for f in funcionarios if filhos_map_total.get(f.id)]
+    elif lideranca_filtro == 'sem_lideranca':
+        funcionarios = [f for f in funcionarios if not filhos_map_total.get(f.id)]
+    if vinculo_filtro == 'com_superior':
+        funcionarios = [
+            f for f in funcionarios
+            if f.superior_id and f.superior_id in ids_visiveis
+        ]
+    elif vinculo_filtro == 'sem_superior':
+        funcionarios = [
+            f for f in funcionarios
+            if not f.superior_id or f.superior_id not in ids_visiveis
+        ]
+    if acesso_filtro == 'controlado':
+        funcionarios = [f for f in funcionarios if f.controle_acesso_ativo]
+    elif acesso_filtro == 'livre':
+        funcionarios = [f for f in funcionarios if not f.controle_acesso_ativo]
+    if busca_filtro:
+        busca_normalizada = busca_filtro.lower()
+        funcionarios = [
+            f for f in funcionarios
+            if busca_normalizada in (f.nome or '').lower()
+            or busca_normalizada in (f.cargo or '').lower()
+            or busca_normalizada in (f.departamento or '').lower()
+            or busca_normalizada in (f.time_nome or '').lower()
+            or busca_normalizada in (f.role or '').lower()
+            or busca_normalizada in ((f.perfil_acesso.nome if getattr(f, 'perfil_acesso', None) else '') or '').lower()
+        ]
 
     funcionarios_map = {f.id: f for f in funcionarios}
 
@@ -5394,7 +6320,21 @@ def organograma_rh():
         camadas_organograma=camadas_organograma,
         subordinados_totais=subordinados_totais,
         departamentos_disponiveis=departamentos_disponiveis,
+        cargos_disponiveis=cargos_disponiveis,
+        times_disponiveis=times_disponiveis,
+        niveis_disponiveis=niveis_disponiveis,
+        roles_disponiveis=roles_disponiveis,
+        perfis_disponiveis=perfis_disponiveis,
         departamento_filtro=departamento_filtro,
+        cargo_filtro=cargo_filtro,
+        time_filtro=time_filtro,
+        nivel_filtro=nivel_filtro,
+        role_filtro=role_filtro,
+        perfil_filtro=perfil_filtro,
+        lideranca_filtro=lideranca_filtro,
+        vinculo_filtro=vinculo_filtro,
+        acesso_filtro=acesso_filtro,
+        busca_filtro=busca_filtro,
         profundidade_maxima=(max(camadas.keys()) + 1 if camadas else 0),
         resumo_departamentos=resumo_departamentos,
         total_colaboradores=len(funcionarios),
@@ -5418,8 +6358,15 @@ def analytics_rh_api():
         if cached_payload is not None:
             return jsonify(cached_payload)
 
-    data_limite = datetime.utcnow() - timedelta(days=periodo)
+    agora = datetime.utcnow()
+    data_limite = agora - timedelta(days=periodo)
     admissoes_periodo = Funcionario.query.filter(Funcionario.criado_em >= data_limite).count()
+    total_funcionarios = Funcionario.query.count()
+    funcionarios_ativos = Funcionario.query.filter(Funcionario.ativo.is_(True)).count()
+    funcionarios_inativos = Funcionario.query.filter(Funcionario.ativo.is_(False)).count()
+    acessos_controlados = Funcionario.query.filter(
+        Funcionario.controle_acesso_ativo.is_(True)
+    ).count()
 
     distribuicao_roles = db.session.query(
         Funcionario.role.label('role'),
@@ -5427,8 +6374,19 @@ def analytics_rh_api():
     ).group_by(Funcionario.role).order_by(db.desc('quantidade')).all()
     distribuicao_cargos = db.session.query(
         Funcionario.cargo.label('cargo'),
-        db.func.count(Funcionario.id).label('quantidade')
+        db.func.count(Funcionario.id).label('quantidade'),
+        db.func.sum(db.case((Funcionario.ativo.is_(True), 1), else_=0)).label('ativos')
     ).group_by(Funcionario.cargo).order_by(db.desc('quantidade')).all()
+    distribuicao_perfis = db.session.query(
+        PerfilAcesso.nome.label('perfil'),
+        db.func.count(Funcionario.id).label('quantidade')
+    ).outerjoin(
+        Funcionario, Funcionario.perfil_acesso_id == PerfilAcesso.id
+    ).group_by(
+        PerfilAcesso.id, PerfilAcesso.nome
+    ).order_by(
+        db.desc('quantidade'), PerfilAcesso.nome.asc()
+    ).all()
 
     pedidos_pendentes = Pedido.query.filter(
         Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE])
@@ -5441,39 +6399,154 @@ def analytics_rh_api():
         pedidos_pendentes / equipe_operacao_ativa
         if equipe_operacao_ativa > 0 else float(pedidos_pendentes)
     )
+    deficit_equipe = max(0, max(1, int((pedidos_pendentes + 7) // 8)) - equipe_operacao_ativa) if pedidos_pendentes else 0
 
-    ativos_por_dia_raw = db.session.query(
-        db.func.date(Funcionario.criado_em).label('dia'),
+    admissoes_por_mes_raw = db.session.query(
+        db.func.strftime('%Y-%m', Funcionario.criado_em).label('mes'),
         db.func.count(Funcionario.id).label('quantidade')
     ).filter(
-        Funcionario.criado_em >= data_limite
-    ).group_by(db.func.date(Funcionario.criado_em)).order_by(db.func.date(Funcionario.criado_em).asc()).all()
+        Funcionario.criado_em >= agora - timedelta(days=180)
+    ).group_by(
+        db.func.strftime('%Y-%m', Funcionario.criado_em)
+    ).order_by(
+        db.func.strftime('%Y-%m', Funcionario.criado_em).asc()
+    ).all()
+
+    admissoes_diarias = [
+        {'dia': item.mes, 'quantidade': int(item.quantidade or 0)}
+        for item in admissoes_por_mes_raw
+    ]
+
+    funcoes_ativas_lista = FuncaoRH.query.filter_by(ativo=True).all()
+    cargos_sem_cobertura = []
+    for funcao in funcoes_ativas_lista:
+        ativos_no_cargo = Funcionario.query.filter(
+            Funcionario.ativo.is_(True),
+            db.func.lower(Funcionario.cargo) == (funcao.nome or '').lower()
+        ).count()
+        if ativos_no_cargo == 0:
+            cargos_sem_cobertura.append({
+                'cargo': funcao.nome,
+                'ativos': 0,
+            })
+
+    funcionarios_recentes = Funcionario.query.order_by(Funcionario.criado_em.desc()).limit(5).all()
 
     payload = {
         'success': True,
         'message': 'Analytics RH carregado com sucesso.',
         'data': {
             'periodo_dias': periodo,
+            'kpis': {
+                'total_funcionarios': int(total_funcionarios or 0),
+                'funcionarios_ativos': int(funcionarios_ativos or 0),
+                'funcionarios_inativos': int(funcionarios_inativos or 0),
+                'acessos_controlados': int(acessos_controlados or 0),
+                'produtividade_media': 0.0,
+                'equipe_operacional_ativa': int(equipe_operacao_ativa or 0),
+                'deficit_equipe': int(deficit_equipe or 0),
+            },
             'admissoes_periodo': admissoes_periodo,
             'distribuicao_roles': [
                 {'role': item.role, 'quantidade': int(item.quantidade or 0)}
                 for item in distribuicao_roles
             ],
             'distribuicao_cargos': [
-                {'cargo': item.cargo or '-', 'quantidade': int(item.quantidade or 0)}
+                {'cargo': item.cargo or '-', 'quantidade': int(item.quantidade or 0), 'ativos': int(item.ativos or 0)}
                 for item in distribuicao_cargos
             ],
-            'admissoes_diarias': [
-                {'dia': str(item.dia), 'quantidade': int(item.quantidade or 0)}
-                for item in ativos_por_dia_raw
+            'distribuicao_perfis_acesso': [
+                {'perfil': item.perfil or 'Sem perfil padrao', 'quantidade': int(item.quantidade or 0)}
+                for item in distribuicao_perfis
             ],
+            'admissoes_diarias': admissoes_diarias,
             'pedidos_pendentes': pedidos_pendentes,
             'equipe_operacao_ativa': equipe_operacao_ativa,
             'pendencias_por_colaborador': round(pendencias_por_colaborador, 2),
+            'cargos_sem_cobertura': cargos_sem_cobertura,
+            'funcionarios_recentes': [
+                {
+                    'nome': item.nome,
+                    'cargo': item.cargo or item.role.upper(),
+                    'data_admissao': item.criado_em.strftime('%d/%m/%Y') if item.criado_em else '-',
+                }
+                for item in funcionarios_recentes
+            ],
+            'alertas': [],
+            'produtividade_vs_faturamento': [],
         }
     }
+
+    produtividade_map = {}
+    pedidos_fechados_periodo = Pedido.query.options(
+        selectinload(Pedido.garcom).selectinload(Garcom.funcionario),
+        selectinload(Pedido.caixa).selectinload(Caixa.funcionario),
+    ).filter(
+        Pedido.status == Pedido.STATUS_FECHADO,
+        Pedido.fechado_em.isnot(None),
+        Pedido.fechado_em >= data_limite
+    ).all()
+    for pedido in pedidos_fechados_periodo:
+        funcionario_produtividade = None
+        if pedido.garcom and pedido.garcom.funcionario:
+            funcionario_produtividade = pedido.garcom.funcionario
+        elif pedido.caixa and pedido.caixa.funcionario:
+            funcionario_produtividade = pedido.caixa.funcionario
+        if not funcionario_produtividade:
+            continue
+        registro = produtividade_map.setdefault(
+            funcionario_produtividade.id,
+            {
+                'nome': funcionario_produtividade.nome,
+                'cargo': funcionario_produtividade.cargo or funcionario_produtividade.role.upper(),
+                'pedidos': 0,
+                'faturamento': 0.0,
+            }
+        )
+        registro['pedidos'] += 1
+        registro['faturamento'] += float(pedido.total or 0.0)
+
+    produtividade_items = [
+        {
+            'nome': item['nome'],
+            'cargo': item['cargo'],
+            'pedidos': int(item['pedidos'] or 0),
+            'faturamento': float(item['faturamento'] or 0.0),
+            'ticket_medio': float((item['faturamento'] or 0.0) / item['pedidos']) if item['pedidos'] else 0.0,
+        }
+        for item in produtividade_map.values()
+    ]
+    produtividade_items.sort(key=lambda item: (item['pedidos'], item['faturamento']), reverse=True)
+    payload['data']['produtividade_vs_faturamento'] = produtividade_items
+    payload['data']['top_produtividade'] = produtividade_items[:5]
+    payload['data']['kpis']['produtividade_media'] = round(
+        (
+            sum(item['pedidos'] for item in produtividade_items) / len(produtividade_items)
+            if produtividade_items else 0.0
+        ),
+        2,
+    )
+    if cargos_sem_cobertura:
+        payload['data']['alertas'].append({
+            'nivel': 'warning',
+            'titulo': 'Cargos sem cobertura',
+            'descricao': f'{len(cargos_sem_cobertura)} cargo(s) ativo(s) sem colaborador ativo.',
+        })
+    if deficit_equipe > 0:
+        payload['data']['alertas'].append({
+            'nivel': 'danger',
+            'titulo': 'Deficit operacional',
+            'descricao': f'Deficit estimado de {deficit_equipe} colaborador(es) para a fila atual.',
+        })
+    perfis_sem_usuario = [item for item in payload['data']['distribuicao_perfis_acesso'] if item['quantidade'] == 0]
+    if perfis_sem_usuario:
+        payload['data']['alertas'].append({
+            'nivel': 'info',
+            'titulo': 'Perfis sem aplicacao',
+            'descricao': f'{len(perfis_sem_usuario)} perfil(is) ativo(s) sem usuarios vinculados.',
+        })
     if cache is not None:
-        cache.set(cache_key, payload, timeout=120)
+        cache.set(cache_key, payload, timeout=60)
     return jsonify(payload)
 
 
@@ -6410,6 +7483,29 @@ def registrar_auditoria_pos_resposta(response):
                     )
     except Exception:
         pass
+
+    try:
+        if request.method == 'GET':
+            endpoint = request.endpoint or ''
+            caminho = request.path or ''
+            if caminho == '/sw.js' or endpoint in {'pwa_manifest', 'store_pwa_manifest'}:
+                response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+            elif caminho.startswith('/static/'):
+                if request.args.get('v'):
+                    response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                else:
+                    response.headers['Cache-Control'] = 'no-cache, max-age=0, must-revalidate'
+                    response.headers['Pragma'] = 'no-cache'
+                    response.headers['Expires'] = '0'
+            elif response.mimetype == 'text/html':
+                response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+                response.headers['Pragma'] = 'no-cache'
+                response.headers['Expires'] = '0'
+    except Exception:
+        pass
+
     return response
 
 
@@ -6523,7 +7619,9 @@ def store_pwa_manifest():
 @app.route('/sw.js')
 def pwa_service_worker():
     response = send_from_directory(app.static_folder, 'sw.js', mimetype='application/javascript')
-    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
     return response
 
 
@@ -6536,6 +7634,7 @@ def inject_user():
     atendimento_mesas_ativo = not empresa_config or empresa_config.atendimento_mesas_ativo is not False
     secao_atual_nome, tela_atual_nome = _titulo_tela_atual()
     endpoint_atual = request.endpoint or ''
+    pagina_atual_menu = ENDPOINT_TO_PAGINA.get(endpoint_atual)
     estoques_contexto_disponiveis = _estoques_contexto_disponiveis(funcionario_logado) if funcionario_logado else []
     estoque_contexto_id = _estoque_contexto_selecionado_id(funcionario_logado) if funcionario_logado else None
     produto_imagem_padrao_path = (
@@ -6558,11 +7657,33 @@ def inject_user():
     )
     csrf_token_value = ensure_csrf_token()
     paginas_permitidas_usuario = _paginas_permitidas_para_funcionario(funcionario_logado) if funcionario_logado else set()
+    menu_paginas_usuario = _menu_agrupado_para_paginas(paginas_permitidas_usuario) if funcionario_logado else []
+    menu_navegacao_principal = _menu_navegacao_principal(
+        funcionario_logado,
+        empresa_config=empresa_config,
+        atendimento_mesas_ativo=atendimento_mesas_ativo,
+        current_page_key=pagina_atual_menu,
+    ) if funcionario_logado else []
+    user_agent_texto = (request.user_agent.string or '').lower()
+    acesso_mobile_web = any(token in user_agent_texto for token in ['android', 'iphone', 'ipad', 'ipod', 'mobile'])
+    apk_download_url = None
+    for candidato in ['downloads/app-release.apk', 'downloads/systemlr.apk', 'downloads/app-latest.apk']:
+        caminho = os.path.join(app.static_folder, candidato)
+        if os.path.exists(caminho):
+            apk_download_url = url_for('static', filename=candidato)
+            break
+
     assistente_status = (
         local_ai_assistant.status()
         if funcionario_logado and app.config.get('LOCAL_AI_ENABLED') and local_ai_assistant
         else {'enabled': False}
     )
+    indicadores_contexto_usuario = (
+        _montar_indicadores_contexto_usuario(funcionario_logado, paginas_permitidas_usuario)
+        if funcionario_logado else []
+    )
+    if funcionario_logado:
+        _registrar_debug_menu(funcionario_logado, paginas_permitidas_usuario, menu_paginas_usuario)
     return {
         'ano_atual': datetime.utcnow().year,
         'total_alertas': Produto.query.filter(
@@ -6577,12 +7698,18 @@ def inject_user():
         'store_favicon_path': store_favicon_path,
         'app_icon_path': app_icon_path,
         'paginas_permitidas_usuario': paginas_permitidas_usuario,
+        'menu_paginas_usuario': menu_paginas_usuario,
+        'menu_navegacao_principal': menu_navegacao_principal,
+        'pagina_atual_menu': pagina_atual_menu,
         'secao_atual_nome': secao_atual_nome,
         'tela_atual_nome': tela_atual_nome,
         'endpoint_atual': endpoint_atual,
         'estoques_contexto_disponiveis': estoques_contexto_disponiveis,
         'estoque_contexto_id': estoque_contexto_id,
         'assistente_local_status': assistente_status,
+        'indicadores_contexto_usuario': indicadores_contexto_usuario,
+        'apk_download_url': apk_download_url,
+        'show_apk_download_mobile_web': bool(apk_download_url and acesso_mobile_web),
         'csrf_token': csrf_token_value,
         'csrf_input': csrf_input_tag()
     }
@@ -6593,17 +7720,19 @@ def inject_user():
 @app.errorhandler(400)
 def bad_request(error):
     mensagem = getattr(error, 'description', None) or 'Requisicao invalida.'
+    acao = resolve_action(code='bad_request', status_code=400)
     if is_json_request():
-        return json_response(False, mensagem, status=400, code='bad_request')
-    return render_template('errors/500.html', error_message=mensagem), 400
+        return json_response(False, mensagem, status=400, code='bad_request', action=acao)
+    return render_template('errors/400.html', error_message=mensagem), 400
 
 
 @app.errorhandler(403)
 def forbidden(error):
     mensagem = getattr(error, 'description', None) or 'Acesso negado.'
+    acao = resolve_action(code='forbidden', status_code=403)
     if is_json_request():
-        return json_response(False, mensagem, status=403, code='forbidden')
-    return render_template('errors/500.html', error_message=mensagem), 403
+        return json_response(False, mensagem, status=403, code='forbidden', action=acao)
+    return render_template('errors/403.html', error_message=mensagem), 403
 
 
 @app.errorhandler(404)
@@ -6616,9 +7745,14 @@ def handle_app_error(error):
     mensagem = str(error)
     status_code = getattr(error, 'status_code', 500)
     code = getattr(error, 'code', 'app_error')
+    fields = getattr(error, 'fields', {}) or {}
+    acao = resolve_action(code=code, status_code=status_code, action=getattr(error, 'action', None))
     if is_json_request():
-        return json_response(False, mensagem, status=status_code, code=code)
-    flash(mensagem, 'danger' if status_code >= 400 else 'warning')
+        return json_response(False, mensagem, status=status_code, code=code, fields=fields, action=acao)
+    flash(
+        build_flash_message('Aviso' if status_code == 403 else 'Erro', mensagem, acao),
+        flash_category_for_status(status_code),
+    )
     destino = request.referrer
     if request.endpoint == 'login':
         destino = url_for('login')
@@ -6669,14 +7803,15 @@ __all__ = [
 
 
 ### Arquivo: `app/api_routes.py`
-- Linhas: 144
-- Tamanho: 6.5 KB
+- Linhas: 204
+- Tamanho: 8.3 KB
 - Status: completo
 
 ```python
-from flask import Response, jsonify, render_template, request
+from flask import Response, render_template, request
 
 from models import AssistenteLocalFeedback, db
+from app.user_messages import resolve_action
 from security import json_response
 
 
@@ -6702,15 +7837,16 @@ def register_routes(app, context):
             default_days=7
         )
         analytics = coletar_dashboard_analytics(inicio_periodo, fim_periodo)
-        return jsonify({
-            'success': True,
-            'message': 'Analytics carregado com sucesso.',
-            'data': {
+        return json_response(
+            True,
+            'Analytics carregado com sucesso.',
+            code='analytics_loaded',
+            data={
                 'data_inicial': data_inicial_str,
                 'data_final': data_final_str,
                 **analytics
-            }
-        })
+            },
+        )
 
     @app.route('/api/docs')
     @login_required
@@ -6723,8 +7859,14 @@ def register_routes(app, context):
     def assistente_local_status():
         assistant = local_ai_assistant()
         if not app.config.get('LOCAL_AI_ENABLED') or not assistant:
-            return json_response(False, 'Assistente local desativado.', status=503, code='assistant_disabled')
-        return json_response(True, 'Status do assistente local.', data=assistant.status())
+            return json_response(
+                False,
+                'Assistente local desativado.',
+                status=503,
+                code='assistant_disabled',
+                action=resolve_action(code='assistant_disabled', status_code=503),
+            )
+        return json_response(True, 'Status do assistente local.', code='assistant_status_loaded', data=assistant.status())
 
     @app.route('/api/assistente-local/perguntar', methods=['POST'])
     @login_required
@@ -6732,14 +7874,34 @@ def register_routes(app, context):
     def assistente_local_perguntar():
         assistant = local_ai_assistant()
         if not app.config.get('LOCAL_AI_ENABLED') or not assistant:
-            return json_response(False, 'Assistente local desativado.', status=503, code='assistant_disabled')
+            return json_response(
+                False,
+                'Assistente local desativado.',
+                status=503,
+                code='assistant_disabled',
+                action=resolve_action(code='assistant_disabled', status_code=503),
+            )
 
         payload = request.get_json(silent=True) or {}
         pergunta = (payload.get('pergunta') or '').strip()
         if not pergunta:
-            return json_response(False, 'Informe uma pergunta para o assistente local.', status=400, code='assistant_question_required')
+            return json_response(
+                False,
+                'Pergunta obrigatoria.',
+                status=400,
+                code='assistant_question_required',
+                fields={'pergunta': 'Informe uma pergunta com ate 500 caracteres.'},
+                action=resolve_action(code='assistant_question_required', status_code=400),
+            )
         if len(pergunta) > 500:
-            return json_response(False, 'Pergunta muito longa. Resuma em ate 500 caracteres.', status=400, code='assistant_question_too_long')
+            return json_response(
+                False,
+                'Pergunta invalida.',
+                status=400,
+                code='assistant_question_too_long',
+                fields={'pergunta': 'Use no maximo 500 caracteres.'},
+                action=resolve_action(code='assistant_question_too_long', status_code=400),
+            )
 
         endpoint_atual = str(payload.get('endpoint_atual') or '').strip()
         endpoint_resolvido = endpoint_atual.split('.')[-1] if endpoint_atual else ''
@@ -6754,7 +7916,7 @@ def register_routes(app, context):
             conversation_history=historico,
             feedback_items=carregar_feedbacks(pagina_atual=pagina_atual),
         )
-        return json_response(True, 'Resposta do assistente local gerada com sucesso.', data=resposta)
+        return json_response(True, 'Resposta do assistente local gerada com sucesso.', code='assistant_answer_generated', data=resposta)
 
     @app.route('/api/assistente-local/feedback', methods=['POST'])
     @login_required
@@ -6762,22 +7924,48 @@ def register_routes(app, context):
     def assistente_local_feedback():
         assistant = local_ai_assistant()
         if not app.config.get('LOCAL_AI_ENABLED') or not assistant:
-            return json_response(False, 'Assistente local desativado.', status=503, code='assistant_disabled')
+            return json_response(
+                False,
+                'Assistente local desativado.',
+                status=503,
+                code='assistant_disabled',
+                action=resolve_action(code='assistant_disabled', status_code=503),
+            )
 
         payload = request.get_json(silent=True) or {}
         response_id = (payload.get('response_id') or '').strip()
         vote = normalizar_voto(payload.get('vote'))
         if not response_id:
-            return json_response(False, 'Informe a resposta avaliada.', status=400, code='assistant_feedback_response_required')
+            return json_response(
+                False,
+                'Resposta avaliada obrigatoria.',
+                status=400,
+                code='assistant_feedback_response_required',
+                fields={'response_id': 'Informe a resposta que voce deseja avaliar.'},
+                action=resolve_action(code='assistant_feedback_response_required', status_code=400),
+            )
         if not vote:
-            return json_response(False, 'Informe like ou dislike para registrar o feedback.', status=400, code='assistant_feedback_vote_required')
+            return json_response(
+                False,
+                'Voto obrigatorio.',
+                status=400,
+                code='assistant_feedback_vote_required',
+                fields={'vote': 'Escolha like ou dislike para continuar.'},
+                action=resolve_action(code='assistant_feedback_vote_required', status_code=400),
+            )
 
         endpoint_atual = str(payload.get('endpoint_atual') or '').strip()
         endpoint_resolvido = endpoint_atual.split('.')[-1] if endpoint_atual else ''
         pagina_atual = endpoint_to_pagina.get(endpoint_resolvido)
         funcionario = get_funcionario_logado()
         if not funcionario:
-            return json_response(False, 'Voce precisa fazer login.', status=401, code='auth_required')
+            return json_response(
+                False,
+                'Login obrigatorio.',
+                status=401,
+                code='auth_required',
+                action=resolve_action(code='auth_required', status_code=401),
+            )
 
         matched_doc_ids = []
         for item in payload.get('matched_doc_ids') or []:
@@ -6811,9 +7999,15 @@ def register_routes(app, context):
             db.session.commit()
         except Exception:
             db.session.rollback()
-            return json_response(False, 'Nao foi possivel salvar o feedback agora.', status=500, code='assistant_feedback_save_failed')
+            return json_response(
+                False,
+                'Nao foi possivel salvar o feedback agora.',
+                status=500,
+                code='assistant_feedback_save_failed',
+                action=resolve_action(code='assistant_feedback_save_failed', status_code=500),
+            )
 
-        return json_response(True, 'Feedback da assistente registrado com sucesso.', data={
+        return json_response(True, 'Feedback da assistente registrado com sucesso.', code='assistant_feedback_saved', data={
             'vote': registro.vote,
             'response_id': registro.response_id,
         })
@@ -6822,25 +8016,25 @@ def register_routes(app, context):
 
 
 ### Arquivo: `app/auth_routes.py`
-- Linhas: 267
-- Tamanho: 13.1 KB
+- Linhas: 253
+- Tamanho: 12.1 KB
 - Status: completo
 
 ```python
 from flask import flash, redirect, render_template, request, session, url_for
 
-from models import FuncaoRH, Funcionario, PerfilAcesso, db
+from app.services.auth_service import AuthService
+from app.validators.auth_validators import LoginSchema, RegistroSchema
+from models import FuncaoRH, PerfilAcesso, db
 
 
 def register_routes(app, context):
-    login_required = context['login_required']
     limit = context['_limit']
     client_ip = context['_client_ip']
     is_login_rate_limited = context['_is_login_rate_limited']
     register_login_attempt = context['_register_login_attempt']
     get_funcionario_logado = context['get_funcionario_logado']
     normalizar_texto = context['_normalizar_texto']
-    normalizar_matricula = context['_normalizar_matricula']
     normalizar_cpf = context['_normalizar_cpf']
     normalizar_campo_organograma = context['_normalizar_campo_organograma']
     normalizar_estado = context['_normalizar_estado']
@@ -6850,6 +8044,7 @@ def register_routes(app, context):
     gerar_numero_cadastro_unico = context['_gerar_numero_cadastro_unico']
     gerar_matricula_unica = context['_gerar_matricula_unica']
     listar_cadastros_organograma = context['_listar_cadastros_organograma']
+    paginas_permitidas_para_funcionario = context['_paginas_permitidas_para_funcionario']
     sincronizar_garcom_funcionario = context['sincronizar_garcom_funcionario']
     registrar_evento_auditoria = context['registrar_evento_auditoria']
     bootstrap_admin_configurado = context['_bootstrap_admin_configurado']
@@ -6857,9 +8052,20 @@ def register_routes(app, context):
     roles_permitidos = context['ROLES_PERMITIDOS']
     niveis_organograma = context['NIVEIS_ORGANOGRAMA']
     extensions = context['extensions']
+    auth_service = AuthService(
+        normalizar_matricula=context['_normalizar_matricula'],
+        normalizar_texto=normalizar_texto,
+        normalizar_cpf=normalizar_cpf,
+    )
+
+    def _pode_registrar_funcionarios(funcionario):
+        if not funcionario:
+            return False
+        paginas_rh_gestao = {'funcionarios', 'rh_funcoes'}
+        return bool(set(paginas_permitidas_para_funcionario(funcionario)).intersection(paginas_rh_gestao))
 
     @app.route('/login', methods=['GET', 'POST'])
-    @limit('10 per 5 minute')
+    @limit('5 per 5 minute')
     def login():
         if request.method == 'POST':
             ip_addr = client_ip()
@@ -6870,27 +8076,21 @@ def register_routes(app, context):
                     acao='login_rate_limited',
                     entidade='autenticacao',
                     detalhes=f'ip={ip_addr}',
-                    status_code=429
+                    status_code=429,
                 )
+                return redirect(url_for('login'))
+
+            is_valid, errors = LoginSchema().validate(request.form)
+            if not is_valid:
+                for error in errors.values():
+                    flash(error, 'danger')
                 return redirect(url_for('login'))
 
             identificador = (request.form.get('login') or request.form.get('email') or '').strip()
             senha = request.form.get('senha', '')
+            funcionario, erro_login = auth_service.login(identificador, senha)
 
-            if not identificador or not senha:
-                flash('Matricula/email e senha sao obrigatorios.', 'danger')
-                return redirect(url_for('login'))
-
-            identificador_norm = identificador.lower()
-            matricula_norm = normalizar_matricula(identificador)
-            funcionario = Funcionario.query.filter(
-                db.or_(
-                    db.func.lower(Funcionario.email) == identificador_norm,
-                    db.func.lower(Funcionario.matricula) == (matricula_norm.lower() if matricula_norm else identificador_norm),
-                )
-            ).first()
-
-            if funcionario and funcionario.check_password(senha):
+            if funcionario:
                 if not funcionario.ativo:
                     register_login_attempt(ip_addr, success=False)
                     registrar_evento_auditoria(
@@ -6898,9 +8098,9 @@ def register_routes(app, context):
                         acao='login_bloqueado_inativo',
                         entidade='autenticacao',
                         detalhes=f'identificador={identificador}',
-                        status_code=403
+                        status_code=403,
                     )
-                    flash('Usuário inativo. Contate um administrador.', 'danger')
+                    flash('Usuario inativo. Contate um administrador.', 'danger')
                     return redirect(url_for('login'))
 
                 session['funcionario_id'] = funcionario.id
@@ -6913,7 +8113,7 @@ def register_routes(app, context):
                     acao='login_sucesso',
                     entidade='autenticacao',
                     detalhes=f'identificador={identificador}',
-                    status_code=200
+                    status_code=200,
                 )
 
                 if getattr(funcionario, 'senha_provisoria', False):
@@ -6929,19 +8129,17 @@ def register_routes(app, context):
                 acao='login_falha',
                 entidade='autenticacao',
                 detalhes=f'identificador={identificador}',
-                status_code=401
+                status_code=401,
             )
-            flash('Matricula/email ou senha incorretos.', 'danger')
+            flash(erro_login or 'Matricula/email ou senha incorretos.', 'danger')
             return redirect(url_for('login'))
 
-        funcionario_admin_inicial = Funcionario.query.filter(
-            db.func.lower(Funcionario.email) == primeiro_acesso_email.lower()
-        ).order_by(Funcionario.id.asc()).first()
+        funcionario_admin_inicial = auth_service.get_primeiro_admin(primeiro_acesso_email)
         mostrar_credenciais_iniciais = bool(
             bootstrap_admin_configurado()
             and getattr(funcionario_admin_inicial, 'senha_provisoria', False)
             and funcionario_admin_inicial
-            and Funcionario.query.count() == 1
+            and auth_service.total_funcionarios() == 1
         )
         return render_template(
             'sistema/login.html',
@@ -6957,32 +8155,34 @@ def register_routes(app, context):
             acao='logout',
             entidade='autenticacao',
             detalhes=f'usuario={funcionario.nome if funcionario else "desconhecido"}',
-            status_code=200
+            status_code=200,
         )
-        nome = session.get('funcionario_nome', 'Usuário')
+        nome = session.get('funcionario_nome', 'Usuario')
         session.clear()
         flash(f'Ate logo, {nome}!', 'info')
         return redirect(url_for('index'))
 
     @app.route('/registro', methods=['GET', 'POST'])
     def registro():
-        total_funcionarios = Funcionario.query.count()
+        total_funcionarios = auth_service.total_funcionarios()
+        funcionario_logado = get_funcionario_logado()
+
+        if total_funcionarios > 0 and not _pode_registrar_funcionarios(funcionario_logado):
+            flash('A criacao de contas e restrita a usuarios com acesso de RH.', 'danger')
+            if funcionario_logado:
+                return redirect(url_for('dashboard'))
+            return redirect(url_for('login'))
 
         if request.method == 'POST':
-            if total_funcionarios > 0 and 'funcionario_id' not in session:
-                flash('Acesso negado. Faca login como administrador.', 'danger')
-                return redirect(url_for('login'))
-
-            if total_funcionarios > 0:
-                funcionario_logado = get_funcionario_logado()
-                if not funcionario_logado or funcionario_logado.role != 'admin':
-                    flash('Apenas administradores podem registrar novos funcionarios.', 'danger')
-                    return redirect(url_for('dashboard'))
+            is_valid, errors = RegistroSchema().validate(request.form)
+            if not is_valid:
+                for error in errors.values():
+                    flash(error, 'danger')
+                return redirect(url_for('registro'))
 
             nome = request.form.get('nome', '').strip()
             email = request.form.get('email', '').strip()
             senha = request.form.get('senha', '')
-            confirmacao_senha = request.form.get('confirmacao_senha', '')
             role = normalizar_texto(request.form.get('role', 'operador'))
             cargo = (request.form.get('cargo') or '').strip()
             cpf = normalizar_cpf(request.form.get('cpf'))
@@ -6999,39 +8199,19 @@ def register_routes(app, context):
             nivel_organograma = normalizar_campo_organograma(request.form.get('nivel_organograma'))
             permitir_editar_imagem_perfil = (request.form.get('permitir_editar_imagem_perfil') == 'on')
             perfil_acesso_id = request.form.get('perfil_acesso_id', type=int)
-            perfil_acesso = None
 
-            if not nome or not email or not senha:
-                flash('Nome, email e senha são obrigatórios.', 'danger')
-                return redirect(url_for('registro'))
-            if senha != confirmacao_senha:
-                flash('As senhas não conferem.', 'danger')
-                return redirect(url_for('registro'))
-            if len(senha) < 6:
-                flash('A senha deve ter no minimo 6 caracteres.', 'danger')
-                return redirect(url_for('registro'))
-            if Funcionario.query.filter_by(email=email).first():
-                flash('Email ja cadastrado.', 'danger')
-                return redirect(url_for('registro'))
-            if cpf == '__invalid__':
-                flash('CPF invalido. Informe 11 digitos.', 'danger')
-                return redirect(url_for('registro'))
-            if cpf and Funcionario.query.filter_by(cpf=cpf).first():
-                flash('CPF ja cadastrado para outro funcionario.', 'danger')
-                return redirect(url_for('registro'))
-            if nivel_organograma and nivel_organograma not in niveis_organograma:
-                flash('Nivel de organograma invalido.', 'danger')
+            perfil_acesso, erro_registro = auth_service.validar_registro_basico(
+                email=email,
+                cpf=cpf,
+                perfil_acesso_id=perfil_acesso_id,
+                niveis_organograma=niveis_organograma,
+                nivel_organograma=nivel_organograma,
+            )
+            if erro_registro:
+                flash(erro_registro, 'danger')
                 return redirect(url_for('registro'))
 
-            if perfil_acesso_id:
-                perfil_acesso = PerfilAcesso.query.get(perfil_acesso_id)
-                if not perfil_acesso:
-                    flash('Perfil de acesso invalido.', 'danger')
-                    return redirect(url_for('registro'))
-
-            novo_funcionario = Funcionario(nome=nome, email=email)
-            novo_funcionario.set_password(senha)
-            novo_funcionario.matricula = None
+            novo_funcionario = auth_service.build_novo_funcionario(nome=nome, email=email, senha=senha)
             novo_funcionario.cpf = cpf if cpf != '__invalid__' else None
             novo_funcionario.rg = rg
             novo_funcionario.data_nascimento = data_nascimento
@@ -7114,11 +8294,13 @@ os blueprints para migração incremental sem quebra de compatibilidade.
 
 
 ### Arquivo: `app/blueprints/auth_bp.py`
-- Linhas: 5
+- Linhas: 7
 - Tamanho: 0.1 KB
 - Status: completo
 
 ```python
+"""Blueprint reservado para a migracao do dominio de autenticacao."""
+
 from flask import Blueprint
 
 
@@ -7184,17 +8366,19 @@ vendas_bp = Blueprint('vendas_bp', __name__)
 
 
 ### Arquivo: `app/cli.py`
-- Linhas: 56
-- Tamanho: 2.0 KB
+- Linhas: 102
+- Tamanho: 3.9 KB
 - Status: completo
 
 ```python
+import json
 import os
+from datetime import date, datetime
 
 import click
 import qrcode
 
-from models import Funcionario, Mesa, db
+from models import Funcionario, Mesa, Produto, db
 
 
 def register_cli(app):
@@ -7207,6 +8391,15 @@ def register_cli(app):
 
         seed_database()
         click.echo('Seed finalizado.')
+
+    @app.cli.command('seed-operational-homologation')
+    @click.option('--reset', is_flag=True, help='Limpa a base antes da carga. Use com cuidado.')
+    def seed_operational_homologation_command(reset):
+        """Popula o banco com massa operacional de homologacao."""
+        from scripts.seed_operational_homologation import seed_operational_homologation
+
+        resumo = seed_operational_homologation(reset=reset)
+        click.echo(json.dumps(resumo, ensure_ascii=False, indent=2))
 
     @app.cli.command('fix-admin')
     @click.option('--email', default=lambda: os.environ.get('SYSTEMLR_ADMIN_EMAIL', 'admin@conveniencia.local'))
@@ -7245,12 +8438,47 @@ def register_cli(app):
             total += 1
         click.echo(f'QR codes gerados: {total}')
 
+    @app.cli.command('check-expired-products')
+    @click.option('--reference-date', default=None, help='Data de referencia no formato YYYY-MM-DD.')
+    def check_expired_products_command(reference_date):
+        """Desativa produtos vencidos e retira sua disponibilidade operacional."""
+        if reference_date:
+            try:
+                referencia = datetime.strptime(reference_date, '%Y-%m-%d').date()
+            except ValueError as exc:
+                raise click.BadParameter('Use o formato YYYY-MM-DD para --reference-date.') from exc
+        else:
+            referencia = date.today()
+
+        produtos = Produto.query.filter(
+            Produto.validade.is_not(None),
+            Produto.validade < referencia,
+        ).all()
+
+        atualizados = 0
+        for produto in produtos:
+            mudou = False
+            if produto.ativo:
+                produto.ativo = False
+                mudou = True
+            if Produto.normalizar_status_disponibilidade(produto.status_disponibilidade) != Produto.STATUS_DISPONIVEL_OFF:
+                produto.status_disponibilidade = Produto.STATUS_DISPONIVEL_OFF
+                mudou = True
+            if mudou:
+                atualizados += 1
+
+        db.session.commit()
+        click.echo(
+            f'{atualizados} produto(s) vencido(s) atualizado(s) em {referencia.isoformat()}. '
+            f'Total expirado encontrado: {len(produtos)}.'
+        )
+
 ```
 
 
 ### Arquivo: `app/constants.py`
-- Linhas: 199
-- Tamanho: 7.1 KB
+- Linhas: 209
+- Tamanho: 7.3 KB
 - Status: completo
 
 ```python
@@ -7272,6 +8500,7 @@ CARGOS_PERMANENTES = (
 )
 
 PAGINAS_SISTEMA = {
+    'api': 'APIs Administrativas',
     'inicio': 'Meu Perfil',
     'gestao_negocio': 'Gestao do Negocio',
     'financeiro': 'Financeiro',
@@ -7298,12 +8527,20 @@ PAGINAS_SISTEMA = {
     'rh_organograma': 'RH - Organograma',
     'auditoria': 'Auditoria',
     'empresa': 'Empresa',
-    'ecommerce_config': 'E-commerce - Ativacao e Configuracao',
+    'ecommerce_config': 'E-commerce - Tema e Operacao',
+    'ecommerce_marketing': 'E-commerce - Promocoes e Campanhas',
     'servicos_tecnicos': 'Servicos Tecnicos',
     'chamados_internos': 'Chamados Internos',
     'garcons': 'Garcons',
     'ajuda': 'Ajuda e Treinamento',
 }
+
+API_FALLBACK_ACCESS_PAGES = (
+    'empresa',
+    'auditoria',
+    'funcionarios',
+    'rh_funcoes',
+)
 
 PAGINAS_SISTEMA_MENU_ORDEM = (
     ('Dashboard', ('inicio',)),
@@ -7314,7 +8551,7 @@ PAGINAS_SISTEMA_MENU_ORDEM = (
     ('Recebimento', ('fornecedores', 'recebimentos')),
     ('Expedicao', ('expedicao', 'transferencias_estoque')),
     ('Meu RH', ('rh_indicadores', 'rh_organograma', 'funcionarios', 'rh_funcoes', 'auditoria')),
-    ('E-commerce', ('ecommerce_config',)),
+    ('E-commerce', ('ecommerce_config', 'ecommerce_marketing')),
     ('Servicos', ('servicos_tecnicos', 'chamados_internos')),
     ('Ajuda', ('ajuda',)),
 )
@@ -7429,6 +8666,7 @@ PAGINA_ENDPOINTS = {
     'auditoria': {'auditoria_sistema'},
     'empresa': {'editar_empresa', 'preview_cardapio_empresa'},
     'ecommerce_config': {'configurar_ecommerce', 'configurar_ativacao_ecommerce'},
+    'ecommerce_marketing': {'configurar_marketing_ecommerce'},
     'servicos_tecnicos': {
         'listar_ordens_servico',
         'minhas_ordens_servico',
@@ -7551,8 +8789,8 @@ def register_routes(app, context=None):
 
 
 ### Arquivo: `app/exceptions.py`
-- Linhas: 31
-- Tamanho: 0.6 KB
+- Linhas: 33
+- Tamanho: 0.7 KB
 - Status: completo
 
 ```python
@@ -7560,12 +8798,14 @@ class AppError(Exception):
     status_code = 500
     code = 'app_error'
 
-    def __init__(self, message, *, code=None, status_code=None):
+    def __init__(self, message, *, code=None, status_code=None, action=None, fields=None):
         super().__init__(message)
         if code:
             self.code = code
         if status_code:
             self.status_code = status_code
+        self.action = action
+        self.fields = fields or {}
 
 
 class BusinessRuleError(AppError):
@@ -7672,8 +8912,8 @@ def init_extensions(app, db):
 
 
 ### Arquivo: `app/factory.py`
-- Linhas: 76
-- Tamanho: 3.0 KB
+- Linhas: 102
+- Tamanho: 3.9 KB
 - Status: completo
 
 ```python
@@ -7706,9 +8946,11 @@ def create_app(config_name=None, *, register_routes=False, route_contexts=None):
     )
     app.config.from_object(config[config_name])
     app.config['SESSION_PERMANENT'] = False
-    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_TYPE'] = app.config.get('SESSION_TYPE') or 'filesystem'
+    app.config.setdefault('TEMPLATES_AUTO_RELOAD', True)
     app.config.setdefault('LOGIN_MAX_ATTEMPTS', 5)
     app.config.setdefault('LOGIN_WINDOW_SECONDS', 300)
+    app.config.setdefault('MENU_DEBUG_ENABLED', app.config.get('ENV_NAME') != 'production')
     app.config.setdefault('LOCAL_AI_ENABLED', os.environ.get('SYSTEMLR_LOCAL_AI_ENABLED', '1') not in {'0', 'false', 'False'})
     app.config.setdefault(
         'LOCAL_AI_AUTO_INSTALL',
@@ -7740,6 +8982,30 @@ def create_app(config_name=None, *, register_routes=False, route_contexts=None):
 
     init_extensions(app, db)
 
+    app.jinja_env.auto_reload = True
+
+    @app.url_defaults
+    def _add_static_file_version(endpoint, values):
+        if endpoint != 'static' or not values:
+            return
+        if 'v' in values:
+            return
+
+        filename = values.get('filename')
+        if not filename or not isinstance(filename, str):
+            return
+
+        try:
+            static_root = os.path.abspath(app.static_folder)
+            file_path = os.path.abspath(os.path.join(static_root, filename.replace('/', os.sep)))
+            if not file_path.startswith(static_root):
+                return
+            stat_result = os.stat(file_path)
+        except OSError:
+            return
+
+        values['v'] = str(int(stat_result.st_mtime))
+
     if register_routes:
         route_contexts = route_contexts or {}
         from app import api_routes, auth_routes, dashboard_routes, empresa_routes, rh_routes, services_routes
@@ -7757,8 +9023,8 @@ def create_app(config_name=None, *, register_routes=False, route_contexts=None):
 
 
 ### Arquivo: `app/helpers.py`
-- Linhas: 69
-- Tamanho: 2.0 KB
+- Linhas: 112
+- Tamanho: 3.6 KB
 - Status: completo
 
 ```python
@@ -7766,10 +9032,12 @@ from collections import deque
 from datetime import datetime
 
 from flask import current_app, request, session
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
 from app import extensions
+from app.services.analytics import construir_metricas_dashboard_vazias
 from app.services.financeiro_service import calcular_metricas_dashboard, parse_date_range
-from models import Funcionario
+from models import Funcionario, db
 
 
 _failed_login_attempts = {}
@@ -7798,7 +9066,22 @@ def _purge_old_attempts(attempts):
         attempts.popleft()
 
 
+def _login_attempt_cache_key(ip_addr):
+    return f'login-attempts:{ip_addr}'
+
+
+def _cache_supports_shared_login_attempts():
+    cache = extensions.cache
+    if cache is None:
+        return False
+    cache_type = str(current_app.config.get('CACHE_TYPE') or '').lower()
+    return 'redis' in cache_type
+
+
 def _is_login_rate_limited(ip_addr):
+    if _cache_supports_shared_login_attempts():
+        attempts = extensions.cache.get(_login_attempt_cache_key(ip_addr)) or []
+        return len(attempts) >= int(current_app.config.get('LOGIN_MAX_ATTEMPTS', 5))
     attempts = _failed_login_attempts.get(ip_addr)
     if not attempts:
         return False
@@ -7807,6 +9090,18 @@ def _is_login_rate_limited(ip_addr):
 
 
 def _register_login_attempt(ip_addr, success):
+    if _cache_supports_shared_login_attempts():
+        cache = extensions.cache
+        cache_key = _login_attempt_cache_key(ip_addr)
+        login_window_seconds = int(current_app.config.get('LOGIN_WINDOW_SECONDS', 300))
+        attempts = list(cache.get(cache_key) or [])
+        if success:
+            cache.delete(cache_key)
+            return
+        attempts.append(datetime.utcnow().timestamp())
+        attempts = attempts[-int(current_app.config.get('LOGIN_MAX_ATTEMPTS', 5)):]
+        cache.set(cache_key, attempts, timeout=login_window_seconds)
+        return
     attempts = _failed_login_attempts.setdefault(ip_addr, deque())
     _purge_old_attempts(attempts)
     if success:
@@ -7826,9 +9121,23 @@ def _coletar_dashboard_analytics(inicio_periodo, fim_periodo):
         dados = cache.get(cache_key)
         if dados is not None:
             return dados
-    dados = calcular_metricas_dashboard(inicio_periodo, fim_periodo)
+    try:
+        dados = calcular_metricas_dashboard(inicio_periodo, fim_periodo)
+    except (OperationalError, ProgrammingError):
+        current_app.logger.warning('dashboard analytics indisponiveis por schema/banco inconsistente', exc_info=True)
+        db.session.rollback()
+        dados = construir_metricas_dashboard_vazias(
+            inicio_periodo,
+            fim_periodo,
+            schema_inconsistente=True,
+        )
+    else:
+        if cache is not None:
+            cache.set(cache_key, dados, timeout=300)
+        return dados
+
     if cache is not None:
-        cache.set(cache_key, dados, timeout=60)
+        cache.set(cache_key, dados, timeout=300)
     return dados
 
 ```
@@ -7847,14 +9156,148 @@ def register_routes(app, context=None):
 
 
 ### Arquivo: `app/services/analytics.py`
-- Linhas: 313
-- Tamanho: 12.2 KB
+- Linhas: 602
+- Tamanho: 23.3 KB
 - Status: completo
 
 ```python
 from datetime import datetime, timedelta
 
+from sqlalchemy.orm import selectinload
+
 from models import Caixa, Garcom, ItemPedido, LancamentoFinanceiro, Pedido, Produto, db
+
+
+FINANCIAL_CATEGORIES_OUTSIDE_OPERATING_RESULT = {
+    'pagamento_fornecedor',
+    'sangria',
+    'fundo_operacional',
+}
+
+
+def construir_metricas_dashboard_vazias(inicio_periodo, fim_periodo, *, schema_inconsistente=False):
+    """Retorna um payload seguro para manter o dashboard funcional em degradacao controlada."""
+    periodo_dias = max((fim_periodo - inicio_periodo).days, 0)
+    alertas = []
+    if schema_inconsistente:
+        alertas.append({
+            'nivel': 'warning',
+            'titulo': 'Analytics temporariamente indisponivel',
+            'descricao': 'O schema do banco esta desatualizado em relacao ao codigo atual. Execute as migrations para restaurar os indicadores.',
+        })
+
+    comparativos_zerados = {
+        'atual': 0.0,
+        'anterior': 0.0,
+        'variacao_pct': 0.0,
+    }
+
+    return {
+        'periodo_dias': periodo_dias,
+        'pedidos_periodo_total': 0,
+        'faturamento_periodo': 0.0,
+        'faturamento_periodo_anterior': 0.0,
+        'crescimento_receita_pct': 0.0,
+        'faturamento_hoje': 0.0,
+        'receita_media_dia': 0.0,
+        'pedidos_media_dia': 0.0,
+        'ticket_medio_periodo': 0.0,
+        'ticket_medio_periodo_anterior': 0.0,
+        'tempo_medio_preparo_minutos': 0.0,
+        'cmv_periodo': 0.0,
+        'lucro_bruto_periodo': 0.0,
+        'margem_bruta_pct': 0.0,
+        'despesas_operacionais_periodo': 0.0,
+        'despesas_operacionais_pct_faturamento': 0.0,
+        'movimentacoes_financeiras_excluidas_periodo': 0.0,
+        'categorias_excluidas_resultado': sorted(FINANCIAL_CATEGORIES_OUTSIDE_OPERATING_RESULT),
+        'ajustes_financeiros_periodo': 0.0,
+        'resultado_operacional_periodo': 0.0,
+        'margem_operacional_pct': 0.0,
+        'pedidos_abertos': 0,
+        'pedidos_cancelados_periodo': 0,
+        'valor_cancelado_periodo': 0.0,
+        'taxa_cancelamento_pct': 0.0,
+        'metodo_mais_usado': 'nao informado',
+        'concentracao_top_pagamento_pct': 0.0,
+        'comparativos': {
+            'faturamento': dict(comparativos_zerados),
+            'ticket_medio': dict(comparativos_zerados),
+            'margem_bruta_pct': dict(comparativos_zerados),
+            'margem_operacional_pct': dict(comparativos_zerados),
+            'despesas_operacionais': dict(comparativos_zerados),
+            'taxa_cancelamento_pct': dict(comparativos_zerados),
+        },
+        'vendas_periodo': [],
+        'receita_vs_despesas': [],
+        'margens_periodo': [],
+        'margem_meta_pct': None,
+        'cmv_vs_categorias': [{'categoria': 'CMV', 'valor': 0.0}],
+        'top_produtos_vendidos': [],
+        'pedidos_por_status': [],
+        'top_clientes': [],
+        'desempenho_garcons': [],
+        'desempenho_caixas': [],
+        'desempenho_operacional': [],
+        'metodos_pagamento': [],
+        'pendencias_lancamento': 0,
+        'alertas': alertas,
+    }
+
+
+def _sum_financial_entries_by_types(inicio_periodo, fim_periodo, tipos, *, exclude_categories=None):
+    query = db.session.query(
+        db.func.sum(LancamentoFinanceiro.valor)
+    ).filter(
+        LancamentoFinanceiro.tipo.in_(tipos),
+        LancamentoFinanceiro.data_competencia >= inicio_periodo.date(),
+        LancamentoFinanceiro.data_competencia < fim_periodo.date()
+    )
+    categorias_excluidas = {str(item).strip().lower() for item in (exclude_categories or set()) if str(item).strip()}
+    if categorias_excluidas:
+        query = query.filter(
+            db.or_(
+                LancamentoFinanceiro.categoria.is_(None),
+                db.func.lower(LancamentoFinanceiro.categoria).notin_(categorias_excluidas)
+            )
+        )
+    return float(query.scalar() or 0.0)
+
+
+def _pct_delta(current, previous):
+    current = float(current or 0.0)
+    previous = float(previous or 0.0)
+    if previous == 0:
+        return 0.0
+    return ((current - previous) / previous) * 100.0
+
+
+def _margin_pct(receita, valor):
+    receita = float(receita or 0.0)
+    valor = float(valor or 0.0)
+    return (valor / receita * 100.0) if receita > 0 else 0.0
+
+
+def _sum_financial_entries_by_category(inicio_periodo, fim_periodo, tipos):
+    rows = db.session.query(
+        LancamentoFinanceiro.categoria.label('categoria'),
+        db.func.sum(LancamentoFinanceiro.valor).label('valor')
+    ).filter(
+        LancamentoFinanceiro.tipo.in_(tipos),
+        LancamentoFinanceiro.data_competencia >= inicio_periodo.date(),
+        LancamentoFinanceiro.data_competencia < fim_periodo.date()
+    ).group_by(
+        LancamentoFinanceiro.categoria
+    ).order_by(
+        db.desc('valor')
+    ).all()
+    return [
+        {
+            'categoria': item.categoria or 'Sem categoria',
+            'valor': float(item.valor or 0.0),
+        }
+        for item in rows
+    ]
 
 
 def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
@@ -7863,7 +9306,9 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
     fim_hoje = inicio_hoje + timedelta(days=1)
     periodo_dias = (fim_periodo - inicio_periodo).days
 
-    pedidos_periodo = Pedido.query.filter(
+    pedidos_periodo = Pedido.query.options(
+        selectinload(Pedido.itens).selectinload(ItemPedido.produto)
+    ).filter(
         Pedido.status == 'fechado',
         Pedido.fechado_em >= inicio_periodo,
         Pedido.fechado_em < fim_periodo
@@ -7871,6 +9316,15 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
     pedidos_periodo_total = len(pedidos_periodo)
     faturamento_periodo = sum((pedido.total or 0) for pedido in pedidos_periodo)
     ticket_medio_periodo = (faturamento_periodo / pedidos_periodo_total) if pedidos_periodo_total else 0
+    tempos_preparo_segundos = [
+        max((pedido.fechado_em - pedido.criado_em).total_seconds(), 0)
+        for pedido in pedidos_periodo
+        if pedido.criado_em and pedido.fechado_em
+    ]
+    tempo_medio_preparo_minutos = (
+        sum(tempos_preparo_segundos) / len(tempos_preparo_segundos) / 60.0
+        if tempos_preparo_segundos else 0.0
+    )
 
     pedidos_abertos = Pedido.query.filter(Pedido.status.in_(['aberto', 'em_preparo'])).count()
     pedidos_cancelados_lista = Pedido.query.filter(
@@ -7904,24 +9358,30 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
     lucro_bruto_periodo = float(faturamento_periodo - cmv_periodo)
     margem_bruta_pct = (lucro_bruto_periodo / faturamento_periodo * 100.0) if faturamento_periodo > 0 else 0.0
 
-    despesas_operacionais_periodo = db.session.query(
-        db.func.sum(LancamentoFinanceiro.valor)
-    ).filter(
-        LancamentoFinanceiro.tipo.in_([
+    despesas_operacionais_periodo = _sum_financial_entries_by_types(
+        inicio_periodo,
+        fim_periodo,
+        [
             LancamentoFinanceiro.TIPO_DESPESA,
             LancamentoFinanceiro.TIPO_CONSUMO_PROPRIO
-        ]),
-        LancamentoFinanceiro.data_competencia >= inicio_periodo.date(),
-        LancamentoFinanceiro.data_competencia < fim_periodo.date()
-    ).scalar() or 0.0
+        ],
+        exclude_categories=FINANCIAL_CATEGORIES_OUTSIDE_OPERATING_RESULT,
+    )
 
-    ajustes_financeiros_periodo = db.session.query(
-        db.func.sum(LancamentoFinanceiro.valor)
-    ).filter(
-        LancamentoFinanceiro.tipo == LancamentoFinanceiro.TIPO_AJUSTE,
-        LancamentoFinanceiro.data_competencia >= inicio_periodo.date(),
-        LancamentoFinanceiro.data_competencia < fim_periodo.date()
-    ).scalar() or 0.0
+    movimentacoes_financeiras_excluidas_periodo = _sum_financial_entries_by_types(
+        inicio_periodo,
+        fim_periodo,
+        [
+            LancamentoFinanceiro.TIPO_DESPESA,
+            LancamentoFinanceiro.TIPO_CONSUMO_PROPRIO
+        ],
+    ) - despesas_operacionais_periodo
+
+    ajustes_financeiros_periodo = _sum_financial_entries_by_types(
+        inicio_periodo,
+        fim_periodo,
+        [LancamentoFinanceiro.TIPO_AJUSTE],
+    )
 
     resultado_operacional_periodo = float(lucro_bruto_periodo - despesas_operacionais_periodo + ajustes_financeiros_periodo)
     margem_operacional_pct = (resultado_operacional_periodo / faturamento_periodo * 100.0) if faturamento_periodo > 0 else 0.0
@@ -7944,6 +9404,11 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
         Pedido.fechado_em >= periodo_anterior_inicio,
         Pedido.fechado_em < periodo_anterior_fim
     ).scalar() or 0.0
+    pedidos_periodo_anterior = Pedido.query.filter(
+        Pedido.status == 'fechado',
+        Pedido.fechado_em >= periodo_anterior_inicio,
+        Pedido.fechado_em < periodo_anterior_fim
+    ).count()
 
     crescimento_receita_pct = (
         ((faturamento_periodo - faturamento_periodo_anterior) / faturamento_periodo_anterior) * 100.0
@@ -7974,17 +9439,43 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
         for item in vendas_periodo_raw
     }
 
+    despesas_diarias_raw = db.session.query(
+        LancamentoFinanceiro.data_competencia.label('dia'),
+        db.func.sum(LancamentoFinanceiro.valor).label('valor')
+    ).filter(
+        LancamentoFinanceiro.tipo.in_([
+            LancamentoFinanceiro.TIPO_DESPESA,
+            LancamentoFinanceiro.TIPO_CONSUMO_PROPRIO,
+        ]),
+        LancamentoFinanceiro.data_competencia >= inicio_periodo.date(),
+        LancamentoFinanceiro.data_competencia < fim_periodo.date()
+    ).group_by(
+        LancamentoFinanceiro.data_competencia
+    ).all()
+    despesas_diarias_map = {
+        str(item.dia): float(item.valor or 0.0)
+        for item in despesas_diarias_raw
+    }
+
     vendas_periodo = []
     for i in range(periodo_dias):
         dia = inicio_periodo + timedelta(days=i)
         chave_dia = dia.strftime('%Y-%m-%d')
         valores_dia = vendas_periodo_map.get(chave_dia, {'faturamento': 0.0, 'pedidos': 0})
+        despesa_dia = float(despesas_diarias_map.get(chave_dia, 0.0))
+        faturamento_dia = float(valores_dia['faturamento'])
+        cmv_estimado_dia = (cmv_periodo / faturamento_periodo * faturamento_dia) if faturamento_periodo > 0 else 0.0
+        lucro_bruto_dia = faturamento_dia - cmv_estimado_dia
+        resultado_operacional_dia = lucro_bruto_dia - despesa_dia
         vendas_periodo.append({
             'data_iso': chave_dia,
             'data_curta': dia.strftime('%d/%m'),
             'data_semana': dia.strftime('%a'),
-            'faturamento': valores_dia['faturamento'],
-            'pedidos': valores_dia['pedidos']
+            'faturamento': faturamento_dia,
+            'pedidos': valores_dia['pedidos'],
+            'despesas': despesa_dia,
+            'margem_bruta_pct': _margin_pct(faturamento_dia, lucro_bruto_dia),
+            'margem_operacional_pct': _margin_pct(faturamento_dia, resultado_operacional_dia),
         })
 
     maior_faturamento_periodo = max((item['faturamento'] for item in vendas_periodo), default=0)
@@ -8009,9 +9500,11 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
     top_produtos_vendidos = [
         {
             'produto_id': produto.id,
+            'sku': produto.codigo,
             'nome': produto.nome,
             'quantidade': int(qtd or 0),
             'receita': float(receita or 0),
+            'margem_contribuicao': float(((produto.preco_venda or 0.0) - (produto.preco_custo or 0.0)) / (produto.preco_venda or 1.0)) if produto.preco_venda else 0.0,
         }
         for produto, qtd, receita in top_produtos_vendidos_raw
     ]
@@ -8079,7 +9572,9 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
         {
             'nome': item.nome,
             'pedidos': int(item.pedidos or 0),
-            'faturamento': float(item.faturamento or 0)
+            'faturamento': float(item.faturamento or 0),
+            'ticket_medio': float((item.faturamento or 0) / item.pedidos) if item.pedidos else 0.0,
+            'tipo': 'Garcom',
         }
         for item in desempenho_garcons_raw
     ]
@@ -8101,7 +9596,9 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
         {
             'nome': item.nome,
             'pedidos': int(item.pedidos or 0),
-            'faturamento': float(item.faturamento or 0)
+            'faturamento': float(item.faturamento or 0),
+            'ticket_medio': float((item.faturamento or 0) / item.pedidos) if item.pedidos else 0.0,
+            'tipo': 'Caixa',
         }
         for item in desempenho_caixas_raw
     ]
@@ -8133,6 +9630,63 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
         if metodos_pagamento and pedidos_periodo_total > 0 else 0.0
     )
 
+    cmv_vs_categorias = [{'categoria': 'CMV', 'valor': float(cmv_periodo)}]
+    cmv_vs_categorias.extend(
+        _sum_financial_entries_by_category(
+            inicio_periodo,
+            fim_periodo,
+            [LancamentoFinanceiro.TIPO_DESPESA, LancamentoFinanceiro.TIPO_CONSUMO_PROPRIO]
+        )[:6]
+    )
+
+    desempenho_operacional = sorted(
+        desempenho_garcons + desempenho_caixas,
+        key=lambda item: (item['faturamento'], item['pedidos']),
+        reverse=True
+    )[:8]
+
+    pendencias_lancamento = Pedido.query.filter(
+        Pedido.status == Pedido.STATUS_FECHADO,
+        Pedido.fechado_em >= inicio_periodo,
+        Pedido.fechado_em < fim_periodo,
+        db.or_(
+            Pedido.financeiro_processado.is_(False),
+            Pedido.financeiro_processado.is_(None),
+        )
+    ).count()
+
+    alertas = []
+    if margem_bruta_pct < 25:
+        alertas.append({
+            'nivel': 'danger',
+            'titulo': 'Margem bruta abaixo do esperado',
+            'descricao': f'Margem bruta atual em {margem_bruta_pct:.1f}% no periodo analisado.',
+        })
+    if taxa_cancelamento_pct >= 5:
+        alertas.append({
+            'nivel': 'warning',
+            'titulo': 'Cancelamento acima do limite',
+            'descricao': f'{pedidos_cancelados_periodo} pedido(s) cancelado(s), taxa de {taxa_cancelamento_pct:.1f}%.',
+        })
+    despesas_pct_faturamento = _margin_pct(faturamento_periodo, despesas_operacionais_periodo)
+    if despesas_pct_faturamento >= 30:
+        alertas.append({
+            'nivel': 'warning',
+            'titulo': 'Despesas operacionais elevadas',
+            'descricao': f'Despesas consumindo {despesas_pct_faturamento:.1f}% do faturamento.',
+        })
+    if pendencias_lancamento:
+        alertas.append({
+            'nivel': 'info',
+            'titulo': 'Pendencias de lancamento financeiro',
+            'descricao': f'{pendencias_lancamento} pedido(s) fechado(s) ainda nao processado(s) no financeiro.',
+        })
+
+    ticket_medio_anterior = (
+        float(faturamento_periodo_anterior) / pedidos_periodo_anterior
+        if pedidos_periodo_anterior and faturamento_periodo_anterior else 0.0
+    )
+
     return {
         'periodo_dias': periodo_dias,
         'pedidos_periodo_total': pedidos_periodo_total,
@@ -8143,10 +9697,15 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
         'receita_media_dia': float(receita_media_dia),
         'pedidos_media_dia': float(pedidos_media_dia),
         'ticket_medio_periodo': float(ticket_medio_periodo),
+        'ticket_medio_periodo_anterior': float(ticket_medio_anterior),
+        'tempo_medio_preparo_minutos': float(tempo_medio_preparo_minutos),
         'cmv_periodo': float(cmv_periodo),
         'lucro_bruto_periodo': float(lucro_bruto_periodo),
         'margem_bruta_pct': float(margem_bruta_pct),
         'despesas_operacionais_periodo': float(despesas_operacionais_periodo),
+        'despesas_operacionais_pct_faturamento': float(despesas_pct_faturamento),
+        'movimentacoes_financeiras_excluidas_periodo': float(movimentacoes_financeiras_excluidas_periodo),
+        'categorias_excluidas_resultado': sorted(FINANCIAL_CATEGORIES_OUTSIDE_OPERATING_RESULT),
         'ajustes_financeiros_periodo': float(ajustes_financeiros_periodo),
         'resultado_operacional_periodo': float(resultado_operacional_periodo),
         'margem_operacional_pct': float(margem_operacional_pct),
@@ -8156,13 +9715,52 @@ def calcular_metricas_dashboard(inicio_periodo, fim_periodo):
         'taxa_cancelamento_pct': float(taxa_cancelamento_pct),
         'metodo_mais_usado': metodo_mais_usado,
         'concentracao_top_pagamento_pct': float(concentracao_top_pagamento_pct),
+        'comparativos': {
+            'faturamento': {
+                'atual': float(faturamento_periodo),
+                'anterior': float(faturamento_periodo_anterior),
+                'variacao_pct': float(_pct_delta(faturamento_periodo, faturamento_periodo_anterior)),
+            },
+            'ticket_medio': {
+                'atual': float(ticket_medio_periodo),
+                'anterior': float(ticket_medio_anterior),
+                'variacao_pct': float(_pct_delta(ticket_medio_periodo, ticket_medio_anterior)),
+            },
+            'margem_bruta_pct': {
+                'atual': float(margem_bruta_pct),
+                'anterior': 0.0,
+                'variacao_pct': 0.0,
+            },
+            'margem_operacional_pct': {
+                'atual': float(margem_operacional_pct),
+                'anterior': 0.0,
+                'variacao_pct': 0.0,
+            },
+            'despesas_operacionais': {
+                'atual': float(despesas_operacionais_periodo),
+                'anterior': 0.0,
+                'variacao_pct': 0.0,
+            },
+            'taxa_cancelamento_pct': {
+                'atual': float(taxa_cancelamento_pct),
+                'anterior': 0.0,
+                'variacao_pct': 0.0,
+            },
+        },
         'vendas_periodo': vendas_periodo,
+        'receita_vs_despesas': vendas_periodo,
+        'margens_periodo': vendas_periodo,
+        'margem_meta_pct': None,
+        'cmv_vs_categorias': cmv_vs_categorias,
         'top_produtos_vendidos': top_produtos_vendidos,
         'pedidos_por_status': pedidos_por_status,
         'top_clientes': top_clientes,
         'desempenho_garcons': desempenho_garcons,
         'desempenho_caixas': desempenho_caixas,
-        'metodos_pagamento': metodos_pagamento
+        'desempenho_operacional': desempenho_operacional,
+        'metodos_pagamento': metodos_pagamento,
+        'pendencias_lancamento': int(pendencias_lancamento),
+        'alertas': alertas,
     }
 
 ```
@@ -8182,9 +9780,84 @@ __all__ = ['LocalAIAssistant']
 ```
 
 
+### Arquivo: `app/services/auth_service.py`
+- Linhas: 66
+- Tamanho: 2.8 KB
+- Status: completo
+
+```python
+"""Services do dominio de autenticacao."""
+
+from models import Funcionario, PerfilAcesso, db
+
+
+class AuthService:
+    """Encapsula autenticacao e cadastro inicial de funcionarios."""
+
+    def __init__(self, *, normalizar_matricula, normalizar_texto, normalizar_cpf):
+        self._normalizar_matricula = normalizar_matricula
+        self._normalizar_texto = normalizar_texto
+        self._normalizar_cpf = normalizar_cpf
+
+    def login(self, identificador, senha):
+        """Autentica por email ou matricula."""
+        identificador = (identificador or '').strip()
+        senha = senha or ''
+        if not identificador or not senha:
+            return None, 'Matricula/email e senha sao obrigatorios.'
+
+        identificador_norm = identificador.lower()
+        matricula_norm = self._normalizar_matricula(identificador)
+        funcionario = Funcionario.query.filter(
+            db.or_(
+                db.func.lower(Funcionario.email) == identificador_norm,
+                db.func.lower(Funcionario.matricula) == (matricula_norm.lower() if matricula_norm else identificador_norm),
+            )
+        ).first()
+        if not funcionario or not funcionario.check_password(senha):
+            return None, 'Matricula/email ou senha incorretos.'
+        return funcionario, ''
+
+    def total_funcionarios(self):
+        """Retorna total atual de funcionarios."""
+        return Funcionario.query.count()
+
+    def get_primeiro_admin(self, email):
+        """Busca o usuario inicial esperado para o primeiro acesso."""
+        return Funcionario.query.filter(
+            db.func.lower(Funcionario.email) == (email or '').lower()
+        ).order_by(Funcionario.id.asc()).first()
+
+    def build_novo_funcionario(self, *, nome, email, senha):
+        """Cria instancia pronta para persistencia."""
+        funcionario = Funcionario(nome=nome, email=email)
+        funcionario.set_password(senha)
+        funcionario.matricula = None
+        return funcionario
+
+    def validar_registro_basico(self, *, email, cpf, perfil_acesso_id, niveis_organograma, nivel_organograma):
+        """Executa validacoes de consistencia de cadastro."""
+        if Funcionario.query.filter_by(email=email).first():
+            return None, 'Email ja cadastrado.'
+        if cpf == '__invalid__':
+            return None, 'CPF invalido. Informe 11 digitos.'
+        if cpf and Funcionario.query.filter_by(cpf=cpf).first():
+            return None, 'CPF ja cadastrado para outro funcionario.'
+        if nivel_organograma and nivel_organograma not in niveis_organograma:
+            return None, 'Nivel de organograma invalido.'
+        perfil_acesso = None
+        if perfil_acesso_id:
+            perfil_acesso = PerfilAcesso.query.get(perfil_acesso_id)
+            if not perfil_acesso:
+                return None, 'Perfil de acesso invalido.'
+        return perfil_acesso, ''
+
+```
+
+
 ### Arquivo: `app/services/estoque.py`
-- Linhas: 158
-- Tamanho: 5.0 KB
+- Linhas: 300
+- Tamanho: 9.8 KB
 - Status: completo
 
 ```python
@@ -8195,13 +9868,22 @@ import uuid
 from flask import current_app
 from PIL import Image
 
+try:
+    import magic
+except Exception:  # pragma: no cover - fallback quando python-magic nao estiver disponivel
+    magic = None
+
 from app.exceptions import BusinessRuleError, ValidationError
+from app.services.operational_rules import validate_stock_movement_payload, validate_stock_transfer_payload
+from app.services.traceability import record_process_event
+from app.services.transaction import atomic_transaction
 from app.utils.helpers import sem_acentos
 from app.utils.validators import normalizar_codigo_barras
-from models import EmpresaConfig, Movimentacao, Produto
+from models import EmpresaConfig, Movimentacao, Produto, db
 
 
 ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
+ALLOWED_IMAGE_MIME_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 DEFAULT_PRODUCT_IMAGE = 'img/placeholders/imgindisponivel.png'
 
 
@@ -8228,6 +9910,133 @@ def aplicar_movimentacao_estoque(produto, tipo, quantidade, *, tipos_validos=Non
     return None
 
 
+def registrar_movimentacao_manual(
+    *,
+    produto,
+    tipo,
+    quantidade,
+    motivo,
+    recebimento_fornecedor=False,
+    fornecedor=None,
+    valor_compra=None,
+    info_nota=None,
+    observacoes=None,
+    movimentacao_model=Movimentacao,
+    failure_hook=None,
+    actor=None,
+    pedido_id=None,
+    recebimento_id=None,
+):
+    with atomic_transaction():
+        motivo_normalizado = validate_stock_movement_payload(
+            tipo=tipo,
+            quantidade=quantidade,
+            motivo=motivo,
+            recebimento_fornecedor=recebimento_fornecedor,
+        )
+        aplicar_movimentacao_estoque(produto, tipo, quantidade, movimentacao_model=movimentacao_model)
+        if failure_hook:
+            failure_hook('after_stock')
+
+        movimentacao = movimentacao_model(
+            produto_id=produto.id,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
+            fornecedor_id=(fornecedor.id if fornecedor else None),
+            tipo=tipo,
+            quantidade=quantidade,
+            valor_compra=valor_compra,
+            info_nota=info_nota,
+            motivo=motivo_normalizado,
+            observacoes=observacoes,
+            endereco_origem_id=(produto.endereco_id if tipo == movimentacao_model.TIPO_SAIDA else None),
+            endereco_destino_id=(produto.endereco_id if tipo == movimentacao_model.TIPO_ENTRADA else None),
+        )
+        db.session.add(movimentacao)
+        db.session.flush()
+        record_process_event(
+            processo_tipo='estoque',
+            etapa='movimentacao',
+            acao='movimentacao_manual_registrada',
+            entidade='movimentacao',
+            entidade_id=movimentacao.id,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
+            movimentacao_id=movimentacao.id,
+            actor=actor,
+            detalhes={
+                'produto_id': produto.id,
+                'tipo': tipo,
+                'quantidade': quantidade,
+                'motivo': motivo_normalizado,
+            },
+        )
+    return movimentacao
+
+
+def transferir_estoque(
+    *,
+    produto,
+    endereco_origem,
+    endereco_destino,
+    motivo,
+    observacoes=None,
+    allow_same_stock=False,
+    movimentacao_model=Movimentacao,
+    failure_hook=None,
+    actor=None,
+):
+    with atomic_transaction():
+        validate_stock_transfer_payload(
+            produto=produto,
+            endereco_origem=endereco_origem,
+            endereco_destino=endereco_destino,
+            motivo=motivo,
+        )
+        if (
+            not allow_same_stock
+            and endereco_origem.estoque_id
+            and endereco_destino.estoque_id
+            and endereco_origem.estoque_id == endereco_destino.estoque_id
+        ):
+            raise BusinessRuleError(
+                'Esta tela e exclusiva para transferencias entre lojas/CDs. '
+                'Para ajustes internos use Entradas e Saidas Internas ou Enderecos Inteligentes.'
+            )
+
+        produto.endereco_id = endereco_destino.id
+        if failure_hook:
+            failure_hook('after_address')
+        movimentacao = movimentacao_model(
+            produto_id=produto.id,
+            tipo=movimentacao_model.TIPO_TRANSFERENCIA,
+            quantidade=max(int(produto.quantidade_estoque or 0), 0),
+            motivo=(motivo or '').strip(),
+            observacoes=observacoes,
+            endereco_origem_id=(endereco_origem.id if endereco_origem else None),
+            endereco_destino_id=endereco_destino.id,
+        )
+        db.session.add(movimentacao)
+        db.session.flush()
+        record_process_event(
+            processo_tipo='estoque',
+            etapa='transferencia',
+            acao='transferencia_registrada',
+            entidade='movimentacao',
+            entidade_id=movimentacao.id,
+            movimentacao_id=movimentacao.id,
+            actor=actor,
+            detalhes={
+                'produto_id': produto.id,
+                'endereco_origem_id': endereco_origem.id if endereco_origem else None,
+                'endereco_destino_id': endereco_destino.id,
+                'quantidade': movimentacao.quantidade,
+                'motivo': movimentacao.motivo,
+            },
+        )
+    return movimentacao
+
+
 def _normalizar_codigo_barras(valor):
     return normalizar_codigo_barras(valor)
 
@@ -8245,6 +10054,12 @@ def _is_valid_image_content(file_storage):
         return False
     try:
         stream.seek(0)
+        header = stream.read(2048)
+        stream.seek(0)
+        if magic is not None:
+            mime_type = magic.from_buffer(header, mime=True)
+            if mime_type not in ALLOWED_IMAGE_MIME_TYPES:
+                return False
         img = Image.open(stream)
         img.verify()
         stream.seek(0)
@@ -8350,8 +10165,8 @@ def aplicar_movimentacao_estoque(produto, tipo, quantidade, *, tipos_validos=Non
 
 
 ### Arquivo: `app/services/estoque_service.py`
-- Linhas: 25
-- Tamanho: 0.6 KB
+- Linhas: 29
+- Tamanho: 0.7 KB
 - Status: completo
 
 ```python
@@ -8361,6 +10176,8 @@ from app.services.estoque import (
     _save_product_image,
     aplicar_movimentacao_estoque,
     categoria_parece_quimico,
+    registrar_movimentacao_manual,
+    transferir_estoque,
 )
 
 
@@ -8372,6 +10189,8 @@ delete_image_file = _delete_image_file
 __all__ = [
     'aplicar_movimentacao_estoque',
     'categoria_parece_quimico',
+    'registrar_movimentacao_manual',
+    'transferir_estoque',
     '_normalizar_codigo_barras',
     '_save_product_image',
     '_delete_image_file',
@@ -8384,15 +10203,19 @@ __all__ = [
 
 
 ### Arquivo: `app/services/financeiro.py`
-- Linhas: 60
-- Tamanho: 2.5 KB
+- Linhas: 78
+- Tamanho: 3.2 KB
 - Status: completo
 
 ```python
+from flask import current_app
+from sqlalchemy.exc import OperationalError, ProgrammingError
+
 from app import extensions
-from app.services.analytics import calcular_metricas_dashboard
+from app.services.analytics import calcular_metricas_dashboard, construir_metricas_dashboard_vazias
 from app.services.utils import _to_float
 from app.utils.data import parse_date_range
+from models import db
 
 
 def _parse_date_range(data_inicial_str, data_final_str, default_days=7):
@@ -8406,7 +10229,21 @@ def _coletar_dashboard_analytics(inicio_periodo, fim_periodo):
         dados = cache.get(cache_key)
         if dados is not None:
             return dados
-    dados = calcular_metricas_dashboard(inicio_periodo, fim_periodo)
+    try:
+        dados = calcular_metricas_dashboard(inicio_periodo, fim_periodo)
+    except (OperationalError, ProgrammingError):
+        current_app.logger.warning('dashboard analytics indisponiveis por schema/banco inconsistente', exc_info=True)
+        db.session.rollback()
+        dados = construir_metricas_dashboard_vazias(
+            inicio_periodo,
+            fim_periodo,
+            schema_inconsistente=True,
+        )
+    else:
+        if cache is not None:
+            cache.set(cache_key, dados, timeout=60)
+        return dados
+
     if cache is not None:
         cache.set(cache_key, dados, timeout=60)
     return dados
@@ -8452,6 +10289,197 @@ def _build_payment_data(metodo_raw, valor_raw, total_pedido, payment_methods, sp
 ```
 
 
+### Arquivo: `app/services/financeiro_operacional.py`
+- Linhas: 182
+- Tamanho: 6.3 KB
+- Status: completo
+
+```python
+from datetime import datetime
+
+from app.exceptions import ValidationError
+from app.services.operational_rules import validate_financial_entry_payload
+from app.services.traceability import record_process_event
+from app.services.transaction import atomic_transaction
+from app.services.workflow import FundoStatus, transition_fundo_status
+from models import FundoSolicitacao, LancamentoFinanceiro, db
+
+
+def criar_solicitacao_fundo(
+    *,
+    tipo,
+    descricao,
+    valor,
+    solicitado_por_id=None,
+    categoria=None,
+    centro_custo=None,
+    referencia_documento=None,
+    fundo_model=FundoSolicitacao,
+    actor=None,
+):
+    tipo_normalizado = (tipo or '').strip().lower()
+    descricao = (descricao or '').strip()
+    valor = float(valor or 0.0)
+
+    if tipo_normalizado not in fundo_model.TIPOS_VALIDOS:
+        raise ValidationError('Tipo de fundo invalido.')
+    if not descricao:
+        raise ValidationError('Descricao da solicitacao e obrigatoria.')
+    if valor <= 0:
+        raise ValidationError('Valor deve ser maior que zero.')
+
+    fundo = fundo_model(
+        tipo=tipo_normalizado,
+        descricao=descricao,
+        categoria=(categoria or '').strip() or None,
+        valor=valor,
+        centro_custo=(centro_custo or '').strip() or None,
+        referencia_documento=(referencia_documento or '').strip() or None,
+        status=fundo_model.STATUS_SOLICITADA,
+        solicitado_por_id=solicitado_por_id,
+    )
+    db.session.add(fundo)
+    db.session.flush()
+    record_process_event(
+        processo_tipo='financeiro_operacional',
+        etapa='fundos',
+        acao='solicitacao_fundo_criada',
+        entidade='fundo',
+        entidade_id=fundo.id,
+        fundo_solicitacao_id=fundo.id,
+        actor=actor,
+        detalhes={
+            'tipo': fundo.tipo,
+            'valor': fundo.valor,
+            'centro_custo': fundo.centro_custo,
+        },
+    )
+    return fundo
+
+
+def aplicar_acao_fundo(fundo, *, acao, actor=None, motivo_rejeicao=None, failure_hook=None):
+    with atomic_transaction():
+        acao = (acao or '').strip().lower()
+        if acao == 'aprovar':
+            return transition_fundo_status(
+                fundo,
+                FundoStatus.APROVADA,
+                actor=actor,
+                detalhes='Aprovacao de solicitacao de fundo.',
+            )
+        if acao == 'rejeitar':
+            return transition_fundo_status(
+                fundo,
+                FundoStatus.REJEITADA,
+                actor=actor,
+                motivo_rejeicao=motivo_rejeicao,
+                detalhes='Rejeicao de solicitacao de fundo.',
+            )
+        if acao == 'liberar':
+            return transition_fundo_status(
+                fundo,
+                FundoStatus.LIBERADA,
+                actor=actor,
+                detalhes='Liberacao operacional de fundo com geracao de lancamento.',
+                failure_hook=failure_hook,
+            )
+        raise ValidationError('Acao de fundo invalida.')
+
+
+def criar_lancamento_financeiro(
+    *,
+    tipo,
+    descricao,
+    valor,
+    data_competencia=None,
+    incluir_contabilidade=False,
+    referencia_documento=None,
+    centro_custo=None,
+    categoria=None,
+    produto=None,
+    produto_id=None,
+    quantidade=None,
+    criado_por_id=None,
+    lancamento_model=LancamentoFinanceiro,
+    failure_hook=None,
+    actor=None,
+    pedido_id=None,
+    recebimento_id=None,
+):
+    with atomic_transaction():
+        tipo = (tipo or '').strip().lower()
+        descricao = (descricao or '').strip()
+        categoria = (categoria or '').strip() or None
+        referencia_documento = (referencia_documento or '').strip() or None
+        centro_custo = (centro_custo or '').strip() or None
+        valor = float(valor or 0.0)
+        quantidade = float(quantidade) if quantidade not in {None, ''} else None
+        data_competencia = data_competencia or datetime.utcnow().date()
+
+        if tipo not in lancamento_model.TIPOS:
+            raise ValidationError('Tipo de lancamento invalido.')
+        if not descricao:
+            raise ValidationError('Descricao e obrigatoria.')
+
+        if tipo == lancamento_model.TIPO_CONSUMO_PROPRIO:
+            if not produto:
+                raise ValidationError('Selecione um produto para consumo proprio.')
+            if not quantidade or quantidade <= 0:
+                raise ValidationError('Informe quantidade valida para consumo proprio.')
+            valor = round((produto.preco_custo or 0) * quantidade, 2)
+        elif tipo in {lancamento_model.TIPO_DESPESA, lancamento_model.TIPO_RECEITA}:
+            if valor <= 0:
+                raise ValidationError('Valor deve ser maior que zero.')
+        elif tipo == lancamento_model.TIPO_AJUSTE and valor == 0:
+            raise ValidationError('Ajuste deve ter valor diferente de zero.')
+
+        validate_financial_entry_payload(
+            tipo=tipo,
+            referencia_documento=referencia_documento,
+            centro_custo=centro_custo,
+        )
+
+        lancamento = lancamento_model(
+            tipo=tipo,
+            categoria=categoria,
+            descricao=descricao,
+            valor=valor,
+            data_competencia=data_competencia,
+            incluir_contabilidade=bool(incluir_contabilidade),
+            referencia_documento=referencia_documento,
+            centro_custo=centro_custo,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
+            produto_id=(produto.id if produto else produto_id),
+            quantidade=quantidade if quantidade and quantidade > 0 else None,
+            criado_por_id=criado_por_id,
+        )
+        db.session.add(lancamento)
+        db.session.flush()
+        record_process_event(
+            processo_tipo='financeiro_operacional',
+            etapa='lancamento',
+            acao='lancamento_financeiro_criado',
+            entidade='lancamento_financeiro',
+            entidade_id=lancamento.id,
+            pedido_id=pedido_id,
+            recebimento_id=recebimento_id,
+            lancamento_financeiro_id=lancamento.id,
+            actor=actor,
+            detalhes={
+                'tipo': lancamento.tipo,
+                'valor': lancamento.valor,
+                'centro_custo': lancamento.centro_custo,
+                'referencia_documento': lancamento.referencia_documento,
+            },
+        )
+        if failure_hook:
+            failure_hook('after_lancamento')
+    return lancamento
+
+```
+
+
 ### Arquivo: `app/services/financeiro_service.py`
 - Linhas: 23
 - Tamanho: 0.5 KB
@@ -8485,8 +10513,8 @@ __all__ = [
 
 
 ### Arquivo: `app/services/local_ai.py`
-- Linhas: 1557
-- Tamanho: 63.3 KB
+- Linhas: 1574
+- Tamanho: 64.3 KB
 - Status: completo
 
 ```python
@@ -9615,7 +11643,7 @@ class LocalAIAssistant:
                 'lancar entrada no sistema',
             ]
         elif intent == 'access_permission':
-            return 'Quero responder certo. Voce esta sem acesso a qual menu? Financeiro, Estoque, Vendas ou outro?'
+            return 'Quero responder certo. Voce esta sem acesso a qual menu ou tela?'
         elif intent == 'navigation_request':
             return 'Posso te mostrar o caminho. Qual tela voce quer abrir agora?'
         if opcoes:
@@ -9632,6 +11660,8 @@ class LocalAIAssistant:
         checklist = (doc or {}).get('checklist') or []
         alertas = (doc or {}).get('alerts') or []
         problemas = (doc or {}).get('problems') or []
+        topic_key = self._detect_primary_topic(question, doc) or domain
+        profile = TOPIC_PROFILES.get(topic_key or '')
 
         def format_passos(lista, limite=5):
             return [self._ensure_sentence(item) for item in lista[:limite]]
@@ -9640,6 +11670,21 @@ class LocalAIAssistant:
             return 'Ola! Como posso ajudar?'
 
         if intent == 'broad_exploration':
+            if profile:
+                passos_iniciais = profile.get('starter_steps') or []
+                fluxo_comum = passos_iniciais[0] if passos_iniciais else profile.get('overview') or 'Posso detalhar as partes principais.'
+                sequencia = '; '.join(passos_iniciais[1:3]) if len(passos_iniciais) > 1 else profile.get('overview') or ''
+                resposta = [
+                    f'Posso te explicar {topic_key} passo a passo.',
+                    f'O fluxo mais comum comeca assim: {fluxo_comum}',
+                ]
+                if sequencia:
+                    resposta.append(sequencia)
+                refinamentos = ', '.join((profile.get('refinements') or [])[:4])
+                if refinamentos:
+                    resposta.append(f'Se quiser, eu detalho {refinamentos}.')
+                resposta.append('Qual parte primeiro?')
+                return ' '.join(resposta)
             resumo = (doc or {}).get('summary') or (doc or {}).get('snippet') or 'Posso detalhar as partes principais.'
             topicos = []
             if doc and doc.get('checklist'):
@@ -9732,7 +11777,7 @@ class LocalAIAssistant:
         if profile:
             partes = ', '.join(profile.get('refinements')[:4])
             return (
-                f'Posso te ajudar com mais precisao em {topic}. '
+                f'Quero te responder certo. Voce quer saber como funciona {topic} ou uma parte especifica? '
                 f'Normalmente essa area envolve {profile.get("overview").rstrip(".")}. '
                 f'Se quiser, eu detalho {partes}. Qual parte voce quer ver primeiro?'
             )
@@ -10050,16 +12095,307 @@ class LocalAIAssistant:
 ```
 
 
-### Arquivo: `app/services/pedido.py`
-- Linhas: 76
-- Tamanho: 2.9 KB
+### Arquivo: `app/services/master_data.py`
+- Linhas: 182
+- Tamanho: 5.7 KB
 - Status: completo
 
 ```python
-from datetime import datetime
+import re
 
-from app.exceptions import BusinessRuleError, NotFound, ValidationError
-from models import Caixa, Movimentacao, MovimentacaoCaixa, Produto, db
+from app.exceptions import ValidationError
+from app.utils.payment_config import payment_text_to_json
+
+
+ALLOWED_COST_CENTERS = {
+    'administrativo',
+    'estoque',
+    'financeiro',
+    'logistica',
+    'manutencao',
+    'operacao',
+    'rh',
+    'tecnologia',
+    'vendas',
+}
+
+ALLOWED_MOVEMENT_REASONS = {
+    'entrada': {
+        'acerto_estoque',
+        'devolucao_cliente',
+        'inventario_ajuste',
+        'producao_interna',
+        'recebimento_fornecedor',
+        'retorno_almoxarifado',
+    },
+    'saida': {
+        'acerto_estoque',
+        'almoxarifado_funcionario',
+        'almoxarifado_setor',
+        'avaria_quebra',
+        'consumo_operacional',
+        'perda_validade',
+        'uso_interno',
+        'venda',
+    },
+    'transferencia': {
+        'abastecimento_filial',
+        'redistribuicao_cd',
+        'reposicao_loja',
+        'transferencia_operacional',
+    },
+}
+
+ALLOWED_CANCEL_REASONS = {
+    'avaria',
+    'cliente_desistiu',
+    'duplicidade',
+    'erro_cadastro',
+    'falta_estoque',
+    'operacao_cancelada',
+    'pagamento_nao_aprovado',
+}
+
+
+def _normalize_slug(value):
+    texto = (value or '').strip().lower()
+    texto = re.sub(r'[^a-z0-9]+', '_', texto)
+    return texto.strip('_')
+
+
+def _validate_email(value, *, field_label):
+    texto = (value or '').strip()
+    if texto and '@' not in texto:
+        raise ValidationError(f'{field_label} invalido.')
+    return texto or None
+
+
+def validate_supplier_payload(
+    *,
+    nome,
+    documento=None,
+    telefone=None,
+    email=None,
+    endereco_cidade=None,
+    tipo_produtos_fornece=None,
+    ativo=True,
+):
+    nome = (nome or '').strip()
+    if not nome:
+        raise ValidationError('Nome do fornecedor e obrigatorio.')
+    email = _validate_email(email, field_label='Email do fornecedor')
+    if not ativo:
+        return
+    if not (documento or '').strip() and not (telefone or '').strip() and not email:
+        raise ValidationError('Fornecedor ativo exige ao menos um contato principal: documento, telefone ou email.')
+    if not (endereco_cidade or '').strip():
+        raise ValidationError('Fornecedor ativo exige cidade informada.')
+    if not (tipo_produtos_fornece or '').strip():
+        raise ValidationError('Fornecedor ativo exige tipo de produto/servico informado.')
+
+
+def validate_employee_payload(
+    *,
+    nome,
+    email,
+    role,
+    cargo,
+    departamento,
+    ativo=True,
+    controle_acesso_ativo=False,
+    perfil_acesso_id=None,
+    restricao_estoques_ativa=False,
+    estoque_principal_id=None,
+):
+    if not (nome or '').strip():
+        raise ValidationError('Nome do funcionario e obrigatorio.')
+    if not (email or '').strip():
+        raise ValidationError('Email do funcionario e obrigatorio.')
+    _validate_email(email, field_label='Email do funcionario')
+    if not ativo:
+        return
+    if not (role or '').strip():
+        raise ValidationError('Funcionario ativo exige perfil de acesso operacional.')
+    if not (cargo or '').strip():
+        raise ValidationError('Funcionario ativo exige cargo informado.')
+    if not (departamento or '').strip():
+        raise ValidationError('Funcionario ativo exige departamento informado.')
+    if controle_acesso_ativo and not perfil_acesso_id:
+        raise ValidationError('Controle de acesso ativo exige perfil de acesso vinculado.')
+    if restricao_estoques_ativa and not estoque_principal_id:
+        raise ValidationError('Funcionario com restricao de estoques exige estoque principal.')
+
+
+def validate_stock_master_payload(*, nome, codigo_filial, ativo=True):
+    if not (nome or '').strip():
+        raise ValidationError('Nome do estoque e obrigatorio.')
+    if ativo and not (codigo_filial or '').strip():
+        raise ValidationError('Estoque/filial ativo exige codigo de filial.')
+
+
+def normalize_cost_center(value, *, required=False):
+    texto = _normalize_slug(value)
+    if required and not texto:
+        raise ValidationError('Centro de custo e obrigatorio.')
+    if texto and texto not in ALLOWED_COST_CENTERS:
+        raise ValidationError('Centro de custo invalido. Use um centro de custo padronizado.')
+    return texto or None
+
+
+def validate_movement_reason_classified(reason, *, tipo):
+    motivo = _normalize_slug(reason)
+    if not motivo:
+        raise ValidationError('Motivo de movimentacao e obrigatorio.')
+    permitidos = ALLOWED_MOVEMENT_REASONS.get(tipo, set())
+    if motivo not in permitidos:
+        raise ValidationError('Motivo de movimentacao invalido. Use um motivo padronizado.')
+    return motivo
+
+
+def validate_cancel_reason_classified(reason, *, entity_label='registro'):
+    texto = (reason or '').strip()
+    if not texto:
+        raise ValidationError(f'Informe o motivo do cancelamento de {entity_label}.')
+    motivo = _normalize_slug(texto)
+    if motivo in ALLOWED_CANCEL_REASONS:
+        return motivo
+    if len(texto) < 8:
+        raise ValidationError(f'Motivo do cancelamento de {entity_label} muito curto. Detalhe melhor ou use um motivo padronizado.')
+    return texto
+
+
+def validate_payment_options_configuration(text, *, channel):
+    linhas = [linha.strip() for linha in (text or '').splitlines() if linha.strip()]
+    if not linhas:
+        return None
+
+    vistos = set()
+    for linha in linhas:
+        partes = [parte.strip() for parte in linha.split('|')]
+        payment_id = _normalize_slug(partes[0] if partes else '')
+        label = partes[1] if len(partes) > 1 else ''
+        if not payment_id:
+            raise ValidationError('Forma de pagamento invalida: informe um identificador.')
+        if not label:
+            raise ValidationError('Forma de pagamento invalida: informe o nome exibido.')
+        if payment_id in vistos:
+            raise ValidationError('Forma de pagamento duplicada na configuracao.')
+        vistos.add(payment_id)
+    return payment_text_to_json(text, channel)
+
+```
+
+
+### Arquivo: `app/services/operational_rules.py`
+- Linhas: 90
+- Tamanho: 3.7 KB
+- Status: completo
+
+```python
+from __future__ import annotations
+
+from app.exceptions import BusinessRuleError, ValidationError
+from app.services.master_data import (
+    validate_cancel_reason_classified,
+    validate_movement_reason_classified,
+)
+from models import LancamentoFinanceiro, Movimentacao
+
+
+CRITICAL_FINANCIAL_TYPES = {
+    LancamentoFinanceiro.TIPO_CONSUMO_PROPRIO,
+    LancamentoFinanceiro.TIPO_DESPESA,
+    LancamentoFinanceiro.TIPO_AJUSTE,
+}
+
+
+def require_cancel_reason(reason, *, entity_label='registro'):
+    return validate_cancel_reason_classified(reason, entity_label=entity_label)
+
+
+def validate_active_product_payload(
+    *,
+    codigo,
+    nome,
+    categoria_id,
+    fornecedor_id,
+    preco_custo,
+    preco_venda,
+    quantidade_minima,
+    ativo=True,
+):
+    if not ativo:
+        return
+    if not (str(codigo or '').strip()):
+        raise ValidationError('Produto ativo exige codigo.')
+    if not (str(nome or '').strip()):
+        raise ValidationError('Produto ativo exige nome.')
+    if not categoria_id:
+        raise ValidationError('Produto ativo exige categoria.')
+    if not fornecedor_id:
+        raise ValidationError('Produto ativo exige fornecedor.')
+    if preco_custo is None or float(preco_custo) < 0:
+        raise ValidationError('Produto ativo exige preco de custo valido.')
+    if preco_venda is None or float(preco_venda) <= 0:
+        raise ValidationError('Produto ativo exige preco de venda maior que zero.')
+    if quantidade_minima is None or int(quantidade_minima) < 0:
+        raise ValidationError('Produto ativo exige quantidade minima valida.')
+
+
+def validate_stock_movement_payload(*, tipo, quantidade, motivo, recebimento_fornecedor=False):
+    if tipo not in {Movimentacao.TIPO_ENTRADA, Movimentacao.TIPO_SAIDA, Movimentacao.TIPO_TRANSFERENCIA}:
+        raise ValidationError('Tipo de movimentacao invalido.')
+    if quantidade is None or int(quantidade) <= 0:
+        raise ValidationError('Quantidade deve ser maior que zero.')
+    motivo_normalizado = (motivo or '').strip().lower()
+    if tipo == Movimentacao.TIPO_SAIDA and not motivo_normalizado:
+        raise ValidationError('Saida de estoque exige motivo classificado.')
+    if tipo == Movimentacao.TIPO_ENTRADA and not recebimento_fornecedor and not motivo_normalizado:
+        raise ValidationError('Entrada manual exige motivo classificado.')
+    if tipo in {Movimentacao.TIPO_SAIDA, Movimentacao.TIPO_TRANSFERENCIA}:
+        return validate_movement_reason_classified(motivo, tipo=tipo)
+    if tipo == Movimentacao.TIPO_ENTRADA:
+        if recebimento_fornecedor:
+            motivo_normalizado = (motivo or 'recebimento_fornecedor').strip().lower()
+        else:
+            motivo_normalizado = validate_movement_reason_classified(motivo, tipo=tipo)
+        return motivo_normalizado
+    return (motivo or '').strip().lower()
+
+
+def validate_financial_entry_payload(*, tipo, referencia_documento, centro_custo):
+    if tipo in CRITICAL_FINANCIAL_TYPES:
+        if not (referencia_documento or '').strip():
+            raise ValidationError('Lancamento financeiro critico exige referencia.')
+        if not (centro_custo or '').strip():
+            raise ValidationError('Lancamento financeiro critico exige centro de custo.')
+
+
+def validate_stock_transfer_payload(*, produto, endereco_origem, endereco_destino, motivo):
+    if not produto:
+        raise ValidationError('Produto nao encontrado.')
+    if not endereco_origem:
+        raise ValidationError('Transferencia exige endereco de origem valido.')
+    if not endereco_destino:
+        raise ValidationError('Transferencia exige endereco de destino valido.')
+    if endereco_origem.id == endereco_destino.id:
+        raise BusinessRuleError('Origem e destino nao podem ser iguais.')
+    validate_movement_reason_classified(motivo, tipo=Movimentacao.TIPO_TRANSFERENCIA)
+
+```
+
+
+### Arquivo: `app/services/pedido.py`
+- Linhas: 204
+- Tamanho: 6.1 KB
+- Status: completo
+
+```python
+from app.exceptions import BusinessRuleError, ValidationError
+from app.services.traceability import record_process_event
+from app.services.venda_service import VendaService
+from app.services.workflow import transition_pedido_status
+from models import ItemPedido, Pedido, Produto, db
 
 
 def _normalizar_item_payload(item, *, produto_model=Produto):
@@ -10075,6 +12411,8 @@ def _normalizar_item_payload(item, *, produto_model=Produto):
     produto = produto_model.query.get(produto_id)
     if not produto or not produto.ativo:
         raise ValidationError('Produto invalido ou inativo.')
+    if produto.vencido:
+        raise ValidationError(f'Produto "{produto.nome}" esta vencido e nao pode entrar no pedido.')
     return {'produto': produto, 'quantidade': quantidade}, None
 
 
@@ -10083,69 +12421,197 @@ def _recalcular_total_pedido(pedido):
     return pedido.total
 
 
-def _processar_fechamento_pedido(pedido):
-    if not pedido.itens:
-        raise ValidationError('Pedido sem itens nao pode ser fechado.')
+def _substituir_itens_pedido(
+    pedido,
+    itens_payload,
+    *,
+    normalizar_item_payload=_normalizar_item_payload,
+    item_model=ItemPedido,
+    clear_existing=True,
+    empty_items_message='Adicione ao menos um item valido ao pedido.',
+):
+    if clear_existing:
+        pedido.itens.clear()
 
-    if not pedido.estoque_processado:
-        for item in pedido.itens:
-            produto = item.produto or Produto.query.get(item.produto_id)
-            if not produto:
-                raise NotFound(f'Produto do item {item.id} nao encontrado.')
-            if produto.quantidade_estoque < item.quantidade:
-                raise BusinessRuleError(f'Estoque insuficiente para "{produto.nome}".')
+    itens_validos = 0
+    for item in itens_payload:
+        normalizado, erro = normalizar_item_payload(item)
+        if erro:
+            continue
 
-        for item in pedido.itens:
-            produto = item.produto or Produto.query.get(item.produto_id)
-            produto.quantidade_estoque -= item.quantidade
-            db.session.add(Movimentacao(
+        produto = normalizado['produto']
+        quantidade = normalizado['quantidade']
+        pedido.itens.append(
+            item_model(
                 produto_id=produto.id,
-                tipo=Movimentacao.TIPO_SAIDA,
-                quantidade=item.quantidade,
-                motivo='venda',
-                observacoes=f'Pedido {pedido.id} fechado'
-            ))
-        pedido.estoque_processado = True
+                quantidade=quantidade,
+                preco_unitario=produto.preco_venda,
+            )
+        )
+        itens_validos += 1
 
-    if pedido.caixa_id and not pedido.financeiro_processado:
-        caixa = pedido.caixa or Caixa.query.get(pedido.caixa_id)
-        if not caixa:
-            raise NotFound('Caixa do pedido nao encontrada.')
-        if not caixa.aberto:
-            raise BusinessRuleError('Caixa do pedido esta fechada. Nao e possivel concluir o financeiro.')
+    if itens_validos == 0:
+        raise ValidationError(empty_items_message)
 
-        valor_pedido = float(pedido.total or 0.0)
-        caixa.saldo_atual = float(caixa.saldo_atual or 0.0) + valor_pedido
-        db.session.add(MovimentacaoCaixa(
-            caixa_id=caixa.id,
-            tipo=MovimentacaoCaixa.TIPO_ENTRADA,
-            valor=valor_pedido,
-            descricao=f'Fechamento do pedido #{pedido.id}'
-        ))
-        pedido.financeiro_processado = True
-
-    pedido.fechado_em = datetime.utcnow()
-    if pedido.mesa:
-        pedido.mesa.status = 'livre'
+    return itens_validos
 
 
-def _aplicar_transicao_status(pedido, novo_status):
-    return pedido.transitar_para(novo_status, on_fechamento=_processar_fechamento_pedido)
+def create_order(
+    *,
+    caixa,
+    itens_payload,
+    mesa=None,
+    garcom_id=None,
+    atendimento_mesas_ativo=False,
+    pedido_model=Pedido,
+    totalizer=_recalcular_total_pedido,
+    normalizar_item_payload=_normalizar_item_payload,
+    empty_items_message='Adicione ao menos um item valido ao pedido.',
+    actor=None,
+):
+    if not caixa or not caixa.aberto:
+        raise BusinessRuleError('Caixa nao esta aberta.')
+    if not itens_payload:
+        raise ValidationError('Caixa e produtos sao obrigatorios.')
+
+    pedido = pedido_model(
+        mesa_id=(mesa.id if atendimento_mesas_ativo and mesa else None),
+        caixa_id=caixa.id,
+        garcom_id=(garcom_id if atendimento_mesas_ativo else None),
+        status=Pedido.STATUS_ABERTO,
+        estoque_processado=False,
+        financeiro_processado=False,
+    )
+    db.session.add(pedido)
+    db.session.flush()
+
+    _substituir_itens_pedido(
+        pedido,
+        itens_payload,
+        normalizar_item_payload=normalizar_item_payload,
+        clear_existing=False,
+        empty_items_message=empty_items_message,
+    )
+    totalizer(pedido)
+
+    if atendimento_mesas_ativo and mesa:
+        mesa.status = 'ocupada'
+
+    record_process_event(
+        processo_tipo='pedido_venda',
+        etapa='criacao',
+        acao='pedido_criado',
+        entidade='pedido',
+        entidade_id=pedido.id,
+        pedido_id=pedido.id,
+        actor=actor,
+        detalhes={
+            'status': pedido.status,
+            'total': float(pedido.total or 0.0),
+            'mesa_id': pedido.mesa_id,
+            'caixa_id': pedido.caixa_id,
+        },
+    )
+
+    return pedido
+
+
+def update_order(
+    pedido,
+    *,
+    novo_status,
+    caixa=None,
+    mesa=None,
+    atendimento_mesas_ativo=False,
+    observacoes=None,
+    itens_payload=None,
+    metodo_pagamento=None,
+    valor_pago=None,
+    actor=None,
+    detalhes=None,
+    require_delivery_separation=False,
+    normalizar_item_payload=_normalizar_item_payload,
+    totalizer=_recalcular_total_pedido,
+    status_transition=None,
+    empty_items_message='Adicione ao menos um item valido ao pedido.',
+):
+    if status_transition is None:
+        status_transition = _aplicar_transicao_status
+    status_atual = (pedido.status or Pedido.STATUS_ABERTO).strip().lower()
+    novo_status = (novo_status or status_atual).strip().lower()
+
+    if status_atual in Pedido.STATUS_IMUTAVEIS and novo_status != status_atual:
+        raise ValidationError(f'Pedido {status_atual} e imutavel.')
+
+    pedido.mesa_id = (mesa.id if atendimento_mesas_ativo and mesa else None)
+    if not atendimento_mesas_ativo:
+        pedido.garcom_id = None
+    pedido.caixa_id = caixa.id if caixa else None
+    pedido.observacoes = observacoes
+
+    if caixa and novo_status == Pedido.STATUS_FECHADO and not caixa.aberto:
+        raise ValidationError('Caixa informada esta fechada.')
+
+    if status_atual not in Pedido.STATUS_IMUTAVEIS:
+        _substituir_itens_pedido(
+            pedido,
+            itens_payload or [],
+            normalizar_item_payload=normalizar_item_payload,
+            empty_items_message=empty_items_message,
+        )
+        totalizer(pedido)
+
+    pedido.metodo_pagamento = metodo_pagamento
+    pedido.valor_pago = valor_pago
+
+    status_transition(
+        pedido,
+        novo_status,
+        actor=actor,
+        detalhes=detalhes,
+        require_delivery_separation=require_delivery_separation,
+    )
+    return pedido
+
+
+def _processar_fechamento_pedido(pedido, *, actor=None, failure_hook=None):
+    VendaService(session=db.session).processar_venda_rapida(
+        pedido,
+        metodo_pagamento=pedido.metodo_pagamento,
+        valor_pago=pedido.valor_pago,
+        actor=actor,
+        commit=False,
+        failure_hook=failure_hook,
+    )
+
+
+def _aplicar_transicao_status(pedido, novo_status, *, actor=None, detalhes=None, require_delivery_separation=False):
+    return transition_pedido_status(
+        pedido,
+        novo_status,
+        actor=actor,
+        detalhes=detalhes,
+        require_delivery_separation=require_delivery_separation,
+        on_fechamento=lambda item: _processar_fechamento_pedido(item, actor=actor),
+    )
 
 ```
 
 
 ### Arquivo: `app/services/pedido_service.py`
-- Linhas: 25
-- Tamanho: 0.6 KB
+- Linhas: 33
+- Tamanho: 0.9 KB
 - Status: completo
 
 ```python
 from app.services.pedido import (
     _aplicar_transicao_status,
+    _substituir_itens_pedido,
+    create_order,
     _normalizar_item_payload,
     _processar_fechamento_pedido,
     _recalcular_total_pedido,
+    update_order,
 )
 
 
@@ -10153,6 +12619,7 @@ normalizar_item_payload = _normalizar_item_payload
 recalcular_total_pedido = _recalcular_total_pedido
 processar_fechamento_pedido = _processar_fechamento_pedido
 aplicar_transicao_status = _aplicar_transicao_status
+substituir_itens_pedido = _substituir_itens_pedido
 
 
 __all__ = [
@@ -10160,25 +12627,368 @@ __all__ = [
     '_recalcular_total_pedido',
     '_processar_fechamento_pedido',
     '_aplicar_transicao_status',
+    '_substituir_itens_pedido',
+    'create_order',
+    'update_order',
     'normalizar_item_payload',
     'recalcular_total_pedido',
     'processar_fechamento_pedido',
     'aplicar_transicao_status',
+    'substituir_itens_pedido',
+]
+
+```
+
+
+### Arquivo: `app/services/permissao_service.py`
+- Linhas: 32
+- Tamanho: 1.1 KB
+- Status: completo
+
+```python
+"""Service de permissao por pagina/endpoint."""
+
+from app.constants import API_FALLBACK_ACCESS_PAGES, ENDPOINT_TO_PAGINA
+
+
+class PermissaoService:
+    """Centraliza o calculo de paginas permitidas e acesso por endpoint."""
+
+    def __init__(self, *, resolver_paginas):
+        self._resolver_paginas = resolver_paginas
+
+    def get_paginas_permitidas(self, funcionario):
+        """Retorna paginas efetivas disponiveis ao funcionario."""
+        return self._resolver_paginas(funcionario)
+
+    def tem_acesso(self, funcionario, endpoint, *, is_api_request=False):
+        """Valida acesso ao endpoint considerando fallback para APIs."""
+        if not funcionario:
+            return False
+        if funcionario.role == 'admin':
+            return True
+        if not funcionario.controle_acesso_ativo:
+            return True
+
+        paginas_resolvidas = set(self.get_paginas_permitidas(funcionario))
+        pagina = ENDPOINT_TO_PAGINA.get(endpoint)
+        if not pagina:
+            if is_api_request:
+                return bool(paginas_resolvidas.intersection(API_FALLBACK_ACCESS_PAGES))
+            return True
+        return pagina in paginas_resolvidas
+
+```
+
+
+### Arquivo: `app/services/recebimento.py`
+- Linhas: 269
+- Tamanho: 10.7 KB
+- Status: completo
+
+```python
+from datetime import datetime
+
+from app.exceptions import BusinessRuleError, ValidationError
+from app.services.estoque_service import aplicar_movimentacao_estoque
+from app.services.traceability import record_process_event
+from app.services.transaction import atomic_transaction
+from app.services.workflow import RecebimentoStatus, transition_recebimento_status
+from models import Movimentacao, RecebimentoFornecedor, RecebimentoItem, db
+
+
+def create_recebimento(
+    *,
+    fornecedor,
+    local_recebimento,
+    tipo_recebimento,
+    itens_processados,
+    fornecedor_documento=None,
+    data_entrega=None,
+    info_nota=None,
+    desconto=0.0,
+    observacoes=None,
+    recebedor_funcionario=None,
+    recebedor_nome=None,
+    recebedor_assinatura=None,
+    entregador_nome=None,
+    entregador_assinatura=None,
+    ir_para_armazenagem=False,
+    actor=None,
+    recebimento_model=RecebimentoFornecedor,
+    item_model=RecebimentoItem,
+    failure_hook=None,
+):
+    if tipo_recebimento not in recebimento_model.TIPOS_VALIDOS:
+        raise ValidationError('Selecione um tipo de recebimento valido.')
+    if not local_recebimento:
+        raise ValidationError('Defina um local de recebimento ativo e valido antes de concluir.')
+    if not itens_processados:
+        raise ValidationError('Informe ao menos um item valido no recebimento.')
+
+    subtotal = sum(float(item['total_item']) for item in itens_processados)
+    desconto = float(desconto or 0.0)
+    if desconto < 0:
+        raise ValidationError('Desconto nao pode ser negativo.')
+    total_pagar = max(subtotal - desconto, 0.0)
+
+    with atomic_transaction():
+        recebimento = recebimento_model(
+            fornecedor_id=getattr(fornecedor, 'id', None),
+            local_recebimento_id=local_recebimento.id,
+            tipo_recebimento=tipo_recebimento,
+            fornecedor_documento=fornecedor_documento or getattr(fornecedor, 'documento', None) or None,
+            data_entrega=data_entrega,
+            info_nota=info_nota,
+            subtotal=subtotal,
+            desconto=desconto,
+            total_pagar=total_pagar,
+            observacoes=observacoes,
+            recebedor_funcionario_id=(recebedor_funcionario.id if recebedor_funcionario else None),
+            recebedor_nome=recebedor_nome,
+            recebedor_assinatura=recebedor_assinatura,
+            entregador_nome=entregador_nome,
+            entregador_assinatura=entregador_assinatura,
+            status=recebimento_model.STATUS_CRIADO,
+        )
+        db.session.add(recebimento)
+        db.session.flush()
+
+        for item in itens_processados:
+            db.session.add(
+                item_model(
+                    recebimento_id=recebimento.id,
+                    produto_id=item['produto_id'],
+                    qtd_recebida=item['qtd_recebida'],
+                    unidade=item['unidade'],
+                    descricao_item=item['descricao_item'],
+                    preco_unitario=item['preco_unitario'],
+                    total_item=item['total_item'],
+                    qtd_avaria=0,
+                )
+            )
+        if failure_hook:
+            failure_hook('after_items')
+
+        if ir_para_armazenagem:
+            transition_recebimento_status(
+                recebimento,
+                RecebimentoStatus.AGUARDANDO_ARMAZENAGEM,
+                actor=actor,
+                detalhes='Recebimento criado com envio direto para armazenagem.',
+            )
+
+        record_process_event(
+            processo_tipo='recebimento',
+            etapa='criacao',
+            acao='recebimento_criado',
+            entidade='recebimento',
+            entidade_id=recebimento.id,
+            recebimento_id=recebimento.id,
+            actor=actor,
+            detalhes={
+                'status': recebimento.status,
+                'fornecedor_id': recebimento.fornecedor_id,
+                'local_recebimento_id': recebimento.local_recebimento_id,
+                'info_nota': recebimento.info_nota,
+            },
+        )
+
+    return recebimento
+
+
+def conferir_recebimento(recebimento, *, conferencias_por_item, actor=None, failure_hook=None):
+    with atomic_transaction():
+        if recebimento.status in {RecebimentoFornecedor.STATUS_CANCELADO, RecebimentoFornecedor.STATUS_CONCLUIDO}:
+            raise BusinessRuleError('Nao e possivel conferir um recebimento cancelado ou concluido.')
+
+        for item in recebimento.itens:
+            dados = conferencias_por_item.get(item.id) or {}
+            qtd_recebida = int(dados.get('qtd_recebida', 0))
+            qtd_avaria = int(dados.get('qtd_avaria', 0))
+            lote = dados.get('lote')
+            validade_texto = (dados.get('validade') or '').strip()
+
+            if qtd_recebida < 0:
+                raise ValidationError(f'Quantidade recebida nao pode ser negativa para o produto "{item.produto.nome}".')
+            if qtd_avaria < 0:
+                raise ValidationError(f'Quantidade avariada nao pode ser negativa para o produto "{item.produto.nome}".')
+            if qtd_avaria > qtd_recebida:
+                raise ValidationError(f'Avaria nao pode ser maior que recebimento no produto "{item.produto.nome}".')
+
+            validade = None
+            if validade_texto:
+                try:
+                    validade = datetime.strptime(validade_texto, '%Y-%m-%d').date()
+                except ValueError as exc:
+                    raise ValidationError(f'Data de validade invalida para o produto "{item.produto.nome}".') from exc
+
+            item.qtd_recebida = qtd_recebida
+            item.qtd_avaria = qtd_avaria
+            item.lote = lote
+            item.validade = validade
+
+        if failure_hook:
+            failure_hook('after_conference')
+
+        transition_recebimento_status(
+            recebimento,
+            RecebimentoStatus.AGUARDANDO_ARMAZENAGEM,
+            actor=actor,
+            detalhes='Conferencia de recebimento concluida.',
+        )
+        record_process_event(
+            processo_tipo='recebimento',
+            etapa='conferencia',
+            acao='recebimento_conferido',
+            entidade='recebimento',
+            entidade_id=recebimento.id,
+            recebimento_id=recebimento.id,
+            actor=actor,
+            detalhes={
+                'status': recebimento.status,
+                'itens': len(recebimento.itens),
+            },
+        )
+    return recebimento
+
+
+def armazenar_recebimento(
+    recebimento,
+    *,
+    destinos_por_item,
+    actor=None,
+    categoria_quimico_predicate,
+    tipo_labels,
+    movimentacao_model=Movimentacao,
+    failure_hook=None,
+):
+    with atomic_transaction():
+        if recebimento.status == RecebimentoFornecedor.STATUS_CANCELADO:
+            raise BusinessRuleError('Recebimento cancelado. Armazenagem nao permitida.')
+        if recebimento.status == RecebimentoFornecedor.STATUS_CONCLUIDO:
+            raise BusinessRuleError('Recebimento ja concluido.')
+        if recebimento.status == RecebimentoFornecedor.STATUS_CRIADO:
+            raise BusinessRuleError('Conclua a conferencia antes da armazenagem.')
+
+        for item in recebimento.itens:
+            endereco_destino = destinos_por_item.get(item.id)
+            if not endereco_destino:
+                raise ValidationError(f'Informe o endereco destino para "{item.produto.nome}".')
+            if item.qtd_liquida > 0 and (endereco_destino.controle_validade or 'nenhum') == 'fefo' and not item.validade:
+                raise ValidationError(
+                    f'Endereco "{endereco_destino.nome}" exige FEFO. Informe validade para "{item.produto.nome}".'
+                )
+            restricoes = {parte.strip().lower() for parte in (endereco_destino.restricoes or '').split(',') if parte.strip()}
+            if 'alimentos' in restricoes and categoria_quimico_predicate(item.produto):
+                raise ValidationError(
+                    f'Produto "{item.produto.nome}" (categoria quimica) nao pode ser armazenado no endereco de alimentos "{endereco_destino.nome}".'
+                )
+
+        for item in recebimento.itens:
+            endereco_destino = destinos_por_item[item.id]
+            item.endereco_destino_id = endereco_destino.id
+            quantidade_entrada = item.qtd_liquida
+            if quantidade_entrada <= 0:
+                continue
+
+            aplicar_movimentacao_estoque(item.produto, movimentacao_model.TIPO_ENTRADA, quantidade_entrada)
+            item.produto.endereco_id = endereco_destino.id
+
+            tipo_recebimento_label = tipo_labels.get(recebimento.tipo_recebimento, recebimento.tipo_recebimento or 'Recebimento')
+            observacoes_mov = f'Recebimento #{recebimento.id} | Tipo: {tipo_recebimento_label}'
+            if item.lote:
+                observacoes_mov += f' | Lote: {item.lote}'
+            if item.validade:
+                observacoes_mov += f' | Validade: {item.validade.strftime("%d/%m/%Y")}'
+            if item.qtd_avaria:
+                observacoes_mov += f' | Avaria: {item.qtd_avaria}'
+
+            movimentacao = movimentacao_model(
+                    produto_id=item.produto_id,
+                    recebimento_id=recebimento.id,
+                    fornecedor_id=recebimento.fornecedor_id,
+                    endereco_destino_id=endereco_destino.id,
+                    tipo=movimentacao_model.TIPO_ENTRADA,
+                    quantidade=quantidade_entrada,
+                    info_nota=recebimento.info_nota,
+                    motivo='recebimento_fornecedor',
+                    observacoes=observacoes_mov,
+            )
+            db.session.add(movimentacao)
+            db.session.flush()
+            record_process_event(
+                processo_tipo='recebimento',
+                etapa='armazenagem',
+                acao='movimentacao_estoque_gerada',
+                entidade='movimentacao',
+                entidade_id=movimentacao.id,
+                recebimento_id=recebimento.id,
+                movimentacao_id=movimentacao.id,
+                actor=actor,
+                detalhes={
+                    'produto_id': item.produto_id,
+                    'quantidade': quantidade_entrada,
+                    'endereco_destino_id': endereco_destino.id,
+                },
+            )
+            if failure_hook:
+                failure_hook('after_item_stock')
+
+        transition_recebimento_status(
+            recebimento,
+            RecebimentoStatus.CONCLUIDO,
+            actor=actor,
+            detalhes='Armazenagem concluida e saldo atualizado.',
+        )
+        record_process_event(
+            processo_tipo='recebimento',
+            etapa='armazenagem',
+            acao='recebimento_armazenado',
+            entidade='recebimento',
+            entidade_id=recebimento.id,
+            recebimento_id=recebimento.id,
+            actor=actor,
+            detalhes={
+                'status': recebimento.status,
+                'armazenado_em': recebimento.armazenado_em,
+            },
+        )
+    return recebimento
+
+```
+
+
+### Arquivo: `app/services/recebimento_service.py`
+- Linhas: 13
+- Tamanho: 0.2 KB
+- Status: completo
+
+```python
+from app.services.recebimento import (
+    armazenar_recebimento,
+    conferir_recebimento,
+    create_recebimento,
+)
+
+
+__all__ = [
+    'create_recebimento',
+    'conferir_recebimento',
+    'armazenar_recebimento',
 ]
 
 ```
 
 
 ### Arquivo: `app/services/rh.py`
-- Linhas: 55
-- Tamanho: 1.5 KB
+- Linhas: 41
+- Tamanho: 1.3 KB
 - Status: completo
 
 ```python
-from flask import request
-
 from app.helpers import _normalizar_texto
-from app.constants import ENDPOINT_TO_PAGINA
+from app.services.permissao_service import PermissaoService
 from models import Garcom
 
 
@@ -10211,20 +13021,8 @@ def sincronizar_garcom_funcionario(funcionario):
 
 
 def funcionario_tem_acesso(funcionario, endpoint, paginas_resolvidas):
-    if not funcionario:
-        return False
-    if funcionario.role == 'admin':
-        return True
-    if not funcionario.controle_acesso_ativo:
-        return True
-
-    pagina = ENDPOINT_TO_PAGINA.get(endpoint)
-    if not pagina:
-        if request.path.startswith('/api/'):
-            return False
-        return True
-
-    return pagina in paginas_resolvidas
+    permissao_service = PermissaoService(resolver_paginas=lambda _funcionario: paginas_resolvidas)
+    return permissao_service.tem_acesso(funcionario, endpoint, is_api_request=False)
 
 
 def _paginas_permitidas_para_funcionario(funcionario, resolver_paginas):
@@ -10255,6 +13053,118 @@ __all__ = [
     '_paginas_permitidas_para_funcionario',
     'paginas_permitidas_para_funcionario',
 ]
+
+```
+
+
+### Arquivo: `app/services/traceability.py`
+- Linhas: 83
+- Tamanho: 2.6 KB
+- Status: completo
+
+```python
+from __future__ import annotations
+
+import json
+
+from models import ProcessoEvento, db
+
+
+def _json_details(payload):
+    data = {key: value for key, value in (payload or {}).items() if value not in (None, '', [], {}, ())}
+    if not data:
+        return None
+    return json.dumps(data, ensure_ascii=False, default=str)
+
+
+def record_process_event(
+    *,
+    processo_tipo,
+    etapa,
+    acao,
+    entidade,
+    entidade_id,
+    actor=None,
+    pedido_id=None,
+    recebimento_id=None,
+    movimentacao_id=None,
+    lancamento_financeiro_id=None,
+    fundo_solicitacao_id=None,
+    detalhes=None,
+):
+    evento = ProcessoEvento(
+        processo_tipo=processo_tipo,
+        etapa=etapa,
+        acao=acao,
+        entidade=entidade,
+        entidade_id=entidade_id,
+        pedido_id=pedido_id,
+        recebimento_id=recebimento_id,
+        movimentacao_id=movimentacao_id,
+        lancamento_financeiro_id=lancamento_financeiro_id,
+        fundo_solicitacao_id=fundo_solicitacao_id,
+        funcionario_id=(getattr(actor, 'id', None) if actor else None),
+        funcionario_nome=(getattr(actor, 'nome', None) if actor else None),
+        detalhes=_json_details(detalhes),
+    )
+    db.session.add(evento)
+    return evento
+
+
+def build_timeline(*, pedido=None, recebimento=None, fundo=None):
+    query = ProcessoEvento.query
+    if pedido is not None:
+        query = query.filter(ProcessoEvento.pedido_id == pedido.id)
+    elif recebimento is not None:
+        query = query.filter(ProcessoEvento.recebimento_id == recebimento.id)
+    elif fundo is not None:
+        query = query.filter(ProcessoEvento.fundo_solicitacao_id == fundo.id)
+    else:
+        return []
+
+    eventos = query.order_by(ProcessoEvento.criado_em.asc(), ProcessoEvento.id.asc()).all()
+    timeline = []
+    for evento in eventos:
+        try:
+            detalhes = json.loads(evento.detalhes) if evento.detalhes else {}
+        except Exception:
+            detalhes = {'raw': evento.detalhes}
+        timeline.append({
+            'quando': evento.criado_em,
+            'processo_tipo': evento.processo_tipo,
+            'etapa': evento.etapa,
+            'acao': evento.acao,
+            'entidade': evento.entidade,
+            'entidade_id': evento.entidade_id,
+            'pedido_id': evento.pedido_id,
+            'recebimento_id': evento.recebimento_id,
+            'movimentacao_id': evento.movimentacao_id,
+            'lancamento_financeiro_id': evento.lancamento_financeiro_id,
+            'fundo_solicitacao_id': evento.fundo_solicitacao_id,
+            'responsavel': evento.funcionario_nome,
+            'detalhes': detalhes,
+        })
+    return timeline
+
+```
+
+
+### Arquivo: `app/services/transaction.py`
+- Linhas: 11
+- Tamanho: 0.2 KB
+- Status: completo
+
+```python
+from contextlib import contextmanager
+
+from models import db
+
+
+@contextmanager
+def atomic_transaction(session=None):
+    session = session or db.session
+    with session.begin_nested():
+        yield session
 
 ```
 
@@ -10404,6 +13314,1061 @@ __all__ = [
 ```
 
 
+### Arquivo: `app/services/venda_service.py`
+- Linhas: 603
+- Tamanho: 23.8 KB
+- Status: completo
+
+```python
+from __future__ import annotations
+
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+from sqlalchemy import case, func, inspect as sa_inspect
+from sqlalchemy.orm import aliased, joinedload
+
+from app.exceptions import BusinessRuleError, NotFound, ValidationError
+from app.services.traceability import record_process_event
+from app.services.transaction import atomic_transaction
+from app.utils.validators import normalizar_codigo_barras
+from models import (
+    Caixa,
+    Categoria,
+    ItemPedido,
+    LancamentoFinanceiro,
+    Movimentacao,
+    MovimentacaoCaixa,
+    Pedido,
+    Produto,
+    db,
+)
+
+
+class VendaService:
+    """Orquestra o fluxo do PDV sem deixar regra de negocio nas rotas."""
+
+    def __init__(self, session=None):
+        self.session = session or db.session
+
+    def carregar_pedido_pdv(self, pedido_id):
+        query = (
+            self.session.query(Pedido)
+            .options(
+                joinedload(Pedido.caixa),
+                joinedload(Pedido.mesa),
+                joinedload(Pedido.garcom),
+                joinedload(Pedido.itens)
+                .joinedload(ItemPedido.produto)
+                .joinedload(Produto.categoria),
+            )
+            .filter(Pedido.id == pedido_id)
+        )
+        pedido = query.first()
+        if not pedido:
+            raise NotFound('Pedido nao encontrado.')
+        return pedido
+
+    def buscar_produtos_pdv(self, termo, *, limit=12):
+        termo = (termo or '').strip()
+        if not termo:
+            return []
+
+        termo_lower = termo.lower()
+        query = self.session.query(Produto).options(joinedload(Produto.categoria)).filter(
+            Produto.ativo.is_(True),
+            Produto.filtro_nao_vencidos(),
+        )
+
+        codigo_normalizado, codigo_erro = normalizar_codigo_barras(termo)
+        codigo_busca = codigo_normalizado if not codigo_erro else None
+        if not codigo_busca and termo.isdigit():
+            codigo_busca = termo
+
+        if codigo_busca:
+            match = (
+                query.filter(Produto.codigo == codigo_busca)
+                .order_by(Produto.nome.asc())
+                .limit(limit)
+                .all()
+            )
+            if match:
+                return [self._serializar_produto_busca(produto, score='barcode_exact') for produto in match]
+
+        dialect = (self.session.bind.dialect.name if self.session.bind else '').lower()
+        prefix = f'{termo}%'
+        contains = f'%{termo}%'
+        rank = case(
+            (func.lower(Produto.nome) == termo_lower, 0),
+            (func.lower(Produto.codigo) == termo_lower, 1),
+            (Produto.nome.ilike(prefix), 2),
+            (Produto.nome.ilike(contains), 3),
+            else_=4,
+        )
+        filtered = query.filter(
+            db.or_(
+                Produto.nome.ilike(contains),
+                Produto.codigo.ilike(contains),
+            )
+        )
+
+        if dialect == 'postgresql' and len(termo) >= 3:
+            similarity = func.similarity(func.lower(Produto.nome), termo_lower)
+            produtos = (
+                filtered.order_by(rank.asc(), similarity.desc(), Produto.nome.asc())
+                .limit(limit)
+                .all()
+            )
+            return [self._serializar_produto_busca(produto, score='trigram') for produto in produtos]
+
+        produtos = filtered.order_by(rank.asc(), Produto.nome.asc()).limit(limit).all()
+        return [self._serializar_produto_busca(produto, score='ilike_ranked') for produto in produtos]
+
+    def processar_venda_rapida(
+        self,
+        pedido_ref,
+        *,
+        metodo_pagamento=None,
+        valor_pago=None,
+        desconto_total=0.0,
+        incluir_contabilidade=False,
+        actor=None,
+        commit=True,
+        failure_hook=None,
+    ):
+        pedido = self._resolver_pedido_para_fechamento(pedido_ref)
+        pedido, lancamento = self._finalizar_pedido(
+            pedido,
+            metodo_pagamento=metodo_pagamento,
+            valor_pago=valor_pago,
+            incluir_contabilidade=incluir_contabilidade,
+            actor=actor,
+            failure_hook=failure_hook,
+        )
+        if commit:
+            self.session.commit()
+            self.session.refresh(pedido)
+        else:
+            self.session.flush()
+
+        desconto_total = float(desconto_total or 0.0)
+        margem = self.calcular_margem_real_pedido(pedido, desconto_total=desconto_total)
+        alertas = self._montar_alertas_pos_venda(pedido)
+        venda_cruzada = []
+        if pedido.itens:
+            venda_cruzada = self.sugerir_venda_cruzada(pedido.itens[0].produto_id, limit=3)
+
+        return {
+            'pedido_id': pedido.id,
+            'status': pedido.status,
+            'metodo_pagamento': pedido.metodo_pagamento,
+            'valor_pago': float(pedido.valor_pago or 0.0) if pedido.valor_pago is not None else None,
+            'total': float(pedido.total or 0.0),
+            'comprovante': self.gerar_talao_payload(pedido),
+            'margin': margem,
+            'alerts': alertas,
+            'cross_sell': venda_cruzada,
+            'lancamento_financeiro_id': getattr(lancamento, 'id', None),
+        }
+
+    def _resolver_pedido_para_fechamento(self, pedido_ref):
+        """Aceita id ou instancia de pedido sem perder alteracoes pendentes em memoria."""
+        if isinstance(pedido_ref, Pedido):
+            estado = sa_inspect(pedido_ref)
+            if estado.session is self.session:
+                return pedido_ref
+            pedido_id = getattr(pedido_ref, 'id', None)
+            if pedido_id is None:
+                raise NotFound('Pedido nao encontrado.')
+            return self.carregar_pedido_pdv(pedido_id)
+        return self.carregar_pedido_pdv(pedido_ref)
+
+    def _finalizar_pedido(
+        self,
+        pedido,
+        *,
+        metodo_pagamento=None,
+        valor_pago=None,
+        incluir_contabilidade=False,
+        actor=None,
+        failure_hook=None,
+    ):
+        status_atual = (pedido.status or Pedido.STATUS_ABERTO).strip().lower()
+        if status_atual in Pedido.STATUS_IMUTAVEIS:
+            raise BusinessRuleError(f'Pedido ja esta {pedido.status}.')
+        if not pedido.itens:
+            raise ValidationError('Pedido sem itens nao pode ser finalizado.')
+
+        with atomic_transaction(self.session):
+            itens_por_produto = self._agrupar_itens_por_produto(pedido.itens)
+            produtos = self._carregar_produtos_para_fechamento(list(itens_por_produto.keys()))
+            self._validar_estoque(produtos, itens_por_produto)
+            self._aplicar_baixa_estoque(pedido, produtos, itens_por_produto, actor=actor)
+            if failure_hook:
+                failure_hook('after_stock')
+            self._aplicar_financeiro_caixa(pedido, actor=actor)
+            if failure_hook:
+                failure_hook('after_cash')
+            lancamento = next(
+                (
+                    item for item in (getattr(pedido, 'lancamentos_financeiros', None) or [])
+                    if item.tipo == LancamentoFinanceiro.TIPO_RECEITA and (item.categoria or '').strip().lower() == 'pdv'
+                ),
+                None,
+            )
+            if lancamento is None:
+                lancamento = self._criar_lancamento_financeiro_pdv(
+                    pedido,
+                    actor=actor,
+                    incluir_contabilidade=incluir_contabilidade,
+                )
+
+            if metodo_pagamento:
+                pedido.metodo_pagamento = metodo_pagamento
+            if valor_pago is not None:
+                pedido.valor_pago = float(valor_pago)
+
+            pedido.status = Pedido.STATUS_FECHADO
+            pedido.fechado_em = datetime.utcnow()
+            pedido.estoque_processado = True
+            pedido.financeiro_processado = True
+            if pedido.mesa:
+                pedido.mesa.status = 'livre'
+
+            record_process_event(
+                processo_tipo='pedido_venda',
+                etapa='fechamento',
+                acao='pedido_fechado',
+                entidade='pedido',
+                entidade_id=pedido.id,
+                pedido_id=pedido.id,
+                actor=actor,
+                detalhes={
+                    'status': pedido.status,
+                    'metodo_pagamento': pedido.metodo_pagamento,
+                    'total': float(pedido.total or 0.0),
+                    'fechado_em': pedido.fechado_em,
+                    'lancamento_financeiro_id': lancamento.id,
+                },
+            )
+        return pedido, lancamento
+
+    def calcular_runway_estoque(self, *, janela_dias=30, limit=50):
+        inicio = datetime.utcnow() - timedelta(days=max(int(janela_dias or 30), 1))
+        dias = float(max(int(janela_dias or 30), 1))
+        quantidade_vendida = func.coalesce(func.sum(ItemPedido.quantidade), 0)
+        media_diaria = quantidade_vendida / dias
+        dias_estoque = case(
+            (quantidade_vendida > 0, Produto.quantidade_estoque / media_diaria),
+            else_=None,
+        )
+
+        rows = (
+            self.session.query(
+                Produto.id.label('produto_id'),
+                Produto.nome.label('produto_nome'),
+                Produto.codigo.label('codigo'),
+                Categoria.nome.label('categoria'),
+                Produto.quantidade_estoque.label('estoque_atual'),
+                Produto.quantidade_minima.label('estoque_minimo'),
+                quantidade_vendida.label('quantidade_vendida'),
+                func.round(media_diaria, 2).label('media_diaria'),
+                func.round(dias_estoque, 1).label('dias_runway'),
+            )
+            .outerjoin(Categoria, Categoria.id == Produto.categoria_id)
+            .outerjoin(ItemPedido, ItemPedido.produto_id == Produto.id)
+            .outerjoin(
+                Pedido,
+                db.and_(
+                    Pedido.id == ItemPedido.pedido_id,
+                    Pedido.status == Pedido.STATUS_FECHADO,
+                    Pedido.fechado_em >= inicio,
+                ),
+            )
+            .filter(Produto.ativo.is_(True))
+            .group_by(
+                Produto.id,
+                Produto.nome,
+                Produto.codigo,
+                Categoria.nome,
+                Produto.quantidade_estoque,
+                Produto.quantidade_minima,
+            )
+            .order_by(dias_estoque.asc().nullsfirst(), Produto.nome.asc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                'produto_id': row.produto_id,
+                'produto': row.produto_nome,
+                'codigo': row.codigo,
+                'categoria': row.categoria,
+                'estoque_atual': int(row.estoque_atual or 0),
+                'estoque_minimo': int(row.estoque_minimo or 0),
+                'quantidade_vendida_periodo': int(row.quantidade_vendida or 0),
+                'media_saida_dia': float(row.media_diaria or 0.0),
+                'dias_ate_ruptura': float(row.dias_runway) if row.dias_runway is not None else None,
+                'abaixo_minimo': int(row.estoque_atual or 0) <= int(row.estoque_minimo or 0),
+            }
+            for row in rows
+        ]
+
+    def calcular_margem_real_pedido(self, pedido, *, desconto_total=0.0):
+        desconto_total = float(desconto_total or 0.0)
+        subtotal = float(sum((item.quantidade or 0) * (item.preco_unitario or 0) for item in pedido.itens))
+        if subtotal <= 0:
+            return {
+                'subtotal_bruto': 0.0,
+                'desconto_rateado': desconto_total,
+                'receita_liquida': 0.0,
+                'custo_total': 0.0,
+                'lucro_bruto': 0.0,
+                'margem_percentual': 0.0,
+                'itens': [],
+            }
+
+        itens = []
+        custo_total = 0.0
+        receita_liquida = 0.0
+        for item in pedido.itens:
+            produto = item.produto
+            linha_bruta = float((item.quantidade or 0) * (item.preco_unitario or 0))
+            desconto_rateado = round((linha_bruta / subtotal) * desconto_total, 2) if desconto_total else 0.0
+            linha_liquida = max(round(linha_bruta - desconto_rateado, 2), 0.0)
+            custo_linha = round(float((produto.preco_custo if produto else 0.0) or 0.0) * float(item.quantidade or 0), 2)
+            lucro_linha = round(linha_liquida - custo_linha, 2)
+            margem_pct = round((lucro_linha / linha_liquida) * 100, 2) if linha_liquida else 0.0
+            custo_total += custo_linha
+            receita_liquida += linha_liquida
+            itens.append(
+                {
+                    'produto_id': item.produto_id,
+                    'produto': produto.nome if produto else f'Produto {item.produto_id}',
+                    'categoria': produto.categoria.nome if produto and produto.categoria else None,
+                    'quantidade': int(item.quantidade or 0),
+                    'preco_unitario': float(item.preco_unitario or 0.0),
+                    'desconto_rateado': desconto_rateado,
+                    'receita_liquida': linha_liquida,
+                    'custo_medio': float((produto.preco_custo if produto else 0.0) or 0.0),
+                    'custo_total': custo_linha,
+                    'lucro_bruto': lucro_linha,
+                    'margem_percentual': margem_pct,
+                }
+            )
+
+        lucro_total = round(receita_liquida - custo_total, 2)
+        margem_total = round((lucro_total / receita_liquida) * 100, 2) if receita_liquida else 0.0
+        return {
+            'subtotal_bruto': round(subtotal, 2),
+            'desconto_rateado': round(desconto_total, 2),
+            'receita_liquida': round(receita_liquida, 2),
+            'custo_total': round(custo_total, 2),
+            'lucro_bruto': lucro_total,
+            'margem_percentual': margem_total,
+            'itens': itens,
+        }
+
+    def sugerir_venda_cruzada(self, produto_id, *, limit=3, janela_dias=90):
+        inicio = datetime.utcnow() - timedelta(days=max(int(janela_dias or 90), 1))
+        base_item = aliased(ItemPedido)
+        combo_item = aliased(ItemPedido)
+
+        rows = (
+            self.session.query(
+                combo_item.produto_id.label('produto_id'),
+                Produto.nome.label('produto_nome'),
+                Produto.codigo.label('codigo'),
+                Categoria.nome.label('categoria'),
+                func.count(func.distinct(combo_item.pedido_id)).label('frequencia'),
+            )
+            .join(base_item, db.and_(
+                base_item.pedido_id == combo_item.pedido_id,
+                base_item.produto_id == produto_id,
+                combo_item.produto_id != produto_id,
+            ))
+            .join(Pedido, Pedido.id == combo_item.pedido_id)
+            .join(Produto, Produto.id == combo_item.produto_id)
+            .outerjoin(Categoria, Categoria.id == Produto.categoria_id)
+            .filter(
+                Pedido.status == Pedido.STATUS_FECHADO,
+                Pedido.fechado_em >= inicio,
+            )
+            .group_by(combo_item.produto_id, Produto.nome, Produto.codigo, Categoria.nome)
+            .order_by(func.count(func.distinct(combo_item.pedido_id)).desc(), Produto.nome.asc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                'produto_id': row.produto_id,
+                'produto': row.produto_nome,
+                'codigo': row.codigo,
+                'categoria': row.categoria,
+                'frequencia_compra_conjunta': int(row.frequencia or 0),
+            }
+            for row in rows
+        ]
+
+    def consolidar_itens_lote(self, itens_payload):
+        consolidado = defaultdict(int)
+        for item in itens_payload or []:
+            produto_id = item.get('produto_id')
+            quantidade = item.get('quantidade', 0)
+            try:
+                produto_id = int(produto_id)
+                quantidade = int(quantidade)
+            except (TypeError, ValueError):
+                raise ValidationError('Item invalido para processamento em lote.')
+            if quantidade <= 0:
+                raise ValidationError('Quantidade deve ser maior que zero.')
+            consolidado[produto_id] += quantidade
+        return dict(consolidado)
+
+    def gerar_talao_payload(self, pedido):
+        troco = 0.0
+        if pedido.valor_pago is not None:
+            troco = round(max(float(pedido.valor_pago or 0.0) - float(pedido.total or 0.0), 0.0), 2)
+        return {
+            'pedido_id': pedido.id,
+            'emitido_em': pedido.fechado_em.isoformat() if pedido.fechado_em else datetime.utcnow().isoformat(),
+            'caixa': pedido.caixa.nome if pedido.caixa else None,
+            'metodo_pagamento': pedido.metodo_pagamento,
+            'total': float(pedido.total or 0.0),
+            'valor_pago': float(pedido.valor_pago or 0.0) if pedido.valor_pago is not None else None,
+            'troco': troco,
+            'itens': [
+                {
+                    'produto_id': item.produto_id,
+                    'produto': item.produto.nome if item.produto else f'Produto {item.produto_id}',
+                    'categoria': item.produto.categoria.nome if item.produto and item.produto.categoria else None,
+                    'quantidade': int(item.quantidade or 0),
+                    'preco_unitario': float(item.preco_unitario or 0.0),
+                    'subtotal': float((item.quantidade or 0) * (item.preco_unitario or 0.0)),
+                }
+                for item in pedido.itens
+            ],
+        }
+
+    def _agrupar_itens_por_produto(self, itens):
+        agregados = defaultdict(int)
+        for item in itens:
+            agregados[item.produto_id] += int(item.quantidade or 0)
+        return dict(agregados)
+
+    def _carregar_produtos_para_fechamento(self, produto_ids):
+        query = (
+            self.session.query(Produto)
+            .options(joinedload(Produto.categoria))
+            .filter(Produto.id.in_(produto_ids))
+            .order_by(Produto.id.asc())
+        )
+        if self.session.bind and self.session.bind.dialect.name == 'postgresql':
+            query = query.with_for_update()
+        return {produto.id: produto for produto in query.all()}
+
+    def _validar_estoque(self, produtos, itens_por_produto):
+        for produto_id, quantidade in itens_por_produto.items():
+            produto = produtos.get(produto_id)
+            if not produto:
+                raise NotFound(f'Produto {produto_id} nao encontrado.')
+            if not produto.ativo:
+                raise BusinessRuleError(f'Produto "{produto.nome}" esta inativo.')
+            if produto.vencido:
+                raise BusinessRuleError(f'Produto "{produto.nome}" esta vencido e nao pode ser vendido.')
+            if produto.quantidade_estoque < quantidade:
+                raise BusinessRuleError(f'Estoque insuficiente para "{produto.nome}".')
+
+    def _aplicar_baixa_estoque(self, pedido, produtos, itens_por_produto, *, actor=None):
+        if pedido.estoque_processado:
+            return
+        for produto_id, quantidade in itens_por_produto.items():
+            produto = produtos[produto_id]
+            produto.quantidade_estoque -= quantidade
+            movimentacao = Movimentacao(
+                produto_id=produto.id,
+                pedido_id=pedido.id,
+                tipo=Movimentacao.TIPO_SAIDA,
+                quantidade=quantidade,
+                motivo='venda',
+                observacoes=f'Pedido {pedido.id} fechado pelo PDV',
+            )
+            self.session.add(movimentacao)
+            self.session.flush()
+            record_process_event(
+                processo_tipo='pedido_venda',
+                etapa='estoque',
+                acao='movimentacao_estoque_gerada',
+                entidade='movimentacao',
+                entidade_id=movimentacao.id,
+                pedido_id=pedido.id,
+                actor=actor,
+                detalhes={
+                    'produto_id': produto.id,
+                    'quantidade': quantidade,
+                    'tipo': Movimentacao.TIPO_SAIDA,
+                },
+            )
+
+    def _aplicar_financeiro_caixa(self, pedido, *, actor=None):
+        if pedido.financeiro_processado:
+            return
+        caixa = pedido.caixa or (self.session.get(Caixa, pedido.caixa_id) if pedido.caixa_id else None)
+        if not caixa:
+            raise NotFound('Caixa do pedido nao encontrada.')
+        if not caixa.aberto:
+            raise BusinessRuleError('Caixa do pedido esta fechada.')
+
+        valor = float(pedido.total or 0.0)
+        caixa.saldo_atual = float(caixa.saldo_atual or 0.0) + valor
+        self.session.add(
+            MovimentacaoCaixa(
+                caixa_id=caixa.id,
+                tipo=MovimentacaoCaixa.TIPO_ENTRADA,
+                valor=valor,
+                descricao=f'Fechamento do pedido #{pedido.id}',
+            )
+        )
+        record_process_event(
+            processo_tipo='pedido_venda',
+            etapa='financeiro',
+            acao='caixa_atualizado',
+            entidade='pedido',
+            entidade_id=pedido.id,
+            pedido_id=pedido.id,
+            actor=actor,
+            detalhes={
+                'caixa_id': caixa.id,
+                'valor': valor,
+            },
+        )
+
+    def _criar_lancamento_financeiro_pdv(self, pedido, *, actor=None, incluir_contabilidade=False):
+        referencia = f'PDV-{pedido.id}'
+        lancamento = LancamentoFinanceiro(
+            tipo=LancamentoFinanceiro.TIPO_RECEITA,
+            categoria='pdv',
+            descricao=f'Receita do pedido #{pedido.id}',
+            valor=float(pedido.total or 0.0),
+            data_competencia=(pedido.fechado_em or datetime.utcnow()).date(),
+            incluir_contabilidade=bool(incluir_contabilidade),
+            referencia_documento=referencia,
+            centro_custo='PDV',
+            pedido_id=pedido.id,
+        )
+        self.session.add(lancamento)
+        self.session.flush()
+        record_process_event(
+            processo_tipo='financeiro_operacional',
+            etapa='lancamento',
+            acao='lancamento_pdv_gerado',
+            entidade='lancamento_financeiro',
+            entidade_id=lancamento.id,
+            pedido_id=pedido.id,
+            lancamento_financeiro_id=lancamento.id,
+            actor=actor,
+            detalhes={'valor': lancamento.valor, 'categoria': lancamento.categoria},
+        )
+        return lancamento
+
+    def _montar_alertas_pos_venda(self, pedido):
+        alertas = []
+        for item in pedido.itens:
+            produto = item.produto
+            if not produto:
+                continue
+            estoque_restante = int(produto.quantidade_estoque or 0)
+            if estoque_restante <= int(produto.quantidade_minima or 0):
+                alertas.append(
+                    {
+                        'type': 'low_stock',
+                        'product_id': produto.id,
+                        'message': (
+                            f'O produto {produto.nome} foi adicionado. '
+                            f'Aviso: O stock deste item esta abaixo do minimo '
+                            f'(Restam {estoque_restante} un).'
+                        ),
+                    }
+                )
+        return alertas
+
+    def _serializar_produto_busca(self, produto, *, score):
+        return {
+            'produto_id': produto.id,
+            'codigo': produto.codigo,
+            'nome': produto.nome,
+            'categoria': produto.categoria.nome if produto.categoria else None,
+            'preco_venda': float(produto.preco_venda or 0.0),
+            'preco_custo': float(produto.preco_custo or 0.0),
+            'quantidade_estoque': int(produto.quantidade_estoque or 0),
+            'quantidade_minima': int(produto.quantidade_minima or 0),
+            'score_mode': score,
+        }
+
+
+def processar_venda_rapida(pedido_id, **kwargs):
+    return VendaService().processar_venda_rapida(pedido_id, **kwargs)
+
+
+def buscar_produtos_pdv(termo, *, limit=12):
+    return VendaService().buscar_produtos_pdv(termo, limit=limit)
+
+
+def calcular_runway_estoque(*, janela_dias=30, limit=50):
+    return VendaService().calcular_runway_estoque(janela_dias=janela_dias, limit=limit)
+
+
+def sugerir_venda_cruzada(produto_id, *, limit=3, janela_dias=90):
+    return VendaService().sugerir_venda_cruzada(produto_id, limit=limit, janela_dias=janela_dias)
+
+```
+
+
+### Arquivo: `app/services/workflow.py`
+- Linhas: 434
+- Tamanho: 16.7 KB
+- Status: completo
+
+```python
+from __future__ import annotations
+
+import json
+from datetime import datetime
+
+from flask import has_request_context, request
+
+from app.exceptions import BusinessRuleError, PermissionDenied, ValidationError
+from app.services.operational_rules import require_cancel_reason
+from app.services.traceability import record_process_event
+from app.services.transaction import atomic_transaction
+from models import AuditoriaEvento, FundoSolicitacao, LancamentoFinanceiro, Pedido, RecebimentoFornecedor, db
+
+
+class PedidoStatus:
+    ABERTO = Pedido.STATUS_ABERTO
+    EM_PREPARO = Pedido.STATUS_EM_PREPARO
+    ENTREGUE = Pedido.STATUS_ENTREGUE
+    FECHADO = Pedido.STATUS_FECHADO
+    CANCELADO = Pedido.STATUS_CANCELADO
+    VALIDOS = {
+        ABERTO,
+        EM_PREPARO,
+        ENTREGUE,
+        FECHADO,
+        CANCELADO,
+    }
+    TRANSICOES = Pedido.TRANSICOES_PERMITIDAS
+
+
+class RecebimentoStatus:
+    CRIADO = RecebimentoFornecedor.STATUS_CRIADO
+    AGUARDANDO_ARMAZENAGEM = RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+    CONCLUIDO = RecebimentoFornecedor.STATUS_CONCLUIDO
+    CANCELADO = RecebimentoFornecedor.STATUS_CANCELADO
+    VALIDOS = {
+        CRIADO,
+        AGUARDANDO_ARMAZENAGEM,
+        CONCLUIDO,
+        CANCELADO,
+    }
+    TRANSICOES = {
+        CRIADO: {AGUARDANDO_ARMAZENAGEM, CANCELADO},
+        AGUARDANDO_ARMAZENAGEM: {CONCLUIDO, CANCELADO},
+        CONCLUIDO: set(),
+        CANCELADO: set(),
+    }
+
+
+class ExpedicaoStatus:
+    PENDENTE_SEPARACAO = 'pendente_separacao'
+    SEPARADO = 'separado'
+    EM_ROTA = 'em_rota'
+    ENTREGUE = 'entregue'
+    VALIDOS = {
+        PENDENTE_SEPARACAO,
+        SEPARADO,
+        EM_ROTA,
+        ENTREGUE,
+    }
+    TRANSICOES = {
+        PENDENTE_SEPARACAO: {SEPARADO},
+        SEPARADO: {PENDENTE_SEPARACAO, EM_ROTA},
+        EM_ROTA: {SEPARADO, ENTREGUE},
+        ENTREGUE: set(),
+    }
+
+
+class FundoStatus:
+    SOLICITADA = FundoSolicitacao.STATUS_SOLICITADA
+    APROVADA = FundoSolicitacao.STATUS_APROVADA
+    REJEITADA = FundoSolicitacao.STATUS_REJEITADA
+    LIBERADA = FundoSolicitacao.STATUS_LIBERADA
+    CANCELADA = FundoSolicitacao.STATUS_CANCELADA
+    VALIDOS = {
+        SOLICITADA,
+        APROVADA,
+        REJEITADA,
+        LIBERADA,
+        CANCELADA,
+    }
+    TRANSICOES = {
+        SOLICITADA: {APROVADA, REJEITADA, CANCELADA},
+        APROVADA: {LIBERADA, CANCELADA},
+        REJEITADA: set(),
+        LIBERADA: set(),
+        CANCELADA: set(),
+    }
+
+
+def _normalizar_status(status, validos, *, default=None):
+    valor = (status or default or '').strip().lower()
+    if valor not in validos:
+        raise ValidationError('Status informado e invalido.')
+    return valor
+
+
+def _detalhes_json(**payload):
+    dados = {chave: valor for chave, valor in payload.items() if valor not in (None, '', [], {}, ())}
+    if not dados:
+        return ''
+    return json.dumps(dados, ensure_ascii=False, default=str)
+
+
+def _registrar_auditoria_transicao(*, entidade, entidade_id, transicao, actor=None, detalhes=None):
+    evento = AuditoriaEvento(
+        funcionario_id=(getattr(actor, 'id', None) if actor else None),
+        funcionario_nome=(getattr(actor, 'nome', None) if actor else None),
+        funcionario_email=(getattr(actor, 'email', None) if actor else None),
+        funcionario_role=(getattr(actor, 'role', None) if actor else None),
+        metodo=(request.method if has_request_context() else 'SYSTEM'),
+        endpoint=(request.endpoint if has_request_context() else 'workflow.transition'),
+        rota=(request.path if has_request_context() else f'workflow://{entidade}/{entidade_id}'),
+        acao=f'transicao_{entidade}',
+        entidade=entidade,
+        detalhes=_detalhes_json(id=entidade_id, transicao=transicao, detalhes=detalhes),
+        status_code=None,
+        ip=((request.headers.get('X-Forwarded-For') or request.remote_addr) if has_request_context() else 'system'),
+    )
+    db.session.add(evento)
+
+
+def _validar_transicao(status_atual, status_destino, transicoes, *, entidade_nome):
+    if status_destino == status_atual:
+        return status_atual
+    permitidos = transicoes.get(status_atual, set())
+    if status_destino not in permitidos:
+        raise BusinessRuleError(
+            f'Transicao invalida de {entidade_nome}: {status_atual} -> {status_destino}.'
+        )
+    return status_destino
+
+
+def transition_pedido_status(
+    pedido,
+    novo_status,
+    *,
+    actor=None,
+    on_fechamento=None,
+    detalhes=None,
+    require_delivery_separation=False,
+):
+    status_atual = _normalizar_status(getattr(pedido, 'status', None), PedidoStatus.VALIDOS, default=PedidoStatus.ABERTO)
+    status_destino = _normalizar_status(novo_status, PedidoStatus.VALIDOS, default=status_atual)
+
+    if status_atual in {PedidoStatus.FECHADO, PedidoStatus.CANCELADO} and status_destino != status_atual:
+        raise BusinessRuleError(f'Pedido {status_atual} e imutavel.')
+
+    _validar_transicao(status_atual, status_destino, PedidoStatus.TRANSICOES, entidade_nome='pedido')
+
+    if status_destino == PedidoStatus.ENTREGUE and require_delivery_separation and not pedido.separacao_entrega_concluida:
+        raise BusinessRuleError('Pedido nao pode ir para entrega sem separacao concluida.')
+
+    if status_destino == PedidoStatus.FECHADO and status_atual != PedidoStatus.FECHADO:
+        if on_fechamento is None:
+            raise BusinessRuleError('Fluxo de fechamento nao configurado para o pedido.')
+        on_fechamento(pedido)
+    elif status_destino == PedidoStatus.CANCELADO and status_atual != PedidoStatus.CANCELADO:
+        motivo = require_cancel_reason(detalhes, entity_label='pedido')
+        pedido.fechado_em = datetime.utcnow()
+        pedido.observacoes = '\n'.join(item for item in [pedido.observacoes, f'Cancelamento: {motivo}'] if item)
+        if pedido.mesa:
+            pedido.mesa.status = 'livre'
+    elif pedido.mesa and status_destino in {PedidoStatus.ABERTO, PedidoStatus.EM_PREPARO, PedidoStatus.ENTREGUE}:
+        pedido.mesa.status = 'ocupada'
+
+    pedido.status = status_destino
+    _registrar_auditoria_transicao(
+        entidade='pedido',
+        entidade_id=pedido.id,
+        transicao=f'{status_atual}->{status_destino}',
+        actor=actor,
+        detalhes=detalhes,
+    )
+    record_process_event(
+        processo_tipo='pedido_venda',
+        etapa='status',
+        acao='status_alterado',
+        entidade='pedido',
+        entidade_id=pedido.id,
+        pedido_id=pedido.id,
+        actor=actor,
+        detalhes={
+            'de': status_atual,
+            'para': status_destino,
+            'observacao': detalhes,
+        },
+    )
+    return pedido.status
+
+
+def _validar_itens_recebimento(recebimento):
+    if not recebimento.itens:
+        raise BusinessRuleError('Recebimento sem itens nao pode avancar no fluxo.')
+
+
+def transition_recebimento_status(recebimento, novo_status, *, actor=None, detalhes=None):
+    status_atual = _normalizar_status(recebimento.status, RecebimentoStatus.VALIDOS, default=RecebimentoStatus.CRIADO)
+    status_destino = _normalizar_status(novo_status, RecebimentoStatus.VALIDOS, default=status_atual)
+    _validar_transicao(status_atual, status_destino, RecebimentoStatus.TRANSICOES, entidade_nome='recebimento')
+    _validar_itens_recebimento(recebimento)
+
+    if status_destino == RecebimentoStatus.AGUARDANDO_ARMAZENAGEM:
+        for item in recebimento.itens:
+            if (item.qtd_recebida or 0) < 0:
+                raise BusinessRuleError(f'Quantidade recebida invalida para "{item.produto.nome}".')
+            if (item.qtd_avaria or 0) < 0:
+                raise BusinessRuleError(f'Quantidade avariada invalida para "{item.produto.nome}".')
+            if (item.qtd_avaria or 0) > (item.qtd_recebida or 0):
+                raise BusinessRuleError(f'Avaria maior que quantidade recebida para "{item.produto.nome}".')
+        recebimento.conferido_em = recebimento.conferido_em or datetime.utcnow()
+
+    if status_destino == RecebimentoStatus.CONCLUIDO:
+        for item in recebimento.itens:
+            if (item.qtd_liquida or 0) > 0 and not item.endereco_destino_id:
+                raise BusinessRuleError(f'Endereco destino obrigatorio para "{item.produto.nome}".')
+        recebimento.armazenado_em = recebimento.armazenado_em or datetime.utcnow()
+
+    if status_destino == RecebimentoStatus.CANCELADO:
+        motivo = require_cancel_reason(detalhes, entity_label='recebimento')
+        recebimento.observacoes = '\n'.join(item for item in [recebimento.observacoes, f'Cancelamento: {motivo}'] if item)
+
+    recebimento.status = status_destino
+    _registrar_auditoria_transicao(
+        entidade='recebimento',
+        entidade_id=recebimento.id,
+        transicao=f'{status_atual}->{status_destino}',
+        actor=actor,
+        detalhes=detalhes,
+    )
+    record_process_event(
+        processo_tipo='recebimento',
+        etapa='status',
+        acao='status_alterado',
+        entidade='recebimento',
+        entidade_id=recebimento.id,
+        recebimento_id=recebimento.id,
+        actor=actor,
+        detalhes={
+            'de': status_atual,
+            'para': status_destino,
+            'observacao': detalhes,
+        },
+    )
+    return recebimento.status
+
+
+def get_expedicao_status(pedido):
+    if pedido.entrega_concluida_em:
+        return ExpedicaoStatus.ENTREGUE
+    if pedido.saiu_para_entrega_em:
+        return ExpedicaoStatus.EM_ROTA
+    if pedido.separacao_entrega_concluida:
+        return ExpedicaoStatus.SEPARADO
+    return ExpedicaoStatus.PENDENTE_SEPARACAO
+
+
+def transition_expedicao_status(
+    pedido,
+    novo_status,
+    *,
+    actor=None,
+    enabled=True,
+    allowed_origins=None,
+    detalhes=None,
+    metadata=None,
+):
+    if not enabled:
+        raise BusinessRuleError('Separacao/expedicao de entrega esta desativada na configuracao da empresa.')
+
+    if allowed_origins and (pedido.origem or '').strip().lower() not in {item.strip().lower() for item in allowed_origins if item}:
+        raise BusinessRuleError('Pedido fora da fila configurada para separacao de entrega.')
+
+    if pedido.status in {Pedido.STATUS_CANCELADO, Pedido.STATUS_FECHADO}:
+        raise BusinessRuleError('Pedido fora da fila operacional de expedicao.')
+
+    status_atual = get_expedicao_status(pedido)
+    status_destino = _normalizar_status(novo_status, ExpedicaoStatus.VALIDOS, default=status_atual)
+    _validar_transicao(status_atual, status_destino, ExpedicaoStatus.TRANSICOES, entidade_nome='expedicao')
+
+    metadata = metadata or {}
+    if status_destino == ExpedicaoStatus.SEPARADO:
+        pedido.rota_entrega = metadata.get('rota_entrega', pedido.rota_entrega)
+        pedido.ordem_rota = metadata.get('ordem_rota', pedido.ordem_rota)
+        pedido.local_saida = metadata.get('local_saida', pedido.local_saida)
+        pedido.veiculo_tipo = metadata.get('veiculo_tipo', pedido.veiculo_tipo)
+        pedido.veiculo_placa = metadata.get('veiculo_placa', pedido.veiculo_placa)
+        pedido.motorista_nome = metadata.get('motorista_nome', pedido.motorista_nome)
+        pedido.empresa_terceirizada = metadata.get('empresa_terceirizada', pedido.empresa_terceirizada)
+        pedido.nota_fiscal_numero = metadata.get('nota_fiscal_numero', pedido.nota_fiscal_numero)
+        pedido.nota_fiscal_chave = metadata.get('nota_fiscal_chave', pedido.nota_fiscal_chave)
+        if metadata.get('nota_fiscal_emitida'):
+            pedido.nota_fiscal_emitida_em = pedido.nota_fiscal_emitida_em or datetime.utcnow()
+        pedido.separacao_entrega_concluida = True
+        pedido.separacao_entrega_em = pedido.separacao_entrega_em or datetime.utcnow()
+
+    elif status_destino == ExpedicaoStatus.PENDENTE_SEPARACAO:
+        pedido.separacao_entrega_concluida = False
+        pedido.separacao_entrega_em = None
+        pedido.saiu_para_entrega_em = None
+        pedido.entrega_concluida_em = None
+
+    elif status_destino == ExpedicaoStatus.EM_ROTA:
+        if not pedido.separacao_entrega_concluida:
+            raise BusinessRuleError('Pedido nao esta separado para despacho.')
+        pedido.saiu_para_entrega_em = pedido.saiu_para_entrega_em or datetime.utcnow()
+
+    elif status_destino == ExpedicaoStatus.ENTREGUE:
+        if not pedido.separacao_entrega_concluida:
+            raise BusinessRuleError('Pedido nao esta separado para entrega.')
+        pedido.saiu_para_entrega_em = pedido.saiu_para_entrega_em or datetime.utcnow()
+        pedido.entrega_concluida_em = pedido.entrega_concluida_em or datetime.utcnow()
+        transition_pedido_status(
+            pedido,
+            PedidoStatus.ENTREGUE,
+            actor=actor,
+            detalhes='Entrega confirmada no fluxo de expedicao.',
+        )
+
+    _registrar_auditoria_transicao(
+        entidade='expedicao',
+        entidade_id=pedido.id,
+        transicao=f'{status_atual}->{status_destino}',
+        actor=actor,
+        detalhes=detalhes,
+    )
+    record_process_event(
+        processo_tipo='expedicao',
+        etapa='expedicao',
+        acao=f'expedicao_{status_destino}',
+        entidade='pedido',
+        entidade_id=pedido.id,
+        pedido_id=pedido.id,
+        actor=actor,
+        detalhes={
+            'de': status_atual,
+            'para': status_destino,
+            'metadata': metadata,
+            'observacao': detalhes,
+        },
+    )
+    return status_destino
+
+
+def transition_fundo_status(
+    fundo,
+    novo_status,
+    *,
+    actor=None,
+    motivo_rejeicao=None,
+    detalhes=None,
+    failure_hook=None,
+):
+    with atomic_transaction():
+        status_atual = _normalizar_status(fundo.status, FundoStatus.VALIDOS, default=FundoStatus.SOLICITADA)
+        status_destino = _normalizar_status(novo_status, FundoStatus.VALIDOS, default=status_atual)
+        _validar_transicao(status_atual, status_destino, FundoStatus.TRANSICOES, entidade_nome='fundo')
+
+        role = (getattr(actor, 'role', '') or '').strip().lower()
+
+        if status_destino in {FundoStatus.APROVADA, FundoStatus.REJEITADA, FundoStatus.LIBERADA} and role not in {'admin', 'gerente'}:
+            raise PermissionDenied('Somente admin/gerente pode alterar esta etapa da solicitacao.')
+
+        lancamento_id = fundo.lancamento_financeiro_id
+        if status_destino == FundoStatus.APROVADA:
+            fundo.aprovado_por_id = getattr(actor, 'id', None)
+            fundo.aprovado_em = fundo.aprovado_em or datetime.utcnow()
+            fundo.motivo_rejeicao = None
+
+        elif status_destino == FundoStatus.REJEITADA:
+            motivo_rejeicao = (motivo_rejeicao or '').strip()
+            if not motivo_rejeicao:
+                raise ValidationError('Informe o motivo da rejeicao.')
+            fundo.aprovado_por_id = getattr(actor, 'id', None)
+            fundo.aprovado_em = datetime.utcnow()
+            fundo.motivo_rejeicao = motivo_rejeicao
+
+        elif status_destino == FundoStatus.LIBERADA:
+            if fundo.lancamento_financeiro_id:
+                raise BusinessRuleError('Solicitacao ja possui lancamento financeiro vinculado.')
+            tipo_lanc = (
+                LancamentoFinanceiro.TIPO_RECEITA
+                if fundo.tipo == FundoSolicitacao.TIPO_APORTE
+                else LancamentoFinanceiro.TIPO_DESPESA
+            )
+            lancamento = LancamentoFinanceiro(
+                tipo=tipo_lanc,
+                categoria=fundo.categoria or 'liberacao_fundos',
+                descricao=f'Liberacao de fundo #{fundo.id} - {fundo.descricao}',
+                valor=float(fundo.valor or 0.0),
+                data_competencia=datetime.utcnow().date(),
+                incluir_contabilidade=True,
+                referencia_documento=fundo.referencia_documento,
+                centro_custo=fundo.centro_custo,
+                criado_por_id=getattr(actor, 'id', None),
+            )
+            db.session.add(lancamento)
+            db.session.flush()
+            if failure_hook:
+                failure_hook('after_lancamento')
+            if not fundo.aprovado_por_id:
+                fundo.aprovado_por_id = getattr(actor, 'id', None)
+                fundo.aprovado_em = fundo.aprovado_em or datetime.utcnow()
+            fundo.liberado_por_id = getattr(actor, 'id', None)
+            fundo.liberado_em = datetime.utcnow()
+            fundo.lancamento_financeiro_id = lancamento.id
+            lancamento_id = lancamento.id
+            fundo.motivo_rejeicao = None
+
+        fundo.status = status_destino
+        _registrar_auditoria_transicao(
+            entidade='fundo',
+            entidade_id=fundo.id,
+            transicao=f'{status_atual}->{status_destino}',
+            actor=actor,
+            detalhes=detalhes,
+        )
+        record_process_event(
+            processo_tipo='financeiro_operacional',
+            etapa='fundos',
+            acao=f'fundo_{status_destino}',
+            entidade='fundo',
+            entidade_id=fundo.id,
+            fundo_solicitacao_id=fundo.id,
+            lancamento_financeiro_id=lancamento_id,
+            actor=actor,
+            detalhes={
+                'de': status_atual,
+                'para': status_destino,
+                'observacao': detalhes,
+            },
+        )
+        return fundo.status
+
+```
+
+
 ### Arquivo: `app/services_routes.py`
 - Linhas: 3
 - Tamanho: 0.1 KB
@@ -10412,6 +14377,85 @@ __all__ = [
 ```python
 def register_routes(app, context=None):
     return app
+
+```
+
+
+### Arquivo: `app/user_messages.py`
+- Linhas: 70
+- Tamanho: 2.6 KB
+- Status: completo
+
+```python
+"""Utilitarios para mensagens amigaveis e padronizadas ao usuario."""
+
+FLASH_CATEGORY_BY_KIND = {
+    'Erro': 'danger',
+    'Sucesso': 'success',
+    'Aviso': 'warning',
+}
+
+DEFAULT_ACTIONS_BY_CODE = {
+    'auth_required': 'Faca login com um usuario autorizado para continuar.',
+    'forbidden': 'Use um perfil com permissao para concluir esta acao.',
+    'bad_request': 'Revise os dados informados e tente novamente.',
+    'validation_error': 'Corrija os campos destacados e tente novamente.',
+    'business_rule': 'Revise o status atual do registro antes de continuar.',
+    'not_found': 'Atualize a tela e tente novamente.',
+    'csrf_invalid': 'Recarregue a pagina e envie a operacao novamente.',
+    'assistant_disabled': 'Use os atalhos da tela atual ou tente novamente mais tarde.',
+    'assistant_question_required': 'Preencha o campo de pergunta antes de enviar.',
+    'assistant_question_too_long': 'Resuma a pergunta e envie novamente.',
+    'assistant_feedback_response_required': 'Abra uma resposta valida antes de avaliar.',
+    'assistant_feedback_vote_required': 'Escolha like ou dislike para registrar o feedback.',
+    'assistant_feedback_save_failed': 'Tente salvar o feedback novamente em alguns instantes.',
+    'app_error': 'Tente novamente em alguns instantes.',
+    'internal_error': 'Tente novamente em alguns instantes.',
+}
+
+
+def _clean_text(value):
+    return ' '.join(str(value or '').strip().split())
+
+
+def ensure_sentence(value):
+    text = _clean_text(value)
+    if not text:
+        return ''
+    if text[-1] not in '.!?':
+        text += '.'
+    return text
+
+
+def resolve_action(*, code=None, status_code=None, action=None):
+    if action:
+        return ensure_sentence(action)
+    if code and code in DEFAULT_ACTIONS_BY_CODE:
+        return ensure_sentence(DEFAULT_ACTIONS_BY_CODE[code])
+    if status_code == 403:
+        return ensure_sentence(DEFAULT_ACTIONS_BY_CODE['forbidden'])
+    if status_code == 400:
+        return ensure_sentence(DEFAULT_ACTIONS_BY_CODE['validation_error'])
+    if status_code == 404:
+        return ensure_sentence(DEFAULT_ACTIONS_BY_CODE['not_found'])
+    return ensure_sentence(DEFAULT_ACTIONS_BY_CODE['app_error'])
+
+
+def build_flash_message(kind, message, action=None):
+    message_text = ensure_sentence(message)
+    action_text = ensure_sentence(action)
+    parts = [f'{kind}: {message_text}']
+    if action_text:
+        parts.append(f'Acao: {action_text}')
+    return ' '.join(parts)
+
+
+def flash_category_for_status(status_code):
+    if status_code and status_code < 400:
+        return FLASH_CATEGORY_BY_KIND['Sucesso']
+    if status_code == 403:
+        return FLASH_CATEGORY_BY_KIND['Aviso']
+    return FLASH_CATEGORY_BY_KIND['Erro']
 
 ```
 
@@ -10810,6 +14854,75 @@ def api_integrations_text_to_json(text):
 ```
 
 
+### Arquivo: `app/utils/responses.py`
+- Linhas: 26
+- Tamanho: 0.6 KB
+- Status: completo
+
+```python
+from flask import jsonify
+
+
+def ok(data=None, message="OK", *, code="ok", status=200, action=None):
+    payload = {
+        "success": True,
+        "message": message,
+        "code": code,
+        "data": data if data is not None else {},
+    }
+    if action:
+        payload["action"] = action
+    return jsonify(payload), status
+
+
+def fail(message, *, code="request_failed", status=400, fields=None, action=None):
+    payload = {
+        "success": False,
+        "message": message,
+        "code": code,
+        "fields": fields or {},
+    }
+    if action:
+        payload["action"] = action
+    return jsonify(payload), status
+
+```
+
+
+### Arquivo: `app/utils/validation.py`
+- Linhas: 25
+- Tamanho: 0.7 KB
+- Status: completo
+
+```python
+from app.exceptions import ValidationError
+
+
+def validate_required_fields(payload: dict, required: list):
+    missing = [field for field in required if payload.get(field) in (None, "")]
+    if missing:
+        raise ValidationError(
+            f"Campos obrigatorios ausentes: {', '.join(missing)}",
+            fields={f: "required" for f in missing},
+        )
+    return payload
+
+
+def validate_schema(payload: dict, schema_callable):
+    """
+    schema_callable deve receber dict e retornar dict validado
+    ou lançar ValidationError.
+    """
+    try:
+        return schema_callable(payload)
+    except ValidationError:
+        raise
+    except Exception as exc:  # fallback generico
+        raise ValidationError(str(exc))
+
+```
+
+
 ### Arquivo: `app/utils/validators.py`
 - Linhas: 106
 - Tamanho: 2.6 KB
@@ -10925,14 +15038,211 @@ __all__ = [
 ```
 
 
+### Arquivo: `app/validators/__init__.py`
+- Linhas: 21
+- Tamanho: 0.6 KB
+- Status: completo
+
+```python
+"""Pacote de validadores centralizados do SystemLR."""
+
+from app.validators.auth_validators import LoginSchema, RegistroSchema
+from app.validators.common import normalize_text
+from app.validators.datas import parse_date_iso
+from app.validators.documentos import validate_cpf
+from app.validators.estoque import normalize_barcode
+from app.validators.rh_validators import FuncionarioSchema
+from app.validators.vendas_validators import PedidoFiltroSchema
+
+__all__ = [
+    'FuncionarioSchema',
+    'LoginSchema',
+    'PedidoFiltroSchema',
+    'RegistroSchema',
+    'normalize_barcode',
+    'normalize_text',
+    'parse_date_iso',
+    'validate_cpf',
+]
+
+```
+
+
+### Arquivo: `app/validators/auth_validators.py`
+- Linhas: 38
+- Tamanho: 1.3 KB
+- Status: completo
+
+```python
+"""Schemas simples para validacao do fluxo de autenticacao."""
+
+
+class LoginSchema:
+    """Valida payload do formulario de login."""
+
+    def validate(self, data):
+        errors = {}
+        identificador = (data.get('login') or data.get('email') or '').strip()
+        senha = data.get('senha', '')
+        if not identificador:
+            errors['login'] = 'Matricula/email e senha sao obrigatorios.'
+        if not senha:
+            errors['senha'] = 'Matricula/email e senha sao obrigatorios.'
+        return (not errors), errors
+
+
+class RegistroSchema:
+    """Valida campos essenciais do cadastro de funcionario."""
+
+    def validate(self, data):
+        errors = {}
+        nome = (data.get('nome') or '').strip()
+        email = (data.get('email') or '').strip()
+        senha = data.get('senha', '')
+        confirmacao_senha = data.get('confirmacao_senha', '')
+        if not nome:
+            errors['nome'] = 'Nome e obrigatorio.'
+        if not email:
+            errors['email'] = 'Email e obrigatorio.'
+        if not senha:
+            errors['senha'] = 'Senha e obrigatoria.'
+        if senha and len(senha) < 6:
+            errors['senha'] = 'A senha deve ter no minimo 6 caracteres.'
+        if senha != confirmacao_senha:
+            errors['confirmacao_senha'] = 'As senhas nao conferem.'
+        return (not errors), errors
+
+```
+
+
+### Arquivo: `app/validators/common.py`
+- Linhas: 7
+- Tamanho: 0.2 KB
+- Status: completo
+
+```python
+"""Validadores e normalizadores compartilhados."""
+
+
+def normalize_text(value):
+    """Normaliza texto livre para comparacoes simples."""
+    return (value or '').strip().lower()
+
+```
+
+
+### Arquivo: `app/validators/datas.py`
+- Linhas: 9
+- Tamanho: 0.2 KB
+- Status: completo
+
+```python
+"""Validadores de datas."""
+
+from app.utils.validators import validar_data
+
+
+def parse_date_iso(value):
+    """Converte uma data ISO no padrao aceito pelo sistema."""
+    return validar_data(value)
+
+```
+
+
+### Arquivo: `app/validators/documentos.py`
+- Linhas: 9
+- Tamanho: 0.2 KB
+- Status: completo
+
+```python
+"""Validacoes de documentos pessoais."""
+
+from app.utils.validators import validar_cpf
+
+
+def validate_cpf(value):
+    """Valida CPF no formato usado pelo dominio atual."""
+    return validar_cpf(value)
+
+```
+
+
+### Arquivo: `app/validators/estoque.py`
+- Linhas: 9
+- Tamanho: 0.2 KB
+- Status: completo
+
+```python
+"""Validadores do dominio de estoque."""
+
+from app.utils.validators import normalizar_codigo_barras
+
+
+def normalize_barcode(value):
+    """Normaliza codigo de barras e reaproveita a regra legada."""
+    return normalizar_codigo_barras(value)
+
+```
+
+
+### Arquivo: `app/validators/rh_validators.py`
+- Linhas: 14
+- Tamanho: 0.4 KB
+- Status: completo
+
+```python
+"""Validacoes do dominio de RH."""
+
+
+class FuncionarioSchema:
+    """Valida campos obrigatorios minimos de funcionario."""
+
+    def validate(self, data):
+        errors = {}
+        if not (data.get('nome') or '').strip():
+            errors['nome'] = 'Nome do funcionario e obrigatorio.'
+        if not (data.get('email') or '').strip():
+            errors['email'] = 'Email do funcionario e obrigatorio.'
+        return (not errors), errors
+
+```
+
+
+### Arquivo: `app/validators/vendas_validators.py`
+- Linhas: 13
+- Tamanho: 0.4 KB
+- Status: completo
+
+```python
+"""Validacoes basicas do dominio de vendas."""
+
+
+class PedidoFiltroSchema:
+    """Valida filtros simples de listagem de pedidos."""
+
+    def validate(self, data):
+        errors = {}
+        status = (data.get('status') or '').strip().lower()
+        if status and status not in {'aberto', 'em_preparo', 'entregue', 'fechado', 'cancelado'}:
+            errors['status'] = 'Status de pedido invalido.'
+        return (not errors), errors
+
+```
+
+
 ### Arquivo: `config.py`
-- Linhas: 57
-- Tamanho: 1.4 KB
+- Linhas: 65
+- Tamanho: 1.7 KB
 - Status: completo
 
 ```python
 import os
 from datetime import timedelta
+
+try:
+    import redis
+except Exception:  # pragma: no cover - redis e opcional no bootstrap local
+    redis = None
 
 DEV_FALLBACK_SECRET = 'dev-secret-key-change-in-production'
 
@@ -10953,6 +15263,9 @@ class Config:
     CACHE_DEFAULT_TIMEOUT = int(os.environ.get('CACHE_DEFAULT_TIMEOUT', '60'))
     CACHE_REDIS_URL = os.environ.get('CACHE_REDIS_URL')
     RATELIMIT_STORAGE_URI = os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
+    REDIS_URL = os.environ.get('REDIS_URL')
+    SESSION_TYPE = 'redis' if REDIS_URL else 'filesystem'
+    SESSION_REDIS = redis.from_url(REDIS_URL) if (REDIS_URL and redis is not None) else None
 
 
 class DevelopmentConfig(Config):
@@ -11049,13 +15362,14 @@ if __name__ == "__main__":
 
 
 ### Arquivo: `models.py`
-- Linhas: 1151
-- Tamanho: 51.5 KB
+- Linhas: 1423
+- Tamanho: 64.4 KB
 - Status: completo
 
 ```python
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import date, datetime
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -11079,6 +15393,7 @@ class Produto(db.Model):
     __table_args__ = (
         db.Index('ix_produtos_categoria_fornecedor', 'categoria_id', 'fornecedor_id'),
         db.Index('ix_produtos_endereco_ativo', 'endereco_id', 'ativo'),
+        db.Index('ix_produtos_validade_ativo', 'validade', 'ativo'),
     )
 
     STATUS_DISPONIVEL_ONLINE = 'online'
@@ -11110,6 +15425,7 @@ class Produto(db.Model):
     preco_venda = db.Column(db.Float, nullable=False)
     quantidade_estoque = db.Column(db.Integer, default=0)
     quantidade_minima = db.Column(db.Integer, default=5)
+    validade = db.Column(db.Date, nullable=True, index=True)
     status_disponibilidade = db.Column(db.String(30), default=STATUS_DISPONIVEL_ONLINE, nullable=False)
     tipo_movimentacao = db.Column(db.String(20), default='manual', nullable=False)
     fora_picking = db.Column(db.Boolean, default=False)
@@ -11141,6 +15457,21 @@ class Produto(db.Model):
     def em_falta(self):
         return self.quantidade_estoque < self.quantidade_minima
 
+    def esta_vencido(self, referencia=None):
+        """Retorna True quando a validade do produto ja expirou."""
+        referencia = referencia or date.today()
+        return bool(self.validade and self.validade < referencia)
+
+    @property
+    def vencido(self):
+        return self.esta_vencido()
+
+    @classmethod
+    def filtro_nao_vencidos(cls, referencia=None):
+        """Expressao SQL para considerar apenas produtos dentro da validade."""
+        referencia = referencia or date.today()
+        return db.or_(cls.validade.is_(None), cls.validade >= referencia)
+
     @classmethod
     def normalizar_status_disponibilidade(cls, status):
         status_normalizado = (status or cls.STATUS_DISPONIVEL_ONLINE).strip().lower()
@@ -11153,7 +15484,7 @@ class Produto(db.Model):
     @property
     def disponivel_para_venda(self):
         status = self.normalizar_status_disponibilidade(self.status_disponibilidade)
-        return bool(self.ativo) and status == self.STATUS_DISPONIVEL_ONLINE
+        return bool(self.ativo) and status == self.STATUS_DISPONIVEL_ONLINE and not self.esta_vencido()
 
     @property
     def status_disponibilidade_label(self):
@@ -11164,9 +15495,32 @@ class Produto(db.Model):
         }
         return labels.get(status, 'Online')
 
+    @property
+    def total_avaliacoes(self):
+        try:
+            avaliacoes = getattr(self, 'avaliacoes', None) or []
+        except (OperationalError, ProgrammingError):
+            return 0
+        return sum(1 for avaliacao in avaliacoes if getattr(avaliacao, 'aprovada', True))
+
+    @property
+    def avaliacao_media(self):
+        try:
+            avaliacoes = [
+                float(avaliacao.nota or 0)
+                for avaliacao in (getattr(self, 'avaliacoes', None) or [])
+                if getattr(avaliacao, 'aprovada', True)
+            ]
+        except (OperationalError, ProgrammingError):
+            return 0.0
+        if not avaliacoes:
+            return 0.0
+        return round(sum(avaliacoes) / len(avaliacoes), 1)
+
 class Movimentacao(db.Model):
     __tablename__ = 'movimentacoes'
     __table_args__ = (
+        db.Index('ix_movimentacoes_tipo', 'tipo'),
         db.Index('ix_movimentacoes_tipo_criado_em', 'tipo', 'criado_em'),
         db.Index('ix_movimentacoes_produto_criado_em', 'produto_id', 'criado_em'),
     )
@@ -11178,6 +15532,8 @@ class Movimentacao(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True, index=True)
+    recebimento_id = db.Column(db.Integer, db.ForeignKey('recebimentos_fornecedor.id'), nullable=True, index=True)
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)
     endereco_origem_id = db.Column(db.Integer, db.ForeignKey('enderecos_estoque.id'), nullable=True)
     endereco_destino_id = db.Column(db.Integer, db.ForeignKey('enderecos_estoque.id'), nullable=True)
@@ -11201,6 +15557,8 @@ class Movimentacao(db.Model):
         backref=db.backref('movimentacoes_como_destino', lazy=True),
         lazy='select',
     )
+    pedido = db.relationship('Pedido', backref=db.backref('movimentacoes_estoque', lazy=True))
+    recebimento = db.relationship('RecebimentoFornecedor', backref=db.backref('movimentacoes_estoque', lazy=True))
     
     def __repr__(self):
         return f'<Movimentacao {self.produto_id} - {self.tipo}>'
@@ -11419,6 +15777,7 @@ class RecebimentoFornecedor(db.Model):
     __table_args__ = (
         db.Index('ix_recebimentos_status_criado_em', 'status', 'criado_em'),
         db.Index('ix_recebimentos_fornecedor_criado_em', 'fornecedor_id', 'criado_em'),
+        db.Index('ix_recebimentos_local_recebimento', 'local_recebimento_id'),
     )
 
     TIPO_COMPRA_REVENDA = 'compra_revenda'
@@ -11551,6 +15910,7 @@ class Mesa(db.Model):
 class Pedido(db.Model):
     __tablename__ = 'pedidos'
     __table_args__ = (
+        db.Index('ix_pedidos_origem', 'origem'),
         db.Index('ix_pedidos_status_criado_em', 'status', 'criado_em'),
         db.Index('ix_pedidos_status_fechado_em', 'status', 'fechado_em'),
     )
@@ -11573,6 +15933,7 @@ class Pedido(db.Model):
     mesa_id = db.Column(db.Integer, db.ForeignKey('mesas.id'), nullable=True)
     caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=True)
     garcom_id = db.Column(db.Integer, db.ForeignKey('garcons.id'), nullable=True)
+    cliente_publico_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=True, index=True)
     cliente_nome = db.Column(db.String(120))
     cliente_celular = db.Column(db.String(30))
     total = db.Column(db.Float, default=0.0)
@@ -11592,6 +15953,9 @@ class Pedido(db.Model):
     veiculo_placa = db.Column(db.String(20), nullable=True)
     motorista_nome = db.Column(db.String(120), nullable=True)
     empresa_terceirizada = db.Column(db.String(150), nullable=True)
+    codigo_rastreio = db.Column(db.String(100), nullable=True)
+    transportadora = db.Column(db.String(100), nullable=True)
+    data_estimada_entrega = db.Column(db.Date, nullable=True)
     nota_fiscal_numero = db.Column(db.String(60), nullable=True)
     nota_fiscal_chave = db.Column(db.String(120), nullable=True)
     nota_fiscal_emitida_em = db.Column(db.DateTime, nullable=True)
@@ -11602,6 +15966,7 @@ class Pedido(db.Model):
     observacoes = db.Column(db.Text)
 
     itens = db.relationship('ItemPedido', backref='pedido', lazy=True, cascade='all, delete-orphan')
+    cliente_publico = db.relationship('ClientePublico', backref=db.backref('pedidos', lazy=True))
 
     @staticmethod
     def _normalizar_status(status, default=STATUS_ABERTO):
@@ -11653,6 +16018,9 @@ class Pedido(db.Model):
 
 class ClientePublico(db.Model):
     __tablename__ = 'clientes_publicos'
+    __table_args__ = (
+        db.Index('ix_clientes_publicos_email_celular', 'email', 'celular'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False)
@@ -11669,11 +16037,143 @@ class ClientePublico(db.Model):
     referencia = db.Column(db.String(180), nullable=True)
     recebe_ofertas = db.Column(db.Boolean, default=False)
     observacoes = db.Column(db.Text, nullable=True)
+    senha_hash = db.Column(db.String(255), nullable=True)
+    data_cadastro = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    ultimo_acesso = db.Column(db.DateTime, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    enderecos = db.relationship('ClienteEndereco', backref='cliente', lazy=True, cascade='all, delete-orphan')
+    favoritos = db.relationship('ClienteFavorito', backref='cliente', lazy=True, cascade='all, delete-orphan')
+    avaliacoes = db.relationship('AvaliacaoProduto', backref='cliente', lazy=True, cascade='all, delete-orphan')
+
     def __repr__(self):
         return f'<ClientePublico {self.nome} ({self.email})>'
+
+    def set_password(self, senha):
+        self.senha_hash = generate_password_hash(senha)
+
+    def check_password(self, senha):
+        if not self.senha_hash:
+            return False
+        return check_password_hash(self.senha_hash, senha)
+
+    @property
+    def endereco_principal(self):
+        try:
+            for endereco in self.enderecos:
+                if endereco.principal:
+                    return endereco
+            return self.enderecos[0] if self.enderecos else None
+        except (OperationalError, ProgrammingError):
+            return None
+
+
+class ClienteEndereco(db.Model):
+    __tablename__ = 'clientes_enderecos'
+    __table_args__ = (
+        db.Index('ix_clientes_enderecos_cliente_principal', 'cliente_id', 'principal'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    apelido = db.Column(db.String(50), nullable=True)
+    cep = db.Column(db.String(12), nullable=False)
+    endereco = db.Column(db.String(180), nullable=False)
+    numero = db.Column(db.String(20), nullable=True)
+    complemento = db.Column(db.String(120), nullable=True)
+    bairro = db.Column(db.String(100), nullable=True)
+    cidade = db.Column(db.String(100), nullable=True)
+    estado = db.Column(db.String(2), nullable=True)
+    referencia = db.Column(db.String(180), nullable=True)
+    principal = db.Column(db.Boolean, default=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f'<ClienteEndereco cliente={self.cliente_id} {self.apelido or self.endereco}>'
+
+
+class ClienteFavorito(db.Model):
+    __tablename__ = 'clientes_favoritos'
+    __table_args__ = (
+        db.UniqueConstraint('cliente_id', 'produto_id', name='uq_cliente_favorito_produto'),
+        db.Index('ix_clientes_favoritos_cliente_criado', 'cliente_id', 'criado_em'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    produto = db.relationship('Produto', backref=db.backref('favoritado_por', lazy=True))
+
+    def __repr__(self):
+        return f'<ClienteFavorito cliente={self.cliente_id} produto={self.produto_id}>'
+
+
+class AvaliacaoProduto(db.Model):
+    __tablename__ = 'avaliacoes_produtos'
+    __table_args__ = (
+        db.CheckConstraint('nota >= 1 AND nota <= 5', name='ck_avaliacoes_produtos_nota'),
+        db.UniqueConstraint('produto_id', 'cliente_id', name='uq_avaliacao_produto_cliente'),
+        db.Index('ix_avaliacoes_produtos_produto_aprovada', 'produto_id', 'aprovada'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    nota = db.Column(db.Integer, nullable=False)
+    titulo = db.Column(db.String(100), nullable=True)
+    comentario = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    aprovada = db.Column(db.Boolean, default=True)
+
+    produto = db.relationship('Produto', backref=db.backref('avaliacoes', lazy=True, cascade='all, delete-orphan'))
+
+    def __repr__(self):
+        return f'<AvaliacaoProduto produto={self.produto_id} cliente={self.cliente_id} nota={self.nota}>'
+
+
+class Cupom(db.Model):
+    __tablename__ = 'cupons'
+    __table_args__ = (
+        db.Index('ix_cupons_codigo_ativo', 'codigo', 'ativo'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    codigo = db.Column(db.String(50), unique=True, nullable=False)
+    descricao = db.Column(db.String(180), nullable=True)
+    tipo_desconto = db.Column(db.String(20), nullable=False)
+    valor = db.Column(db.Float, nullable=False)
+    minimo_compra = db.Column(db.Float, nullable=True)
+    produtos_incluidos = db.Column(db.Text, nullable=True)
+    categorias_incluidas = db.Column(db.Text, nullable=True)
+    primeira_compra = db.Column(db.Boolean, default=False)
+    data_inicio = db.Column(db.Date, nullable=True)
+    data_fim = db.Column(db.Date, nullable=True)
+    ativo = db.Column(db.Boolean, default=True)
+    uso_unico_por_cliente = db.Column(db.Boolean, default=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f'<Cupom {self.codigo}>'
+
+
+class CupomUtilizacao(db.Model):
+    __tablename__ = 'cupons_utilizacoes'
+    __table_args__ = (
+        db.Index('ix_cupons_utilizacoes_cupom_cliente', 'cupom_id', 'cliente_id'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    cupom_id = db.Column(db.Integer, db.ForeignKey('cupons.id'), nullable=False)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    cupom = db.relationship('Cupom', backref=db.backref('utilizacoes', lazy=True, cascade='all, delete-orphan'))
+    cliente = db.relationship('ClientePublico', backref=db.backref('cupons_utilizados', lazy=True))
+    pedido = db.relationship('Pedido', backref=db.backref('cupom_utilizacoes', lazy=True))
 
 
 class ItemPedido(db.Model):
@@ -11888,6 +16388,8 @@ class LancamentoFinanceiro(db.Model):
     enviado_em = db.Column(db.DateTime, nullable=True)
     referencia_documento = db.Column(db.String(120), nullable=True)
     centro_custo = db.Column(db.String(120), nullable=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True, index=True)
+    recebimento_id = db.Column(db.Integer, db.ForeignKey('recebimentos_fornecedor.id'), nullable=True, index=True)
 
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)
     quantidade = db.Column(db.Float, nullable=True)
@@ -11898,6 +16400,8 @@ class LancamentoFinanceiro(db.Model):
 
     produto = db.relationship('Produto', backref=db.backref('lancamentos_financeiros', lazy=True))
     criado_por = db.relationship('Funcionario', backref=db.backref('lancamentos_financeiros', lazy=True))
+    pedido = db.relationship('Pedido', backref=db.backref('lancamentos_financeiros', lazy=True))
+    recebimento = db.relationship('RecebimentoFornecedor', backref=db.backref('lancamentos_financeiros', lazy=True))
 
     def __repr__(self):
         return f'<LancamentoFinanceiro {self.tipo} {self.valor}>'
@@ -11998,6 +16502,7 @@ class EmpresaConfig(db.Model):
     ecommerce_ativo = db.Column(db.Boolean, default=True)
     ecom_cor_primaria = db.Column(db.String(20), default='#ff7848')
     ecom_cor_secundaria = db.Column(db.String(20), default='#ff5a2a')
+    ecom_card_bg = db.Column(db.String(20), default='#ffffff')
     ecom_titulo_banner = db.Column(db.String(140), nullable=True)
     ecom_subtitulo_banner = db.Column(db.String(255), nullable=True)
     ecom_texto_promocao = db.Column(db.String(255), nullable=True)
@@ -12006,6 +16511,7 @@ class EmpresaConfig(db.Model):
     ecom_produto_placeholder_path = db.Column(db.String(255), nullable=True)
     ecom_banners_json = db.Column(db.Text, nullable=True)
     ecom_campanhas_json = db.Column(db.Text, nullable=True)
+    ecom_cupons_json = db.Column(db.Text, nullable=True)
     ecom_footer_bg = db.Column(db.String(20), default='#1f2b38')
     ecom_footer_texto = db.Column(db.String(255), nullable=True)
     ecom_footer_contato = db.Column(db.String(255), nullable=True)
@@ -12037,8 +16543,52 @@ class EmpresaConfig(db.Model):
     ultimo_garcom_id = db.Column(db.Integer, db.ForeignKey('garcons.id'), nullable=True)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    frota_veiculos = db.relationship(
+        'FrotaVeiculo',
+        backref='empresa',
+        lazy=True,
+        cascade='all, delete-orphan',
+    )
+
     def __repr__(self):
         return f'<EmpresaConfig {self.nome_fantasia or self.razao_social or self.id}>'
+
+
+class FrotaVeiculo(db.Model):
+    __tablename__ = 'frota_veiculos'
+    __table_args__ = (
+        db.Index('ix_frota_veiculos_empresa_ativo', 'empresa_id', 'ativo'),
+        db.Index('ix_frota_veiculos_placa', 'placa'),
+    )
+
+    TIPO_MOTO = 'moto'
+    TIPO_CARRO = 'carro'
+    TIPO_CAMINHAO = 'caminhao'
+    TIPO_UTILITARIO = 'utilitario'
+    TIPOS_VALIDOS = {
+        TIPO_MOTO,
+        TIPO_CARRO,
+        TIPO_CAMINHAO,
+        TIPO_UTILITARIO,
+    }
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa_config.id'), nullable=False, index=True)
+    nome = db.Column(db.String(120), nullable=False)
+    placa = db.Column(db.String(20), nullable=True)
+    tipo = db.Column(db.String(20), nullable=False, default=TIPO_CARRO)
+    capacidade_kg = db.Column(db.Float, nullable=True)
+    capacidade_volume = db.Column(db.Float, nullable=True)
+    motorista_padrao = db.Column(db.String(120), nullable=True)
+    tipo_entrega = db.Column(db.String(20), nullable=False, default='todos')
+    capacidade_pedidos = db.Column(db.Integer, nullable=True, default=0)
+    empresa_terceirizada = db.Column(db.String(150), nullable=True)
+    ativo = db.Column(db.Boolean, default=True, nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<FrotaVeiculo {self.nome} ({self.placa or "sem-placa"})>'
 
 
 class AuditoriaEvento(db.Model):
@@ -12063,6 +16613,41 @@ class AuditoriaEvento(db.Model):
 
     def __repr__(self):
         return f'<AuditoriaEvento {self.metodo} {self.rota} ({self.status_code})>'
+
+
+class ProcessoEvento(db.Model):
+    __tablename__ = 'processo_eventos'
+    __table_args__ = (
+        db.Index('ix_processo_eventos_pedido_criado', 'pedido_id', 'criado_em'),
+        db.Index('ix_processo_eventos_recebimento_criado', 'recebimento_id', 'criado_em'),
+        db.Index('ix_processo_eventos_entidade_entidade_id', 'entidade', 'entidade_id'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    processo_tipo = db.Column(db.String(40), nullable=False, index=True)
+    etapa = db.Column(db.String(80), nullable=False)
+    acao = db.Column(db.String(120), nullable=False)
+    entidade = db.Column(db.String(80), nullable=False, index=True)
+    entidade_id = db.Column(db.Integer, nullable=False, index=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    recebimento_id = db.Column(db.Integer, db.ForeignKey('recebimentos_fornecedor.id'), nullable=True)
+    movimentacao_id = db.Column(db.Integer, db.ForeignKey('movimentacoes.id'), nullable=True)
+    lancamento_financeiro_id = db.Column(db.Integer, db.ForeignKey('lancamentos_financeiros.id'), nullable=True)
+    fundo_solicitacao_id = db.Column(db.Integer, db.ForeignKey('fundos_solicitacoes.id'), nullable=True)
+    funcionario_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'), nullable=True)
+    funcionario_nome = db.Column(db.String(120), nullable=True)
+    detalhes = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    pedido = db.relationship('Pedido', backref=db.backref('eventos_processo', lazy=True))
+    recebimento = db.relationship('RecebimentoFornecedor', backref=db.backref('eventos_processo', lazy=True))
+    movimentacao = db.relationship('Movimentacao', backref=db.backref('eventos_processo', lazy=True))
+    lancamento_financeiro = db.relationship('LancamentoFinanceiro', backref=db.backref('eventos_processo', lazy=True))
+    fundo_solicitacao = db.relationship('FundoSolicitacao', backref=db.backref('eventos_processo', lazy=True))
+    funcionario = db.relationship('Funcionario', backref=db.backref('eventos_processo', lazy=True))
+
+    def __repr__(self):
+        return f'<ProcessoEvento {self.processo_tipo} {self.etapa} {self.acao}>'
 
 
 class AssistenteLocalFeedback(db.Model):
@@ -12209,8 +16794,8 @@ class ChamadoInterno(db.Model):
 
 
 ### Arquivo: `realtime.py`
-- Linhas: 30
-- Tamanho: 0.7 KB
+- Linhas: 32
+- Tamanho: 0.9 KB
 - Status: completo
 
 ```python
@@ -12241,7 +16826,9 @@ def sse_stream():
             yield "event: ping\ndata: {}\n\n"
             continue
 
-        yield f"event: pedido\ndata: {json.dumps(payload, default=str)}\n\n"
+        event_name = str(payload.get('event') or 'pedido') if isinstance(payload, dict) else 'pedido'
+        data = payload.get('data', payload) if isinstance(payload, dict) else payload
+        yield f"event: {event_name}\ndata: {json.dumps(data, default=str)}\n\n"
         time.sleep(0.01)
 
 ```
@@ -12259,8 +16846,8 @@ def sse_stream():
 
 
 ### Arquivo: `routes/estoque_routes.py`
-- Linhas: 3763
-- Tamanho: 184.8 KB
+- Linhas: 4166
+- Tamanho: 201.5 KB
 - Status: completo
 
 ```python
@@ -12281,7 +16868,20 @@ from app.utils.operational_flow import (
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
 
 from app.exceptions import AppError, ValidationError
+from app.services.workflow import RecebimentoStatus, transition_recebimento_status
+from app.services.operational_rules import (
+    require_cancel_reason,
+    validate_active_product_payload,
+)
+from app.services.master_data import (
+    validate_stock_master_payload,
+    validate_supplier_payload,
+)
+from app.services.recebimento_service import armazenar_recebimento, conferir_recebimento, create_recebimento
+from app.services.estoque_service import registrar_movimentacao_manual, transferir_estoque
 from app.utils.helpers import sem_acentos
+from app.utils.responses import ok, fail
+from app.utils.validation import validate_required_fields
 from app.utils.validators import normalizar_codigo_barras, validar_cpf, validar_cnpj
 from models import (
     AlmoxarifadoAtribuicao,
@@ -12314,8 +16914,13 @@ from utils.endereco_codigo import (
 
 # pillow serÃ¡ usado para redimensionar/comprimir imagens
 from PIL import Image
+try:
+    import magic
+except Exception:  # pragma: no cover - fallback quando python-magic nao estiver disponivel
+    magic = None
 
 ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
+ALLOWED_IMAGE_MIME_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/gif'}
 DEFAULT_PRODUCT_IMAGE = 'img/placeholders/imgindisponivel.png'
 
 
@@ -12428,6 +17033,22 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         except ValueError:
             return None
 
+    def _parse_validade_produto(valor):
+        """Normaliza a validade do produto a partir do formulario."""
+        texto = (valor or '').strip()
+        if not texto:
+            return None
+        try:
+            return datetime.strptime(texto, '%Y-%m-%d').date()
+        except ValueError as exc:
+            raise ValidationError('Informe a validade do produto no formato YYYY-MM-DD.') from exc
+
+    def _aplicar_bloqueio_validade_produto(produto):
+        """Tira de venda produtos com validade ja expirada."""
+        if produto and produto.vencido:
+            produto.ativo = False
+            produto.status_disponibilidade = Produto.STATUS_DISPONIVEL_OFF
+
     def _tipo_recebimento_exige_fornecedor(tipo_recebimento):
         tipo_normalizado = (tipo_recebimento or '').strip().lower()
         return (
@@ -12520,6 +17141,19 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         params = {'context_key': context_key}
         params.update({key: value for key, value in extra.items() if value not in (None, '')})
         return url_for('novo_recebimento_fornecedor', **params)
+
+    def _gerar_codigo_filial_estoque(nome):
+        """Gera um codigo curto e previsivel para manter compatibilidade com cadastros legados."""
+        base = re.sub(r'[^A-Z0-9]+', '', (nome or '').strip().upper())
+        if not base:
+            return None
+        codigo = base[:8]
+        candidato = codigo
+        sufixo = 1
+        while Estoque.query.filter(db.func.lower(Estoque.codigo_filial) == candidato.lower()).first():
+            sufixo += 1
+            candidato = f'{codigo[:6]}{sufixo:02d}'[:8]
+        return candidato
 
     def _resolver_funcionario_por_matricula_ou_nome(texto_busca='', funcionario_id=None):
         if funcionario_id:
@@ -12742,6 +17376,12 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             return False
         try:
             stream.seek(0)
+            header = stream.read(2048)
+            stream.seek(0)
+            if magic is not None:
+                mime_type = magic.from_buffer(header, mime=True)
+                if mime_type not in ALLOWED_IMAGE_MIME_TYPES:
+                    return False
             img = Image.open(stream)
             img.verify()
             stream.seek(0)
@@ -12856,6 +17496,71 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         _optimize_image_file(absolute_path)
         return relative_path, None
 
+    def _list_category_uploaded_images():
+        relative_dir = os.path.join('uploads', 'categorias')
+        absolute_dir = os.path.join(app.static_folder, relative_dir)
+        if not os.path.isdir(absolute_dir):
+            return []
+
+        imagens = []
+        for entry in sorted(os.scandir(absolute_dir), key=lambda item: item.name.lower()):
+            if not entry.is_file():
+                continue
+            _, ext = os.path.splitext(entry.name.lower())
+            if ext not in ALLOWED_IMAGE_EXTENSIONS:
+                continue
+            relative_path = os.path.join(relative_dir, entry.name).replace('\\', '/')
+            nome_base = os.path.splitext(entry.name)[0].replace('_', ' ').replace('-', ' ').strip()
+            imagens.append({
+                'path': relative_path,
+                'filename': entry.name,
+                'label': nome_base or entry.name,
+            })
+        return imagens
+
+    def _selected_category_image_path(raw_path):
+        path = (raw_path or '').strip().replace('\\', '/')
+        if not path:
+            return None
+
+        allowed_prefix = 'uploads/categorias/'
+        if not path.startswith(allowed_prefix):
+            return None
+
+        _, ext = os.path.splitext(path.lower())
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            return None
+
+        absolute_path = os.path.normpath(os.path.join(app.static_folder, path))
+        static_root = os.path.normpath(app.static_folder)
+        if os.path.commonpath([absolute_path, static_root]) != static_root:
+            return None
+        if not os.path.exists(absolute_path):
+            return None
+        return path
+
+    def _is_generated_category_image(relative_path):
+        caminho_rel = (relative_path or '').strip().replace('\\', '/')
+        nome_arquivo = os.path.splitext(os.path.basename(caminho_rel))[0]
+        return bool(re.fullmatch(r'[0-9a-f]{32}', nome_arquivo))
+
+    def _delete_category_image_if_unused(relative_path, categoria_id_to_ignore=None):
+        caminho_rel = (relative_path or '').strip().replace('\\', '/')
+        if not caminho_rel:
+            return
+        if not caminho_rel.startswith('uploads/categorias/'):
+            _delete_image_file(caminho_rel)
+            return
+        if not _is_generated_category_image(caminho_rel):
+            return
+
+        query = Categoria.query.filter(Categoria.imagem_path == caminho_rel)
+        if categoria_id_to_ignore:
+            query = query.filter(Categoria.id != categoria_id_to_ignore)
+        if query.first():
+            return
+        _delete_image_file(caminho_rel)
+
     with app.app_context():
         _preencher_imagem_padrao_produtos()
 
@@ -12918,6 +17623,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 Produto.preco_venda,
                 Produto.quantidade_estoque,
                 Produto.quantidade_minima,
+                Produto.validade,
                 Produto.status_disponibilidade,
                 Produto.tipo_movimentacao,
                 Produto.fora_picking,
@@ -12932,16 +17638,24 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
         pagination = query.order_by(*ordenacoes_produto[ordenar]).paginate(page=page, per_page=per_page, error_out=False)
         produtos = pagination.items
-        categorias = Categoria.query.order_by(Categoria.nome.asc()).all()
-        estoques = _estoque_query_permitida(funcionario_logado).filter_by(ativo=True).order_by(Estoque.nome.asc()).all()
+        categorias = Categoria.query.options(
+            load_only(Categoria.id, Categoria.nome)
+        ).order_by(Categoria.nome.asc()).all()
+        estoques = _estoque_query_permitida(funcionario_logado).options(
+            load_only(Estoque.id, Estoque.nome, Estoque.codigo_filial, Estoque.ativo)
+        ).filter_by(ativo=True).order_by(Estoque.nome.asc()).all()
         if estoque_id:
-            enderecos = _endereco_query_permitida(funcionario_logado).filter_by(
+            enderecos = _endereco_query_permitida(funcionario_logado).options(
+                load_only(EnderecoEstoque.id, EnderecoEstoque.nome, EnderecoEstoque.estoque_id, EnderecoEstoque.ativo)
+            ).filter_by(
                 ativo=True,
                 estoque_id=estoque_id,
             ).order_by(EnderecoEstoque.nome.asc()).all()
         else:
             enderecos = []
-        fornecedores = Fornecedor.query.filter(
+        fornecedores = Fornecedor.query.options(
+            load_only(Fornecedor.id, Fornecedor.nome, Fornecedor.ativo)
+        ).filter(
             Fornecedor.ativo.is_(True),
             db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
         ).order_by(Fornecedor.nome.asc()).all()
@@ -13207,6 +17921,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             'preco_venda': (request.values.get('preco_venda') or '').strip(),
             'quantidade_estoque': (request.values.get('quantidade_estoque') or '0').strip(),
             'quantidade_minima': (request.values.get('quantidade_minima') or '5').strip(),
+            'validade': (request.values.get('validade') or '').strip(),
             'status_disponibilidade': (
                 (request.values.get('status_disponibilidade') or Produto.STATUS_DISPONIVEL_ONLINE).strip().lower()
             ),
@@ -13252,6 +17967,9 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if not fornecedor:
                     flash('Fornecedor invalido. Selecione um fornecedor para o produto.', 'error')
                     return _render_novo_produto()
+                if not fornecedor.ativo:
+                    flash('Fornecedor inativo nao pode ser usado em produto ativo.', 'error')
+                    return _render_novo_produto()
 
                 endereco_id = request.form.get('endereco_id', type=int) or None
                 if endereco_id and not _carregar_endereco_permitido(endereco_id, funcionario_logado, apenas_ativo=True):
@@ -13283,12 +18001,24 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     preco_venda=float(request.form.get('preco_venda', 0)),
                     quantidade_estoque=int(request.form.get('quantidade_estoque', 0)),
                     quantidade_minima=int(request.form.get('quantidade_minima', 5)),
+                    validade=_parse_validade_produto(request.form.get('validade')),
                     status_disponibilidade=_normalizar_status_disponibilidade(request.form.get('status_disponibilidade')),
                     tipo_movimentacao=_normalizar_tipo_movimentacao(request.form.get('tipo_movimentacao')),
                     fora_picking=(request.form.get('fora_picking') == 'on'),
                     prioridade_reabastecimento=request.form.get('prioridade_reabastecimento', type=int),
                     servico_montagem_disponivel=(request.form.get('servico_montagem_disponivel') == 'on'),
                     servico_instalacao_disponivel=(request.form.get('servico_instalacao_disponivel') == 'on'),
+                )
+                _aplicar_bloqueio_validade_produto(produto)
+                validate_active_product_payload(
+                    codigo=produto.codigo,
+                    nome=produto.nome,
+                    categoria_id=produto.categoria_id,
+                    fornecedor_id=produto.fornecedor_id,
+                    preco_custo=produto.preco_custo,
+                    preco_venda=produto.preco_venda,
+                    quantidade_minima=produto.quantidade_minima,
+                    ativo=produto.ativo,
                 )
                 db.session.add(produto)
                 db.session.commit()
@@ -13329,6 +18059,9 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if not fornecedor:
                     flash('Fornecedor invalido. Selecione um fornecedor para o produto.', 'error')
                     return redirect(url_for('editar_produto', produto_id=produto_id))
+                if not fornecedor.ativo:
+                    flash('Fornecedor inativo nao pode ser usado em produto ativo.', 'error')
+                    return redirect(url_for('editar_produto', produto_id=produto_id))
                 endereco_id = request.form.get('endereco_id', type=int) or None
                 if endereco_id and not _carregar_endereco_permitido(endereco_id, funcionario_logado, apenas_ativo=True):
                     flash('Endereco invalido ou fora dos estoques permitidos.', 'error')
@@ -13346,12 +18079,24 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if preco_venda_raw is not None and str(preco_venda_raw).strip() != '':
                     produto.preco_venda = float(preco_venda_raw)
                 produto.quantidade_minima = int(request.form.get('quantidade_minima', 5))
+                produto.validade = _parse_validade_produto(request.form.get('validade'))
                 produto.status_disponibilidade = _normalizar_status_disponibilidade(request.form.get('status_disponibilidade'))
                 produto.tipo_movimentacao = _normalizar_tipo_movimentacao(request.form.get('tipo_movimentacao'))
                 produto.fora_picking = (request.form.get('fora_picking') == 'on')
                 produto.prioridade_reabastecimento = request.form.get('prioridade_reabastecimento', type=int)
                 produto.servico_montagem_disponivel = (request.form.get('servico_montagem_disponivel') == 'on')
                 produto.servico_instalacao_disponivel = (request.form.get('servico_instalacao_disponivel') == 'on')
+                _aplicar_bloqueio_validade_produto(produto)
+                validate_active_product_payload(
+                    codigo=produto.codigo,
+                    nome=produto.nome,
+                    categoria_id=produto.categoria_id,
+                    fornecedor_id=produto.fornecedor_id,
+                    preco_custo=produto.preco_custo,
+                    preco_venda=produto.preco_venda,
+                    quantidade_minima=produto.quantidade_minima,
+                    ativo=produto.ativo,
+                )
 
                 remover_imagem = request.form.get('remover_imagem') == 'on'
                 arquivo_imagem = request.files.get('imagem')
@@ -13748,17 +18493,28 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @app.route('/categorias/nova', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
     def nova_categoria():
+        imagens_categoria_existentes = _list_category_uploaded_images()
         if request.method == 'POST':
             nova_imagem_path = None
             try:
                 nome_categoria = request.form.get('nome')
-                nova_imagem_path, erro_imagem = _save_category_image(
-                    request.files.get('imagem'),
-                    nome_categoria
-                )
-                if erro_imagem:
-                    flash(erro_imagem, 'error')
-                    return redirect(url_for('nova_categoria'))
+                imagem_existente_path = _selected_category_image_path(request.form.get('imagem_existente'))
+                arquivo_imagem = request.files.get('imagem')
+
+                if arquivo_imagem and arquivo_imagem.filename:
+                    nova_imagem_path, erro_imagem = _save_category_image(
+                        arquivo_imagem,
+                        nome_categoria
+                    )
+                    if erro_imagem:
+                        flash(erro_imagem, 'error')
+                        return render_template(
+                            'estoque/categorias/nova_categoria.html',
+                            imagens_categoria_existentes=imagens_categoria_existentes,
+                            imagem_existente_selecionada=imagem_existente_path,
+                        )
+                else:
+                    nova_imagem_path = imagem_existente_path
 
                 categoria = Categoria(
                     nome=nome_categoria,
@@ -13772,14 +18528,19 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 if nova_imagem_path:
-                    _delete_image_file(nova_imagem_path)
+                    _delete_category_image_if_unused(nova_imagem_path)
                 flash(f'Erro ao criar categoria: {str(e)}', 'error')
-        return render_template('estoque/categorias/nova_categoria.html')
+        return render_template(
+            'estoque/categorias/nova_categoria.html',
+            imagens_categoria_existentes=imagens_categoria_existentes,
+            imagem_existente_selecionada=None,
+        )
 
     @app.route('/categorias/<int:categoria_id>/editar', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
     def editar_categoria(categoria_id):
         categoria = Categoria.query.get_or_404(categoria_id)
+        imagens_categoria_existentes = _list_category_uploaded_images()
         if request.method == 'POST':
             nova_imagem_path = None
             imagem_anterior = categoria.imagem_path
@@ -13788,31 +18549,46 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 categoria.descricao = request.form.get('descricao')
                 remover_imagem = request.form.get('remover_imagem') == 'on'
                 arquivo_imagem = request.files.get('imagem')
+                imagem_existente_path = _selected_category_image_path(request.form.get('imagem_existente'))
 
                 if arquivo_imagem and arquivo_imagem.filename:
                     nova_imagem_path, erro_imagem = _save_category_image(arquivo_imagem, categoria.nome)
                     if erro_imagem:
                         flash(erro_imagem, 'error')
-                        return redirect(url_for('editar_categoria', categoria_id=categoria_id))
+                        return render_template(
+                            'estoque/categorias/editar_categoria.html',
+                            categoria=categoria,
+                            imagens_categoria_existentes=imagens_categoria_existentes,
+                            imagem_existente_selecionada=imagem_existente_path or categoria.imagem_path,
+                        )
                     categoria.imagem_path = nova_imagem_path
+                elif imagem_existente_path:
+                    categoria.imagem_path = imagem_existente_path
                 elif remover_imagem:
                     categoria.imagem_path = None
 
                 db.session.commit()
 
                 if nova_imagem_path and imagem_anterior and imagem_anterior != nova_imagem_path:
-                    _delete_image_file(imagem_anterior)
+                    _delete_category_image_if_unused(imagem_anterior, categoria.id)
+                if imagem_existente_path and imagem_anterior and imagem_anterior != imagem_existente_path:
+                    _delete_category_image_if_unused(imagem_anterior, categoria.id)
                 if remover_imagem and imagem_anterior:
-                    _delete_image_file(imagem_anterior)
+                    _delete_category_image_if_unused(imagem_anterior, categoria.id)
 
                 flash(f'Categoria "{categoria.nome}" atualizada com sucesso!', 'success')
                 return redirect(url_for('listar_categorias'))
             except Exception as e:
                 db.session.rollback()
                 if nova_imagem_path:
-                    _delete_image_file(nova_imagem_path)
+                    _delete_category_image_if_unused(nova_imagem_path, categoria.id)
                 flash(f'Erro ao atualizar categoria: {str(e)}', 'error')
-        return render_template('estoque/categorias/editar_categoria.html', categoria=categoria)
+        return render_template(
+            'estoque/categorias/editar_categoria.html',
+            categoria=categoria,
+            imagens_categoria_existentes=imagens_categoria_existentes,
+            imagem_existente_selecionada=categoria.imagem_path,
+        )
 
     @app.route('/categorias/<int:categoria_id>/deletar', methods=['POST'])
     @require_role(*estoque_write_roles)
@@ -13823,7 +18599,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             db.session.delete(categoria)
             db.session.commit()
             if imagem_categoria:
-                _delete_image_file(imagem_categoria)
+                _delete_category_image_if_unused(imagem_categoria, categoria_id)
             flash(f'Categoria "{categoria.nome}" deletada com sucesso!', 'success')
         except Exception as e:
             db.session.rollback()
@@ -13949,9 +18725,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     observacoes_gerais=request.form.get('observacoes_gerais', '').strip() or None,
                     ativo=(request.form.get('ativo') == 'on')
                 )
-                if not fornecedor.nome:
-                    flash('Nome do fornecedor e obrigatorio.', 'error')
-                    return _render_novo_fornecedor()
+                validate_supplier_payload(
+                    nome=fornecedor.nome,
+                    documento=fornecedor.documento,
+                    telefone=fornecedor.telefone,
+                    email=fornecedor.email,
+                    endereco_cidade=fornecedor.endereco_cidade,
+                    tipo_produtos_fornece=fornecedor.tipo_produtos_fornece,
+                    ativo=fornecedor.ativo,
+                )
                 db.session.add(fornecedor)
                 db.session.commit()
                 flash(f'Fornecedor "{fornecedor.nome}" cadastrado com sucesso!', 'success')
@@ -13968,6 +18750,13 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao cadastrar fornecedor: {str(e)}', 'error')
+                if flow_metadata.get('return_to'):
+                    return redirect(
+                        build_related_return_url(
+                            'listar_fornecedores',
+                            entity='fornecedor',
+                        )
+                    )
                 return _render_novo_fornecedor()
         return _render_novo_fornecedor()
 
@@ -13993,6 +18782,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 fornecedor.tipo_produtos_fornece = request.form.get('tipo_produtos_fornece', '').strip() or None
                 fornecedor.observacoes_gerais = request.form.get('observacoes_gerais', '').strip() or None
                 fornecedor.ativo = (request.form.get('ativo') == 'on')
+                validate_supplier_payload(
+                    nome=fornecedor.nome,
+                    documento=fornecedor.documento,
+                    telefone=fornecedor.telefone,
+                    email=fornecedor.email,
+                    endereco_cidade=fornecedor.endereco_cidade,
+                    tipo_produtos_fornece=fornecedor.tipo_produtos_fornece,
+                    ativo=fornecedor.ativo,
+                )
                 db.session.commit()
                 flash(f'Fornecedor "{fornecedor.nome}" atualizado com sucesso!', 'success')
                 return redirect(url_for('listar_fornecedores'))
@@ -14214,7 +19012,6 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                         flash('Data de entrega invalida.', 'error')
                         return redirect(_url_novo_recebimento_contexto(context_key))
 
-                subtotal = 0.0
                 desconto_raw = (request.form.get('desconto') or '').strip()
                 if desconto_raw:
                     try:
@@ -14276,7 +19073,6 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                         return redirect(_url_novo_recebimento_contexto(context_key))
 
                     total_item = float(qtd_recebida) * float(preco_unitario)
-                    subtotal += total_item
                     itens_processados.append({
                         'produto_id': produto_id,
                         'qtd_recebida': qtd_recebida,
@@ -14290,46 +19086,25 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     flash('Informe ao menos um item valido no recebimento.', 'error')
                     return redirect(_url_novo_recebimento_contexto(context_key))
 
-                total_pagar = max(subtotal - desconto, 0.0)
-
-                recebimento = RecebimentoFornecedor(
-                    fornecedor_id=fornecedor.id,
-                    local_recebimento_id=local_recebimento.id,
+                ir_para_armazenagem = (request.form.get('ir_para_armazenagem') == 'on')
+                recebimento = create_recebimento(
+                    fornecedor=fornecedor,
+                    local_recebimento=local_recebimento,
                     tipo_recebimento=tipo_recebimento,
-                    fornecedor_documento=fornecedor_documento_digitado or fornecedor.documento or None,
+                    itens_processados=itens_processados,
+                    fornecedor_documento=fornecedor_documento_digitado,
                     data_entrega=data_entrega,
                     info_nota=(request.form.get('info_nota') or '').strip() or None,
-                    subtotal=subtotal,
                     desconto=desconto,
-                    total_pagar=total_pagar,
                     observacoes=(request.form.get('observacoes') or '').strip() or None,
-                    recebedor_funcionario_id=(recebedor_funcionario.id if recebedor_funcionario else None),
+                    recebedor_funcionario=recebedor_funcionario,
                     recebedor_nome=recebedor_nome,
                     recebedor_assinatura=(request.form.get('recebedor_assinatura') or '').strip() or None,
                     entregador_nome=(request.form.get('entregador_nome') or '').strip() or None,
                     entregador_assinatura=(request.form.get('entregador_assinatura') or '').strip() or None,
-                    status=RecebimentoFornecedor.STATUS_CRIADO,
+                    ir_para_armazenagem=ir_para_armazenagem,
+                    actor=funcionario_logado,
                 )
-                ir_para_armazenagem = (request.form.get('ir_para_armazenagem') == 'on')
-                if ir_para_armazenagem:
-                    recebimento.status = RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-                    recebimento.conferido_em = datetime.utcnow()
-                db.session.add(recebimento)
-                db.session.flush()
-
-                for item in itens_processados:
-                    db.session.add(
-                        RecebimentoItem(
-                            recebimento_id=recebimento.id,
-                            produto_id=item['produto_id'],
-                            qtd_recebida=item['qtd_recebida'],
-                            unidade=item['unidade'],
-                            descricao_item=item['descricao_item'],
-                            preco_unitario=item['preco_unitario'],
-                            total_item=item['total_item'],
-                            qtd_avaria=0,
-                        )
-                    )
 
                 db.session.commit()
                 if ir_para_armazenagem:
@@ -14393,47 +19168,25 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
         if request.method == 'POST':
             try:
+                conferencias_por_item = {}
                 for item in recebimento.itens:
                     prefix = f'item_{item.id}_'
-                    raw_qtd_recebida = request.form.get(f'{prefix}qtd_recebida', '0')
-                    raw_qtd_avaria = request.form.get(f'{prefix}qtd_avaria', '0')
-                    lote = (request.form.get(f'{prefix}lote') or '').strip() or None
-                    validade_texto = (request.form.get(f'{prefix}validade') or '').strip()
+                    conferencias_por_item[item.id] = {
+                        'qtd_recebida': request.form.get(f'{prefix}qtd_recebida', '0'),
+                        'qtd_avaria': request.form.get(f'{prefix}qtd_avaria', '0'),
+                        'lote': (request.form.get(f'{prefix}lote') or '').strip() or None,
+                        'validade': (request.form.get(f'{prefix}validade') or '').strip(),
+                    }
 
-                    try:
-                        qtd_recebida = int(str(raw_qtd_recebida or '0').strip() or '0')
-                    except ValueError:
-                        raise ValueError(f'Quantidade recebida invalida para o produto "{item.produto.nome}".')
-                    try:
-                        qtd_avaria = int(str(raw_qtd_avaria or '0').strip() or '0')
-                    except ValueError:
-                        raise ValueError(f'Quantidade avariada invalida para o produto "{item.produto.nome}".')
-
-                    if qtd_recebida < 0:
-                        raise ValueError(f'Quantidade recebida nao pode ser negativa para o produto "{item.produto.nome}".')
-                    if qtd_avaria < 0:
-                        raise ValueError(f'Quantidade avariada nao pode ser negativa para o produto "{item.produto.nome}".')
-                    if qtd_avaria > qtd_recebida:
-                        raise ValueError(f'Avaria nao pode ser maior que recebimento no produto "{item.produto.nome}".')
-
-                    validade = None
-                    if validade_texto:
-                        try:
-                            validade = datetime.strptime(validade_texto, '%Y-%m-%d').date()
-                        except ValueError:
-                            raise ValueError(f'Data de validade invalida para o produto "{item.produto.nome}".')
-
-                    item.qtd_recebida = qtd_recebida
-                    item.qtd_avaria = qtd_avaria
-                    item.lote = lote
-                    item.validade = validade
-
-                recebimento.status = RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-                recebimento.conferido_em = datetime.utcnow()
+                conferir_recebimento(
+                    recebimento,
+                    conferencias_por_item=conferencias_por_item,
+                    actor=_funcionario_logado_estoque(),
+                )
                 db.session.commit()
                 flash('Conferencia salva. Proximo passo: armazenagem (put-away).', 'success')
                 return redirect(url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id))
-            except ValueError as e:
+            except (ValueError, ValidationError) as e:
                 db.session.rollback()
                 flash(str(e), 'error')
             except Exception as e:
@@ -14477,72 +19230,19 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     flash('Nao existem enderecos ativos para armazenagem.', 'error')
                     return redirect(url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id))
 
-                erros = []
                 destinos_por_item = {}
                 for item in recebimento.itens:
                     endereco_destino_id = request.form.get(f'endereco_destino_{item.id}', type=int)
-                    if not endereco_destino_id:
-                        erros.append(f'Informe o endereco destino para "{item.produto.nome}".')
-                        continue
                     endereco_destino = enderecos_por_id.get(endereco_destino_id)
-                    if not endereco_destino:
-                        erros.append(f'Endereco destino invalido/inativo para "{item.produto.nome}".')
-                        continue
-                    if item.qtd_liquida > 0 and (endereco_destino.controle_validade or 'nenhum') == 'fefo' and not item.validade:
-                        erros.append(f'Endereco "{endereco_destino.nome}" exige FEFO. Informe validade para "{item.produto.nome}".')
-                    restricoes = {parte.strip().lower() for parte in (endereco_destino.restricoes or '').split(',') if parte.strip()}
-                    if 'alimentos' in restricoes and _categoria_parece_quimico(item.produto):
-                        erros.append(
-                            f'Produto "{item.produto.nome}" (categoria quimica) nao pode ser armazenado no endereco de alimentos "{endereco_destino.nome}".'
-                        )
                     destinos_por_item[item.id] = endereco_destino
 
-                if erros:
-                    for erro in erros:
-                        flash(erro, 'error')
-                    return redirect(url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id))
-
-                for item in recebimento.itens:
-                    endereco_destino = destinos_por_item[item.id]
-                    item.endereco_destino_id = endereco_destino.id
-                    quantidade_entrada = item.qtd_liquida
-                    if quantidade_entrada <= 0:
-                        continue
-
-                    aplicar_movimentacao_estoque(item.produto, Movimentacao.TIPO_ENTRADA, quantidade_entrada)
-
-                    item.produto.endereco_id = endereco_destino.id
-                    tipo_recebimento_label = recebimento_tipo_labels.get(
-                        recebimento.tipo_recebimento,
-                        recebimento.tipo_recebimento or 'Recebimento'
-                    )
-                    tipo_recebimento_slug = (
-                        recebimento.tipo_recebimento
-                        if recebimento.tipo_recebimento in RecebimentoFornecedor.TIPOS_VALIDOS
-                        else 'compra_revenda'
-                    )
-                    observacoes_mov = f'Recebimento #{recebimento.id} | Tipo: {tipo_recebimento_label}'
-                    if item.lote:
-                        observacoes_mov += f' | Lote: {item.lote}'
-                    if item.validade:
-                        observacoes_mov += f' | Validade: {item.validade.strftime("%d/%m/%Y")}'
-                    if item.qtd_avaria:
-                        observacoes_mov += f' | Avaria: {item.qtd_avaria}'
-
-                    movimentacao = Movimentacao(
-                        produto_id=item.produto_id,
-                        fornecedor_id=recebimento.fornecedor_id,
-                        endereco_destino_id=endereco_destino.id,
-                        tipo=Movimentacao.TIPO_ENTRADA,
-                        quantidade=quantidade_entrada,
-                        info_nota=recebimento.info_nota,
-                        motivo=f'recebimento_{tipo_recebimento_slug}',
-                        observacoes=observacoes_mov,
-                    )
-                    db.session.add(movimentacao)
-
-                recebimento.status = RecebimentoFornecedor.STATUS_CONCLUIDO
-                recebimento.armazenado_em = datetime.utcnow()
+                armazenar_recebimento(
+                    recebimento,
+                    destinos_por_item=destinos_por_item,
+                    actor=funcionario_logado,
+                    categoria_quimico_predicate=_categoria_parece_quimico,
+                    tipo_labels=recebimento_tipo_labels,
+                )
                 db.session.commit()
                 flash('Armazenagem concluida. Estoque atualizado com sucesso.', 'success')
                 return redirect(url_for('listar_recebimentos_fornecedor'))
@@ -14572,7 +19272,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             if recebimento.status == RecebimentoFornecedor.STATUS_CANCELADO:
                 flash('Recebimento ja esta cancelado.', 'info')
                 return redirect(url_for('listar_recebimentos_fornecedor'))
-            recebimento.status = RecebimentoFornecedor.STATUS_CANCELADO
+            transition_recebimento_status(
+                recebimento,
+                RecebimentoStatus.CANCELADO,
+                actor=_funcionario_logado_estoque(),
+                detalhes=require_cancel_reason(
+                    request.form.get('motivo_cancelamento'),
+                    entity_label='recebimento',
+                ),
+            )
             db.session.commit()
             flash('Recebimento cancelado com sucesso.', 'success')
         except Exception as e:
@@ -14957,12 +19665,16 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 descricao = (request.form.get('descricao') or '').strip() or None
                 ativo = (request.form.get('ativo') == 'on')
 
+                if ativo and not codigo_filial and descricao:
+                    codigo_filial = _gerar_codigo_filial_estoque(nome)
+
                 if not nome:
                     flash('Nome do estoque e obrigatorio.', 'error')
                     return redirect(url_for('novo_estoque'))
                 if codigo_filial and Estoque.query.filter(db.func.lower(Estoque.codigo_filial) == codigo_filial.lower()).first():
                     flash('Codigo de filial ja utilizado por outro estoque.', 'error')
                     return redirect(url_for('novo_estoque'))
+                validate_stock_master_payload(nome=nome, codigo_filial=codigo_filial, ativo=ativo)
 
                 estoque = Estoque(nome=nome, codigo_filial=codigo_filial, descricao=descricao, ativo=ativo)
                 db.session.add(estoque)
@@ -14974,6 +19686,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar estoque: {str(e)}', 'error')
+                return render_template('estoque/estoques/novo_estoque.html')
         return render_template('estoque/estoques/novo_estoque.html')
 
     @app.route('/estoques/<int:estoque_id>/editar', methods=['GET', 'POST'])
@@ -15000,6 +19713,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if duplicado:
                     flash('Codigo de filial ja utilizado por outro estoque.', 'error')
                     return redirect(url_for('editar_estoque', estoque_id=estoque.id))
+                validate_stock_master_payload(nome=nome, codigo_filial=codigo_filial, ativo=ativo)
 
                 estoque.nome = nome
                 estoque.codigo_filial = codigo_filial
@@ -15275,9 +19989,11 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except ValueError as e:
                 db.session.rollback()
                 flash(str(e), 'error')
+                return redirect(url_for('novo_endereco_estoque'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao cadastrar endereco: {str(e)}', 'error')
+                return redirect(url_for('novo_endereco_estoque'))
         return render_template(
             'estoque/enderecos/novo_endereco.html',
             estoques=estoques_ativos,
@@ -15431,8 +20147,6 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     flash('Tipo de movimentacao invalido.', 'error')
                     return redirect(url_for('movimentacao_rapida', produto_id=produto_id))
 
-                aplicar_movimentacao_estoque(produto, tipo, quantidade)
-
                 fornecedor = None
                 if tipo == Movimentacao.TIPO_ENTRADA and fornecedor_id:
                     fornecedor = Fornecedor.query.get(fornecedor_id)
@@ -15447,19 +20161,18 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if tipo == Movimentacao.TIPO_ENTRADA and recebimento_fornecedor and not motivo:
                     motivo = 'recebimento_fornecedor'
 
-                movimentacao = Movimentacao(
-                    produto_id=produto_id,
-                    fornecedor_id=(fornecedor.id if fornecedor else None),
+                movimentacao = registrar_movimentacao_manual(
+                    produto=produto,
                     tipo=tipo,
                     quantidade=quantidade,
+                    motivo=motivo,
+                    recebimento_fornecedor=recebimento_fornecedor,
+                    fornecedor=fornecedor,
                     valor_compra=request.form.get('valor_compra', type=float),
                     info_nota=request.form.get('info_nota'),
-                    motivo=motivo,
                     observacoes=request.form.get('observacoes'),
-                    endereco_origem_id=(produto.endereco_id if tipo == Movimentacao.TIPO_SAIDA else None),
-                    endereco_destino_id=(produto.endereco_id if tipo == Movimentacao.TIPO_ENTRADA else None),
+                    actor=funcionario_logado,
                 )
-                db.session.add(movimentacao)
                 db.session.commit()
                 flash('Movimentacao registrada com sucesso!', 'success')
                 return redirect(url_for('listar_movimentacoes'))
@@ -15540,7 +20253,12 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 Fornecedor.nome,
             )
         ).order_by(Movimentacao.criado_em.desc()).paginate(page=page, per_page=per_page, error_out=False)
-        produtos = _produto_query_permitida(Produto.query, funcionario_logado).all()
+        produtos = _produto_query_permitida(
+            Produto.query.options(
+                load_only(Produto.id, Produto.nome, Produto.codigo, Produto.quantidade_estoque)
+            ),
+            funcionario_logado,
+        ).order_by(Produto.nome.asc()).all()
         return render_template(
             'estoque/movimentacoes/movimentacoes.html',
             movimentacoes=movimentacoes.items,
@@ -15579,8 +20297,6 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     flash('Você não possui acesso ao estoque deste produto.', 'danger')
                     return redirect(url_for('nova_movimentacao'))
 
-                aplicar_movimentacao_estoque(produto, tipo, quantidade)
-
                 fornecedor = None
                 if tipo == Movimentacao.TIPO_ENTRADA and fornecedor_id:
                     fornecedor = Fornecedor.query.get(fornecedor_id)
@@ -15595,28 +20311,29 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if tipo == Movimentacao.TIPO_ENTRADA and recebimento_fornecedor and not motivo:
                     motivo = 'recebimento_fornecedor'
 
-                movimentacao = Movimentacao(
-                    produto_id=produto_id,
-                    fornecedor_id=(fornecedor.id if fornecedor else None),
+                movimentacao = registrar_movimentacao_manual(
+                    produto=produto,
                     tipo=tipo,
                     quantidade=quantidade,
+                    motivo=motivo,
+                    recebimento_fornecedor=recebimento_fornecedor,
+                    fornecedor=fornecedor,
                     valor_compra=request.form.get('valor_compra', type=float),
                     info_nota=request.form.get('info_nota'),
-                    motivo=motivo,
                     observacoes=request.form.get('observacoes'),
-                    endereco_origem_id=(produto.endereco_id if tipo == Movimentacao.TIPO_SAIDA else None),
-                    endereco_destino_id=(produto.endereco_id if tipo == Movimentacao.TIPO_ENTRADA else None),
+                    actor=funcionario_logado,
                 )
-                db.session.add(movimentacao)
                 db.session.commit()
                 flash('Movimentacao registrada com sucesso!', 'success')
                 return redirect(url_for('listar_movimentacoes'))
             except AppError as e:
                 db.session.rollback()
                 flash(str(e), 'error')
+                return redirect(url_for('nova_movimentacao'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao registrar movimentacao: {str(e)}', 'error')
+                return redirect(url_for('nova_movimentacao'))
 
         produtos = _produto_query_permitida(Produto.query.filter_by(ativo=True), funcionario_logado).all()
         return render_template(
@@ -15689,7 +20406,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             try:
                 produto_id = request.form.get('produto_id', type=int)
                 endereco_destino_id = request.form.get('endereco_destino_id', type=int)
-                motivo = (request.form.get('motivo') or '').strip() or 'transferencia_armazenamento'
+                motivo = (request.form.get('motivo') or '').strip()
                 observacoes = (request.form.get('observacoes') or '').strip() or None
 
                 produto = Produto.query.get(produto_id)
@@ -15705,38 +20422,14 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
                 endereco_origem = _carregar_endereco_permitido(produto.endereco_id, funcionario_logado)
                 endereco_destino = _carregar_endereco_permitido(endereco_destino_id, funcionario_logado, apenas_ativo=True)
-                if not endereco_destino:
-                    flash('Endereco de destino invalido.', 'error')
-                    return redirect(url_for('transferir_armazenamento'))
-                if not endereco_origem:
-                    flash('Origem da transferencia nao localizada.', 'error')
-                    return redirect(url_for('transferir_armazenamento'))
-                if endereco_origem and endereco_origem.id == endereco_destino.id:
-                    flash('Origem e destino nao podem ser iguais.', 'error')
-                    return redirect(url_for('transferir_armazenamento'))
-                if (
-                    endereco_origem.estoque_id
-                    and endereco_destino.estoque_id
-                    and endereco_origem.estoque_id == endereco_destino.estoque_id
-                ):
-                    flash(
-                        'Esta tela e exclusiva para transferencias entre lojas/CDs. '
-                        'Para ajustes internos use Entradas e Saidas Internas ou Enderecos Inteligentes.',
-                        'warning'
-                    )
-                    return redirect(url_for('transferir_armazenamento'))
-
-                produto.endereco_id = endereco_destino.id
-                movimentacao = Movimentacao(
-                    produto_id=produto.id,
-                    tipo=Movimentacao.TIPO_TRANSFERENCIA,
-                    quantidade=max(int(produto.quantidade_estoque or 0), 0),
+                movimentacao = transferir_estoque(
+                    produto=produto,
+                    endereco_origem=endereco_origem,
+                    endereco_destino=endereco_destino,
                     motivo=motivo,
                     observacoes=observacoes,
-                    endereco_origem_id=(endereco_origem.id if endereco_origem else None),
-                    endereco_destino_id=endereco_destino.id,
+                    actor=funcionario_logado,
                 )
-                db.session.add(movimentacao)
                 db.session.commit()
                 flash(
                     f'Transferencia concluida: produto "{produto.nome}" movido para "{endereco_destino.nome}".',
@@ -15746,6 +20439,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao transferir armazenamento: {str(e)}', 'error')
+                return redirect(url_for('transferir_armazenamento'))
 
         produtos = _produto_query_permitida(
             Produto.query.options(
@@ -15780,9 +20474,14 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         if cache is not None:
             cached_payload = cache.get(cache_key)
             if cached_payload is not None:
-                return jsonify(cached_payload)
+                if isinstance(cached_payload, dict) and 'data' in cached_payload:
+                    cached_data = cached_payload.get('data')
+                else:
+                    cached_data = cached_payload
+                return ok(cached_data, message='Analytics de estoque (cache)', code='estoque_analytics_cache')
 
-        data_limite = datetime.utcnow() - timedelta(days=periodo)
+        agora = datetime.utcnow()
+        data_limite = agora - timedelta(days=periodo)
         movimentos_raw = _movimentacao_query_permitida(db.session.query(
             db.func.date(Movimentacao.criado_em).label('dia'),
             Movimentacao.tipo.label('tipo'),
@@ -15814,45 +20513,257 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 'saidas': saidas_por_dia.get(key, 0),
             })
 
-        valor_categoria_raw = _produto_query_permitida(db.session.query(
-            Categoria.nome.label('categoria_nome'),
-            db.func.sum(Produto.quantidade_estoque * Produto.preco_custo).label('valor_total')
-        ).join(Produto, Produto.categoria_id == Categoria.id), funcionario_logado).filter(
+        total_produtos_ativos = _produto_query_permitida(Produto.query, funcionario_logado).filter(
             Produto.ativo == True
-        ).group_by(Categoria.id, Categoria.nome).order_by(db.desc('valor_total')).all()
+        ).count()
+        total_unidades = int(_produto_query_permitida(
+            db.session.query(db.func.sum(Produto.quantidade_estoque)),
+            funcionario_logado
+        ).scalar() or 0)
+
+        total_enderecos_ativos = _endereco_query_permitida(funcionario_logado).filter_by(ativo=True).count()
+        enderecos_ocupados = _endereco_query_permitida(funcionario_logado).with_entities(EnderecoEstoque.id).join(
+            Produto, Produto.endereco_id == EnderecoEstoque.id
+        ).filter(
+            EnderecoEstoque.ativo == True,
+            Produto.ativo == True
+        ).distinct().count()
+        enderecos_livres = max(total_enderecos_ativos - enderecos_ocupados, 0)
+        taxa_ocupacao = ((enderecos_ocupados / total_enderecos_ativos) * 100.0) if total_enderecos_ativos else 0.0
+
+        produtos_pareto_raw = _produto_query_permitida(
+            db.session.query(
+                Produto.codigo.label('sku'),
+                Produto.nome.label('produto_nome'),
+                Produto.quantidade_estoque.label('quantidade')
+            ),
+            funcionario_logado
+        ).filter(
+            Produto.ativo == True
+        ).order_by(db.desc('quantidade')).limit(10).all()
+        total_pareto = sum(int(item.quantidade or 0) for item in produtos_pareto_raw) or 0
+        acumulado_pareto = 0.0
+        pareto_produtos = []
+        for item in produtos_pareto_raw:
+            quantidade = int(item.quantidade or 0)
+            acumulado_pareto += quantidade
+            percentual = (quantidade / total_pareto * 100.0) if total_pareto > 0 else 0.0
+            percentual_acumulado = (acumulado_pareto / total_pareto * 100.0) if total_pareto > 0 else 0.0
+            pareto_produtos.append({
+                'sku': item.sku,
+                'produto': item.produto_nome,
+                'quantidade': quantidade,
+                'percentual': percentual,
+                'percentual_acumulado': percentual_acumulado,
+            })
+
+        produtos_ruptura_raw = _produto_query_permitida(
+            Produto.query.options(selectinload(Produto.fornecedor)),
+            funcionario_logado,
+        ).filter(
+            Produto.ativo == True,
+            Produto.quantidade_estoque < Produto.quantidade_minima
+        ).order_by(
+            Produto.quantidade_estoque.asc(),
+            Produto.nome.asc(),
+        ).limit(5).all()
+        produtos_ruptura = [
+            {
+                'produto_id': prod.id,
+                'sku': prod.codigo,
+                'nome': prod.nome,
+                'estoque_atual': int(prod.quantidade_estoque or 0),
+                'estoque_minimo': int(prod.quantidade_minima or 0),
+                'fornecedor': prod.fornecedor.nome if prod.fornecedor else '-',
+            }
+            for prod in produtos_ruptura_raw
+        ]
+
+        data_sem_giro = agora - timedelta(days=60)
+        produtos_sem_giro_raw = _produto_query_permitida(
+            Produto.query,
+            funcionario_logado,
+        ).filter(
+            Produto.ativo == True,
+            ~Produto.movimentacoes.any(Movimentacao.criado_em >= data_sem_giro)
+        ).order_by(Produto.nome.asc()).limit(5).all()
+        produtos_sem_giro = []
+        for prod in produtos_sem_giro_raw:
+            ultima_mov = _movimentacao_query_permitida(
+                Movimentacao.query.filter(Movimentacao.produto_id == prod.id),
+                funcionario_logado,
+            ).order_by(Movimentacao.criado_em.desc()).first()
+            produtos_sem_giro.append({
+                'produto_id': prod.id,
+                'sku': prod.codigo,
+                'nome': prod.nome,
+                'ultima_movimentacao': ultima_mov.criado_em.strftime('%d/%m/%Y %H:%M') if ultima_mov and ultima_mov.criado_em else '-',
+            })
+
+        periodo_kpi_dias = max(periodo, 1)
+        vendas_periodo_unidades = int(_produto_query_permitida(
+            db.session.query(db.func.sum(ItemPedido.quantidade)).join(
+                Produto, Produto.id == ItemPedido.produto_id
+            ).join(
+                Pedido, Pedido.id == ItemPedido.pedido_id
+            ),
+            funcionario_logado
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= data_limite,
+        ).scalar() or 0)
+        estoque_medio_unidades = max(total_unidades, 0)
+        giro_estoque = (vendas_periodo_unidades / estoque_medio_unidades) if estoque_medio_unidades > 0 else 0.0
+        vendas_diarias_medias = (vendas_periodo_unidades / periodo_kpi_dias) if periodo_kpi_dias else 0.0
+        dias_cobertura = (estoque_medio_unidades / vendas_diarias_medias) if vendas_diarias_medias > 0 else 0.0
+
+        recebimentos_pendentes = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.status == RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        ).count()
+
+        alertas = []
+        if produtos_ruptura:
+            alertas.append({
+                'nivel': 'warning',
+                'titulo': 'Produtos abaixo do minimo',
+                'descricao': f'{len(produtos_ruptura)} SKU(s) com reposicao imediata recomendada.',
+            })
+        if total_enderecos_ativos and taxa_ocupacao < 55:
+            alertas.append({
+                'nivel': 'info',
+                'titulo': 'Baixa ocupacao de enderecos',
+                'descricao': f'Ocupacao atual em {taxa_ocupacao:.1f}% dos enderecos ativos.',
+            })
+        if recebimentos_pendentes:
+            alertas.append({
+                'nivel': 'danger',
+                'titulo': 'Recebimentos pendentes de armazenagem',
+                'descricao': f'{recebimentos_pendentes} recebimento(s) aguardando enderecamento/armazenagem.',
+            })
+
+        data_payload = {
+            'periodo_dias': periodo,
+            'kpis': {
+                'giro_estoque': float(giro_estoque),
+                'dias_cobertura': float(dias_cobertura),
+                'produtos_ruptura': len(produtos_ruptura),
+                'taxa_ocupacao_enderecos': float(taxa_ocupacao),
+                'total_unidades': total_unidades,
+            },
+            'movimentacao_diaria': dias,
+            'ocupacao_enderecos': {
+                'ocupados': int(enderecos_ocupados or 0),
+                'livres': int(enderecos_livres or 0),
+                'total': int(total_enderecos_ativos or 0),
+                'taxa_ocupacao_pct': float(taxa_ocupacao),
+            },
+            'pareto_produtos': pareto_produtos,
+            'produtos_em_falta': _produto_query_permitida(Produto.query, funcionario_logado).filter(
+                Produto.quantidade_estoque < Produto.quantidade_minima,
+                Produto.ativo == True
+            ).count(),
+            'produtos_sem_estoque': _produto_query_permitida(Produto.query, funcionario_logado).filter(
+                Produto.ativo == True,
+                Produto.quantidade_estoque <= 0
+            ).count(),
+            'produtos_risco_ruptura': produtos_ruptura,
+            'produtos_sem_giro': produtos_sem_giro,
+            'recebimentos_pendentes_armazenagem': int(recebimentos_pendentes),
+            'alertas': alertas,
+            'comparativos': {
+                'giro_estoque': {'atual': float(giro_estoque), 'variacao_pct': 0.0},
+                'dias_cobertura': {'atual': float(dias_cobertura), 'variacao_pct': 0.0},
+                'produtos_ruptura': {'atual': len(produtos_ruptura), 'variacao_pct': 0.0},
+                'taxa_ocupacao_enderecos': {'atual': float(taxa_ocupacao), 'variacao_pct': 0.0},
+            },
+        }
+        if cache is not None:
+            cache.set(cache_key, data_payload, timeout=60)
+        return ok(data_payload, message='Analytics de estoque carregado', code='estoque_analytics')
+
+    @app.route('/api/estoque/processos-tempo-real')
+    @login_required
+    def processos_tempo_real():
+        funcionario_logado = _funcionario_logado_estoque()
+        agora = datetime.utcnow()
+        limite = agora - timedelta(days=30)
+
+        pedidos_totais = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.criado_em >= limite
+        ).count()
+        pedidos_em_separacao = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.status.in_([Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO]),
+            Pedido.criado_em >= limite
+        ).count()
+        entregas_em_andamento = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.saiu_para_entrega_em.isnot(None),
+            Pedido.entrega_concluida_em.is_(None),
+            Pedido.status != Pedido.STATUS_CANCELADO,
+            Pedido.criado_em >= limite
+        ).count()
+        entregas_concluidas = _pedido_query_permitida(Pedido.query, funcionario_logado).filter(
+            Pedido.entrega_concluida_em.isnot(None),
+            Pedido.criado_em >= limite
+        ).count()
+
+        recebimentos_pendentes = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.status == RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
+        ).count()
+
+        mov_avarias = db.session.query(db.func.count(Movimentacao.id)).filter(
+            Movimentacao.motivo.ilike('%avaria%'),
+            Movimentacao.criado_em >= limite
+        ).scalar() or 0
+        mov_devolucoes = db.session.query(db.func.count(Movimentacao.id)).filter(
+            Movimentacao.motivo.ilike('%devolucao%'),
+            Movimentacao.criado_em >= limite
+        ).scalar() or 0
+
+        def _pct(parcial, total):
+            total = total or 1
+            return round((parcial / total) * 100.0, 1)
 
         payload = {
             'success': True,
-            'message': 'Analytics de estoque carregado com sucesso.',
             'data': {
-                'periodo_dias': periodo,
-                'movimentacao_diaria': dias,
-                'valor_por_categoria': [
-                    {
-                        'categoria': item.categoria_nome,
-                        'valor_total': float(item.valor_total or 0)
-                    }
-                    for item in valor_categoria_raw
-                ],
-                'produtos_em_falta': _produto_query_permitida(Produto.query, funcionario_logado).filter(
-                    Produto.quantidade_estoque < Produto.quantidade_minima,
-                    Produto.ativo == True
-                ).count(),
-                'produtos_sem_estoque': _produto_query_permitida(Produto.query, funcionario_logado).filter(
-                    Produto.ativo == True,
-                    Produto.quantidade_estoque <= 0
-                ).count()
+                'janela_dias': 30,
+                'pedidos_totais': pedidos_totais,
+                'separacao': {
+                    'em_andamento': pedidos_em_separacao,
+                    'pct': _pct(pedidos_em_separacao, max(pedidos_totais, 1)),
+                },
+                'entregas': {
+                    'em_andamento': entregas_em_andamento,
+                    'concluidas': entregas_concluidas,
+                    'pct_concluidas': _pct(entregas_concluidas, max(pedidos_totais, 1)),
+                },
+                'recebimentos_pendentes': recebimentos_pendentes,
+                'avarias_30d': int(mov_avarias),
+                'devolucoes_30d': int(mov_devolucoes),
             }
         }
-        if cache is not None:
-            cache.set(cache_key, payload, timeout=120)
         return jsonify(payload)
+
+    @app.route('/estoque/painel-tempo-real')
+    @login_required
+    def painel_tempo_real_estoque():
+        funcionario = _funcionario_logado_estoque()
+        return render_template(
+            'estoque/tempo_real.html',
+            funcionario_logado=funcionario,
+        )
 
     @app.route('/relatorios')
     @login_required
     def relatorios():
         empresa = _obter_empresa_config_estoque()
         funcionario_logado = _funcionario_logado_estoque()
+        cache = extensions.cache
+        cache_key = f'view:relatorios:{getattr(funcionario_logado, "id", "anon")}'
+        if cache is not None:
+            html = cache.get(cache_key)
+            if html is not None:
+                return html
         total_produtos = _produto_query_permitida(Produto.query, funcionario_logado).count()
         produtos_ativos = _produto_query_permitida(Produto.query, funcionario_logado).filter_by(ativo=True).count()
         produtos_inativos = _produto_query_permitida(Produto.query, funcionario_logado).filter_by(ativo=False).count()
@@ -15932,6 +20843,73 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             if total_enderecos_ativos > 0 else 0.0
         )
 
+        periodo_kpi_dias = 30
+        data_kpi_limite = datetime.utcnow() - timedelta(days=periodo_kpi_dias)
+        cmv_periodo_raw = _produto_query_permitida(
+            db.session.query(
+                db.func.sum(ItemPedido.quantidade * Produto.preco_custo)
+            ).join(Produto, Produto.id == ItemPedido.produto_id).join(Pedido, Pedido.id == ItemPedido.pedido_id),
+            funcionario_logado
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= data_kpi_limite,
+        ).scalar()
+        cmv_periodo = float(cmv_periodo_raw or 0.0)
+        cmv_diario = (cmv_periodo / periodo_kpi_dias) if periodo_kpi_dias > 0 else 0.0
+        estoque_medio_periodo = float(valor_total or 0.0)
+        dias_cobertura_estoque = (estoque_medio_periodo / cmv_diario) if cmv_diario > 0 else 0.0
+        giro_estoque = (cmv_periodo / estoque_medio_periodo) if estoque_medio_periodo > 0 else 0.0
+
+        recebimentos_periodo = RecebimentoFornecedor.query.filter(
+            RecebimentoFornecedor.criado_em >= data_kpi_limite,
+            RecebimentoFornecedor.status.in_([
+                RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM,
+                RecebimentoFornecedor.STATUS_CONCLUIDO,
+            ]),
+        )
+        itens_recebidos_periodo = db.session.query(
+            db.func.sum(RecebimentoItem.qtd_recebida),
+            db.func.sum(RecebimentoItem.qtd_avaria),
+        ).join(
+            RecebimentoFornecedor,
+            RecebimentoFornecedor.id == RecebimentoItem.recebimento_id
+        ).filter(
+            RecebimentoFornecedor.criado_em >= data_kpi_limite,
+            RecebimentoFornecedor.status.in_([
+                RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM,
+                RecebimentoFornecedor.STATUS_CONCLUIDO,
+            ]),
+        ).first()
+        total_itens_recebidos = int((itens_recebidos_periodo[0] or 0) if itens_recebidos_periodo else 0)
+        total_itens_avariados = int((itens_recebidos_periodo[1] or 0) if itens_recebidos_periodo else 0)
+        taxa_avarias_recebimento = (
+            (total_itens_avariados / total_itens_recebidos) * 100.0
+            if total_itens_recebidos > 0 else 0.0
+        )
+
+        itens_vendidos_periodo_raw = db.session.query(
+            db.func.sum(ItemPedido.quantidade)
+        ).join(
+            Pedido,
+            Pedido.id == ItemPedido.pedido_id
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= data_kpi_limite,
+        ).scalar()
+        itens_devolvidos_periodo_raw = _movimentacao_query_permitida(
+            db.session.query(db.func.sum(Movimentacao.quantidade)),
+            funcionario_logado
+        ).filter(
+            Movimentacao.criado_em >= data_kpi_limite,
+            db.func.lower(Movimentacao.motivo).like('%devol%'),
+        ).scalar()
+        total_itens_vendidos = int(itens_vendidos_periodo_raw or 0)
+        total_itens_devolvidos = int(itens_devolvidos_periodo_raw or 0)
+        taxa_devolucao_produtos = (
+            (total_itens_devolvidos / total_itens_vendidos) * 100.0
+            if total_itens_vendidos > 0 else 0.0
+        )
+
         produtos_ativos_total = max(int(produtos_ativos or 0), 1)
         taxa_reposicao_necessaria = (len(produtos_em_falta) / produtos_ativos_total) * 100.0
 
@@ -15996,7 +20974,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 'Operacao equilibrada. Mantenha rotina de reposicao preventiva e revisao semanal por endereco.'
             )
 
-        return render_template(
+        html = render_template(
             'estoque/relatorios/relatorios.html',
             empresa=empresa,
             total_produtos=total_produtos,
@@ -16007,6 +20985,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             produtos_sem_estoque=produtos_sem_estoque,
             valor_total_estoque=f'{valor_total:.2f}',
             custo_medio_estoque=f'{custo_medio_estoque:.2f}',
+            cmv_periodo=cmv_periodo,
+            dias_cobertura_estoque=dias_cobertura_estoque,
+            giro_estoque=giro_estoque,
+            taxa_avarias_recebimento=taxa_avarias_recebimento,
+            taxa_devolucao_produtos=taxa_devolucao_produtos,
+            total_itens_recebidos=total_itens_recebidos,
+            total_itens_avariados=total_itens_avariados,
+            total_itens_vendidos=total_itens_vendidos,
+            total_itens_devolvidos=total_itens_devolvidos,
             produtos_maior_valor=produtos_maior_valor,
             movimentacoes_mes=movimentacoes_mes,
             entradas_mes=entradas_mes,
@@ -16025,30 +21012,55 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             risco_operacional_score=risco_operacional_score,
             dicas_estoque_inteligente=dicas_estoque_inteligente,
         )
+        if cache is not None:
+            cache.set(cache_key, html, timeout=300)
+        return html
 
 
 ```
 
 
 ### Arquivo: `routes/public_routes.py`
-- Linhas: 869
-- Tamanho: 31.8 KB
+- Linhas: 1778
+- Tamanho: 72.0 KB
 - Status: completo
 
 ```python
 import json
 import re
 import unicodedata
-from urllib.parse import urlparse
+from datetime import datetime
+from functools import wraps
+from urllib.parse import urlencode, urlparse
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from sqlalchemy import or_
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import OperationalError, ProgrammingError
 
+from app.exceptions import AppError, BusinessRuleError
+from app.services.transaction import atomic_transaction
 from app.services.utils_service import _normalizar_contato, _to_float
 from app.utils.helpers import slugify
 from app.utils.validators import validar_cep, validar_email, validar_telefone
-from models import Categoria, ClientePublico, EmpresaConfig, Garcom, ItemPedido, Mesa, Pedido, Produto, db
+from models import (
+    AvaliacaoProduto,
+    Categoria,
+    ClienteEndereco,
+    ClienteFavorito,
+    ClientePublico,
+    Cupom,
+    CupomUtilizacao,
+    EmpresaConfig,
+    Fornecedor,
+    Garcom,
+    ItemPedido,
+    Mesa,
+    Pedido,
+    Produto,
+    db,
+)
 from realtime import publish_alert
 from app.utils.payment_config import default_payment_id, load_payment_options, payment_methods_map
 
@@ -16056,7 +21068,38 @@ from app.utils.payment_config import default_payment_id, load_payment_options, p
 CLIENTE_SESSION_KEY = 'qr_clientes'
 SITE_CART_SESSION_KEY = 'site_carrinho'
 SITE_CUSTOMER_SESSION_KEY = 'site_cliente_cadastro'
+SITE_PUBLIC_CLIENT_SESSION_KEY = 'site_cliente_id'
+SITE_PUBLIC_COUPON_SESSION_KEY = 'site_cupom'
 PEDIDO_CONFIRMACAO_SALT = 'pedido-site-confirmacao'
+
+
+def _schema_has_table(table_name):
+    try:
+        return db.inspect(db.engine).has_table(table_name)
+    except Exception:
+        return False
+
+
+def _schema_has_columns(table_name, expected_columns):
+    try:
+        if not _schema_has_table(table_name):
+            return False
+        columns = {col['name'] for col in db.inspect(db.engine).get_columns(table_name)}
+        return set(expected_columns).issubset(columns)
+    except Exception:
+        return False
+
+
+def _public_accounts_ready():
+    return _schema_has_columns('clientes_publicos', {'senha_hash', 'data_cadastro', 'ultimo_acesso'})
+
+
+def _reviews_ready():
+    return _schema_has_table('avaliacoes_produtos')
+
+
+def _coupons_ready():
+    return _schema_has_table('cupons')
 
 
 def _obter_empresa_config():
@@ -16348,6 +21391,325 @@ def _salvar_cliente_site_sessao(dados):
     session.modified = True
 
 
+def _cliente_para_sessao(cliente, endereco=None):
+    endereco = endereco or (cliente.endereco_principal if cliente else None)
+    dados = _dados_cliente_padrao()
+    if not cliente:
+        return dados
+
+    dados.update({
+        'nome': (cliente.nome or '').strip(),
+        'email': (cliente.email or '').strip(),
+        'celular': (cliente.celular or '').strip(),
+        'cpf_cnpj': (cliente.cpf_cnpj or '').strip(),
+        'observacoes': (cliente.observacoes or '').strip(),
+        'recebe_ofertas': bool(cliente.recebe_ofertas),
+    })
+    if endereco:
+        dados.update({
+            'cep': (endereco.cep or '').strip(),
+            'endereco': (endereco.endereco or '').strip(),
+            'numero': (endereco.numero or '').strip(),
+            'complemento': (endereco.complemento or '').strip(),
+            'bairro': (endereco.bairro or '').strip(),
+            'cidade': (endereco.cidade or '').strip(),
+            'estado': (endereco.estado or '').strip(),
+            'referencia': (endereco.referencia or '').strip(),
+        })
+    else:
+        dados.update({
+            'cep': (cliente.cep or '').strip(),
+            'endereco': (cliente.endereco or '').strip(),
+            'numero': (cliente.numero or '').strip(),
+            'complemento': (cliente.complemento or '').strip(),
+            'bairro': (cliente.bairro or '').strip(),
+            'cidade': (cliente.cidade or '').strip(),
+            'estado': (cliente.estado or '').strip(),
+            'referencia': (cliente.referencia or '').strip(),
+        })
+    return dados
+
+
+def _obter_cliente_publico_logado():
+    cliente_id = session.get(SITE_PUBLIC_CLIENT_SESSION_KEY)
+    if not cliente_id:
+        return None
+    query = ClientePublico.query
+    if _schema_has_table('clientes_enderecos'):
+        query = query.options(selectinload(ClientePublico.enderecos))
+    if _schema_has_table('clientes_favoritos'):
+        query = query.options(selectinload(ClientePublico.favoritos).selectinload(ClienteFavorito.produto))
+    return query.get(cliente_id)
+
+
+def _salvar_cliente_publico_logado(cliente):
+    if not cliente:
+        session.pop(SITE_PUBLIC_CLIENT_SESSION_KEY, None)
+    else:
+        session[SITE_PUBLIC_CLIENT_SESSION_KEY] = int(cliente.id)
+        _salvar_cliente_site_sessao(_cliente_para_sessao(cliente))
+    session.modified = True
+
+
+def _limpar_sessao_cliente_publico():
+    session.pop(SITE_PUBLIC_CLIENT_SESSION_KEY, None)
+    session.modified = True
+
+
+def cliente_login_required(view):
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        if not _obter_cliente_publico_logado():
+            flash('Faça login para acessar sua conta.', 'warning')
+            return redirect(url_for('public.cliente_login_site', next=request.full_path if request.query_string else request.path))
+        return view(*args, **kwargs)
+    return wrapper
+
+
+def _coletar_dados_endereco_form(form_data):
+    dados = {
+        'apelido': (form_data.get('apelido') or '').strip(),
+        'cep': (form_data.get('cep') or '').strip(),
+        'endereco': (form_data.get('endereco') or '').strip(),
+        'numero': (form_data.get('numero') or '').strip(),
+        'complemento': (form_data.get('complemento') or '').strip(),
+        'bairro': (form_data.get('bairro') or '').strip(),
+        'cidade': (form_data.get('cidade') or '').strip(),
+        'estado': (form_data.get('estado') or '').strip().upper(),
+        'referencia': (form_data.get('referencia') or '').strip(),
+        'principal': (form_data.get('principal') == 'on'),
+    }
+    erros = []
+    cep = validar_cep(dados['cep'])
+    if not cep:
+        erros.append('Informe o CEP do endereço.')
+    elif cep == '__invalid__':
+        erros.append('Informe um CEP válido.')
+    else:
+        dados['cep'] = cep
+    if not dados['endereco']:
+        erros.append('Informe o endereço.')
+    if not dados['numero']:
+        erros.append('Informe o número do endereço.')
+    if not dados['bairro']:
+        erros.append('Informe o bairro.')
+    if not dados['cidade']:
+        erros.append('Informe a cidade.')
+    if len(dados['estado']) != 2:
+        erros.append('Informe o estado com 2 letras.')
+    return dados, erros
+
+
+def _salvar_endereco_cliente(cliente, dados, endereco=None):
+    if endereco is None:
+        endereco = ClienteEndereco(cliente=cliente)
+        db.session.add(endereco)
+    if dados.get('principal'):
+        ClienteEndereco.query.filter_by(cliente_id=cliente.id, principal=True).update({'principal': False})
+    endereco.apelido = dados.get('apelido') or None
+    endereco.cep = dados.get('cep')
+    endereco.endereco = dados.get('endereco')
+    endereco.numero = dados.get('numero') or None
+    endereco.complemento = dados.get('complemento') or None
+    endereco.bairro = dados.get('bairro') or None
+    endereco.cidade = dados.get('cidade') or None
+    endereco.estado = dados.get('estado') or None
+    endereco.referencia = dados.get('referencia') or None
+    endereco.principal = bool(dados.get('principal'))
+    if not cliente.enderecos:
+        endereco.principal = True
+    return endereco
+
+
+def _upsert_endereco_principal_cliente(cliente, dados, apelido='Principal'):
+    if not cliente:
+        return None
+    endereco = cliente.endereco_principal
+    payload = {
+        'apelido': apelido,
+        'cep': dados.get('cep'),
+        'endereco': dados.get('endereco'),
+        'numero': dados.get('numero'),
+        'complemento': dados.get('complemento'),
+        'bairro': dados.get('bairro'),
+        'cidade': dados.get('cidade'),
+        'estado': dados.get('estado'),
+        'referencia': dados.get('referencia'),
+        'principal': True,
+    }
+    return _salvar_endereco_cliente(cliente, payload, endereco=endereco)
+
+
+def _parse_json_ids(raw_value):
+    if not raw_value:
+        return set()
+    try:
+        values = json.loads(raw_value)
+    except Exception:
+        return set()
+    resultado = set()
+    for value in values or []:
+        try:
+            resultado.add(int(value))
+        except (TypeError, ValueError):
+            continue
+    return resultado
+
+
+def _base_query_produtos_publicos():
+    query = Produto.query.options(
+        selectinload(Produto.categoria),
+        selectinload(Produto.fornecedor),
+    )
+    if _schema_has_table('avaliacoes_produtos'):
+        query = query.options(selectinload(Produto.avaliacoes))
+    return query.filter(
+        Produto.ativo.is_(True),
+        Produto.filtro_nao_vencidos(),
+        Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES),
+    )
+
+
+def _aplicar_filtros_produtos(query, params):
+    busca = (params.get('busca') or '').strip()
+    categoria_id = params.get('categoria_id', type=int)
+    fornecedor_id = params.get('fornecedor_id', type=int)
+    preco_min = params.get('preco_min', type=float)
+    preco_max = params.get('preco_max', type=float)
+    avaliacao_min = params.get('avaliacao_min', type=float)
+    ordenar = (params.get('ordenar') or 'recentes').strip().lower()
+
+    if categoria_id:
+        query = query.filter(Produto.categoria_id == categoria_id)
+    if fornecedor_id:
+        query = query.filter(Produto.fornecedor_id == fornecedor_id)
+    if preco_min is not None:
+        query = query.filter(Produto.preco_venda >= preco_min)
+    if preco_max is not None:
+        query = query.filter(Produto.preco_venda <= preco_max)
+    if busca:
+        termo = f'%{busca}%'
+        query = query.filter(
+            or_(
+                Produto.nome.ilike(termo),
+                Produto.codigo.ilike(termo),
+                Produto.descricao.ilike(termo),
+            )
+        )
+
+    usa_avaliacao = bool(avaliacao_min) or ordenar == 'melhor_avaliacao'
+    if usa_avaliacao:
+        query = query.outerjoin(
+            AvaliacaoProduto,
+            and_(
+                AvaliacaoProduto.produto_id == Produto.id,
+                AvaliacaoProduto.aprovada.is_(True),
+            )
+        ).group_by(Produto.id)
+        if avaliacao_min:
+            query = query.having(func.coalesce(func.avg(AvaliacaoProduto.nota), 0) >= avaliacao_min)
+
+    if ordenar == 'preco_asc':
+        query = query.order_by(Produto.preco_venda.asc(), Produto.nome.asc())
+    elif ordenar == 'preco_desc':
+        query = query.order_by(Produto.preco_venda.desc(), Produto.nome.asc())
+    elif ordenar == 'melhor_avaliacao':
+        query = query.order_by(func.coalesce(func.avg(AvaliacaoProduto.nota), 0).desc(), Produto.nome.asc())
+    else:
+        query = query.order_by(Produto.atualizado_em.desc(), Produto.criado_em.desc())
+    return query
+
+
+def _cliente_ja_comprou_produto(cliente, produto_id):
+    if not cliente or not produto_id:
+        return False
+    if not _schema_has_table('pedidos') or not _schema_has_table('itens_pedido'):
+        return False
+    return db.session.query(Pedido.id).join(ItemPedido, ItemPedido.pedido_id == Pedido.id).filter(
+        Pedido.cliente_publico_id == cliente.id,
+        Pedido.status.in_(['entregue', 'fechado']),
+        ItemPedido.produto_id == produto_id,
+    ).first() is not None
+
+
+def _carregar_cupom_por_codigo(codigo):
+    codigo_limpo = (codigo or '').strip().upper()
+    if not codigo_limpo:
+        return None
+    if not _schema_has_table('cupons'):
+        return None
+    return Cupom.query.filter(func.upper(Cupom.codigo) == codigo_limpo).first()
+
+
+def _cupom_pode_ser_usado(cupom, cliente, itens, subtotal):
+    hoje = datetime.utcnow().date()
+    if not cupom or not cupom.ativo:
+        return False, 'Cupom inválido ou indisponível no momento.', []
+    if cupom.data_inicio and cupom.data_inicio > hoje:
+        return False, 'Este cupom ainda não está vigente.', []
+    if cupom.data_fim and cupom.data_fim < hoje:
+        return False, 'Este cupom expirou.', []
+    if cupom.minimo_compra and float(subtotal or 0) < float(cupom.minimo_compra or 0):
+        return False, f'Este cupom exige compra mínima de R$ {float(cupom.minimo_compra):.2f}.', []
+    if cupom.primeira_compra:
+        if not cliente:
+            return False, 'Faça login para usar cupom de primeira compra.', []
+        possui_pedido = Pedido.query.filter(
+            Pedido.cliente_publico_id == cliente.id,
+            Pedido.status != Pedido.STATUS_CANCELADO,
+        ).count() > 0
+        if possui_pedido:
+            return False, 'Este cupom é válido apenas na primeira compra.', []
+    if cupom.uso_unico_por_cliente and cliente and _schema_has_table('cupons_utilizacoes'):
+        uso_existente = CupomUtilizacao.query.filter_by(cupom_id=cupom.id, cliente_id=cliente.id).first()
+        if uso_existente:
+            return False, 'Este cupom já foi utilizado na sua conta.', []
+
+    produtos_ids = _parse_json_ids(cupom.produtos_incluidos)
+    categorias_ids = _parse_json_ids(cupom.categorias_incluidas)
+    itens_elegiveis = []
+    for item in itens:
+        produto = item['produto']
+        if produtos_ids and produto.id not in produtos_ids:
+            continue
+        if categorias_ids and produto.categoria_id not in categorias_ids:
+            continue
+        itens_elegiveis.append(item)
+    if (produtos_ids or categorias_ids) and not itens_elegiveis:
+        return False, 'Os produtos do carrinho não atendem às regras deste cupom.', []
+    return True, '', (itens_elegiveis or list(itens))
+
+
+def _calcular_desconto_cupom(cupom, itens_elegiveis):
+    subtotal_elegivel = sum(float(item['total_item'] or 0) for item in itens_elegiveis)
+    if subtotal_elegivel <= 0:
+        return 0.0
+    if cupom.tipo_desconto == 'percentual':
+        return round(subtotal_elegivel * (float(cupom.valor or 0) / 100.0), 2)
+    if cupom.tipo_desconto == 'fixo':
+        return round(min(float(cupom.valor or 0), subtotal_elegivel), 2)
+    if cupom.tipo_desconto == 'frete':
+        return 0.0
+    return 0.0
+
+
+def _obter_cupom_sessao():
+    dados = session.get(SITE_PUBLIC_COUPON_SESSION_KEY)
+    return dados if isinstance(dados, dict) else {}
+
+
+def _salvar_cupom_sessao(cupom):
+    session[SITE_PUBLIC_COUPON_SESSION_KEY] = {
+        'codigo': (cupom.codigo or '').strip().upper(),
+    }
+    session.modified = True
+
+
+def _limpar_cupom_sessao():
+    session.pop(SITE_PUBLIC_COUPON_SESSION_KEY, None)
+    session.modified = True
+
+
 def _coletar_dados_cliente_form(form_data):
     dados = {
         'nome': (form_data.get('nome') or '').strip(),
@@ -16392,7 +21754,7 @@ def _coletar_dados_cliente_form(form_data):
     return dados, erros
 
 
-def _upsert_cliente_publico(dados):
+def _upsert_cliente_publico(dados, senha=None, cliente=None):
     filtros = []
     email = validar_email(dados.get('email'))
     celular = validar_telefone(dados.get('celular')) or _normalizar_contato(dados.get('celular'))
@@ -16405,8 +21767,7 @@ def _upsert_cliente_publico(dados):
     if cpf_cnpj:
         filtros.append(ClientePublico.cpf_cnpj == cpf_cnpj)
 
-    cliente = None
-    if filtros:
+    if cliente is None and filtros:
         cliente = ClientePublico.query.filter(or_(*filtros)).order_by(ClientePublico.atualizado_em.desc()).first()
 
     if not cliente:
@@ -16427,16 +21788,31 @@ def _upsert_cliente_publico(dados):
     cliente.referencia = dados.get('referencia') or None
     cliente.observacoes = dados.get('observacoes') or None
     cliente.recebe_ofertas = bool(dados.get('recebe_ofertas'))
+    if senha:
+        cliente.set_password(senha)
+    if not cliente.data_cadastro:
+        cliente.data_cadastro = datetime.utcnow()
     return cliente
 
 
-def obter_resumo_carrinho_site():
+def obter_resumo_carrinho_site(cliente=None):
     carrinho = _obter_carrinho_site()
     if not carrinho:
-        return {'itens': [], 'subtotal': 0.0, 'quantidade_itens': 0}
+        return {
+            'itens': [],
+            'subtotal': 0.0,
+            'desconto': 0.0,
+            'total': 0.0,
+            'quantidade_itens': 0,
+            'cupom': None,
+        }
 
     produto_ids = [int(produto_id) for produto_id in carrinho.keys()]
-    produtos = Produto.query.filter(Produto.id.in_(produto_ids)).all()
+    produtos = Produto.query.options(
+        selectinload(Produto.categoria),
+        selectinload(Produto.fornecedor),
+        selectinload(Produto.avaliacoes),
+    ).filter(Produto.id.in_(produto_ids)).all()
     produtos_por_id = {produto.id: produto for produto in produtos}
 
     itens = []
@@ -16465,10 +21841,31 @@ def obter_resumo_carrinho_site():
     if mudou:
         _salvar_carrinho_site(carrinho)
 
+    subtotal = round(subtotal, 2)
+    desconto = 0.0
+    cupom_resumo = None
+    cupom_codigo = (_obter_cupom_sessao().get('codigo') or '').strip().upper()
+    if cupom_codigo and itens:
+        cupom = _carregar_cupom_por_codigo(cupom_codigo)
+        valido, mensagem, itens_elegiveis = _cupom_pode_ser_usado(cupom, cliente, itens, subtotal)
+        if valido:
+            desconto = min(_calcular_desconto_cupom(cupom, itens_elegiveis), subtotal)
+            cupom_resumo = {
+                'codigo': cupom.codigo,
+                'descricao': cupom.descricao,
+                'tipo': cupom.tipo_desconto,
+                'desconto': round(desconto, 2),
+            }
+        else:
+            _limpar_cupom_sessao()
+
     return {
         'itens': itens,
-        'subtotal': round(subtotal, 2),
+        'subtotal': subtotal,
+        'desconto': round(desconto, 2),
+        'total': round(max(subtotal - desconto, 0.0), 2),
         'quantidade_itens': sum(item['quantidade'] for item in itens),
+        'cupom': cupom_resumo,
     }
 
 
@@ -16501,33 +21898,93 @@ def _coletar_pagamento_checkout(form_data, total_pedido, metodos_validos):
 def register_public_routes(app):
     bp = Blueprint('public', __name__)
 
+    @bp.route('/cliente/login', methods=['GET', 'POST'])
+    def cliente_login_site():
+        empresa = _obter_empresa_config()
+        if not _ecommerce_site_ativo(empresa):
+            return _redirecionar_loja_inativa()
+        if not _public_accounts_ready():
+            flash('A área do cliente está em atualização. Execute as migrações do e-commerce para ativar este recurso.', 'warning')
+            return redirect(url_for('index'))
+        if _obter_cliente_publico_logado():
+            return redirect(url_for('public.cliente_dashboard'))
+
+        next_dest = _destino_interno_seguro(request.args.get('next') or request.form.get('next'))
+        if request.method == 'POST':
+            email = validar_email((request.form.get('email') or '').strip().lower())
+            senha = (request.form.get('senha') or '').strip()
+            if not email or not senha:
+                flash('Informe e-mail e senha para entrar.', 'warning')
+            else:
+                cliente = ClientePublico.query.filter(func.lower(ClientePublico.email) == email).first()
+                if not cliente or not cliente.check_password(senha):
+                    flash('E-mail ou senha inválidos.', 'danger')
+                elif not cliente.senha_hash:
+                    flash('Sua conta ainda não possui senha. Atualize seu cadastro para ativar o acesso.', 'warning')
+                else:
+                    cliente.ultimo_acesso = datetime.utcnow()
+                    db.session.commit()
+                    _salvar_cliente_publico_logado(cliente)
+                    flash(f'Bem-vindo de volta, {cliente.nome}.', 'success')
+                    return redirect(next_dest or url_for('public.cliente_dashboard'))
+
+        return render_template(
+            'public/cliente_login.html',
+            empresa=empresa,
+            resumo_carrinho=obter_resumo_carrinho_site(),
+            next_dest=next_dest,
+        )
+
+    @bp.route('/cliente/logout', methods=['GET', 'POST'])
+    def cliente_logout_site():
+        cliente = _obter_cliente_publico_logado()
+        if cliente:
+            flash(f'Até logo, {cliente.nome}.', 'info')
+        _limpar_sessao_cliente_publico()
+        return redirect(url_for('index'))
+
     @bp.route('/cliente/cadastro', methods=['GET', 'POST'])
     def cadastro_cliente_site():
         empresa = _obter_empresa_config()
         if not _ecommerce_site_ativo(empresa):
             return _redirecionar_loja_inativa()
-        resumo_carrinho = obter_resumo_carrinho_site()
-        cliente_dados = _obter_cliente_site_sessao()
+        if not _public_accounts_ready():
+            flash('O cadastro completo de clientes depende das migrações do e-commerce. Atualize o banco para continuar.', 'warning')
+            return redirect(url_for('index'))
+        cliente_logado = _obter_cliente_publico_logado()
+        resumo_carrinho = obter_resumo_carrinho_site(cliente_logado)
+        cliente_dados = _cliente_para_sessao(cliente_logado) if cliente_logado else _obter_cliente_site_sessao()
         proximo_seguro = _destino_interno_seguro(request.args.get('proximo'))
 
         if request.method == 'POST':
             cliente_dados, erros = _coletar_dados_cliente_form(request.form)
+            senha = (request.form.get('senha') or '').strip()
+            confirmar_senha = (request.form.get('confirmar_senha') or '').strip()
+            if not cliente_logado:
+                if len(senha) < 6:
+                    erros.append('Crie uma senha com pelo menos 6 caracteres.')
+                if senha != confirmar_senha:
+                    erros.append('A confirmação da senha não confere.')
             if erros:
                 for erro in erros:
                     flash(erro, 'warning')
             else:
                 try:
-                    _upsert_cliente_publico(cliente_dados)
+                    cliente = cliente_logado or _upsert_cliente_publico(cliente_dados, senha=senha)
+                    if cliente_logado:
+                        cliente = _upsert_cliente_publico(cliente_dados, senha=senha if senha else None, cliente=cliente_logado)
+                    endereco_principal = _upsert_endereco_principal_cliente(cliente, cliente_dados)
                     db.session.commit()
-                    _salvar_cliente_site_sessao(cliente_dados)
-                    flash('Cadastro do cliente salvo com sucesso.', 'success')
+                    _salvar_cliente_publico_logado(cliente)
+                    _salvar_cliente_site_sessao(_cliente_para_sessao(cliente, endereco_principal))
+                    flash('Conta do cliente salva com sucesso.', 'success')
                     proximo = (request.form.get('proximo') or '').strip()
                     if proximo:
                         return _redirect_interno_seguro(proximo, url_for('public.checkout_site'))
-                    return redirect(url_for('public.checkout_site'))
-                except Exception as e:
+                    return redirect(url_for('public.cliente_dashboard'))
+                except Exception:
                     db.session.rollback()
-                    flash(f'Nao foi possivel salvar o cadastro: {str(e)}', 'danger')
+                    flash('Não foi possível salvar sua conta agora.', 'danger')
 
         return render_template(
             'public/cadastro_cliente.html',
@@ -16535,17 +21992,206 @@ def register_public_routes(app):
             resumo_carrinho=resumo_carrinho,
             cliente_dados=cliente_dados,
             proximo_seguro=proximo_seguro,
+            cliente_logado=cliente_logado,
         )
+
+    @bp.route('/cliente')
+    @cliente_login_required
+    def cliente_dashboard():
+        if not _public_accounts_ready():
+            flash('A área do cliente ainda não está disponível neste banco.', 'warning')
+            return redirect(url_for('index'))
+        cliente = _obter_cliente_publico_logado()
+        pedidos = Pedido.query.options(
+            selectinload(Pedido.itens).selectinload(ItemPedido.produto)
+        ).filter_by(cliente_publico_id=cliente.id).order_by(Pedido.criado_em.desc()).limit(5).all()
+        favoritos = ClienteFavorito.query.options(
+            selectinload(ClienteFavorito.produto).selectinload(Produto.categoria)
+        ).filter_by(cliente_id=cliente.id).order_by(ClienteFavorito.criado_em.desc()).limit(8).all()
+        avaliacoes = AvaliacaoProduto.query.options(
+            selectinload(AvaliacaoProduto.produto)
+        ).filter_by(cliente_id=cliente.id).order_by(AvaliacaoProduto.criado_em.desc()).limit(5).all()
+        return render_template(
+            'cliente/dashboard.html',
+            cliente=cliente,
+            pedidos=pedidos,
+            favoritos=favoritos,
+            avaliacoes=avaliacoes,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/cliente/pedidos')
+    @cliente_login_required
+    def cliente_pedidos():
+        if not _public_accounts_ready():
+            flash('A área do cliente ainda não está disponível neste banco.', 'warning')
+            return redirect(url_for('index'))
+        cliente = _obter_cliente_publico_logado()
+        pedidos = Pedido.query.options(
+            selectinload(Pedido.itens).selectinload(ItemPedido.produto)
+        ).filter_by(cliente_publico_id=cliente.id).order_by(Pedido.criado_em.desc()).all()
+        return render_template(
+            'cliente/pedidos.html',
+            cliente=cliente,
+            pedidos=pedidos,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/cliente/perfil', methods=['GET', 'POST'])
+    @cliente_login_required
+    def cliente_perfil():
+        if not _public_accounts_ready():
+            flash('A área do cliente ainda não está disponível neste banco.', 'warning')
+            return redirect(url_for('index'))
+        cliente = _obter_cliente_publico_logado()
+        if request.method == 'POST':
+            cliente_dados, erros = _coletar_dados_cliente_form(request.form)
+            nova_senha = (request.form.get('senha') or '').strip()
+            confirmar_senha = (request.form.get('confirmar_senha') or '').strip()
+            if nova_senha:
+                if len(nova_senha) < 6:
+                    erros.append('A nova senha deve ter pelo menos 6 caracteres.')
+                if nova_senha != confirmar_senha:
+                    erros.append('A confirmação da nova senha não confere.')
+            if erros:
+                for erro in erros:
+                    flash(erro, 'warning')
+            else:
+                try:
+                    cliente = _upsert_cliente_publico(cliente_dados, senha=nova_senha if nova_senha else None, cliente=cliente)
+                    endereco_principal = _upsert_endereco_principal_cliente(cliente, cliente_dados)
+                    db.session.commit()
+                    _salvar_cliente_publico_logado(cliente)
+                    _salvar_cliente_site_sessao(_cliente_para_sessao(cliente, endereco_principal))
+                    flash('Perfil atualizado com sucesso.', 'success')
+                    return redirect(url_for('public.cliente_perfil'))
+                except Exception:
+                    db.session.rollback()
+                    flash('Não foi possível atualizar seu perfil.', 'danger')
+        return render_template(
+            'cliente/editar_perfil.html',
+            cliente=cliente,
+            cliente_dados=_cliente_para_sessao(cliente),
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/cliente/enderecos', methods=['GET', 'POST'])
+    @cliente_login_required
+    def cliente_enderecos():
+        if not _schema_has_table('clientes_enderecos'):
+            flash('Os endereços salvos ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.cliente_dashboard'))
+        cliente = _obter_cliente_publico_logado()
+        if request.method == 'POST':
+            endereco_id = request.form.get('endereco_id', type=int)
+            dados_endereco, erros = _coletar_dados_endereco_form(request.form)
+            if erros:
+                for erro in erros:
+                    flash(erro, 'warning')
+            else:
+                try:
+                    endereco = None
+                    if endereco_id:
+                        endereco = ClienteEndereco.query.filter_by(id=endereco_id, cliente_id=cliente.id).first_or_404()
+                    _salvar_endereco_cliente(cliente, dados_endereco, endereco=endereco)
+                    db.session.commit()
+                    _salvar_cliente_site_sessao(_cliente_para_sessao(cliente))
+                    flash('Endereço salvo com sucesso.', 'success')
+                    return redirect(url_for('public.cliente_enderecos'))
+                except Exception:
+                    db.session.rollback()
+                    flash('Não foi possível salvar o endereço.', 'danger')
+
+        return render_template(
+            'cliente/enderecos.html',
+            cliente=cliente,
+            enderecos=sorted(cliente.enderecos, key=lambda item: (not item.principal, item.id)),
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/cliente/enderecos/<int:id>/deletar', methods=['POST'])
+    @cliente_login_required
+    def cliente_endereco_deletar(id):
+        if not _schema_has_table('clientes_enderecos'):
+            flash('Os endereços salvos ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.cliente_dashboard'))
+        cliente = _obter_cliente_publico_logado()
+        endereco = ClienteEndereco.query.filter_by(id=id, cliente_id=cliente.id).first_or_404()
+        try:
+            principal = bool(endereco.principal)
+            db.session.delete(endereco)
+            db.session.flush()
+            if principal and cliente.enderecos:
+                cliente.enderecos[0].principal = True
+            db.session.commit()
+            flash('Endereço removido com sucesso.', 'success')
+        except Exception:
+            db.session.rollback()
+            flash('Não foi possível remover o endereço.', 'danger')
+        return redirect(url_for('public.cliente_enderecos'))
+
+    @bp.route('/cliente/favoritos')
+    @cliente_login_required
+    def cliente_favoritos():
+        if not _schema_has_table('clientes_favoritos'):
+            flash('Os favoritos ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.cliente_dashboard'))
+        cliente = _obter_cliente_publico_logado()
+        favoritos = ClienteFavorito.query.options(
+            selectinload(ClienteFavorito.produto).selectinload(Produto.categoria),
+            selectinload(ClienteFavorito.produto).selectinload(Produto.fornecedor),
+        ).filter_by(cliente_id=cliente.id).order_by(ClienteFavorito.criado_em.desc()).all()
+        return render_template(
+            'cliente/favoritos.html',
+            cliente=cliente,
+            favoritos=favoritos,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/cliente/favoritos/adicionar/<int:produto_id>', methods=['POST'])
+    @cliente_login_required
+    def cliente_favorito_adicionar(produto_id):
+        if not _schema_has_table('clientes_favoritos'):
+            flash('Os favoritos ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(_destino_interno_seguro(request.form.get('next') or request.referrer) or url_for('index'))
+        cliente = _obter_cliente_publico_logado()
+        produto = Produto.query.get_or_404(produto_id)
+        favorito = ClienteFavorito.query.filter_by(cliente_id=cliente.id, produto_id=produto.id).first()
+        if not favorito:
+            db.session.add(ClienteFavorito(cliente_id=cliente.id, produto_id=produto.id))
+            db.session.commit()
+            flash(f'"{produto.nome}" foi adicionado aos favoritos.', 'success')
+        else:
+            flash(f'"{produto.nome}" já está nos seus favoritos.', 'info')
+        return redirect(_destino_interno_seguro(request.form.get('next') or request.referrer) or url_for('public.cliente_favoritos'))
+
+    @bp.route('/cliente/favoritos/remover/<int:produto_id>', methods=['POST'])
+    @cliente_login_required
+    def cliente_favorito_remover(produto_id):
+        if not _schema_has_table('clientes_favoritos'):
+            flash('Os favoritos ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(_destino_interno_seguro(request.form.get('next') or request.referrer) or url_for('index'))
+        cliente = _obter_cliente_publico_logado()
+        favorito = ClienteFavorito.query.filter_by(cliente_id=cliente.id, produto_id=produto_id).first()
+        if favorito:
+            db.session.delete(favorito)
+            db.session.commit()
+            flash('Produto removido dos favoritos.', 'success')
+        else:
+            flash('Favorito não encontrado.', 'warning')
+        return redirect(_destino_interno_seguro(request.form.get('next') or request.referrer) or url_for('public.cliente_favoritos'))
 
     @bp.route('/carrinho', methods=['GET'])
     def carrinho_site():
         empresa = _obter_empresa_config()
         if not _ecommerce_site_ativo(empresa):
             return _redirecionar_loja_inativa()
-        resumo_carrinho = obter_resumo_carrinho_site()
+        cliente = _obter_cliente_publico_logado()
+        resumo_carrinho = obter_resumo_carrinho_site(cliente)
         ids_no_carrinho = {item['produto'].id for item in resumo_carrinho['itens']}
         query_destaque = Produto.query.filter(
             Produto.ativo.is_(True),
+            Produto.filtro_nao_vencidos(),
             Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES)
         )
         if ids_no_carrinho:
@@ -16557,7 +22203,36 @@ def register_public_routes(app):
             empresa=empresa,
             resumo_carrinho=resumo_carrinho,
             produtos_destaque=produtos_destaque,
+            cliente_publico=cliente,
         )
+
+    @bp.route('/carrinho/cupom', methods=['POST'])
+    def aplicar_cupom_carrinho_site():
+        if not _ecommerce_site_ativo():
+            return _redirecionar_loja_inativa()
+        if not _coupons_ready():
+            flash('Os cupons avançados ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.carrinho_site'))
+        cliente = _obter_cliente_publico_logado()
+        resumo_carrinho = obter_resumo_carrinho_site(cliente)
+        if not resumo_carrinho['itens']:
+            flash('Adicione itens ao carrinho antes de aplicar um cupom.', 'warning')
+            return redirect(url_for('public.carrinho_site'))
+
+        codigo = (request.form.get('codigo_cupom') or '').strip().upper()
+        if not codigo:
+            _limpar_cupom_sessao()
+            flash('Cupom removido do carrinho.', 'info')
+            return redirect(url_for('public.carrinho_site'))
+
+        cupom = _carregar_cupom_por_codigo(codigo)
+        valido, mensagem, _ = _cupom_pode_ser_usado(cupom, cliente, resumo_carrinho['itens'], resumo_carrinho['subtotal'])
+        if not valido:
+            flash(mensagem, 'warning')
+        else:
+            _salvar_cupom_sessao(cupom)
+            flash(f'Cupom "{cupom.codigo}" aplicado com sucesso.', 'success')
+        return redirect(url_for('public.carrinho_site'))
 
     @bp.route('/carrinho/adicionar', methods=['POST'])
     def adicionar_item_carrinho_site():
@@ -16626,7 +22301,8 @@ def register_public_routes(app):
         empresa = _obter_empresa_config()
         if not _ecommerce_site_ativo(empresa):
             return _redirecionar_loja_inativa()
-        resumo_carrinho = obter_resumo_carrinho_site()
+        cliente_logado = _obter_cliente_publico_logado()
+        resumo_carrinho = obter_resumo_carrinho_site(cliente_logado)
         if not resumo_carrinho['itens']:
             flash('Adicione itens ao carrinho antes de finalizar.', 'warning')
             return redirect(url_for('public.carrinho_site'))
@@ -16634,55 +22310,98 @@ def register_public_routes(app):
         payment_options = load_payment_options(empresa.pagamentos_ecommerce_json, 'ecommerce')
         payment_methods = payment_methods_map(empresa.pagamentos_ecommerce_json, 'ecommerce')
         default_payment = default_payment_id(empresa.pagamentos_ecommerce_json, 'ecommerce') or 'pix'
-        cliente_dados = _obter_cliente_site_sessao()
+        cliente_dados = _cliente_para_sessao(cliente_logado) if cliente_logado else _obter_cliente_site_sessao()
+        enderecos_salvos = sorted((cliente_logado.enderecos if cliente_logado else []), key=lambda item: (not item.principal, item.id))
         pagamento_selecionado = (request.form.get('metodo_pagamento') or default_payment).strip().lower() if request.method == 'POST' else default_payment
         valor_recebido = (request.form.get('valor_recebido') or '').strip() if request.method == 'POST' else ''
 
         if request.method == 'POST':
-            cliente_dados, erros = _coletar_dados_cliente_form(request.form)
+            endereco_id = request.form.get('endereco_id', type=int)
+            if cliente_logado and endereco_id:
+                endereco_escolhido = ClienteEndereco.query.filter_by(id=endereco_id, cliente_id=cliente_logado.id).first()
+                if endereco_escolhido:
+                    cliente_dados = _cliente_para_sessao(cliente_logado, endereco_escolhido)
+                    cliente_dados['observacoes'] = (request.form.get('observacoes') or cliente_dados.get('observacoes') or '').strip()
+                    cliente_dados['recebe_ofertas'] = (request.form.get('recebe_ofertas') == 'on') or cliente_dados.get('recebe_ofertas')
+                    erros = []
+                else:
+                    cliente_dados, erros = _coletar_dados_cliente_form(request.form)
+            else:
+                cliente_dados, erros = _coletar_dados_cliente_form(request.form)
             if erros:
                 for erro in erros:
                     flash(erro, 'warning')
             else:
                 try:
-                    pagamento = _coletar_pagamento_checkout(request.form, resumo_carrinho['subtotal'], payment_methods)
-                    cliente_db = _upsert_cliente_publico(cliente_dados)
-                    db.session.flush()
+                    pagamento = _coletar_pagamento_checkout(request.form, resumo_carrinho['total'], payment_methods)
+                    with atomic_transaction(db.session):
+                        itens_checkout = []
+                        for item in resumo_carrinho['itens']:
+                            produto = Produto.query.get(item['produto'].id)
+                            qtd_solicitada = item['quantidade']
+                            if not produto or not produto.ativo:
+                                raise BusinessRuleError(
+                                    'Um dos produtos do carrinho nao esta mais disponivel. Atualize a pagina e tente novamente.'
+                                )
+                            if produto.vencido:
+                                raise BusinessRuleError(f'O produto {produto.nome} esta vencido e nao pode ser vendido.')
+                            if produto.quantidade_estoque < qtd_solicitada:
+                                raise BusinessRuleError(
+                                    f'Estoque insuficiente para {produto.nome}. Disponivel: {produto.quantidade_estoque}'
+                                )
+                            itens_checkout.append((produto, qtd_solicitada))
 
-                    pedido = Pedido(
-                        cliente_nome=cliente_dados.get('nome'),
-                        cliente_celular=cliente_dados.get('celular'),
-                        status='aberto',
-                        origem='site',
-                        total=float(resumo_carrinho['subtotal'] or 0.0),
-                        metodo_pagamento=pagamento['metodo_label'],
-                        valor_pago=pagamento['valor_pago'],
-                        estoque_processado=False,
-                        financeiro_processado=False,
-                    )
-                    db.session.add(pedido)
-                    db.session.flush()
+                        cliente_db = cliente_logado or _upsert_cliente_publico(cliente_dados)
+                        if cliente_logado:
+                            cliente_db = _upsert_cliente_publico(cliente_dados, cliente=cliente_logado)
+                        endereco_principal = _upsert_endereco_principal_cliente(cliente_db, cliente_dados)
+                        db.session.flush()
 
-                    for item in resumo_carrinho['itens']:
-                        produto = item['produto']
-                        db.session.add(ItemPedido(
-                            pedido_id=pedido.id,
-                            produto_id=produto.id,
-                            quantidade=item['quantidade'],
-                            preco_unitario=produto.preco_venda
-                        ))
+                        pedido = Pedido(
+                            cliente_publico_id=cliente_db.id,
+                            cliente_nome=cliente_dados.get('nome'),
+                            cliente_celular=cliente_dados.get('celular'),
+                            status='aberto',
+                            origem='site',
+                            total=float(resumo_carrinho['total'] or 0.0),
+                            metodo_pagamento=pagamento['metodo_label'],
+                            valor_pago=pagamento['valor_pago'],
+                            estoque_processado=False,
+                            financeiro_processado=False,
+                        )
+                        db.session.add(pedido)
+                        db.session.flush()
 
-                    pedido.observacoes = json.dumps({
-                        'cliente_publico_id': cliente_db.id,
-                        'cliente_cadastro': cliente_dados,
-                        'pagamento': {
-                            'metodo': pagamento['metodo'],
-                            'metodo_label': pagamento['metodo_label'],
-                            'troco': pagamento['troco'],
-                            'detalhes': pagamento['detalhes'],
-                        },
-                        'origem_checkout': 'home_varejo',
-                    }, ensure_ascii=False)
+                        for produto, quantidade in itens_checkout:
+                            db.session.add(ItemPedido(
+                                pedido_id=pedido.id,
+                                produto_id=produto.id,
+                                quantidade=quantidade,
+                                preco_unitario=produto.preco_venda
+                            ))
+
+                        cupom_resumo = resumo_carrinho.get('cupom') or {}
+                        cupom = _carregar_cupom_por_codigo(cupom_resumo.get('codigo')) if cupom_resumo else None
+                        pedido.observacoes = json.dumps({
+                            'cliente_publico_id': cliente_db.id,
+                            'cliente_cadastro': cliente_dados,
+                            'cliente_endereco_id': endereco_principal.id if endereco_principal else None,
+                            'pagamento': {
+                                'metodo': pagamento['metodo'],
+                                'metodo_label': pagamento['metodo_label'],
+                                'troco': pagamento['troco'],
+                                'detalhes': pagamento['detalhes'],
+                            },
+                            'cupom': cupom_resumo,
+                            'origem_checkout': 'home_varejo',
+                        }, ensure_ascii=False)
+
+                        if cupom and cliente_db:
+                            db.session.add(CupomUtilizacao(
+                                cupom_id=cupom.id,
+                                cliente_id=cliente_db.id,
+                                pedido=pedido,
+                            ))
 
                     db.session.commit()
                     try:
@@ -16699,34 +22418,213 @@ def register_public_routes(app):
                     except Exception:
                         pass
 
-                    _salvar_cliente_site_sessao(cliente_dados)
+                    _salvar_cliente_publico_logado(cliente_db)
+                    _salvar_cliente_site_sessao(_cliente_para_sessao(cliente_db, endereco_principal))
                     _salvar_carrinho_site({})
+                    _limpar_cupom_sessao()
                     token_confirmacao = _gerar_token_confirmacao_pedido(pedido.id)
 
                     flash(f'Pedido #{pedido.id} recebido com sucesso.', 'success')
                     return redirect(url_for('public.pedido_confirmado_site', pedido_id=pedido.id, token=token_confirmacao))
+                except AppError as e:
+                    db.session.rollback()
+                    flash(str(e), 'warning')
                 except ValueError as e:
                     db.session.rollback()
                     flash(str(e), 'warning')
-                except Exception as e:
+                except Exception:
                     db.session.rollback()
-                    flash(f'Nao foi possivel concluir seu pedido: {str(e)}', 'danger')
+                    flash('Não foi possível concluir seu pedido agora.', 'danger')
 
         return render_template(
             'public/checkout.html',
             empresa=empresa,
             resumo_carrinho=resumo_carrinho,
             cliente_dados=cliente_dados,
+            cliente_publico=cliente_logado,
+            enderecos_salvos=enderecos_salvos,
             payment_options=payment_options,
             pagamento_selecionado=pagamento_selecionado,
             valor_recebido=valor_recebido,
         )
+
+    @bp.route('/loja/produtos', methods=['GET'])
+    def listar_produtos_site():
+        empresa = _obter_empresa_config()
+        if not _ecommerce_site_ativo(empresa):
+            return _redirecionar_loja_inativa()
+        cliente = _obter_cliente_publico_logado()
+        page = request.args.get('page', 1, type=int)
+        query = _aplicar_filtros_produtos(_base_query_produtos_publicos(), request.args)
+        paginacao = query.paginate(page=page, per_page=12, error_out=False)
+        categorias = Categoria.query.order_by(Categoria.nome.asc()).all()
+        fornecedores = Fornecedor.query.order_by(Fornecedor.nome.asc()).all()
+        favoritos_ids = {
+            favorito.produto_id for favorito in (cliente.favoritos if cliente else [])
+        }
+        filtros_atuais = request.args.to_dict(flat=True)
+        prev_url = None
+        next_url = None
+        if paginacao.has_prev:
+            filtros_prev = dict(filtros_atuais)
+            filtros_prev['page'] = paginacao.prev_num
+            prev_url = f"{url_for('public.listar_produtos_site')}?{urlencode(filtros_prev)}"
+        if paginacao.has_next:
+            filtros_next = dict(filtros_atuais)
+            filtros_next['page'] = paginacao.next_num
+            next_url = f"{url_for('public.listar_produtos_site')}?{urlencode(filtros_next)}"
+        return render_template(
+            'public/produtos.html',
+            empresa=empresa,
+            paginacao=paginacao,
+            produtos=paginacao.items,
+            categorias=categorias,
+            fornecedores=fornecedores,
+            favoritos_ids=favoritos_ids,
+            prev_url=prev_url,
+            next_url=next_url,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/loja/produto/<int:produto_id>', methods=['GET'])
+    def produto_detalhe_site(produto_id):
+        empresa = _obter_empresa_config()
+        if not _ecommerce_site_ativo(empresa):
+            return _redirecionar_loja_inativa()
+        cliente = _obter_cliente_publico_logado()
+        produto_query = Produto.query.options(
+            selectinload(Produto.categoria),
+            selectinload(Produto.fornecedor),
+        )
+        if _reviews_ready():
+            produto_query = produto_query.options(selectinload(Produto.avaliacoes).selectinload(AvaliacaoProduto.cliente))
+        produto = produto_query.filter(
+            Produto.id == produto_id,
+            Produto.ativo.is_(True),
+            Produto.filtro_nao_vencidos(),
+            Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES),
+        ).first_or_404()
+        avaliacao_cliente = None
+        if cliente and _reviews_ready():
+            avaliacao_cliente = AvaliacaoProduto.query.filter_by(produto_id=produto.id, cliente_id=cliente.id).first()
+        relacionados = Produto.query.options(selectinload(Produto.categoria)).filter(
+            Produto.id != produto.id,
+            Produto.ativo.is_(True),
+            Produto.filtro_nao_vencidos(),
+            Produto.categoria_id == produto.categoria_id,
+            Produto.status_disponibilidade.in_(Produto.STATUS_DISPONIBILIDADE_ONLINE_EQUIVALENTES),
+        ).limit(4).all()
+        return render_template(
+            'public/produto.html',
+            empresa=empresa,
+            produto=produto,
+            avaliacoes=([item for item in produto.avaliacoes if item.aprovada] if _reviews_ready() else []),
+            avaliacao_cliente=avaliacao_cliente,
+            cliente_publico=cliente,
+            relacionados=relacionados,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/loja/produto/<int:produto_id>/avaliar', methods=['GET', 'POST'])
+    @cliente_login_required
+    def produto_avaliar_site(produto_id):
+        if not _reviews_ready():
+            flash('As avaliações ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.produto_detalhe_site', produto_id=produto_id))
+        cliente = _obter_cliente_publico_logado()
+        produto = Produto.query.get_or_404(produto_id)
+        if not _cliente_ja_comprou_produto(cliente, produto.id):
+            flash('Você só pode avaliar produtos já comprados na sua conta.', 'warning')
+            return redirect(url_for('public.produto_detalhe_site', produto_id=produto.id))
+
+        avaliacao = AvaliacaoProduto.query.filter_by(produto_id=produto.id, cliente_id=cliente.id).first()
+        if request.method == 'POST':
+            nota = request.form.get('nota', type=int)
+            titulo = (request.form.get('titulo') or '').strip()
+            comentario = (request.form.get('comentario') or '').strip()
+            if nota not in {1, 2, 3, 4, 5}:
+                flash('Selecione uma nota entre 1 e 5 estrelas.', 'warning')
+            else:
+                try:
+                    if not avaliacao:
+                        avaliacao = AvaliacaoProduto(produto_id=produto.id, cliente_id=cliente.id)
+                        db.session.add(avaliacao)
+                    avaliacao.nota = nota
+                    avaliacao.titulo = titulo or None
+                    avaliacao.comentario = comentario or None
+                    avaliacao.aprovada = True
+                    db.session.commit()
+                    flash('Sua avaliação foi salva com sucesso.', 'success')
+                    return redirect(url_for('public.produto_detalhe_site', produto_id=produto.id))
+                except Exception:
+                    db.session.rollback()
+                    flash('Não foi possível salvar sua avaliação.', 'danger')
+
+        return render_template(
+            'cliente/avaliar_produto.html',
+            cliente=cliente,
+            produto=produto,
+            avaliacao=avaliacao,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/loja/produto/<int:produto_id>/avaliacoes', methods=['GET'])
+    def produto_avaliacoes_site(produto_id):
+        empresa = _obter_empresa_config()
+        if not _reviews_ready():
+            flash('As avaliações ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.produto_detalhe_site', produto_id=produto_id))
+        produto = Produto.query.options(
+            selectinload(Produto.avaliacoes).selectinload(AvaliacaoProduto.cliente)
+        ).get_or_404(produto_id)
+        return render_template(
+            'public/produto_avaliacoes.html',
+            empresa=empresa,
+            produto=produto,
+            avaliacoes=[item for item in produto.avaliacoes if item.aprovada],
+            resumo_carrinho=obter_resumo_carrinho_site(_obter_cliente_publico_logado()),
+        )
+
+    @bp.route('/cliente/avaliacoes')
+    @cliente_login_required
+    def cliente_avaliacoes():
+        if not _reviews_ready():
+            flash('As avaliações ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.cliente_dashboard'))
+        cliente = _obter_cliente_publico_logado()
+        avaliacoes = AvaliacaoProduto.query.options(
+            selectinload(AvaliacaoProduto.produto)
+        ).filter_by(cliente_id=cliente.id).order_by(AvaliacaoProduto.criado_em.desc()).all()
+        return render_template(
+            'cliente/avaliacoes.html',
+            cliente=cliente,
+            avaliacoes=avaliacoes,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
+        )
+
+    @bp.route('/cliente/avaliacoes/<int:id>/remover', methods=['POST'])
+    @cliente_login_required
+    def cliente_avaliacao_remover(id):
+        if not _reviews_ready():
+            flash('As avaliações ainda não estão disponíveis neste banco.', 'warning')
+            return redirect(url_for('public.cliente_dashboard'))
+        cliente = _obter_cliente_publico_logado()
+        avaliacao = AvaliacaoProduto.query.filter_by(id=id, cliente_id=cliente.id).first_or_404()
+        try:
+            db.session.delete(avaliacao)
+            db.session.commit()
+            flash('Avaliação removida com sucesso.', 'success')
+        except Exception:
+            db.session.rollback()
+            flash('Não foi possível remover a avaliação.', 'danger')
+        return redirect(url_for('public.cliente_avaliacoes'))
 
     @bp.route('/pedido/<int:pedido_id>/confirmado', methods=['GET'])
     def pedido_confirmado_site(pedido_id):
         empresa = _obter_empresa_config()
         if not _ecommerce_site_ativo(empresa):
             return _redirecionar_loja_inativa()
+        cliente = _obter_cliente_publico_logado()
         token = (request.args.get('token') or '').strip()
         if not _token_confirmacao_pedido_valido(pedido_id, token):
             abort(404)
@@ -16743,7 +22641,8 @@ def register_public_routes(app):
             empresa=empresa,
             pedido=pedido,
             detalhes=detalhes,
-            resumo_carrinho=obter_resumo_carrinho_site(),
+            cliente_publico=cliente,
+            resumo_carrinho=obter_resumo_carrinho_site(cliente),
         )
 
     @bp.route('/m/<token>', methods=['GET'])
@@ -16909,11 +22808,12 @@ def register_public_routes(app):
 
 
 ### Arquivo: `routes/vendas_routes.py`
-- Linhas: 2550
-- Tamanho: 106.0 KB
+- Linhas: 3204
+- Tamanho: 134.3 KB
 - Status: completo
 
 ```python
+import math
 from datetime import datetime
 from datetime import time
 from datetime import timedelta
@@ -16921,10 +22821,30 @@ import json
 import secrets
 import qrcode
 from io import BytesIO
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 from flask import render_template, request, redirect, url_for, flash, session, Response, jsonify
-from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.orm import selectinload, load_only
 
-from models import db, Caixa, Mesa, Pedido, Produto, ItemPedido, Movimentacao, MovimentacaoCaixa, Funcionario, Garcom, EmpresaConfig, PermissaoAcesso
+from app import extensions
+from models import (
+    db,
+    Caixa,
+    ClienteEndereco,
+    EnderecoEstoque,
+    EmpresaConfig,
+    FrotaVeiculo,
+    Funcionario,
+    Garcom,
+    ItemPedido,
+    Mesa,
+    Movimentacao,
+    MovimentacaoCaixa,
+    Pedido,
+    PermissaoAcesso,
+    Produto,
+)
 from realtime import publish_alert, sse_stream
 from security import json_response
 from app.constants import ENDPOINT_TO_PAGINA
@@ -16932,16 +22852,24 @@ from app.exceptions import AppError, BusinessRuleError, ValidationError
 from app.services.financeiro_service import _build_payment_data
 from app.services.pedido_service import (
     _aplicar_transicao_status as service_aplicar_transicao_status,
+    create_order as service_create_order,
     _normalizar_item_payload,
-    _processar_fechamento_pedido as service_processar_fechamento_pedido,
     _recalcular_total_pedido,
+    update_order as service_update_order,
 )
+from app.services.transaction import atomic_transaction
+from app.services.venda_service import VendaService
+from app.services.workflow import ExpedicaoStatus, transition_expedicao_status
+from app.services.operational_rules import require_cancel_reason
 from app.services.utils_service import _to_float, _to_int
 from app.utils.payment_config import default_payment_id, infer_payment_method_id, load_payment_options, payment_methods_map
+from app.utils.responses import fail, ok
+from app.utils.validators import validar_cep
 
 ORDER_ALLOWED_TRANSITIONS = Pedido.TRANSICOES_PERMITIDAS
 ORDER_IMMUTABLE_STATUSES = Pedido.STATUS_IMUTAVEIS
 DELIVERY_SEPARATION_STATUSES = {Pedido.STATUS_ABERTO, Pedido.STATUS_EM_PREPARO, Pedido.STATUS_ENTREGUE}
+venda_service = VendaService()
 
 
 def _obter_empresa_config():
@@ -16999,6 +22927,45 @@ def _pedido_pronto_para_roteirizacao(pedido):
     if pedido.status in {Pedido.STATUS_CANCELADO, Pedido.STATUS_FECHADO}:
         return False
     return True
+
+
+def _coletar_metricas_dashboard_tempo_real():
+    agora = datetime.utcnow()
+    inicio_dia = agora.replace(hour=0, minute=0, second=0, microsecond=0)
+    try:
+        pedidos_ultimos_15_min = Pedido.query.filter(Pedido.criado_em >= (agora - timedelta(minutes=15))).count()
+        faturamento_dia = db.session.query(db.func.sum(Pedido.total)).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0.0
+        produtos_vendidos_turno = db.session.query(db.func.sum(ItemPedido.quantidade)).join(
+            Pedido, Pedido.id == ItemPedido.pedido_id
+        ).filter(
+            Pedido.status == Pedido.STATUS_FECHADO,
+            Pedido.fechado_em >= inicio_dia,
+            Pedido.fechado_em < inicio_dia + timedelta(days=1),
+        ).scalar() or 0
+    except (OperationalError, ProgrammingError):
+        db.session.rollback()
+        pedidos_ultimos_15_min = 0
+        faturamento_dia = 0.0
+        produtos_vendidos_turno = 0
+    return {
+        'pedidos_ultimos_15_min': int(pedidos_ultimos_15_min or 0),
+        'faturamento_dia': float(faturamento_dia or 0.0),
+        'produtos_vendidos_turno': int(produtos_vendidos_turno or 0),
+    }
+
+
+def _publicar_metricas_dashboard_tempo_real():
+    try:
+        publish_alert({
+            'event': 'dashboard_metrics',
+            'data': _coletar_metricas_dashboard_tempo_real(),
+        })
+    except Exception:
+        pass
 
 
 def _referencia_pedido_roteirizacao(pedido):
@@ -17113,7 +23080,22 @@ def _parse_veiculo_cadastrado(valor):
     return texto, None
 
 
-def _carregar_veiculos_config(valor_json):
+def _carregar_veiculos_config(valor_json=None, empresa=None):
+    empresa_ref = empresa
+    if isinstance(valor_json, EmpresaConfig):
+        empresa_ref = valor_json
+        valor_json = empresa_ref.entrega_veiculos_json
+
+    if empresa_ref is not None and _frota_relacional_disponivel():
+        veiculos_relacionais = _listar_veiculos_frota(empresa_ref)
+        if veiculos_relacionais:
+            return [_serializar_frota_veiculo(item) for item in veiculos_relacionais]
+        valor_json = valor_json or empresa_ref.entrega_veiculos_json
+
+    return _carregar_veiculos_config_legado(valor_json)
+
+
+def _carregar_veiculos_config_legado(valor_json):
     if not valor_json:
         return []
     try:
@@ -17218,6 +23200,75 @@ def _normalizar_veiculos_texto(texto):
     return veiculos
 
 
+def _frota_relacional_disponivel():
+    """Verifica se a tabela relacional da frota esta acessivel na conexao ativa."""
+    try:
+        return db.inspect(db.session.connection()).has_table('frota_veiculos')
+    except Exception:
+        try:
+            return db.inspect(db.engine).has_table('frota_veiculos')
+        except Exception:
+            return False
+
+
+def _listar_veiculos_frota(empresa, *, apenas_ativos=False):
+    if not empresa or not getattr(empresa, 'id', None) or not _frota_relacional_disponivel():
+        return []
+    query = FrotaVeiculo.query.filter(FrotaVeiculo.empresa_id == empresa.id)
+    if apenas_ativos:
+        query = query.filter(FrotaVeiculo.ativo.is_(True))
+    return query.order_by(FrotaVeiculo.nome.asc(), FrotaVeiculo.id.asc()).all()
+
+
+def _serializar_frota_veiculo(veiculo):
+    return {
+        'id': veiculo.id,
+        'nome': veiculo.nome,
+        'placa': (veiculo.placa or '').strip().upper() or None,
+        'categoria': veiculo.tipo or 'geral',
+        'tipo': veiculo.tipo or 'geral',
+        'tipo_entrega': (veiculo.tipo_entrega or 'todos').strip().lower(),
+        'capacidade_pedidos': int(veiculo.capacidade_pedidos or 0),
+        'capacidade_kg': float(veiculo.capacidade_kg or 0) if veiculo.capacidade_kg is not None else None,
+        'capacidade_volume': float(veiculo.capacidade_volume or 0) if veiculo.capacidade_volume is not None else None,
+        'motorista_padrao': veiculo.motorista_padrao,
+        'empresa': veiculo.empresa_terceirizada,
+        'ativo': veiculo.ativo is not False,
+    }
+
+
+def _opcoes_veiculos_cadastrados(empresa):
+    if empresa and _frota_relacional_disponivel():
+        return _listar_veiculos_frota(empresa, apenas_ativos=True)
+    return [
+        {
+            'id': '',
+            'nome': item.get('nome'),
+            'placa': item.get('placa'),
+        }
+        for item in _carregar_veiculos_config_legado(empresa.entrega_veiculos_json if empresa else None)
+        if item.get('ativo', True)
+    ]
+
+
+def _obter_veiculo_frota(empresa, veiculo_id):
+    if not empresa or not veiculo_id or not _frota_relacional_disponivel():
+        return None
+    return FrotaVeiculo.query.filter_by(id=veiculo_id, empresa_id=empresa.id).first()
+
+
+def _sincronizar_frota_legada(empresa):
+    """Mantem o JSON legado atualizado enquanto a frota migra para tabela propria."""
+    if not empresa:
+        return
+    if _frota_relacional_disponivel():
+        veiculos = [
+            _serializar_frota_veiculo(item)
+            for item in _listar_veiculos_frota(empresa)
+        ]
+        empresa.entrega_veiculos_json = json.dumps(veiculos, ensure_ascii=False) if veiculos else None
+
+
 def _carregar_regras_roteirizacao(empresa):
     regras = {
         'prefixo_rota': 'Rota',
@@ -17272,6 +23323,8 @@ def _distribuir_pedidos_automaticamente(pedidos, veiculos, regras, empresa):
 
     if not pedidos_ordenados:
         return 0
+
+    pedidos_ordenados = _ordenar_pedidos_por_proximidade(pedidos_ordenados, getattr(empresa, 'cep', None))
 
     veiculos_ativos = [v for v in veiculos if v.get('ativo', True)]
     if tipo_entrega != 'todos':
@@ -17360,6 +23413,50 @@ def _pedido_na_fila_entrega(pedido, empresa=None):
         _separacao_entrega_ativa(empresa)
         and (pedido.origem or '').strip().lower() in _origens_separacao_entrega(empresa)
     )
+
+
+def _validar_pedido_para_separacao(pedido, funcionario=None):
+    """Garante que os itens estao em areas autorizadas para picking/expedicao."""
+    tipos_permitidos = {'picking', 'box_expedicao', 'expedicao'}
+    endereco_ids = {
+        item.produto.endereco_id
+        for item in (pedido.itens or [])
+        if item.produto and item.produto.endereco_id
+    }
+    enderecos = {}
+    if endereco_ids:
+        enderecos = {
+            endereco.id: endereco
+            for endereco in _endereco_query_permitida(funcionario).filter(EnderecoEstoque.id.in_(endereco_ids)).all()
+        }
+
+    produtos_sem_picking = []
+    produtos_vencidos = []
+    for item in pedido.itens or []:
+        produto = item.produto
+        if not produto:
+            produtos_sem_picking.append(f'Produto #{item.produto_id}')
+            continue
+        if produto.vencido:
+            produtos_vencidos.append(produto.nome)
+            continue
+        endereco = enderecos.get(produto.endereco_id) if produto.endereco_id else None
+        tipo_area = (getattr(endereco, 'tipo_area', None) or '').strip().lower()
+        if not endereco or tipo_area not in tipos_permitidos:
+            produtos_sem_picking.append(produto.nome)
+
+    if produtos_vencidos:
+        raise BusinessRuleError(
+            'Produtos vencidos nao podem ser separados: '
+            + ', '.join(dict.fromkeys(produtos_vencidos))
+            + '.'
+        )
+    if produtos_sem_picking:
+        raise BusinessRuleError(
+            'Os produtos a seguir precisam estar enderecados em areas de picking/expedicao antes da separacao: '
+            + ', '.join(dict.fromkeys(produtos_sem_picking))
+            + '.'
+        )
 
 
 def _visao_operacional_pedido(pedido, empresa=None):
@@ -17663,6 +23760,136 @@ def _coletar_progresso_expedicao_diario(empresa):
     }
 
 
+def _coletar_dashboard_expedicao(empresa):
+    agora = datetime.utcnow()
+    inicio_dia = agora.replace(hour=0, minute=0, second=0, microsecond=0)
+    fim_dia = inicio_dia + timedelta(days=1)
+    pedidos = Pedido.query.options(
+        selectinload(Pedido.caixa),
+        selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+    ).filter(
+        Pedido.origem.in_(_origens_separacao_entrega(empresa)),
+        Pedido.criado_em >= inicio_dia,
+        Pedido.criado_em < fim_dia,
+    ).order_by(Pedido.criado_em.asc()).all()
+
+    pedidos_fluxo = [pedido for pedido in pedidos if pedido.status in DELIVERY_SEPARATION_STATUSES]
+    por_hora = {f'{hora:02d}:00': {'separacao': 0, 'embalagem': 0, 'expedicao': 0, 'entregue': 0} for hora in range(24)}
+    fila_por_hora = {f'{hora:02d}:00': 0 for hora in range(24)}
+    status_rotas = {'em_rota': 0, 'entregues': 0, 'atrasadas': 0}
+    tempos_separacao = []
+    aderencia_ok = 0
+    aderencia_total = 0
+    pedidos_separacao = []
+    pedidos_rota = []
+
+    for pedido in pedidos_fluxo:
+        etapa = _resolver_etapa_expedicao(pedido)
+        hora_ref = (pedido.criado_em or inicio_dia).strftime('%H:00')
+        if etapa == 'separacao':
+            por_hora[hora_ref]['separacao'] += 1
+            fila_por_hora[hora_ref] += 1
+            espera_min = max((agora - pedido.criado_em).total_seconds() / 60.0, 0.0) if pedido.criado_em else 0.0
+            pedidos_separacao.append({
+                'id': pedido.id,
+                'cliente': pedido.cliente_nome or '-',
+                'rota': pedido.rota_entrega or '-',
+                'motorista': pedido.motorista_nome or '-',
+                'tempo_espera_min': round(espera_min, 1),
+            })
+        elif etapa == 'embalagem':
+            por_hora[hora_ref]['embalagem'] += 1
+        elif etapa == 'expedicao':
+            por_hora[hora_ref]['expedicao'] += 1
+        elif etapa == 'entregue':
+            por_hora[hora_ref]['entregue'] += 1
+
+        if pedido.separacao_entrega_em and pedido.criado_em:
+            tempos_separacao.append(max((pedido.separacao_entrega_em - pedido.criado_em).total_seconds() / 60.0, 0.0))
+
+        if pedido.saiu_para_entrega_em and not pedido.entrega_concluida_em:
+            status_rotas['em_rota'] += 1
+            previsao = pedido.saiu_para_entrega_em + timedelta(minutes=90)
+            pedidos_rota.append({
+                'id': pedido.id,
+                'cliente': pedido.cliente_nome or '-',
+                'rota': pedido.rota_entrega or '-',
+                'motorista': pedido.motorista_nome or '-',
+                'previsao_entrega': previsao.strftime('%H:%M'),
+            })
+        elif pedido.entrega_concluida_em:
+            status_rotas['entregues'] += 1
+            aderencia_total += 1
+            if pedido.saiu_para_entrega_em and (pedido.entrega_concluida_em - pedido.saiu_para_entrega_em) <= timedelta(minutes=90):
+                aderencia_ok += 1
+        elif pedido.rota_entrega and pedido.separacao_entrega_concluida:
+            status_rotas['atrasadas'] += 1
+
+    veiculos_config = _carregar_veiculos_config(empresa)
+    veiculos = []
+    for item in veiculos_config:
+        veiculos.append({
+            'nome': item.get('nome') or 'Veiculo',
+            'placa': item.get('placa') or '-',
+            'tipo': item.get('tipo') or '-',
+            'capacidade': item.get('capacidade_pedidos') or '-',
+        })
+
+    alertas = []
+    pedidos_separacao.sort(key=lambda item: item['tempo_espera_min'], reverse=True)
+    pedidos_rota.sort(key=lambda item: item['previsao_entrega'])
+    if pedidos_separacao and pedidos_separacao[0]['tempo_espera_min'] > 30:
+        alertas.append({
+            'nivel': 'warning',
+            'titulo': 'Pedidos parados na separacao',
+            'descricao': f'O pedido #{pedidos_separacao[0]["id"]} aguarda ha {pedidos_separacao[0]["tempo_espera_min"]:.1f} minutos.',
+        })
+    corte = _config_corte_roteirizacao(empresa, agora=agora)
+    if corte['ativo'] and not corte['janela_aberta']:
+        alertas.append({
+            'nivel': 'danger',
+            'titulo': 'Horario de fechamento da rota atingido',
+            'descricao': f'Roteirizacao fechada desde {corte["horario"]}.',
+        })
+    if any(str(item.get('nome') or '').strip() for item in veiculos_config) and not veiculos:
+        alertas.append({
+            'nivel': 'info',
+            'titulo': 'Frota sem cadastro estruturado',
+            'descricao': 'Revise os veiculos configurados para preencher tipo, placa e capacidade.',
+        })
+
+    return {
+        'kpis': {
+            'pedidos_dia_total': len(pedidos_fluxo),
+            'separados': sum(1 for pedido in pedidos_fluxo if pedido.separacao_entrega_concluida),
+            'embalados': sum(1 for pedido in pedidos_fluxo if pedido.etiqueta_entrega_emitida_em),
+            'expedidos': sum(1 for pedido in pedidos_fluxo if pedido.saiu_para_entrega_em),
+            'entregues': sum(1 for pedido in pedidos_fluxo if pedido.entrega_concluida_em),
+            'tempo_medio_separacao_min': round(sum(tempos_separacao) / len(tempos_separacao), 1) if tempos_separacao else 0.0,
+            'aderencia_rota_pct': round((aderencia_ok / aderencia_total) * 100.0, 1) if aderencia_total else 0.0,
+        },
+        'progresso_por_hora': [
+            {
+                'hora': hora,
+                'separacao': valores['separacao'],
+                'embalagem': valores['embalagem'],
+                'expedicao': valores['expedicao'],
+                'entregue': valores['entregue'],
+            }
+            for hora, valores in por_hora.items()
+        ],
+        'fila_separacao_por_hora': [
+            {'hora': hora, 'pendentes': qtd}
+            for hora, qtd in fila_por_hora.items()
+        ],
+        'status_rotas': status_rotas,
+        'pedidos_separacao': pedidos_separacao[:5],
+        'pedidos_rota': pedidos_rota[:5],
+        'veiculos': veiculos[:5],
+        'alertas': alertas,
+    }
+
+
 def _bloquear_se_atendimento_mesas_desativado():
     if _atendimento_mesas_ativo():
         return None
@@ -17722,12 +23949,181 @@ def _paginas_efetivas_funcionario(funcionario):
     return permitidas
 
 
+def _estoques_permitidos_ids_base(funcionario=None):
+    funcionario = funcionario or _funcionario_logado_vendas()
+    if not funcionario or funcionario.role == 'admin' or not getattr(funcionario, 'restricao_estoques_ativa', False):
+        return None
+    ids = set()
+    if getattr(funcionario, 'estoque_principal_id', None):
+        ids.add(funcionario.estoque_principal_id)
+    for estoque in getattr(funcionario, 'estoques_permitidos', []) or []:
+        if getattr(estoque, 'id', None):
+            ids.add(estoque.id)
+    return ids
+
+
+def _estoque_contexto_selecionado_id(funcionario=None):
+    funcionario = funcionario or _funcionario_logado_vendas()
+    valor = session.get('estoque_contexto_id')
+    if valor in (None, '', 'all'):
+        return None
+    try:
+        estoque_id = int(valor)
+    except (TypeError, ValueError):
+        session.pop('estoque_contexto_id', None)
+        return None
+    ids_base = _estoques_permitidos_ids_base(funcionario)
+    if ids_base is not None and estoque_id not in ids_base:
+        session.pop('estoque_contexto_id', None)
+        return None
+    return estoque_id
+
+
+def _estoques_permitidos_ids(funcionario=None):
+    funcionario = funcionario or _funcionario_logado_vendas()
+    ids_base = _estoques_permitidos_ids_base(funcionario)
+    estoque_contexto_id = _estoque_contexto_selecionado_id(funcionario)
+    if estoque_contexto_id:
+        return {estoque_contexto_id}
+    return ids_base
+
+
+def _endereco_query_permitida(funcionario=None):
+    query = EnderecoEstoque.query
+    ids = _estoques_permitidos_ids(funcionario)
+    if ids is None:
+        return query
+    if not ids:
+        return query.filter(EnderecoEstoque.id == -1)
+    return query.filter(EnderecoEstoque.estoque_id.in_(ids))
+
+
+def _normalizar_cep_entrega(valor):
+    cep = validar_cep((valor or '').strip())
+    if not cep or cep == '__invalid__':
+        return None
+    return cep
+
+
+def _extrair_cep_pedido(pedido):
+    observacoes = {}
+    try:
+        observacoes = json.loads(pedido.observacoes) if pedido and pedido.observacoes else {}
+    except Exception:
+        observacoes = {}
+
+    if isinstance(observacoes, dict):
+        cliente_cadastro = observacoes.get('cliente_cadastro') or {}
+        cep = _normalizar_cep_entrega(cliente_cadastro.get('cep'))
+        if cep:
+            return cep
+        endereco_id = observacoes.get('cliente_endereco_id')
+        if endereco_id:
+            endereco = ClienteEndereco.query.filter_by(id=endereco_id).first()
+            if endereco:
+                cep = _normalizar_cep_entrega(endereco.cep)
+                if cep:
+                    return cep
+
+    cliente_publico = getattr(pedido, 'cliente_publico', None)
+    if cliente_publico:
+        endereco_principal = getattr(cliente_publico, 'endereco_principal', None)
+        if endereco_principal:
+            cep = _normalizar_cep_entrega(endereco_principal.cep)
+            if cep:
+                return cep
+        cep = _normalizar_cep_entrega(getattr(cliente_publico, 'cep', None))
+        if cep:
+            return cep
+    return None
+
+
+def _obter_coordenadas_cep(cep):
+    """Resolve coordenadas aproximadas via geocodificacao com cache local."""
+    cep_normalizado = _normalizar_cep_entrega(cep)
+    if not cep_normalizado:
+        return None
+
+    cache = extensions.cache
+    cache_key = f'geocode:cep:{cep_normalizado}'
+    if cache is not None:
+        cached = cache.get(cache_key)
+        if cached:
+            return tuple(cached)
+
+    query_string = urlencode({
+        'postalcode': cep_normalizado,
+        'country': 'Brazil',
+        'format': 'jsonv2',
+        'limit': 1,
+    })
+    request_obj = Request(
+        f'https://nominatim.openstreetmap.org/search?{query_string}',
+        headers={'User-Agent': 'SystemLR/1.0'},
+    )
+    try:
+        with urlopen(request_obj, timeout=2.5) as response:
+            payload = json.loads(response.read().decode('utf-8'))
+        if not payload:
+            return None
+        coordenadas = (float(payload[0]['lat']), float(payload[0]['lon']))
+    except Exception:
+        return None
+
+    if cache is not None:
+        cache.set(cache_key, coordenadas, timeout=86400)
+    return coordenadas
+
+
+def _distancia_haversine(origem, destino):
+    if not origem or not destino:
+        return float('inf')
+    lat1, lon1 = origem
+    lat2, lon2 = destino
+    raio_terra_km = 6371.0
+    delta_lat = math.radians(lat2 - lat1)
+    delta_lon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(delta_lon / 2) ** 2
+    )
+    return raio_terra_km * (2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
+
+
+def _ordenar_pedidos_por_proximidade(pedidos, cep_origem):
+    """Ordena pedidos pelo CEP mais proximo da loja usando Haversine."""
+    pedidos_base = list(pedidos or [])
+    coordenada_origem = _obter_coordenadas_cep(cep_origem)
+    if not coordenada_origem:
+        return sorted(pedidos_base, key=lambda item: (item.criado_em or datetime.utcnow(), item.id or 0))
+
+    def _sort_key(pedido):
+        coordenada_destino = _obter_coordenadas_cep(_extrair_cep_pedido(pedido))
+        sem_coordenada = coordenada_destino is None
+        distancia = _distancia_haversine(coordenada_origem, coordenada_destino)
+        return (
+            1 if sem_coordenada else 0,
+            distancia,
+            pedido.criado_em or datetime.utcnow(),
+            pedido.id or 0,
+        )
+
+    return sorted(pedidos_base, key=_sort_key)
+
+
 def _garcom_logado_id():
     funcionario_id = session.get('funcionario_id')
     if not funcionario_id:
         return None
     garcom = Garcom.query.filter_by(funcionario_id=funcionario_id, ativo=True).first()
     return garcom.id if garcom else None
+
+
+def _funcionario_logado_vendas():
+    funcionario_id = session.get('funcionario_id')
+    if not funcionario_id:
+        return None
+    return Funcionario.query.get(funcionario_id)
 
 
 def _parse_status(value, default='aberto'):
@@ -17752,68 +24148,14 @@ def _http_status_for_order_error(message):
     return 400, 'validation_error'
 
 
-def _processar_fechamento_pedido(pedido):
-    """Aplica regras de negócio para encerrar um pedido.
-
-    - Garante que há itens
-    - Calcula total e registra timestamps de fechamento
-    - Marca pedido como processado para estoque/financeiro quando aplicável
-    """
-    if not pedido.itens:
-        raise ValueError('Pedido sem itens nao pode ser fechado.')
-
-    if not pedido.estoque_processado:
-        for item in pedido.itens:
-            produto = item.produto or Produto.query.get(item.produto_id)
-            if not produto:
-                raise ValueError(f'Produto do item {item.id} nao encontrado.')
-            if produto.quantidade_estoque < item.quantidade:
-                raise ValueError(f'Estoque insuficiente para "{produto.nome}".')
-
-        for item in pedido.itens:
-            produto = item.produto or Produto.query.get(item.produto_id)
-            produto.quantidade_estoque -= item.quantidade
-            db.session.add(Movimentacao(
-                produto_id=produto.id,
-                tipo=Movimentacao.TIPO_SAIDA,
-                quantidade=item.quantidade,
-                motivo='venda',
-                observacoes=f'Pedido {pedido.id} fechado'
-            ))
-        pedido.estoque_processado = True
-
-    if pedido.caixa_id and not pedido.financeiro_processado:
-        caixa = pedido.caixa or Caixa.query.get(pedido.caixa_id)
-        if not caixa:
-            raise ValueError('Caixa do pedido nao encontrada.')
-        if not caixa.aberto:
-            raise ValueError('Caixa do pedido esta fechada. Nao e possivel concluir o financeiro.')
-
-        valor_pedido = float(pedido.total or 0.0)
-        caixa.saldo_atual = float(caixa.saldo_atual or 0.0) + valor_pedido
-        db.session.add(MovimentacaoCaixa(
-            caixa_id=caixa.id,
-            tipo=MovimentacaoCaixa.TIPO_ENTRADA,
-            valor=valor_pedido,
-            descricao=f'Fechamento do pedido #{pedido.id}'
-        ))
-        pedido.financeiro_processado = True
-
-    pedido.fechado_em = datetime.utcnow()
-    if pedido.mesa:
-        pedido.mesa.status = 'livre'
-
-
-def _aplicar_transicao_status(pedido, novo_status):
-    return pedido.transitar_para(novo_status, on_fechamento=_processar_fechamento_pedido)
-
-
-def _processar_fechamento_pedido(pedido):
-    return service_processar_fechamento_pedido(pedido)
-
-
-def _aplicar_transicao_status(pedido, novo_status):
-    return service_aplicar_transicao_status(pedido, novo_status)
+def _aplicar_transicao_status(pedido, novo_status, *, actor=None, detalhes=None, require_delivery_separation=False):
+    return service_aplicar_transicao_status(
+        pedido,
+        novo_status,
+        actor=actor,
+        detalhes=detalhes,
+        require_delivery_separation=require_delivery_separation,
+    )
 
 
 def register_vendas_routes(app, login_required, require_role):
@@ -17831,11 +24173,13 @@ def register_vendas_routes(app, login_required, require_role):
             return redirect(url_for('listar_pedidos'))
 
         progresso = _coletar_progresso_expedicao_diario(empresa)
+        dashboard = _coletar_dashboard_expedicao(empresa)
         return render_template(
             'expedicao/central.html',
             empresa=empresa,
             progresso=progresso,
-            veiculos_cadastrados=_carregar_lista_config(empresa.entrega_veiculos_json),
+            dashboard=dashboard,
+            veiculos_cadastrados=_opcoes_veiculos_cadastrados(empresa),
             terceirizadas_cadastradas=_carregar_lista_config(empresa.entrega_terceirizadas_json),
             etiquetas_ativas=_emissao_etiqueta_entrega_ativa(empresa),
             emissao_nota_ativa=empresa.emissao_nota_entrega_ativa is not False,
@@ -17845,40 +24189,85 @@ def register_vendas_routes(app, login_required, require_role):
     @require_role(*vendas_gestao_roles)
     def frota_expedicao():
         empresa = _obter_empresa_config()
+        veiculo_edicao = _obter_veiculo_frota(empresa, request.args.get('veiculo_id', type=int))
         if request.method == 'POST':
+            acao = (request.form.get('acao') or 'salvar_configuracao').strip().lower()
             try:
-                empresa.entrega_local_saida_padrao = (request.form.get('entrega_local_saida_padrao') or '').strip() or None
-                empresa.entrega_motorista_padrao = (request.form.get('entrega_motorista_padrao') or '').strip() or None
-                empresa.entrega_veiculo_padrao = (request.form.get('entrega_veiculo_padrao') or '').strip() or None
-                horario_fechamento_roteirizacao = _parse_horario_hhmm(request.form.get('entrega_horario_fechamento_roteirizacao'))
-                horario_fechamento_roteirizacao_txt = (request.form.get('entrega_horario_fechamento_roteirizacao') or '').strip()
-                if horario_fechamento_roteirizacao_txt and not horario_fechamento_roteirizacao:
-                    flash('Horario de fechamento da roteirizacao invalido. Use HH:MM.', 'error')
-                    return redirect(url_for('frota_expedicao'))
-                empresa.entrega_horario_fechamento_roteirizacao = (
-                    horario_fechamento_roteirizacao.strftime('%H:%M')
-                    if horario_fechamento_roteirizacao
-                    else None
-                )
+                with atomic_transaction(db.session):
+                    if acao == 'salvar_configuracao':
+                        empresa.entrega_local_saida_padrao = (request.form.get('entrega_local_saida_padrao') or '').strip() or None
+                        empresa.entrega_motorista_padrao = (request.form.get('entrega_motorista_padrao') or '').strip() or None
+                        empresa.entrega_veiculo_padrao = (request.form.get('entrega_veiculo_padrao') or '').strip() or None
+                        horario_fechamento_roteirizacao = _parse_horario_hhmm(request.form.get('entrega_horario_fechamento_roteirizacao'))
+                        horario_fechamento_roteirizacao_txt = (request.form.get('entrega_horario_fechamento_roteirizacao') or '').strip()
+                        if horario_fechamento_roteirizacao_txt and not horario_fechamento_roteirizacao:
+                            raise ValidationError('Horario de fechamento da roteirizacao invalido. Use HH:MM.')
+                        empresa.entrega_horario_fechamento_roteirizacao = (
+                            horario_fechamento_roteirizacao.strftime('%H:%M')
+                            if horario_fechamento_roteirizacao
+                            else None
+                        )
+                        terceirizadas_linhas = _normalizar_linhas_configuracao(request.form.get('entrega_terceirizadas_cadastro', ''))
+                        empresa.entrega_terceirizadas_json = json.dumps(terceirizadas_linhas, ensure_ascii=False) if terceirizadas_linhas else None
+                        _sincronizar_frota_legada(empresa)
+                        mensagem = 'Configuracao operacional da frota atualizada com sucesso.'
+                    elif acao == 'salvar_veiculo':
+                        if not _frota_relacional_disponivel():
+                            raise BusinessRuleError('A tabela de frota ainda nao esta disponivel. Execute a migration antes de cadastrar veiculos.')
+                        veiculo_id = request.form.get('veiculo_id', type=int)
+                        veiculo = _obter_veiculo_frota(empresa, veiculo_id) if veiculo_id else None
+                        if veiculo is None:
+                            veiculo = FrotaVeiculo(empresa_id=empresa.id)
+                            db.session.add(veiculo)
+                        nome = (request.form.get('nome') or '').strip()
+                        if not nome:
+                            raise ValidationError('Informe o nome do veiculo.')
+                        tipo = (request.form.get('tipo') or FrotaVeiculo.TIPO_CARRO).strip().lower()
+                        if tipo not in FrotaVeiculo.TIPOS_VALIDOS:
+                            raise ValidationError('Tipo de veiculo invalido. Use moto, carro, caminhao ou utilitario.')
 
-                veiculos_linhas = _normalizar_veiculos_texto(request.form.get('entrega_veiculos_cadastro', ''))
-                terceirizadas_linhas = _normalizar_linhas_configuracao(request.form.get('entrega_terceirizadas_cadastro', ''))
-
-                empresa.entrega_veiculos_json = json.dumps(veiculos_linhas, ensure_ascii=False) if veiculos_linhas else None
-                empresa.entrega_terceirizadas_json = json.dumps(terceirizadas_linhas, ensure_ascii=False) if terceirizadas_linhas else None
+                        veiculo.nome = nome
+                        veiculo.placa = (request.form.get('placa') or '').strip().upper() or None
+                        veiculo.tipo = tipo
+                        veiculo.capacidade_kg = _to_float(request.form.get('capacidade_kg'), None)
+                        veiculo.capacidade_volume = _to_float(request.form.get('capacidade_volume'), None)
+                        veiculo.motorista_padrao = (request.form.get('motorista_padrao') or '').strip() or None
+                        veiculo.tipo_entrega = (request.form.get('tipo_entrega') or 'todos').strip().lower() or 'todos'
+                        veiculo.capacidade_pedidos = max(int(_to_int(request.form.get('capacidade_pedidos'), 0) or 0), 0)
+                        veiculo.empresa_terceirizada = (request.form.get('empresa_terceirizada') or '').strip() or None
+                        veiculo.ativo = request.form.get('ativo') == 'on'
+                        if not empresa.entrega_veiculo_padrao and veiculo.ativo:
+                            empresa.entrega_veiculo_padrao = veiculo.nome
+                        _sincronizar_frota_legada(empresa)
+                        mensagem = f'Veiculo "{veiculo.nome}" salvo com sucesso.'
+                    elif acao == 'excluir_veiculo':
+                        if not _frota_relacional_disponivel():
+                            raise BusinessRuleError('A tabela de frota ainda nao esta disponivel. Execute a migration antes de excluir veiculos.')
+                        veiculo = _obter_veiculo_frota(empresa, request.form.get('veiculo_id', type=int))
+                        if not veiculo:
+                            raise ValidationError('Veiculo nao encontrado para exclusao.')
+                        nome_veiculo = veiculo.nome
+                        db.session.delete(veiculo)
+                        _sincronizar_frota_legada(empresa)
+                        mensagem = f'Veiculo "{nome_veiculo}" removido com sucesso.'
+                    else:
+                        raise ValidationError('Acao de frota invalida.')
                 db.session.commit()
-                flash('Cadastro de frota e terceiros atualizado com sucesso.', 'success')
+                flash(mensagem, 'success')
+            except AppError as e:
+                db.session.rollback()
+                flash(str(e), 'error')
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao atualizar cadastro de frota: {str(e)}', 'error')
             return redirect(url_for('frota_expedicao'))
 
-        veiculos_texto = _serializar_veiculos_config_texto(_carregar_veiculos_config(empresa.entrega_veiculos_json))
         terceirizadas_texto = '\n'.join(_carregar_lista_config(empresa.entrega_terceirizadas_json))
         return render_template(
             'expedicao/frota.html',
             empresa=empresa,
-            veiculos_texto=veiculos_texto,
+            veiculos_frota=_carregar_veiculos_config(empresa),
+            veiculo_em_edicao=veiculo_edicao,
             terceirizadas_texto=terceirizadas_texto,
         )
 
@@ -18359,10 +24748,20 @@ def register_vendas_routes(app, login_required, require_role):
                     Pedido.saiu_para_entrega_em,
                     Pedido.entrega_concluida_em,
                 ),
-                selectinload(Pedido.mesa),
-                selectinload(Pedido.caixa),
-                selectinload(Pedido.garcom),
-                selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+                selectinload(Pedido.mesa).load_only(Mesa.id, Mesa.numero, Mesa.status),
+                selectinload(Pedido.caixa).load_only(Caixa.id, Caixa.nome),
+                selectinload(Pedido.garcom).load_only(Garcom.id, Garcom.nome, Garcom.ativo),
+                selectinload(Pedido.itens).load_only(
+                    ItemPedido.id,
+                    ItemPedido.pedido_id,
+                    ItemPedido.produto_id,
+                    ItemPedido.quantidade,
+                    ItemPedido.preco_unitario,
+                ).selectinload(ItemPedido.produto).load_only(
+                    Produto.id,
+                    Produto.nome,
+                    Produto.codigo,
+                ),
             )
             .order_by(Pedido.criado_em.desc())
             .paginate(page=page, per_page=per_page, error_out=False)
@@ -18402,9 +24801,33 @@ def register_vendas_routes(app, login_required, require_role):
         pendente = (request.args.get('pendente') or '1').strip().lower()
 
         query = Pedido.query.options(
-            selectinload(Pedido.caixa),
-            selectinload(Pedido.mesa),
-            selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+            load_only(
+                Pedido.id,
+                Pedido.caixa_id,
+                Pedido.mesa_id,
+                Pedido.cliente_nome,
+                Pedido.cliente_celular,
+                Pedido.status,
+                Pedido.origem,
+                Pedido.total,
+                Pedido.criado_em,
+                Pedido.separacao_entrega_concluida,
+                Pedido.separacao_entrega_em,
+                Pedido.etiqueta_entrega_emitida_em,
+                Pedido.rota_entrega,
+                Pedido.motorista_nome,
+                Pedido.saiu_para_entrega_em,
+                Pedido.entrega_concluida_em,
+            ),
+            selectinload(Pedido.caixa).load_only(Caixa.id, Caixa.nome),
+            selectinload(Pedido.mesa).load_only(Mesa.id, Mesa.numero),
+            selectinload(Pedido.itens).load_only(
+                ItemPedido.id,
+                ItemPedido.pedido_id,
+                ItemPedido.produto_id,
+                ItemPedido.quantidade,
+                ItemPedido.preco_unitario,
+            ).selectinload(ItemPedido.produto).load_only(Produto.id, Produto.nome, Produto.codigo),
         ).filter(
             Pedido.status.in_(DELIVERY_SEPARATION_STATUSES),
             Pedido.origem.in_(_origens_separacao_entrega(empresa)),
@@ -18431,7 +24854,7 @@ def register_vendas_routes(app, login_required, require_role):
             )
 
         pagination = query.order_by(Pedido.criado_em.desc()).paginate(page=page, per_page=per_page, error_out=False)
-        veiculos_cadastrados = _carregar_lista_config(empresa.entrega_veiculos_json)
+        veiculos_cadastrados = _opcoes_veiculos_cadastrados(empresa)
         terceirizadas_cadastradas = _carregar_lista_config(empresa.entrega_terceirizadas_json)
         return render_template(
             'vendas/pedidos/separacao_entrega.html',
@@ -18554,6 +24977,27 @@ def register_vendas_routes(app, login_required, require_role):
         data['iniciado_em'] = session.get('expedicao_iniciada_em')
         return jsonify({'success': True, 'data': data})
 
+    @app.route('/api/expedicao/analytics')
+    @require_role(*vendas_operacao_roles)
+    def analytics_expedicao_api():
+        empresa = _obter_empresa_config()
+        if not _separacao_entrega_ativa(empresa):
+            return jsonify({'success': False, 'message': 'Separacao de entrega desativada.'}), 409
+        cache = extensions.cache
+        cache_key = f'analytics:expedicao:{datetime.utcnow().strftime("%Y%m%d")}'
+        if cache is not None:
+            cached_payload = cache.get(cache_key)
+            if cached_payload is not None:
+                return jsonify(cached_payload)
+        payload = {
+            'success': True,
+            'message': 'Analytics de expedicao carregado com sucesso.',
+            'data': _coletar_dashboard_expedicao(empresa),
+        }
+        if cache is not None:
+            cache.set(cache_key, payload, timeout=60)
+        return jsonify(payload)
+
     @app.route('/pedidos/roteirizacao-entrega')
     @require_role(*separacao_entrega_roles)
     def listar_roteirizacao_entrega():
@@ -18607,7 +25051,7 @@ def register_vendas_routes(app, login_required, require_role):
         )
         rotas_disponiveis = [r[0] for r in rotas_disponiveis if r and r[0]]
         regras_roteirizacao = _carregar_regras_roteirizacao(empresa)
-        veiculos_configurados = _carregar_veiculos_config(empresa.entrega_veiculos_json)
+        veiculos_configurados = _carregar_veiculos_config(empresa)
         resumo_roteirizacao = {
             'total_pedidos': len(pedidos),
             'aguardando': 0,
@@ -18675,7 +25119,7 @@ def register_vendas_routes(app, login_required, require_role):
                     else:
                         flash('Nenhum pedido disponivel para roteirizacao automatica.', 'warning')
                     return redirect(url_for('listar_roteirizacao_entrega'))
-                veiculos = _carregar_veiculos_config(empresa.entrega_veiculos_json)
+                veiculos = _carregar_veiculos_config(empresa)
                 total_alocados = _distribuir_pedidos_automaticamente(
                     pedidos_disponiveis,
                     veiculos,
@@ -18729,19 +25173,36 @@ def register_vendas_routes(app, login_required, require_role):
         acao = (request.form.get('acao') or '').strip().lower()
         try:
             if acao == 'sair':
-                pedido.saiu_para_entrega_em = datetime.utcnow()
                 if not pedido.motorista_nome:
                     pedido.motorista_nome = empresa.entrega_motorista_padrao
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.EM_ROTA,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Despacho de saida para entrega.',
+                )
                 flash(f'Pedido #{pedido.id} marcado como saiu para entrega.', 'success')
             elif acao == 'entregar':
-                if not pedido.saiu_para_entrega_em:
-                    pedido.saiu_para_entrega_em = datetime.utcnow()
-                pedido.entrega_concluida_em = datetime.utcnow()
-                pedido.transitar_para(Pedido.STATUS_ENTREGUE)
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.ENTREGUE,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Entrega confirmada na expedicao.',
+                )
                 flash(f'Pedido #{pedido.id} marcado como entregue.', 'success')
             elif acao == 'reabrir':
-                pedido.entrega_concluida_em = None
-                pedido.saiu_para_entrega_em = None
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.SEPARADO,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Reabertura do despacho para nova expedicao.',
+                )
                 flash(f'Pedido #{pedido.id} retornou para aguardando despacho.', 'success')
             else:
                 flash('Acao de despacho invalida.', 'warning')
@@ -18763,61 +25224,90 @@ def register_vendas_routes(app, login_required, require_role):
             flash('Separacao para entrega esta desativada na configuracao da empresa.', 'warning')
             return redirect(request.referrer or url_for('listar_pedidos'))
 
-        pedido = Pedido.query.get_or_404(pedido_id)
+        pedido = Pedido.query.options(
+            selectinload(Pedido.itens).selectinload(ItemPedido.produto).selectinload(Produto.endereco),
+        ).get_or_404(pedido_id)
         if pedido.origem not in _origens_separacao_entrega(empresa):
             flash('Pedido fora da fila configurada para separacao de entrega.', 'warning')
             return redirect(request.referrer or url_for('listar_separacao_entrega'))
 
         acao = (request.form.get('acao') or 'concluir').strip().lower()
+        actor = _funcionario_logado_vendas()
         try:
-            if acao == 'reabrir':
-                pedido.marcar_separacao_entrega(False)
-                mensagem = f'Pedido #{pedido.id} retornou para fila de separacao.'
-            else:
-                rota_entrega = (request.form.get('rota_entrega') or '').strip() or None
-                ordem_rota = _to_int(request.form.get('ordem_rota'), None)
-                local_saida = (request.form.get('local_saida') or '').strip() or None
-                veiculo_tipo = (request.form.get('veiculo_tipo') or '').strip() or None
-                veiculo_placa = (request.form.get('veiculo_placa') or '').strip().upper() or None
-                veiculo_cadastrado = (request.form.get('veiculo_cadastrado') or '').strip()
-                motorista_nome = (request.form.get('motorista_nome') or '').strip() or None
-                empresa_terceirizada = (request.form.get('empresa_terceirizada') or '').strip() or None
-                nota_fiscal_numero = (request.form.get('nota_fiscal_numero') or '').strip() or None
-                nota_fiscal_chave = (request.form.get('nota_fiscal_chave') or '').strip() or None
-                emitir_nota = (request.form.get('emitir_nota') == 'on')
+            with atomic_transaction(db.session):
+                if acao == 'reabrir':
+                    transition_expedicao_status(
+                        pedido,
+                        ExpedicaoStatus.PENDENTE_SEPARACAO,
+                        actor=actor,
+                        enabled=_separacao_entrega_ativa(empresa),
+                        allowed_origins=_origens_separacao_entrega(empresa),
+                        detalhes='Reabertura da separacao de entrega.',
+                    )
+                    mensagem = f'Pedido #{pedido.id} retornou para fila de separacao.'
+                else:
+                    _validar_pedido_para_separacao(pedido, actor)
+                    rota_entrega = (request.form.get('rota_entrega') or '').strip() or None
+                    ordem_rota = _to_int(request.form.get('ordem_rota'), None)
+                    local_saida = (request.form.get('local_saida') or '').strip() or None
+                    veiculo_tipo = (request.form.get('veiculo_tipo') or '').strip() or None
+                    veiculo_placa = (request.form.get('veiculo_placa') or '').strip().upper() or None
+                    motorista_nome = (request.form.get('motorista_nome') or '').strip() or None
+                    empresa_terceirizada = (request.form.get('empresa_terceirizada') or '').strip() or None
+                    nota_fiscal_numero = (request.form.get('nota_fiscal_numero') or '').strip() or None
+                    nota_fiscal_chave = (request.form.get('nota_fiscal_chave') or '').strip() or None
+                    emitir_nota = (request.form.get('emitir_nota') == 'on')
 
-                if veiculo_cadastrado:
-                    nome_veiculo_cfg, placa_veiculo_cfg = _parse_veiculo_cadastrado(veiculo_cadastrado)
-                    if nome_veiculo_cfg:
-                        veiculo_tipo = nome_veiculo_cfg
-                    if placa_veiculo_cfg and not veiculo_placa:
-                        veiculo_placa = placa_veiculo_cfg
+                    veiculo_cadastrado = _obter_veiculo_frota(empresa, request.form.get('veiculo_cadastrado_id', type=int))
+                    if veiculo_cadastrado:
+                        veiculo_tipo = veiculo_cadastrado.nome or veiculo_tipo
+                        veiculo_placa = veiculo_placa or veiculo_cadastrado.placa
+                        motorista_nome = motorista_nome or veiculo_cadastrado.motorista_padrao
+                        empresa_terceirizada = empresa_terceirizada or veiculo_cadastrado.empresa_terceirizada
+                    else:
+                        veiculo_cadastrado_legacy = (request.form.get('veiculo_cadastrado') or '').strip()
+                        if veiculo_cadastrado_legacy:
+                            nome_veiculo_cfg, placa_veiculo_cfg = _parse_veiculo_cadastrado(veiculo_cadastrado_legacy)
+                            if nome_veiculo_cfg:
+                                veiculo_tipo = nome_veiculo_cfg
+                            if placa_veiculo_cfg and not veiculo_placa:
+                                veiculo_placa = placa_veiculo_cfg
 
-                pedido.rota_entrega = rota_entrega
-                pedido.ordem_rota = ordem_rota
-                pedido.local_saida = local_saida or empresa.entrega_local_saida_padrao
-                pedido.veiculo_tipo = veiculo_tipo or empresa.entrega_veiculo_padrao
-                pedido.veiculo_placa = veiculo_placa
-                pedido.motorista_nome = motorista_nome or empresa.entrega_motorista_padrao
-                pedido.empresa_terceirizada = empresa_terceirizada
-                pedido.nota_fiscal_numero = nota_fiscal_numero
-                pedido.nota_fiscal_chave = nota_fiscal_chave
-                if emitir_nota and empresa.emissao_nota_entrega_ativa is not False:
-                    pedido.nota_fiscal_emitida_em = datetime.utcnow()
-
-                pedido.marcar_separacao_entrega(True)
-                mensagem = f'Pedido #{pedido.id} marcado como separado.'
-                corte_roteirizacao = _config_corte_roteirizacao(empresa)
-                referencia_roteirizacao = _referencia_pedido_roteirizacao(pedido)
-                if (
-                    corte_roteirizacao['ativo']
-                    and referencia_roteirizacao
-                    and referencia_roteirizacao > corte_roteirizacao['corte_do_dia']
-                ):
-                    mensagem += f' Ficara disponivel para o proximo ciclo de roteirizacao apos o corte das {corte_roteirizacao["horario"]}.'
+                    transition_expedicao_status(
+                        pedido,
+                        ExpedicaoStatus.SEPARADO,
+                        actor=actor,
+                        enabled=_separacao_entrega_ativa(empresa),
+                        allowed_origins=_origens_separacao_entrega(empresa),
+                        detalhes='Separacao de entrega concluida.',
+                        metadata={
+                            'rota_entrega': rota_entrega,
+                            'ordem_rota': ordem_rota,
+                            'local_saida': local_saida or empresa.entrega_local_saida_padrao,
+                            'veiculo_tipo': veiculo_tipo or empresa.entrega_veiculo_padrao,
+                            'veiculo_placa': veiculo_placa,
+                            'motorista_nome': motorista_nome or empresa.entrega_motorista_padrao,
+                            'empresa_terceirizada': empresa_terceirizada,
+                            'nota_fiscal_numero': nota_fiscal_numero,
+                            'nota_fiscal_chave': nota_fiscal_chave,
+                            'nota_fiscal_emitida': bool(emitir_nota and empresa.emissao_nota_entrega_ativa is not False),
+                        },
+                    )
+                    mensagem = f'Pedido #{pedido.id} marcado como separado.'
+                    corte_roteirizacao = _config_corte_roteirizacao(empresa)
+                    referencia_roteirizacao = _referencia_pedido_roteirizacao(pedido)
+                    if (
+                        corte_roteirizacao['ativo']
+                        and referencia_roteirizacao
+                        and referencia_roteirizacao > corte_roteirizacao['corte_do_dia']
+                    ):
+                        mensagem += f' Ficara disponivel para o proximo ciclo de roteirizacao apos o corte das {corte_roteirizacao["horario"]}.'
             db.session.commit()
             _publicar_evento_expedicao(pedido, f'separacao_{acao}')
             flash(mensagem, 'success')
+        except AppError as e:
+            db.session.rollback()
+            flash(str(e), 'error')
         except Exception as e:
             db.session.rollback()
             flash(f'Erro ao atualizar separacao de entrega: {str(e)}', 'error')
@@ -18853,6 +25343,60 @@ def register_vendas_routes(app, login_required, require_role):
             empresa=empresa,
         )
 
+    @app.route('/pedidos/etiquetas-entrega/lote')
+    @require_role(*separacao_entrega_roles)
+    def imprimir_etiquetas_entrega_lote():
+        empresa = _obter_empresa_config()
+        if not _emissao_etiqueta_entrega_ativa(empresa):
+            flash('Emissao de etiquetas de entrega esta desativada na configuracao da empresa.', 'warning')
+            return redirect(request.referrer or url_for('listar_pedidos'))
+
+        ids_brutos = (request.args.get('ids') or '').strip()
+        ids = []
+        for valor in ids_brutos.split(','):
+            valor = valor.strip()
+            if not valor or not valor.isdigit():
+                continue
+            pedido_id = int(valor)
+            if pedido_id not in ids:
+                ids.append(pedido_id)
+
+        if not ids:
+            flash('Nenhum pedido valido foi informado para impressao das etiquetas.', 'warning')
+            return redirect(request.referrer or url_for('listar_separacao_entrega'))
+
+        pedidos_base = Pedido.query.options(
+            selectinload(Pedido.caixa),
+            selectinload(Pedido.mesa),
+            selectinload(Pedido.itens).selectinload(ItemPedido.produto),
+        ).filter(
+            Pedido.id.in_(ids),
+            Pedido.origem.in_(_origens_separacao_entrega(empresa)),
+            Pedido.status.in_(DELIVERY_SEPARATION_STATUSES),
+        ).all()
+
+        pedidos_por_id = {pedido.id: pedido for pedido in pedidos_base}
+        pedidos = [pedidos_por_id[pedido_id] for pedido_id in ids if pedido_id in pedidos_por_id]
+
+        if not pedidos:
+            flash('Nenhum pedido da fila de separacao foi encontrado para impressao.', 'warning')
+            return redirect(request.referrer or url_for('listar_separacao_entrega'))
+
+        try:
+            for pedido in pedidos:
+                pedido.marcar_etiqueta_entrega_emitida()
+            db.session.commit()
+            for pedido in pedidos:
+                _publicar_evento_expedicao(pedido, 'etiqueta_emitida_lote')
+        except Exception:
+            db.session.rollback()
+
+        return render_template(
+            'vendas/pedidos/etiquetas_entrega_lote.html',
+            pedidos=pedidos,
+            empresa=empresa,
+        )
+
     @app.route('/pedidos/pendentes')
     @require_role(*vendas_operacao_roles)
     def listar_pedidos_pendentes():
@@ -18878,7 +25422,16 @@ def register_vendas_routes(app, login_required, require_role):
 
         pedido = Pedido.query.get_or_404(pedido_id)
         try:
-            _aplicar_transicao_status(pedido, novo_status)
+            detalhes = None
+            if novo_status == Pedido.STATUS_CANCELADO:
+                detalhes = require_cancel_reason(request.form.get('motivo_cancelamento'), entity_label='pedido')
+            _aplicar_transicao_status(
+                pedido,
+                novo_status,
+                actor=_funcionario_logado_vendas(),
+                detalhes=detalhes,
+                require_delivery_separation=_pedido_na_fila_entrega(pedido, _obter_empresa_config()),
+            )
             db.session.commit()
             status_label = 'venda concluida' if novo_status == 'fechado' else novo_status
             flash(f'Pedido {pedido.id} atualizado para {status_label}.', 'success')
@@ -18891,7 +25444,7 @@ def register_vendas_routes(app, login_required, require_role):
     @app.route('/pedidos/novo', methods=['GET', 'POST'])
     @require_role(*vendas_operacao_roles)
     def novo_pedido():
-        produtos = Produto.query.filter_by(ativo=True).all()
+        produtos = Produto.query.filter(Produto.ativo.is_(True), Produto.filtro_nao_vencidos()).all()
         atendimento_mesas_ativo = _atendimento_mesas_ativo()
         mesas = Mesa.query.all() if atendimento_mesas_ativo else []
         caixas = Caixa.query.filter_by(aberto=True).all()
@@ -18903,51 +25456,26 @@ def register_vendas_routes(app, login_required, require_role):
                 caixa_id = request.form.get('caixa_id', type=int) or None
                 observacoes = request.form.get('observacoes')
 
-                if caixa_id:
-                    caixa = Caixa.query.get(caixa_id)
-                    if not caixa or not caixa.aberto:
-                        flash('Caixa invalida ou fechada.', 'danger')
-                        return redirect(url_for('novo_pedido'))
+                caixa = Caixa.query.get(caixa_id) if caixa_id else None
+                mesa = Mesa.query.get(mesa_id) if atendimento_mesas_ativo and mesa_id else None
+                itens_payload = [
+                    {
+                        'produto_id': request.form.get(f'produto_{i}'),
+                        'quantidade': request.form.get(f'quantidade_{i}', 1),
+                    }
+                    for i in range(int(request.form.get('item_count', 0)))
+                ]
 
-                pedido = Pedido(
-                    mesa_id=mesa_id,
-                    caixa_id=caixa_id,
-                    garcom_id=_garcom_logado_id() if atendimento_mesas_ativo else None,
-                    observacoes=observacoes,
-                    status='aberto',
-                    estoque_processado=False,
-                    financeiro_processado=False
+                pedido = service_create_order(
+                    caixa=caixa,
+                    itens_payload=itens_payload,
+                    mesa=mesa,
+                    garcom_id=_garcom_logado_id(),
+                    atendimento_mesas_ativo=atendimento_mesas_ativo,
+                    normalizar_item_payload=_normalizar_item_payload,
+                    actor=_funcionario_logado_vendas(),
                 )
-                db.session.add(pedido)
-                db.session.flush()
-
-                itens_validos = 0
-                for i in range(int(request.form.get('item_count', 0))):
-                    pid = request.form.get(f'produto_{i}')
-                    qty = request.form.get(f'quantidade_{i}', 1)
-                    if not pid:
-                        continue
-                    normalizado, erro = _normalizar_item_payload({'produto_id': pid, 'quantidade': qty})
-                    if erro:
-                        continue
-
-                    produto = normalizado['produto']
-                    quantidade = normalizado['quantidade']
-                    ip = ItemPedido(
-                        pedido_id=pedido.id,
-                        produto_id=produto.id,
-                        quantidade=quantidade,
-                        preco_unitario=produto.preco_venda
-                    )
-                    db.session.add(ip)
-                    itens_validos += 1
-
-                if itens_validos == 0:
-                    raise ValueError('Adicione ao menos um item valido ao pedido.')
-
-                _recalcular_total_pedido(pedido)
-                if atendimento_mesas_ativo and pedido.mesa:
-                    pedido.mesa.status = 'ocupada'
+                pedido.observacoes = observacoes
                 db.session.commit()
                 flash('Pedido criado com sucesso!', 'success')
                 return redirect(url_for('listar_pedidos'))
@@ -18966,7 +25494,10 @@ def register_vendas_routes(app, login_required, require_role):
     @require_role(*vendas_operacao_roles)
     def editar_pedido(pedido_id):
         pedido = Pedido.query.get_or_404(pedido_id)
-        produtos = Produto.query.filter_by(ativo=True).all()
+        if _parse_status(pedido.status) in ORDER_IMMUTABLE_STATUSES and request.method == 'POST':
+            flash('Pedido finalizado/cancelado nao pode ser editado.', 'danger')
+            return redirect(url_for('listar_pedidos'))
+        produtos = Produto.query.filter(Produto.ativo.is_(True), Produto.filtro_nao_vencidos()).all()
         atendimento_mesas_ativo = _atendimento_mesas_ativo()
         mesas = Mesa.query.all() if atendimento_mesas_ativo else []
         caixas = Caixa.query.all()
@@ -18975,50 +25506,23 @@ def register_vendas_routes(app, login_required, require_role):
         metodos_pagamento_pdv_map = payment_methods_map(empresa.pagamentos_pdv_json, 'pdv')
         if request.method == 'POST':
             try:
+                actor = _funcionario_logado_vendas()
                 status_atual = _parse_status(pedido.status)
                 novo_status = _parse_status(request.form.get('status', pedido.status), default=status_atual)
-                if status_atual in ORDER_IMMUTABLE_STATUSES and novo_status != status_atual:
-                    raise ValueError(f'Pedido {status_atual} e imutavel.')
+                caixa_id = request.form.get('caixa_id', type=int) or None
+                caixa = Caixa.query.get(caixa_id) if caixa_id else None
+                if caixa_id and not caixa:
+                    raise ValueError('Caixa informada nao existe.')
+                mesa_id = request.form.get('mesa_id', type=int) or None
+                mesa = Mesa.query.get(mesa_id) if atendimento_mesas_ativo and mesa_id else None
 
-                pedido.mesa_id = request.form.get('mesa_id', type=int) or None
-                if not atendimento_mesas_ativo:
-                    pedido.mesa_id = None
-                    pedido.garcom_id = None
-                pedido.caixa_id = request.form.get('caixa_id', type=int) or None
-                pedido.observacoes = request.form.get('observacoes', pedido.observacoes)
-
-                if pedido.caixa_id:
-                    caixa = Caixa.query.get(pedido.caixa_id)
-                    if not caixa:
-                        raise ValueError('Caixa informada nao existe.')
-                    if novo_status == 'fechado' and not caixa.aberto:
-                        raise ValueError('Caixa informada esta fechada.')
-
-                if status_atual not in ORDER_IMMUTABLE_STATUSES:
-                    pedido.itens.clear()
-                    itens_validos = 0
-                    for i in range(int(request.form.get('item_count', 0))):
-                        pid = request.form.get(f'produto_{i}')
-                        qty = request.form.get(f'quantidade_{i}', 1)
-                        if not pid:
-                            continue
-                        normalizado, erro = _normalizar_item_payload({'produto_id': pid, 'quantidade': qty})
-                        if erro:
-                            continue
-                        produto = normalizado['produto']
-                        quantidade = normalizado['quantidade']
-                        ip = ItemPedido(
-                            pedido_id=pedido.id,
-                            produto_id=produto.id,
-                            quantidade=quantidade,
-                            preco_unitario=produto.preco_venda
-                        )
-                        db.session.add(ip)
-                        itens_validos += 1
-                    if itens_validos == 0:
-                        raise ValueError('Adicione ao menos um item valido no pedido.')
-
-                    _recalcular_total_pedido(pedido)
+                itens_payload = [
+                    {
+                        'produto_id': request.form.get(f'produto_{i}'),
+                        'quantidade': request.form.get(f'quantidade_{i}', 1),
+                    }
+                    for i in range(int(request.form.get('item_count', 0)))
+                ]
 
                 metodo = request.form.get('metodo_pagamento')
                 if metodo:
@@ -19039,7 +25543,52 @@ def register_vendas_routes(app, login_required, require_role):
                     pedido.metodo_pagamento = None
                     pedido.valor_pago = None
 
-                _aplicar_transicao_status(pedido, novo_status)
+                detalhes = None
+                if novo_status == Pedido.STATUS_CANCELADO:
+                    detalhes = require_cancel_reason(request.form.get('motivo_cancelamento'), entity_label='pedido')
+                if novo_status == Pedido.STATUS_FECHADO:
+                    service_update_order(
+                        pedido,
+                        novo_status=status_atual,
+                        caixa=caixa,
+                        mesa=mesa,
+                        atendimento_mesas_ativo=atendimento_mesas_ativo,
+                        observacoes=request.form.get('observacoes', pedido.observacoes),
+                        itens_payload=itens_payload,
+                        metodo_pagamento=pedido.metodo_pagamento,
+                        valor_pago=pedido.valor_pago,
+                        actor=actor,
+                        detalhes=detalhes,
+                        require_delivery_separation=_pedido_na_fila_entrega(pedido, empresa),
+                        normalizar_item_payload=_normalizar_item_payload,
+                        status_transition=_aplicar_transicao_status,
+                    )
+                    venda_service.processar_venda_rapida(
+                        pedido,
+                        metodo_pagamento=pedido.metodo_pagamento,
+                        valor_pago=pedido.valor_pago,
+                        desconto_total=request.form.get('desconto_total') or 0.0,
+                        incluir_contabilidade=(request.form.get('incluir_contabilidade') == 'on'),
+                        actor=actor,
+                        commit=False,
+                    )
+                else:
+                    service_update_order(
+                        pedido,
+                        novo_status=novo_status,
+                        caixa=caixa,
+                        mesa=mesa,
+                        atendimento_mesas_ativo=atendimento_mesas_ativo,
+                        observacoes=request.form.get('observacoes', pedido.observacoes),
+                        itens_payload=itens_payload,
+                        metodo_pagamento=pedido.metodo_pagamento,
+                        valor_pago=pedido.valor_pago,
+                        actor=actor,
+                        detalhes=detalhes,
+                        require_delivery_separation=_pedido_na_fila_entrega(pedido, empresa),
+                        normalizar_item_payload=_normalizar_item_payload,
+                        status_transition=_aplicar_transicao_status,
+                    )
                 db.session.commit()
                 flash('Pedido atualizado com sucesso!', 'success')
                 return redirect(url_for('listar_pedidos'))
@@ -19124,7 +25673,7 @@ def register_vendas_routes(app, login_required, require_role):
         """Interface de PDV (Ponto de Venda) para o operador de caixa"""
         atendimento_mesas_ativo = _atendimento_mesas_ativo()
         empresa = _obter_empresa_config()
-        produtos = Produto.query.filter_by(ativo=True).order_by(Produto.nome).all()
+        produtos = Produto.query.filter(Produto.ativo.is_(True), Produto.filtro_nao_vencidos()).order_by(Produto.nome).all()
         caixas_abertas = Caixa.query.filter_by(aberto=True).all()
         mesas = Mesa.query.all() if atendimento_mesas_ativo else []
         garcons = Garcom.query.filter_by(ativo=True).order_by(Garcom.nome.asc()).all() if atendimento_mesas_ativo else []
@@ -19157,48 +25706,17 @@ def register_vendas_routes(app, login_required, require_role):
                 return json_response(False, 'Caixa e produtos sao obrigatorios.', status=400, code='validation_error')
 
             caixa = Caixa.query.get(caixa_id)
-            if not caixa or not caixa.aberto:
-                return json_response(False, 'Caixa nao esta aberta.', status=409, code='business_rule')
-
-            pedido = Pedido(
-                mesa_id=mesa_id,
-                caixa_id=caixa_id,
-                garcom_id=_garcom_logado_id() if atendimento_mesas_ativo else None,
-                status='aberto',
-                estoque_processado=False,
-                financeiro_processado=False
+            mesa = Mesa.query.get(mesa_id) if atendimento_mesas_ativo and mesa_id else None
+            pedido = service_create_order(
+                caixa=caixa,
+                itens_payload=itens,
+                mesa=mesa,
+                garcom_id=_garcom_logado_id(),
+                atendimento_mesas_ativo=atendimento_mesas_ativo,
+                normalizar_item_payload=_normalizar_item_payload,
+                empty_items_message='Nenhum item valido para criar o pedido.',
+                actor=_funcionario_logado_vendas(),
             )
-            db.session.add(pedido)
-            db.session.flush()
-
-            itens_validos = 0
-            for item in itens:
-                normalizado, erro = _normalizar_item_payload(item)
-                if erro:
-                    continue
-
-                produto = normalizado['produto']
-                quantidade = normalizado['quantidade']
-                ip = ItemPedido(
-                    pedido_id=pedido.id,
-                    produto_id=produto.id,
-                    quantidade=quantidade,
-                    preco_unitario=produto.preco_venda
-                )
-                db.session.add(ip)
-                itens_validos += 1
-
-            if itens_validos == 0:
-                db.session.rollback()
-                return json_response(False, 'Nenhum item valido para criar o pedido.', status=400, code='validation_error')
-
-            _recalcular_total_pedido(pedido)
-
-            mesa = None
-            if atendimento_mesas_ativo and mesa_id:
-                mesa = Mesa.query.get(mesa_id)
-                if mesa:
-                    mesa.status = 'ocupada'
 
             db.session.commit()
             try:
@@ -19213,11 +25731,20 @@ def register_vendas_routes(app, login_required, require_role):
                 })
             except Exception:
                 pass
+            _publicar_metricas_dashboard_tempo_real()
 
             return json_response(
                 True,
                 f'Pedido #{pedido.id} criado com sucesso.',
                 data={'pedido_id': pedido.id, 'total': float(pedido.total or 0.0)}
+            )
+        except AppError as e:
+            db.session.rollback()
+            return json_response(
+                False,
+                str(e),
+                status=getattr(e, 'status_code', 400),
+                code=getattr(e, 'code', 'app_error'),
             )
         except Exception as e:
             db.session.rollback()
@@ -19228,7 +25755,7 @@ def register_vendas_routes(app, login_required, require_role):
     def finalizar_pedido_api(pedido_id):
         """API para finalizar pedido via AJAX."""
         try:
-            pedido = Pedido.query.get_or_404(pedido_id)
+            pedido = venda_service.carregar_pedido_pdv(pedido_id)
             if _parse_status(pedido.status) in ORDER_IMMUTABLE_STATUSES:
                 return json_response(False, f'Pedido ja esta {pedido.status}.', status=409, code='business_rule')
 
@@ -19245,21 +25772,24 @@ def register_vendas_routes(app, login_required, require_role):
                     split_raw=dados.get('split_pagamento'),
                     cliente_crediario=dados.get('cliente_crediario', '')
                 )
-                pedido.metodo_pagamento = metodo_texto
-                pedido.valor_pago = valor_pago
+            else:
+                metodo_texto = pedido.metodo_pagamento
+                valor_pago = pedido.valor_pago
 
-            _aplicar_transicao_status(pedido, 'fechado')
-            db.session.commit()
+            payload = venda_service.processar_venda_rapida(
+                pedido_id,
+                metodo_pagamento=metodo_texto,
+                valor_pago=valor_pago,
+                desconto_total=dados.get('desconto_total') or 0.0,
+                incluir_contabilidade=bool(dados.get('incluir_contabilidade')),
+                actor=_funcionario_logado_vendas(),
+            )
+            _publicar_metricas_dashboard_tempo_real()
 
             return json_response(
                 True,
                 'Pedido finalizado com sucesso.',
-                data={
-                    'pedido_id': pedido_id,
-                    'metodo_pagamento': pedido.metodo_pagamento,
-                    'valor_pago': pedido.valor_pago,
-                    'status': pedido.status
-                }
+                data=payload
             )
         except AppError as e:
             db.session.rollback()
@@ -19268,6 +25798,28 @@ def register_vendas_routes(app, login_required, require_role):
         except Exception as e:
             db.session.rollback()
             return json_response(False, str(e), status=500, code='internal_error')
+
+    @app.route('/api/pdv/produtos/buscar')
+    @require_role(*vendas_operacao_roles)
+    def buscar_produtos_pdv_api():
+        termo = (request.args.get('q') or '').strip()
+        if not termo:
+            return fail('Informe um termo de busca.', code='validation_error', status=400, fields={'q': 'obrigatorio'})
+
+        try:
+            produtos = venda_service.buscar_produtos_pdv(termo, limit=request.args.get('limit', type=int) or 12)
+            return ok(
+                {
+                    'query': termo,
+                    'items': produtos,
+                    'latency_target_ms': 100,
+                    'search_strategy': 'barcode_first_then_ranked_text',
+                },
+                message='Busca de produtos processada com sucesso.',
+                code='pdv_search_ok',
+            )
+        except AppError as e:
+            return fail(str(e), code=getattr(e, 'code', 'app_error'), status=getattr(e, 'status_code', 400))
 
     @app.route('/api/pedidos/aberto/<int:caixa_id>')
     @require_role(*vendas_operacao_roles)
@@ -19446,6 +25998,7 @@ def register_vendas_routes(app, login_required, require_role):
 
             _recalcular_total_pedido(pedido)
             db.session.commit()
+            _publicar_metricas_dashboard_tempo_real()
             return json_response(
                 True,
                 'Itens adicionados com sucesso.',
@@ -19501,8 +26054,8 @@ if __name__ == '__main__':
 
 
 ### Arquivo: `security.py`
-- Linhas: 110
-- Tamanho: 3.1 KB
+- Linhas: 116
+- Tamanho: 3.3 KB
 - Status: completo
 
 ```python
@@ -19517,12 +26070,17 @@ CSRF_HEADER_CANDIDATES = ('X-CSRF-Token', 'X-CSRFToken')
 SAFE_METHODS = {'GET', 'HEAD', 'OPTIONS', 'TRACE'}
 
 
-def json_response(success, message, *, status=200, data=None, code=None):
-    payload = {'success': bool(success), 'message': message}
+def json_response(success, message, *, status=200, data=None, code=None, fields=None, action=None):
+    payload = {
+        'success': bool(success),
+        'message': message,
+        'code': code or ('ok' if success else 'request_failed'),
+        'fields': fields or {},
+    }
     if data is not None:
         payload['data'] = data
-    if code:
-        payload['code'] = code
+    if action:
+        payload['action'] = action
     return jsonify(payload), status
 
 
@@ -19588,6 +26146,7 @@ def csrf_protect_request(*, exempt_endpoints: Optional[Iterable[str]] = None):
     if endpoint.startswith('static'):
         return None
 
+    # Rotas publicas sensiveis como login/registro nao devem ser isentas por padrao.
     if exempt_endpoints and endpoint in set(exempt_endpoints):
         return None
 

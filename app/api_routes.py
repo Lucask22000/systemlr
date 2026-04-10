@@ -1,6 +1,7 @@
-from flask import Response, jsonify, render_template, request
+from flask import Response, render_template, request
 
 from models import AssistenteLocalFeedback, db
+from app.user_messages import resolve_action
 from security import json_response
 
 
@@ -26,15 +27,16 @@ def register_routes(app, context):
             default_days=7
         )
         analytics = coletar_dashboard_analytics(inicio_periodo, fim_periodo)
-        return jsonify({
-            'success': True,
-            'message': 'Analytics carregado com sucesso.',
-            'data': {
+        return json_response(
+            True,
+            'Analytics carregado com sucesso.',
+            code='analytics_loaded',
+            data={
                 'data_inicial': data_inicial_str,
                 'data_final': data_final_str,
                 **analytics
-            }
-        })
+            },
+        )
 
     @app.route('/api/docs')
     @login_required
@@ -47,8 +49,14 @@ def register_routes(app, context):
     def assistente_local_status():
         assistant = local_ai_assistant()
         if not app.config.get('LOCAL_AI_ENABLED') or not assistant:
-            return json_response(False, 'Assistente local desativado.', status=503, code='assistant_disabled')
-        return json_response(True, 'Status do assistente local.', data=assistant.status())
+            return json_response(
+                False,
+                'Assistente local desativado.',
+                status=503,
+                code='assistant_disabled',
+                action=resolve_action(code='assistant_disabled', status_code=503),
+            )
+        return json_response(True, 'Status do assistente local.', code='assistant_status_loaded', data=assistant.status())
 
     @app.route('/api/assistente-local/perguntar', methods=['POST'])
     @login_required
@@ -56,14 +64,34 @@ def register_routes(app, context):
     def assistente_local_perguntar():
         assistant = local_ai_assistant()
         if not app.config.get('LOCAL_AI_ENABLED') or not assistant:
-            return json_response(False, 'Assistente local desativado.', status=503, code='assistant_disabled')
+            return json_response(
+                False,
+                'Assistente local desativado.',
+                status=503,
+                code='assistant_disabled',
+                action=resolve_action(code='assistant_disabled', status_code=503),
+            )
 
         payload = request.get_json(silent=True) or {}
         pergunta = (payload.get('pergunta') or '').strip()
         if not pergunta:
-            return json_response(False, 'Informe uma pergunta para o assistente local.', status=400, code='assistant_question_required')
+            return json_response(
+                False,
+                'Pergunta obrigatoria.',
+                status=400,
+                code='assistant_question_required',
+                fields={'pergunta': 'Informe uma pergunta com ate 500 caracteres.'},
+                action=resolve_action(code='assistant_question_required', status_code=400),
+            )
         if len(pergunta) > 500:
-            return json_response(False, 'Pergunta muito longa. Resuma em ate 500 caracteres.', status=400, code='assistant_question_too_long')
+            return json_response(
+                False,
+                'Pergunta invalida.',
+                status=400,
+                code='assistant_question_too_long',
+                fields={'pergunta': 'Use no maximo 500 caracteres.'},
+                action=resolve_action(code='assistant_question_too_long', status_code=400),
+            )
 
         endpoint_atual = str(payload.get('endpoint_atual') or '').strip()
         endpoint_resolvido = endpoint_atual.split('.')[-1] if endpoint_atual else ''
@@ -78,7 +106,7 @@ def register_routes(app, context):
             conversation_history=historico,
             feedback_items=carregar_feedbacks(pagina_atual=pagina_atual),
         )
-        return json_response(True, 'Resposta do assistente local gerada com sucesso.', data=resposta)
+        return json_response(True, 'Resposta do assistente local gerada com sucesso.', code='assistant_answer_generated', data=resposta)
 
     @app.route('/api/assistente-local/feedback', methods=['POST'])
     @login_required
@@ -86,22 +114,48 @@ def register_routes(app, context):
     def assistente_local_feedback():
         assistant = local_ai_assistant()
         if not app.config.get('LOCAL_AI_ENABLED') or not assistant:
-            return json_response(False, 'Assistente local desativado.', status=503, code='assistant_disabled')
+            return json_response(
+                False,
+                'Assistente local desativado.',
+                status=503,
+                code='assistant_disabled',
+                action=resolve_action(code='assistant_disabled', status_code=503),
+            )
 
         payload = request.get_json(silent=True) or {}
         response_id = (payload.get('response_id') or '').strip()
         vote = normalizar_voto(payload.get('vote'))
         if not response_id:
-            return json_response(False, 'Informe a resposta avaliada.', status=400, code='assistant_feedback_response_required')
+            return json_response(
+                False,
+                'Resposta avaliada obrigatoria.',
+                status=400,
+                code='assistant_feedback_response_required',
+                fields={'response_id': 'Informe a resposta que voce deseja avaliar.'},
+                action=resolve_action(code='assistant_feedback_response_required', status_code=400),
+            )
         if not vote:
-            return json_response(False, 'Informe like ou dislike para registrar o feedback.', status=400, code='assistant_feedback_vote_required')
+            return json_response(
+                False,
+                'Voto obrigatorio.',
+                status=400,
+                code='assistant_feedback_vote_required',
+                fields={'vote': 'Escolha like ou dislike para continuar.'},
+                action=resolve_action(code='assistant_feedback_vote_required', status_code=400),
+            )
 
         endpoint_atual = str(payload.get('endpoint_atual') or '').strip()
         endpoint_resolvido = endpoint_atual.split('.')[-1] if endpoint_atual else ''
         pagina_atual = endpoint_to_pagina.get(endpoint_resolvido)
         funcionario = get_funcionario_logado()
         if not funcionario:
-            return json_response(False, 'Voce precisa fazer login.', status=401, code='auth_required')
+            return json_response(
+                False,
+                'Login obrigatorio.',
+                status=401,
+                code='auth_required',
+                action=resolve_action(code='auth_required', status_code=401),
+            )
 
         matched_doc_ids = []
         for item in payload.get('matched_doc_ids') or []:
@@ -135,9 +189,15 @@ def register_routes(app, context):
             db.session.commit()
         except Exception:
             db.session.rollback()
-            return json_response(False, 'Nao foi possivel salvar o feedback agora.', status=500, code='assistant_feedback_save_failed')
+            return json_response(
+                False,
+                'Nao foi possivel salvar o feedback agora.',
+                status=500,
+                code='assistant_feedback_save_failed',
+                action=resolve_action(code='assistant_feedback_save_failed', status_code=500),
+            )
 
-        return json_response(True, 'Feedback da assistente registrado com sucesso.', data={
+        return json_response(True, 'Feedback da assistente registrado com sucesso.', code='assistant_feedback_saved', data={
             'vote': registro.vote,
             'response_id': registro.response_id,
         })

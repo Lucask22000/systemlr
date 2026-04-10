@@ -1,7 +1,11 @@
+from flask import current_app
+from sqlalchemy.exc import OperationalError, ProgrammingError
+
 from app import extensions
-from app.services.analytics import calcular_metricas_dashboard
+from app.services.analytics import calcular_metricas_dashboard, construir_metricas_dashboard_vazias
 from app.services.utils import _to_float
 from app.utils.data import parse_date_range
+from models import db
 
 
 def _parse_date_range(data_inicial_str, data_final_str, default_days=7):
@@ -15,7 +19,21 @@ def _coletar_dashboard_analytics(inicio_periodo, fim_periodo):
         dados = cache.get(cache_key)
         if dados is not None:
             return dados
-    dados = calcular_metricas_dashboard(inicio_periodo, fim_periodo)
+    try:
+        dados = calcular_metricas_dashboard(inicio_periodo, fim_periodo)
+    except (OperationalError, ProgrammingError):
+        current_app.logger.warning('dashboard analytics indisponiveis por schema/banco inconsistente', exc_info=True)
+        db.session.rollback()
+        dados = construir_metricas_dashboard_vazias(
+            inicio_periodo,
+            fim_periodo,
+            schema_inconsistente=True,
+        )
+    else:
+        if cache is not None:
+            cache.set(cache_key, dados, timeout=60)
+        return dados
+
     if cache is not None:
         cache.set(cache_key, dados, timeout=60)
     return dados

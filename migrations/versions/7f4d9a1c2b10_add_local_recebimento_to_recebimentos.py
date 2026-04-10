@@ -16,17 +16,28 @@ depends_on = None
 
 
 def upgrade():
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if not inspector.has_table('recebimentos_fornecedor'):
+        return
+
+    colunas = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+    if 'local_recebimento_id' in colunas:
+        return
+
     with op.batch_alter_table('recebimentos_fornecedor', schema=None) as batch_op:
         batch_op.add_column(sa.Column('local_recebimento_id', sa.Integer(), nullable=True))
-        batch_op.create_foreign_key(
-            'fk_recebimentos_fornecedor_local_recebimento_id',
-            'enderecos_estoque',
-            ['local_recebimento_id'],
-            ['id'],
-        )
 
 
 def downgrade():
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    if not inspector.has_table('recebimentos_fornecedor'):
+        return
+
+    colunas = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+    if 'local_recebimento_id' not in colunas:
+        return
+
     with op.batch_alter_table('recebimentos_fornecedor', schema=None) as batch_op:
-        batch_op.drop_constraint('fk_recebimentos_fornecedor_local_recebimento_id', type_='foreignkey')
         batch_op.drop_column('local_recebimento_id')

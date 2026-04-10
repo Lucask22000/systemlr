@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import date, datetime
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -23,6 +24,7 @@ class Produto(db.Model):
     __table_args__ = (
         db.Index('ix_produtos_categoria_fornecedor', 'categoria_id', 'fornecedor_id'),
         db.Index('ix_produtos_endereco_ativo', 'endereco_id', 'ativo'),
+        db.Index('ix_produtos_validade_ativo', 'validade', 'ativo'),
     )
 
     STATUS_DISPONIVEL_ONLINE = 'online'
@@ -54,6 +56,7 @@ class Produto(db.Model):
     preco_venda = db.Column(db.Float, nullable=False)
     quantidade_estoque = db.Column(db.Integer, default=0)
     quantidade_minima = db.Column(db.Integer, default=5)
+    validade = db.Column(db.Date, nullable=True, index=True)
     status_disponibilidade = db.Column(db.String(30), default=STATUS_DISPONIVEL_ONLINE, nullable=False)
     tipo_movimentacao = db.Column(db.String(20), default='manual', nullable=False)
     fora_picking = db.Column(db.Boolean, default=False)
@@ -85,6 +88,21 @@ class Produto(db.Model):
     def em_falta(self):
         return self.quantidade_estoque < self.quantidade_minima
 
+    def esta_vencido(self, referencia=None):
+        """Retorna True quando a validade do produto ja expirou."""
+        referencia = referencia or date.today()
+        return bool(self.validade and self.validade < referencia)
+
+    @property
+    def vencido(self):
+        return self.esta_vencido()
+
+    @classmethod
+    def filtro_nao_vencidos(cls, referencia=None):
+        """Expressao SQL para considerar apenas produtos dentro da validade."""
+        referencia = referencia or date.today()
+        return db.or_(cls.validade.is_(None), cls.validade >= referencia)
+
     @classmethod
     def normalizar_status_disponibilidade(cls, status):
         status_normalizado = (status or cls.STATUS_DISPONIVEL_ONLINE).strip().lower()
@@ -97,7 +115,7 @@ class Produto(db.Model):
     @property
     def disponivel_para_venda(self):
         status = self.normalizar_status_disponibilidade(self.status_disponibilidade)
-        return bool(self.ativo) and status == self.STATUS_DISPONIVEL_ONLINE
+        return bool(self.ativo) and status == self.STATUS_DISPONIVEL_ONLINE and not self.esta_vencido()
 
     @property
     def status_disponibilidade_label(self):
@@ -108,9 +126,32 @@ class Produto(db.Model):
         }
         return labels.get(status, 'Online')
 
+    @property
+    def total_avaliacoes(self):
+        try:
+            avaliacoes = getattr(self, 'avaliacoes', None) or []
+        except (OperationalError, ProgrammingError):
+            return 0
+        return sum(1 for avaliacao in avaliacoes if getattr(avaliacao, 'aprovada', True))
+
+    @property
+    def avaliacao_media(self):
+        try:
+            avaliacoes = [
+                float(avaliacao.nota or 0)
+                for avaliacao in (getattr(self, 'avaliacoes', None) or [])
+                if getattr(avaliacao, 'aprovada', True)
+            ]
+        except (OperationalError, ProgrammingError):
+            return 0.0
+        if not avaliacoes:
+            return 0.0
+        return round(sum(avaliacoes) / len(avaliacoes), 1)
+
 class Movimentacao(db.Model):
     __tablename__ = 'movimentacoes'
     __table_args__ = (
+        db.Index('ix_movimentacoes_tipo', 'tipo'),
         db.Index('ix_movimentacoes_tipo_criado_em', 'tipo', 'criado_em'),
         db.Index('ix_movimentacoes_produto_criado_em', 'produto_id', 'criado_em'),
     )
@@ -122,6 +163,8 @@ class Movimentacao(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True, index=True)
+    recebimento_id = db.Column(db.Integer, db.ForeignKey('recebimentos_fornecedor.id'), nullable=True, index=True)
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)
     endereco_origem_id = db.Column(db.Integer, db.ForeignKey('enderecos_estoque.id'), nullable=True)
     endereco_destino_id = db.Column(db.Integer, db.ForeignKey('enderecos_estoque.id'), nullable=True)
@@ -145,6 +188,8 @@ class Movimentacao(db.Model):
         backref=db.backref('movimentacoes_como_destino', lazy=True),
         lazy='select',
     )
+    pedido = db.relationship('Pedido', backref=db.backref('movimentacoes_estoque', lazy=True))
+    recebimento = db.relationship('RecebimentoFornecedor', backref=db.backref('movimentacoes_estoque', lazy=True))
     
     def __repr__(self):
         return f'<Movimentacao {self.produto_id} - {self.tipo}>'
@@ -363,6 +408,7 @@ class RecebimentoFornecedor(db.Model):
     __table_args__ = (
         db.Index('ix_recebimentos_status_criado_em', 'status', 'criado_em'),
         db.Index('ix_recebimentos_fornecedor_criado_em', 'fornecedor_id', 'criado_em'),
+        db.Index('ix_recebimentos_local_recebimento', 'local_recebimento_id'),
     )
 
     TIPO_COMPRA_REVENDA = 'compra_revenda'
@@ -495,6 +541,7 @@ class Mesa(db.Model):
 class Pedido(db.Model):
     __tablename__ = 'pedidos'
     __table_args__ = (
+        db.Index('ix_pedidos_origem', 'origem'),
         db.Index('ix_pedidos_status_criado_em', 'status', 'criado_em'),
         db.Index('ix_pedidos_status_fechado_em', 'status', 'fechado_em'),
     )
@@ -517,6 +564,7 @@ class Pedido(db.Model):
     mesa_id = db.Column(db.Integer, db.ForeignKey('mesas.id'), nullable=True)
     caixa_id = db.Column(db.Integer, db.ForeignKey('caixas.id'), nullable=True)
     garcom_id = db.Column(db.Integer, db.ForeignKey('garcons.id'), nullable=True)
+    cliente_publico_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=True, index=True)
     cliente_nome = db.Column(db.String(120))
     cliente_celular = db.Column(db.String(30))
     total = db.Column(db.Float, default=0.0)
@@ -536,6 +584,9 @@ class Pedido(db.Model):
     veiculo_placa = db.Column(db.String(20), nullable=True)
     motorista_nome = db.Column(db.String(120), nullable=True)
     empresa_terceirizada = db.Column(db.String(150), nullable=True)
+    codigo_rastreio = db.Column(db.String(100), nullable=True)
+    transportadora = db.Column(db.String(100), nullable=True)
+    data_estimada_entrega = db.Column(db.Date, nullable=True)
     nota_fiscal_numero = db.Column(db.String(60), nullable=True)
     nota_fiscal_chave = db.Column(db.String(120), nullable=True)
     nota_fiscal_emitida_em = db.Column(db.DateTime, nullable=True)
@@ -546,6 +597,7 @@ class Pedido(db.Model):
     observacoes = db.Column(db.Text)
 
     itens = db.relationship('ItemPedido', backref='pedido', lazy=True, cascade='all, delete-orphan')
+    cliente_publico = db.relationship('ClientePublico', backref=db.backref('pedidos', lazy=True))
 
     @staticmethod
     def _normalizar_status(status, default=STATUS_ABERTO):
@@ -597,6 +649,9 @@ class Pedido(db.Model):
 
 class ClientePublico(db.Model):
     __tablename__ = 'clientes_publicos'
+    __table_args__ = (
+        db.Index('ix_clientes_publicos_email_celular', 'email', 'celular'),
+    )
 
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False)
@@ -613,11 +668,143 @@ class ClientePublico(db.Model):
     referencia = db.Column(db.String(180), nullable=True)
     recebe_ofertas = db.Column(db.Boolean, default=False)
     observacoes = db.Column(db.Text, nullable=True)
+    senha_hash = db.Column(db.String(255), nullable=True)
+    data_cadastro = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    ultimo_acesso = db.Column(db.DateTime, nullable=True)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    enderecos = db.relationship('ClienteEndereco', backref='cliente', lazy=True, cascade='all, delete-orphan')
+    favoritos = db.relationship('ClienteFavorito', backref='cliente', lazy=True, cascade='all, delete-orphan')
+    avaliacoes = db.relationship('AvaliacaoProduto', backref='cliente', lazy=True, cascade='all, delete-orphan')
+
     def __repr__(self):
         return f'<ClientePublico {self.nome} ({self.email})>'
+
+    def set_password(self, senha):
+        self.senha_hash = generate_password_hash(senha)
+
+    def check_password(self, senha):
+        if not self.senha_hash:
+            return False
+        return check_password_hash(self.senha_hash, senha)
+
+    @property
+    def endereco_principal(self):
+        try:
+            for endereco in self.enderecos:
+                if endereco.principal:
+                    return endereco
+            return self.enderecos[0] if self.enderecos else None
+        except (OperationalError, ProgrammingError):
+            return None
+
+
+class ClienteEndereco(db.Model):
+    __tablename__ = 'clientes_enderecos'
+    __table_args__ = (
+        db.Index('ix_clientes_enderecos_cliente_principal', 'cliente_id', 'principal'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    apelido = db.Column(db.String(50), nullable=True)
+    cep = db.Column(db.String(12), nullable=False)
+    endereco = db.Column(db.String(180), nullable=False)
+    numero = db.Column(db.String(20), nullable=True)
+    complemento = db.Column(db.String(120), nullable=True)
+    bairro = db.Column(db.String(100), nullable=True)
+    cidade = db.Column(db.String(100), nullable=True)
+    estado = db.Column(db.String(2), nullable=True)
+    referencia = db.Column(db.String(180), nullable=True)
+    principal = db.Column(db.Boolean, default=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f'<ClienteEndereco cliente={self.cliente_id} {self.apelido or self.endereco}>'
+
+
+class ClienteFavorito(db.Model):
+    __tablename__ = 'clientes_favoritos'
+    __table_args__ = (
+        db.UniqueConstraint('cliente_id', 'produto_id', name='uq_cliente_favorito_produto'),
+        db.Index('ix_clientes_favoritos_cliente_criado', 'cliente_id', 'criado_em'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    produto = db.relationship('Produto', backref=db.backref('favoritado_por', lazy=True))
+
+    def __repr__(self):
+        return f'<ClienteFavorito cliente={self.cliente_id} produto={self.produto_id}>'
+
+
+class AvaliacaoProduto(db.Model):
+    __tablename__ = 'avaliacoes_produtos'
+    __table_args__ = (
+        db.CheckConstraint('nota >= 1 AND nota <= 5', name='ck_avaliacoes_produtos_nota'),
+        db.UniqueConstraint('produto_id', 'cliente_id', name='uq_avaliacao_produto_cliente'),
+        db.Index('ix_avaliacoes_produtos_produto_aprovada', 'produto_id', 'aprovada'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=False)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    nota = db.Column(db.Integer, nullable=False)
+    titulo = db.Column(db.String(100), nullable=True)
+    comentario = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    aprovada = db.Column(db.Boolean, default=True)
+
+    produto = db.relationship('Produto', backref=db.backref('avaliacoes', lazy=True, cascade='all, delete-orphan'))
+
+    def __repr__(self):
+        return f'<AvaliacaoProduto produto={self.produto_id} cliente={self.cliente_id} nota={self.nota}>'
+
+
+class Cupom(db.Model):
+    __tablename__ = 'cupons'
+    __table_args__ = (
+        db.Index('ix_cupons_codigo_ativo', 'codigo', 'ativo'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    codigo = db.Column(db.String(50), unique=True, nullable=False)
+    descricao = db.Column(db.String(180), nullable=True)
+    tipo_desconto = db.Column(db.String(20), nullable=False)
+    valor = db.Column(db.Float, nullable=False)
+    minimo_compra = db.Column(db.Float, nullable=True)
+    produtos_incluidos = db.Column(db.Text, nullable=True)
+    categorias_incluidas = db.Column(db.Text, nullable=True)
+    primeira_compra = db.Column(db.Boolean, default=False)
+    data_inicio = db.Column(db.Date, nullable=True)
+    data_fim = db.Column(db.Date, nullable=True)
+    ativo = db.Column(db.Boolean, default=True)
+    uso_unico_por_cliente = db.Column(db.Boolean, default=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def __repr__(self):
+        return f'<Cupom {self.codigo}>'
+
+
+class CupomUtilizacao(db.Model):
+    __tablename__ = 'cupons_utilizacoes'
+    __table_args__ = (
+        db.Index('ix_cupons_utilizacoes_cupom_cliente', 'cupom_id', 'cliente_id'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    cupom_id = db.Column(db.Integer, db.ForeignKey('cupons.id'), nullable=False)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes_publicos.id'), nullable=False)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    cupom = db.relationship('Cupom', backref=db.backref('utilizacoes', lazy=True, cascade='all, delete-orphan'))
+    cliente = db.relationship('ClientePublico', backref=db.backref('cupons_utilizados', lazy=True))
+    pedido = db.relationship('Pedido', backref=db.backref('cupom_utilizacoes', lazy=True))
 
 
 class ItemPedido(db.Model):
@@ -832,6 +1019,8 @@ class LancamentoFinanceiro(db.Model):
     enviado_em = db.Column(db.DateTime, nullable=True)
     referencia_documento = db.Column(db.String(120), nullable=True)
     centro_custo = db.Column(db.String(120), nullable=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True, index=True)
+    recebimento_id = db.Column(db.Integer, db.ForeignKey('recebimentos_fornecedor.id'), nullable=True, index=True)
 
     produto_id = db.Column(db.Integer, db.ForeignKey('produtos.id'), nullable=True)
     quantidade = db.Column(db.Float, nullable=True)
@@ -842,6 +1031,8 @@ class LancamentoFinanceiro(db.Model):
 
     produto = db.relationship('Produto', backref=db.backref('lancamentos_financeiros', lazy=True))
     criado_por = db.relationship('Funcionario', backref=db.backref('lancamentos_financeiros', lazy=True))
+    pedido = db.relationship('Pedido', backref=db.backref('lancamentos_financeiros', lazy=True))
+    recebimento = db.relationship('RecebimentoFornecedor', backref=db.backref('lancamentos_financeiros', lazy=True))
 
     def __repr__(self):
         return f'<LancamentoFinanceiro {self.tipo} {self.valor}>'
@@ -942,6 +1133,7 @@ class EmpresaConfig(db.Model):
     ecommerce_ativo = db.Column(db.Boolean, default=True)
     ecom_cor_primaria = db.Column(db.String(20), default='#ff7848')
     ecom_cor_secundaria = db.Column(db.String(20), default='#ff5a2a')
+    ecom_card_bg = db.Column(db.String(20), default='#ffffff')
     ecom_titulo_banner = db.Column(db.String(140), nullable=True)
     ecom_subtitulo_banner = db.Column(db.String(255), nullable=True)
     ecom_texto_promocao = db.Column(db.String(255), nullable=True)
@@ -950,6 +1142,7 @@ class EmpresaConfig(db.Model):
     ecom_produto_placeholder_path = db.Column(db.String(255), nullable=True)
     ecom_banners_json = db.Column(db.Text, nullable=True)
     ecom_campanhas_json = db.Column(db.Text, nullable=True)
+    ecom_cupons_json = db.Column(db.Text, nullable=True)
     ecom_footer_bg = db.Column(db.String(20), default='#1f2b38')
     ecom_footer_texto = db.Column(db.String(255), nullable=True)
     ecom_footer_contato = db.Column(db.String(255), nullable=True)
@@ -981,8 +1174,52 @@ class EmpresaConfig(db.Model):
     ultimo_garcom_id = db.Column(db.Integer, db.ForeignKey('garcons.id'), nullable=True)
     atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    frota_veiculos = db.relationship(
+        'FrotaVeiculo',
+        backref='empresa',
+        lazy=True,
+        cascade='all, delete-orphan',
+    )
+
     def __repr__(self):
         return f'<EmpresaConfig {self.nome_fantasia or self.razao_social or self.id}>'
+
+
+class FrotaVeiculo(db.Model):
+    __tablename__ = 'frota_veiculos'
+    __table_args__ = (
+        db.Index('ix_frota_veiculos_empresa_ativo', 'empresa_id', 'ativo'),
+        db.Index('ix_frota_veiculos_placa', 'placa'),
+    )
+
+    TIPO_MOTO = 'moto'
+    TIPO_CARRO = 'carro'
+    TIPO_CAMINHAO = 'caminhao'
+    TIPO_UTILITARIO = 'utilitario'
+    TIPOS_VALIDOS = {
+        TIPO_MOTO,
+        TIPO_CARRO,
+        TIPO_CAMINHAO,
+        TIPO_UTILITARIO,
+    }
+
+    id = db.Column(db.Integer, primary_key=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa_config.id'), nullable=False, index=True)
+    nome = db.Column(db.String(120), nullable=False)
+    placa = db.Column(db.String(20), nullable=True)
+    tipo = db.Column(db.String(20), nullable=False, default=TIPO_CARRO)
+    capacidade_kg = db.Column(db.Float, nullable=True)
+    capacidade_volume = db.Column(db.Float, nullable=True)
+    motorista_padrao = db.Column(db.String(120), nullable=True)
+    tipo_entrega = db.Column(db.String(20), nullable=False, default='todos')
+    capacidade_pedidos = db.Column(db.Integer, nullable=True, default=0)
+    empresa_terceirizada = db.Column(db.String(150), nullable=True)
+    ativo = db.Column(db.Boolean, default=True, nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    atualizado_em = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<FrotaVeiculo {self.nome} ({self.placa or "sem-placa"})>'
 
 
 class AuditoriaEvento(db.Model):
@@ -1007,6 +1244,41 @@ class AuditoriaEvento(db.Model):
 
     def __repr__(self):
         return f'<AuditoriaEvento {self.metodo} {self.rota} ({self.status_code})>'
+
+
+class ProcessoEvento(db.Model):
+    __tablename__ = 'processo_eventos'
+    __table_args__ = (
+        db.Index('ix_processo_eventos_pedido_criado', 'pedido_id', 'criado_em'),
+        db.Index('ix_processo_eventos_recebimento_criado', 'recebimento_id', 'criado_em'),
+        db.Index('ix_processo_eventos_entidade_entidade_id', 'entidade', 'entidade_id'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    processo_tipo = db.Column(db.String(40), nullable=False, index=True)
+    etapa = db.Column(db.String(80), nullable=False)
+    acao = db.Column(db.String(120), nullable=False)
+    entidade = db.Column(db.String(80), nullable=False, index=True)
+    entidade_id = db.Column(db.Integer, nullable=False, index=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedidos.id'), nullable=True)
+    recebimento_id = db.Column(db.Integer, db.ForeignKey('recebimentos_fornecedor.id'), nullable=True)
+    movimentacao_id = db.Column(db.Integer, db.ForeignKey('movimentacoes.id'), nullable=True)
+    lancamento_financeiro_id = db.Column(db.Integer, db.ForeignKey('lancamentos_financeiros.id'), nullable=True)
+    fundo_solicitacao_id = db.Column(db.Integer, db.ForeignKey('fundos_solicitacoes.id'), nullable=True)
+    funcionario_id = db.Column(db.Integer, db.ForeignKey('funcionarios.id'), nullable=True)
+    funcionario_nome = db.Column(db.String(120), nullable=True)
+    detalhes = db.Column(db.Text, nullable=True)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+    pedido = db.relationship('Pedido', backref=db.backref('eventos_processo', lazy=True))
+    recebimento = db.relationship('RecebimentoFornecedor', backref=db.backref('eventos_processo', lazy=True))
+    movimentacao = db.relationship('Movimentacao', backref=db.backref('eventos_processo', lazy=True))
+    lancamento_financeiro = db.relationship('LancamentoFinanceiro', backref=db.backref('eventos_processo', lazy=True))
+    fundo_solicitacao = db.relationship('FundoSolicitacao', backref=db.backref('eventos_processo', lazy=True))
+    funcionario = db.relationship('Funcionario', backref=db.backref('eventos_processo', lazy=True))
+
+    def __repr__(self):
+        return f'<ProcessoEvento {self.processo_tipo} {self.etapa} {self.acao}>'
 
 
 class AssistenteLocalFeedback(db.Model):

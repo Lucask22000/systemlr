@@ -11,7 +11,7 @@ def fix_admin_access():
     """Cria ou atualiza o admin"""
     
     with app.app_context():
-        email = os.environ.get("SYSTEMLR_ADMIN_EMAIL", "admin@conveniencia.local")
+        email = os.environ.get("SYSTEMLR_ADMIN_EMAIL", "admin@systemlr.com")
         senha = os.environ.get("SYSTEMLR_ADMIN_PASSWORD", "142536")
         nome = os.environ.get("SYSTEMLR_ADMIN_NAME", "Administrador")
         

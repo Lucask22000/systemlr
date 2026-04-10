@@ -1,0 +1,82 @@
+[
+  {
+    "macro": "Macro Funcionarios",
+    "step": "Validar menu do Joao",
+    "error_type": "AssertionError",
+    "message": "Menu sem acesso esperado: /pdv",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_funcionarios.py\", line 146, in _validate_joao_menu\n    self.assert_and_screenshot(any(fragment in href for href in hrefs), f\"Menu sem acesso esperado: {fragment}\")\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 306, in assert_and_screenshot\n    raise AssertionError(message)\nAssertionError: Menu sem acesso esperado: /pdv\n",
+    "screenshot": "reports\\screenshots\\macro-funcionarios\\20260406_153427_validar-menu-do-joao.png"
+  },
+  {
+    "macro": "Macro Funcionarios",
+    "step": "macro",
+    "error_type": "AssertionError",
+    "message": "Menu sem acesso esperado: /pdv",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 258, in run\n    self.execute()\n    ~~~~~~~~~~~~^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_funcionarios.py\", line 32, in execute\n    self.run_step(\"Validar menu do Joao\", self._validate_joao_menu)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_funcionarios.py\", line 146, in _validate_joao_menu\n    self.assert_and_screenshot(any(fragment in href for href in hrefs), f\"Menu sem acesso esperado: {fragment}\")\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 306, in assert_and_screenshot\n    raise AssertionError(message)\nAssertionError: Menu sem acesso esperado: /pdv\n",
+    "screenshot": "reports\\screenshots\\macro-funcionarios\\20260406_153427_macro.png"
+  },
+  {
+    "macro": "Macro Cliente Online",
+    "step": "Finalizar pedido",
+    "error_type": "TimeoutException",
+    "message": "Message: \n",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_cliente_online.py\", line 109, in _submit_checkout\n    self.wait.until(lambda d: \"/confirmado\" in d.current_url)\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\.venv\\Lib\\site-packages\\selenium\\webdriver\\support\\wait.py\", line 121, in until\n    raise TimeoutException(message, screen, stacktrace)\nselenium.common.exceptions.TimeoutException: Message: \n\n",
+    "screenshot": "reports\\screenshots\\macro-cliente-online\\20260406_153459_finalizar-pedido.png"
+  },
+  {
+    "macro": "Macro Cliente Online",
+    "step": "macro",
+    "error_type": "TimeoutException",
+    "message": "Message: \n",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 258, in run\n    self.execute()\n    ~~~~~~~~~~~~^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_cliente_online.py\", line 35, in execute\n    self.run_step(\"Finalizar pedido\", self._submit_checkout)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_cliente_online.py\", line 109, in _submit_checkout\n    self.wait.until(lambda d: \"/confirmado\" in d.current_url)\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\.venv\\Lib\\site-packages\\selenium\\webdriver\\support\\wait.py\", line 121, in until\n    raise TimeoutException(message, screen, stacktrace)\nselenium.common.exceptions.TimeoutException: Message: \n\n",
+    "screenshot": "reports\\screenshots\\macro-cliente-online\\20260406_153459_macro.png"
+  },
+  {
+    "macro": "Macro PDV",
+    "step": "Login como caixa",
+    "error_type": "TimeoutException",
+    "message": "Message: \n",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_pdv.py\", line 82, in _login_caixa\n    self.login(\"joao.silva@systemlr.com\", \"Joao@123\")\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 412, in login\n    self.wait.until(lambda d: \"/login\" not in d.current_url)\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\.venv\\Lib\\site-packages\\selenium\\webdriver\\support\\wait.py\", line 121, in until\n    raise TimeoutException(message, screen, stacktrace)\nselenium.common.exceptions.TimeoutException: Message: \n\n",
+    "screenshot": "reports\\screenshots\\macro-pdv\\20260406_153527_login-como-caixa.png"
+  },
+  {
+    "macro": "Macro PDV",
+    "step": "macro",
+    "error_type": "TimeoutException",
+    "message": "Message: \n",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 258, in run\n    self.execute()\n    ~~~~~~~~~~~~^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_pdv.py\", line 26, in execute\n    self.run_step(\"Login como caixa\", self._login_caixa)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_pdv.py\", line 82, in _login_caixa\n    self.login(\"joao.silva@systemlr.com\", \"Joao@123\")\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 412, in login\n    self.wait.until(lambda d: \"/login\" not in d.current_url)\n    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\.venv\\Lib\\site-packages\\selenium\\webdriver\\support\\wait.py\", line 121, in until\n    raise TimeoutException(message, screen, stacktrace)\nselenium.common.exceptions.TimeoutException: Message: \n\n",
+    "screenshot": "reports\\screenshots\\macro-pdv\\20260406_153527_macro.png"
+  },
+  {
+    "macro": "Macro Expedicao",
+    "step": "Garantir pedido online aberto",
+    "error_type": "RuntimeError",
+    "message": "Nao foi possivel criar pedido online para a macro de expedicao.",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_expedicao.py\", line 56, in _ensure_open_site_order\n    raise RuntimeError(\"Nao foi possivel criar pedido online para a macro de expedicao.\")\nRuntimeError: Nao foi possivel criar pedido online para a macro de expedicao.\n",
+    "screenshot": "reports\\screenshots\\macro-expedicao\\20260406_153606_garantir-pedido-online-aberto.png"
+  },
+  {
+    "macro": "Macro Expedicao",
+    "step": "macro",
+    "error_type": "RuntimeError",
+    "message": "Nao foi possivel criar pedido online para a macro de expedicao.",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 258, in run\n    self.execute()\n    ~~~~~~~~~~~~^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_expedicao.py\", line 24, in execute\n    self.run_step(\"Garantir pedido online aberto\", self._ensure_open_site_order)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_expedicao.py\", line 56, in _ensure_open_site_order\n    raise RuntimeError(\"Nao foi possivel criar pedido online para a macro de expedicao.\")\nRuntimeError: Nao foi possivel criar pedido online para a macro de expedicao.\n",
+    "screenshot": "reports\\screenshots\\macro-expedicao\\20260406_153606_macro.png"
+  },
+  {
+    "macro": "Macro Estoque",
+    "step": "Criar recebimento operacional",
+    "error_type": "AttributeError",
+    "message": "'NoneType' object has no attribute 'id'",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_estoque.py\", line 107, in _create_receiving\n    self.recebimento_id = recebimento.id\n                          ^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'id'\n",
+    "screenshot": "reports\\screenshots\\macro-estoque\\20260406_153617_criar-recebimento-operacional.png"
+  },
+  {
+    "macro": "Macro Estoque",
+    "step": "macro",
+    "error_type": "AttributeError",
+    "message": "'NoneType' object has no attribute 'id'",
+    "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 258, in run\n    self.execute()\n    ~~~~~~~~~~~~^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_estoque.py\", line 26, in execute\n    self.run_step(\"Criar recebimento operacional\", self._create_receiving)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\base_macro.py\", line 323, in run_step\n    result = action()\n  File \"C:\\Users\\lucas\\OneDrive\\Desktop\\conveniencia\\scripts\\macros\\macro_estoque.py\", line 107, in _create_receiving\n    self.recebimento_id = recebimento.id\n                          ^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'id'\n",
+    "screenshot": "reports\\screenshots\\macro-estoque\\20260406_153617_macro.png"
+  }
+]

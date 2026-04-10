@@ -1,7 +1,5 @@
-from flask import request
-
 from app.helpers import _normalizar_texto
-from app.constants import ENDPOINT_TO_PAGINA
+from app.services.permissao_service import PermissaoService
 from models import Garcom
 
 
@@ -34,20 +32,8 @@ def sincronizar_garcom_funcionario(funcionario):
 
 
 def funcionario_tem_acesso(funcionario, endpoint, paginas_resolvidas):
-    if not funcionario:
-        return False
-    if funcionario.role == 'admin':
-        return True
-    if not funcionario.controle_acesso_ativo:
-        return True
-
-    pagina = ENDPOINT_TO_PAGINA.get(endpoint)
-    if not pagina:
-        if request.path.startswith('/api/'):
-            return False
-        return True
-
-    return pagina in paginas_resolvidas
+    permissao_service = PermissaoService(resolver_paginas=lambda _funcionario: paginas_resolvidas)
+    return permissao_service.tem_acesso(funcionario, endpoint, is_api_request=False)
 
 
 def _paginas_permitidas_para_funcionario(funcionario, resolver_paginas):

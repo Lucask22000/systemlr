@@ -2,6 +2,62 @@
 
 {% block title %}Editar Categoria - SystemLR{% endblock %}
 
+{% block extra_css %}
+<style>
+.category-image-library {
+    display: grid;
+    gap: 12px;
+}
+.category-image-library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+}
+.category-image-option {
+    position: relative;
+}
+.category-image-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.category-image-card {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.category-image-card img {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.category-image-name {
+    font-size: .88rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text);
+    word-break: break-word;
+}
+.category-image-option input:checked + .category-image-card {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.14);
+    transform: translateY(-1px);
+}
+.category-image-help {
+    margin: 0;
+    font-size: .88rem;
+    color: var(--text-muted);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1>Editar Categoria</h1>
@@ -32,6 +88,26 @@
             </div>
             {% endif %}
         </div>
+
+        {% if imagens_categoria_existentes %}
+        <div class="form-group">
+            <label>Ou trocar por imagem já disponível</label>
+            <div class="category-image-library">
+                <p class="category-image-help">Se você enviar um novo arquivo, ele terá prioridade sobre a imagem selecionada abaixo.</p>
+                <div class="category-image-library-grid">
+                    {% for imagem in imagens_categoria_existentes %}
+                    <label class="category-image-option">
+                        <input type="radio" name="imagem_existente" value="{{ imagem.path }}" {% if imagem_existente_selecionada == imagem.path %}checked{% endif %}>
+                        <span class="category-image-card">
+                            <img src="{{ url_for('static', filename=imagem.path) }}" alt="{{ imagem.label }}">
+                            <span class="category-image-name">{{ imagem.label }}</span>
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Salvar Alteracoes</button>

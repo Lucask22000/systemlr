@@ -1,0 +1,64 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'cliente' %}
+{% set store_nav = 'cliente' %}
+{% set store_title = 'Entrar | ' ~ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR') %}
+
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Conta</span>
+    <h1>Entrar na área do cliente</h1>
+    <p>Acompanhe pedidos, favoritos, avaliações e endereços salvos em um só lugar.</p>
+</section>
+
+<section class="store-grid store-grid--commerce">
+    <article class="store-panel">
+        <div class="store-panel-header">
+            <div>
+                <h2 class="store-card-title">Acesso do cliente</h2>
+                <p class="store-note">Use o e-mail cadastrado e sua senha para continuar.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('public.cliente_login_site') }}">
+            {{ csrf_input|safe }}
+            {% if next_dest %}
+            <input type="hidden" name="next" value="{{ next_dest }}">
+            {% endif %}
+
+            <div class="store-form-grid">
+                <div class="store-field">
+                    <label for="email">E-mail</label>
+                    <input id="email" name="email" type="email" required>
+                </div>
+                <div class="store-field">
+                    <label for="senha">Senha</label>
+                    <input id="senha" name="senha" type="password" required>
+                </div>
+            </div>
+
+            <div class="store-grid-actions" style="margin-top: 14px;">
+                <button type="submit" class="store-btn store-btn-primary">Entrar</button>
+                <a href="{{ url_for('public.cadastro_cliente_site', proximo=next_dest) }}" class="store-btn store-btn-secondary">Criar conta</a>
+            </div>
+        </form>
+    </article>
+
+    <aside class="store-panel">
+        <div class="store-panel-header">
+            <div>
+                <h2 class="store-card-title">Vantagens da conta</h2>
+            </div>
+        </div>
+
+        <div class="store-summary-list">
+            <div class="store-summary-line"><span>Pedidos</span><strong>Histórico completo</strong></div>
+            <div class="store-summary-line"><span>Favoritos</span><strong>Produtos salvos</strong></div>
+            <div class="store-summary-line"><span>Endereços</span><strong>Checkout mais rápido</strong></div>
+        </div>
+
+        <div class="store-note-box">
+            Seu carrinho continua salvo mesmo depois do login.
+        </div>
+    </aside>
+</section>
+{% endblock %}

@@ -9,12 +9,17 @@ CSRF_HEADER_CANDIDATES = ('X-CSRF-Token', 'X-CSRFToken')
 SAFE_METHODS = {'GET', 'HEAD', 'OPTIONS', 'TRACE'}
 
 
-def json_response(success, message, *, status=200, data=None, code=None):
-    payload = {'success': bool(success), 'message': message}
+def json_response(success, message, *, status=200, data=None, code=None, fields=None, action=None):
+    payload = {
+        'success': bool(success),
+        'message': message,
+        'code': code or ('ok' if success else 'request_failed'),
+        'fields': fields or {},
+    }
     if data is not None:
         payload['data'] = data
-    if code:
-        payload['code'] = code
+    if action:
+        payload['action'] = action
     return jsonify(payload), status
 
 
@@ -80,6 +85,7 @@ def csrf_protect_request(*, exempt_endpoints: Optional[Iterable[str]] = None):
     if endpoint.startswith('static'):
         return None
 
+    # Rotas publicas sensiveis como login/registro nao devem ser isentas por padrao.
     if exempt_endpoints and endpoint in set(exempt_endpoints):
         return None
 

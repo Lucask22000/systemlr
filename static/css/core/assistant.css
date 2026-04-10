@@ -1,3 +1,7 @@
+:root {
+    --assistant-navbar-offset: 0px;
+}
+
 .assistant-shell {
     position: fixed;
     right: 20px;
@@ -7,6 +11,7 @@
     flex-direction: column;
     align-items: flex-end;
     gap: 12px;
+    transition: opacity 0.18s ease, transform 0.18s ease;
 }
 
 .assistant-fab {
@@ -39,7 +44,7 @@
 .assistant-panel {
     width: min(430px, calc(100vw - 32px));
     height: min(78vh, 720px);
-    max-height: calc(100dvh - 40px - env(safe-area-inset-bottom, 0px));
+    max-height: calc(100dvh - var(--assistant-navbar-offset) - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -430,7 +435,8 @@
 
     .assistant-panel {
         width: min(392px, calc(100vw - 24px));
-        height: min(82vh, calc(100dvh - 24px - env(safe-area-inset-bottom, 0px)));
+        height: min(82vh, calc(100dvh - var(--assistant-navbar-offset) - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+        max-height: calc(100dvh - var(--assistant-navbar-offset) - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
     }
 
     .assistant-panel-header {
@@ -468,5 +474,13 @@
     .assistant-feedback {
         align-items: flex-start;
         flex-direction: column;
+    }
+}
+
+@media (max-width: 991.98px) {
+    body.menu-open .assistant-shell {
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(16px);
     }
 }

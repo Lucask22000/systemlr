@@ -1,0 +1,27 @@
+[
+  {
+    "macro": "Macro Funcionarios",
+    "duration_seconds": 3.99,
+    "success": false
+  },
+  {
+    "macro": "Macro Cliente Online",
+    "duration_seconds": 26.05,
+    "success": false
+  },
+  {
+    "macro": "Macro PDV",
+    "duration_seconds": 22.42,
+    "success": false
+  },
+  {
+    "macro": "Macro Expedicao",
+    "duration_seconds": 31.08,
+    "success": false
+  },
+  {
+    "macro": "Macro Estoque",
+    "duration_seconds": 4.28,
+    "success": false
+  }
+]

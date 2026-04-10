@@ -2,6 +2,7 @@ from datetime import datetime
 
 from app.exceptions import BusinessRuleError, ValidationError
 from app.services.estoque_service import aplicar_movimentacao_estoque
+from app.services.traceability import record_process_event
 from app.services.transaction import atomic_transaction
 from app.services.workflow import RecebimentoStatus, transition_recebimento_status
 from models import Movimentacao, RecebimentoFornecedor, RecebimentoItem, db
@@ -88,6 +89,22 @@ def create_recebimento(
                 detalhes='Recebimento criado com envio direto para armazenagem.',
             )
 
+        record_process_event(
+            processo_tipo='recebimento',
+            etapa='criacao',
+            acao='recebimento_criado',
+            entidade='recebimento',
+            entidade_id=recebimento.id,
+            recebimento_id=recebimento.id,
+            actor=actor,
+            detalhes={
+                'status': recebimento.status,
+                'fornecedor_id': recebimento.fornecedor_id,
+                'local_recebimento_id': recebimento.local_recebimento_id,
+                'info_nota': recebimento.info_nota,
+            },
+        )
+
     return recebimento
 
 
@@ -130,6 +147,19 @@ def conferir_recebimento(recebimento, *, conferencias_por_item, actor=None, fail
             RecebimentoStatus.AGUARDANDO_ARMAZENAGEM,
             actor=actor,
             detalhes='Conferencia de recebimento concluida.',
+        )
+        record_process_event(
+            processo_tipo='recebimento',
+            etapa='conferencia',
+            acao='recebimento_conferido',
+            entidade='recebimento',
+            entidade_id=recebimento.id,
+            recebimento_id=recebimento.id,
+            actor=actor,
+            detalhes={
+                'status': recebimento.status,
+                'itens': len(recebimento.itens),
+            },
         )
     return recebimento
 
@@ -185,9 +215,9 @@ def armazenar_recebimento(
             if item.qtd_avaria:
                 observacoes_mov += f' | Avaria: {item.qtd_avaria}'
 
-            db.session.add(
-                movimentacao_model(
+            movimentacao = movimentacao_model(
                     produto_id=item.produto_id,
+                    recebimento_id=recebimento.id,
                     fornecedor_id=recebimento.fornecedor_id,
                     endereco_destino_id=endereco_destino.id,
                     tipo=movimentacao_model.TIPO_ENTRADA,
@@ -195,7 +225,23 @@ def armazenar_recebimento(
                     info_nota=recebimento.info_nota,
                     motivo='recebimento_fornecedor',
                     observacoes=observacoes_mov,
-                )
+            )
+            db.session.add(movimentacao)
+            db.session.flush()
+            record_process_event(
+                processo_tipo='recebimento',
+                etapa='armazenagem',
+                acao='movimentacao_estoque_gerada',
+                entidade='movimentacao',
+                entidade_id=movimentacao.id,
+                recebimento_id=recebimento.id,
+                movimentacao_id=movimentacao.id,
+                actor=actor,
+                detalhes={
+                    'produto_id': item.produto_id,
+                    'quantidade': quantidade_entrada,
+                    'endereco_destino_id': endereco_destino.id,
+                },
             )
             if failure_hook:
                 failure_hook('after_item_stock')
@@ -205,5 +251,18 @@ def armazenar_recebimento(
             RecebimentoStatus.CONCLUIDO,
             actor=actor,
             detalhes='Armazenagem concluida e saldo atualizado.',
+        )
+        record_process_event(
+            processo_tipo='recebimento',
+            etapa='armazenagem',
+            acao='recebimento_armazenado',
+            entidade='recebimento',
+            entidade_id=recebimento.id,
+            recebimento_id=recebimento.id,
+            actor=actor,
+            detalhes={
+                'status': recebimento.status,
+                'armazenado_em': recebimento.armazenado_em,
+            },
         )
     return recebimento

@@ -1,0 +1,36 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'cliente' %}
+{% set store_nav = 'cliente' %}
+{% set store_title = 'Favoritos | SystemLR' %}
+
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Favoritos</span>
+    <h1>Produtos salvos</h1>
+    <p>Reencontre rapidamente os itens que você marcou para acompanhar depois.</p>
+</section>
+
+<article class="store-panel">
+    {% for favorito in favoritos %}
+    <div class="store-note-box" style="margin-bottom: 12px;">
+        <p class="store-item-title"><a href="{{ url_for('public.produto_detalhe_site', produto_id=favorito.produto.id) }}">{{ favorito.produto.nome }}</a></p>
+        <p class="store-note">{{ favorito.produto.categoria.nome if favorito.produto and favorito.produto.categoria else 'Sem categoria' }}</p>
+        <div class="store-inline-actions" style="margin-top: 10px;">
+            <form method="POST" action="{{ url_for('public.cliente_favorito_remover', produto_id=favorito.produto.id) }}">
+                {{ csrf_input|safe }}
+                <button type="submit" class="store-btn store-btn-danger">Remover</button>
+            </form>
+            <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="produto_id" value="{{ favorito.produto.id }}">
+                <input type="hidden" name="quantidade" value="1">
+                <input type="hidden" name="next" value="{{ url_for('public.cliente_favoritos') }}">
+                <button type="submit" class="store-btn store-btn-primary">Adicionar ao carrinho</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <p class="store-note">Você ainda não adicionou produtos aos favoritos.</p>
+    {% endfor %}
+</article>
+{% endblock %}

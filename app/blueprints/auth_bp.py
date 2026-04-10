@@ -1,3 +1,5 @@
+"""Blueprint reservado para a migracao do dominio de autenticacao."""
+
 from flask import Blueprint
 
 

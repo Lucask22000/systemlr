@@ -138,6 +138,11 @@
                 <label for="quantidade_minima">Quantidade Minima</label>
                 <input type="number" id="quantidade_minima" name="quantidade_minima" value="{{ form_data.quantidade_minima if form_data else '5' }}" placeholder="5" class="input-text">
             </div>
+
+            <div class="form-group">
+                <label for="validade">Validade</label>
+                <input type="date" id="validade" name="validade" value="{{ form_data.validade if form_data else '' }}" class="input-text">
+            </div>
         </div>
 
         <div class="form-actions">

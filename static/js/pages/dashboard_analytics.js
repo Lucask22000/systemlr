@@ -3,298 +3,170 @@
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
     }
 
-    function getFiltro() {
+    function pct(v) {
+        return (Number(v || 0)).toFixed(1) + '%';
+    }
+
+    function todayIso(offsetDays) {
+        var d = new Date();
+        d.setDate(d.getDate() + (offsetDays || 0));
+        return d.toISOString().slice(0, 10);
+    }
+
+    function applyPreset() {
+        var preset = document.getElementById('periodoPreset');
         var ini = document.getElementById('data_inicial');
         var fim = document.getElementById('data_final');
-        return {
-            data_inicial: ini ? ini.value : '',
-            data_final: fim ? fim.value : ''
-        };
+        if (!preset || !ini || !fim) return;
+        if (preset.value === 'hoje') {
+            ini.value = todayIso(0);
+            fim.value = todayIso(0);
+        } else if (preset.value === 'ontem') {
+            ini.value = todayIso(-1);
+            fim.value = todayIso(-1);
+        } else if (preset.value === 'semana') {
+            ini.value = todayIso(-6);
+            fim.value = todayIso(0);
+        } else if (preset.value === 'mes') {
+            ini.value = todayIso(-29);
+            fim.value = todayIso(0);
+        }
     }
 
     function buildUrl() {
-        var filtro = getFiltro();
+        var ini = document.getElementById('data_inicial');
+        var fim = document.getElementById('data_final');
         var params = new URLSearchParams();
-        if (filtro.data_inicial) params.set('data_inicial', filtro.data_inicial);
-        if (filtro.data_final) params.set('data_final', filtro.data_final);
+        if (ini && ini.value) params.set('data_inicial', ini.value);
+        if (fim && fim.value) params.set('data_final', fim.value);
         return '/api/dashboard/analytics?' + params.toString();
     }
 
-    function isMobileViewport() {
-        return window.matchMedia('(max-width: 768px)').matches;
-    }
-
-    function buildChartOptions(type, mobile) {
-        var options = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: mobile ? 'bottom' : 'top',
-                    labels: {
-                        boxWidth: mobile ? 10 : 14,
-                        usePointStyle: mobile,
-                        font: {
-                            size: mobile ? 10 : 12
-                        }
-                    }
-                }
-            }
-        };
-
-        if (type !== 'doughnut') {
-            options.scales = {
-                x: {
-                    ticks: {
-                        autoSkip: true,
-                        maxTicksLimit: mobile ? 6 : 12,
-                        maxRotation: mobile ? 0 : 40,
-                        minRotation: 0,
-                        font: {
-                            size: mobile ? 10 : 11
-                        }
-                    }
-                },
-                y: {
-                    ticks: {
-                        font: {
-                            size: mobile ? 10 : 11
-                        }
-                    }
-                }
-            };
+    function tbodyRows(id, rows, emptyText) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        if (!rows.length) {
+            el.innerHTML = '<tr><td colspan="5" class="text-center">' + emptyText + '</td></tr>';
+            return;
         }
-
-        return options;
+        el.innerHTML = rows.join('');
     }
 
-    var charts = {
-        faturamento: null,
-        status: null,
-        pagamento: null,
-        topProdutos: null,
-        desempenhoGarcons: null,
-        desempenhoCaixas: null
-    };
-    var analyticsData = null;
-    var lastMobileState = isMobileViewport();
-
+    var charts = {};
     function destroyCharts() {
-        Object.keys(charts).forEach(function (k) {
-            if (charts[k]) {
-                charts[k].destroy();
-                charts[k] = null;
-            }
+        Object.keys(charts).forEach(function (key) {
+            if (charts[key]) charts[key].destroy();
         });
+        charts = {};
     }
 
-    function atualizarKpis(data) {
-        var map = {
-            kpiFaturamentoPeriodo: moeda(data.faturamento_periodo),
-            kpiTicketMedio: moeda(data.ticket_medio_periodo),
-            kpiFaturamentoHoje: moeda(data.faturamento_hoje),
-            kpiPedidosAbertos: String(data.pedidos_abertos || 0),
-            kpiPedidosCancelados: String(data.pedidos_cancelados_periodo || 0)
-        };
-
-        Object.keys(map).forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el) el.textContent = map[id];
-        });
-
-        var metaPedidos = document.getElementById('kpiPedidosPeriodo');
-        if (metaPedidos) {
-            metaPedidos.textContent = String(data.pedidos_periodo_total || 0) + ' pedidos fechados';
+    function renderAlerts(alertas) {
+        var wrap = document.getElementById('financeiroAlertas');
+        if (!wrap) return;
+        if (!(alertas || []).length) {
+            wrap.innerHTML = '<p class="text-muted mb-0">Nenhum alerta critico para o periodo.</p>';
+            return;
         }
+        wrap.innerHTML = alertas.map(function (item) {
+            var cls = item.nivel === 'danger' ? 'danger' : (item.nivel === 'warning' ? 'warning' : 'info');
+            return '<div class="alert alert-' + cls + ' mb-0"><strong>' + item.titulo + ':</strong> ' + item.descricao + '</div>';
+        }).join('');
+    }
+
+    function renderKpis(data) {
+        var comp = data.comparativos || {};
+        document.getElementById('kpiFaturamento').textContent = moeda(data.faturamento_periodo);
+        document.getElementById('metaFaturamento').textContent = pct((comp.faturamento || {}).variacao_pct);
+        document.getElementById('kpiTicket').textContent = moeda(data.ticket_medio_periodo);
+        document.getElementById('metaTicket').textContent = pct((comp.ticket_medio || {}).variacao_pct);
+        document.getElementById('kpiMargemBruta').textContent = pct(data.margem_bruta_pct);
+        document.getElementById('metaMargemBruta').textContent = 'Lucro bruto ' + moeda(data.lucro_bruto_periodo);
+        document.getElementById('kpiMargemOperacional').textContent = pct(data.margem_operacional_pct);
+        document.getElementById('metaMargemOperacional').textContent = 'Resultado ' + moeda(data.resultado_operacional_periodo);
+        document.getElementById('kpiDespesas').textContent = moeda(data.despesas_operacionais_periodo);
+        document.getElementById('metaDespesas').textContent = pct(data.despesas_operacionais_pct_faturamento) + ' do faturamento';
+        document.getElementById('kpiCancelamento').textContent = pct(data.taxa_cancelamento_pct);
+        document.getElementById('metaCancelamento').textContent = String(data.pedidos_cancelados_periodo || 0) + ' pedidos cancelados';
+    }
+
+    function renderTables(data) {
+        tbodyRows('tableTopProdutos', (data.top_produtos_vendidos || []).map(function (item) {
+            return '<tr><td>' + (item.sku || '-') + '</td><td>' + item.nome + '</td><td>' + item.quantidade + '</td><td>' + moeda(item.receita) + '</td><td>' + pct((item.margem_contribuicao || 0) * 100) + '</td></tr>';
+        }), 'Sem dados de produtos.');
+        tbodyRows('tableTopClientes', (data.top_clientes || []).map(function (item) {
+            return '<tr><td>' + item.cliente_nome + '</td><td>' + item.pedidos + '</td><td>' + moeda(item.faturamento) + '</td></tr>';
+        }), 'Sem dados de clientes.');
+        tbodyRows('tableDesempenho', (data.desempenho_operacional || []).map(function (item) {
+            return '<tr><td>' + item.tipo + '</td><td>' + item.nome + '</td><td>' + item.pedidos + '</td><td>' + moeda(item.faturamento) + '</td><td>' + moeda(item.ticket_medio) + '</td></tr>';
+        }), 'Sem dados operacionais.');
     }
 
     function renderCharts(data) {
-        analyticsData = data;
         destroyCharts();
-        var mobile = isMobileViewport();
-
-        var ctxFat = document.getElementById('chartFaturamento');
-        if (ctxFat) {
-            var fatOptions = buildChartOptions('line', mobile);
-            fatOptions.plugins.legend.display = false;
-            charts.faturamento = new Chart(ctxFat, {
-                type: 'line',
-                data: {
-                    labels: (data.vendas_periodo || []).map(function (d) { return d.data_curta; }),
-                    datasets: [{
-                        label: 'Faturamento',
-                        data: (data.vendas_periodo || []).map(function (d) { return d.faturamento; }),
-                        borderColor: '#0f766e',
-                        backgroundColor: 'rgba(15, 118, 110, 0.16)',
-                        tension: 0.25,
-                        pointRadius: mobile ? 0 : 2,
-                        pointHoverRadius: mobile ? 3 : 4,
-                        fill: true
-                    }]
-                },
-                options: fatOptions
-            });
-        }
-
-        var ctxStatus = document.getElementById('chartStatus');
-        if (ctxStatus) {
-            var statusOptions = buildChartOptions('doughnut', mobile);
-            charts.status = new Chart(ctxStatus, {
-                type: 'doughnut',
-                data: {
-                    labels: (data.pedidos_por_status || []).map(function (s) { return s.label; }),
-                    datasets: [{
-                        data: (data.pedidos_por_status || []).map(function (s) { return s.quantidade; }),
-                        backgroundColor: ['#0f766e', '#f59e0b', '#2563eb', '#16a34a', '#dc2626']
-                    }]
-                },
-                options: statusOptions
-            });
-        }
-
-        var ctxPag = document.getElementById('chartPagamento');
-        if (ctxPag) {
-            var pagOptions = buildChartOptions('bar', mobile);
-            pagOptions.plugins.legend.display = false;
-            charts.pagamento = new Chart(ctxPag, {
-                type: 'bar',
-                data: {
-                    labels: (data.metodos_pagamento || []).map(function (m) { return m.metodo; }),
-                    datasets: [{
-                        label: 'Pedidos',
-                        data: (data.metodos_pagamento || []).map(function (m) { return m.quantidade; }),
-                        backgroundColor: '#155e75'
-                    }]
-                },
-                options: pagOptions
-            });
-        }
-
-        var ctxTop = document.getElementById('chartTopProdutos');
-        if (ctxTop) {
-            var topOptions = buildChartOptions('bar', mobile);
-            topOptions.plugins.legend.display = false;
-            if (mobile) {
-                topOptions.indexAxis = 'y';
-                topOptions.scales.y.ticks.autoSkip = false;
-            }
-            charts.topProdutos = new Chart(ctxTop, {
-                type: 'bar',
-                data: {
-                    labels: (data.top_produtos_vendidos || []).map(function (p) { return p.nome; }),
-                    datasets: [{
-                        label: 'Receita (R$)',
-                        data: (data.top_produtos_vendidos || []).map(function (p) { return p.receita; }),
-                        backgroundColor: '#0ea5a4'
-                    }]
-                },
-                options: topOptions
-            });
-        }
-
-        var ctxGarcons = document.getElementById('chartDesempenhoGarcons');
-        if (ctxGarcons) {
-            var chartWrapperGarcons = ctxGarcons.closest('.performance-chart-container');
-            var garconsData = data.desempenho_garcons || [];
-            if (chartWrapperGarcons) {
-                chartWrapperGarcons.style.height = mobile
-                    ? Math.max(220, garconsData.length * 56) + 'px'
-                    : '300px';
-            }
-
-            var garconsOptions = buildChartOptions('bar', mobile);
-            garconsOptions.indexAxis = 'y';
-            garconsOptions.plugins.legend.display = false;
-            garconsOptions.scales.x.ticks.callback = function (value) {
-                return moeda(value);
-            };
-            garconsOptions.scales.y.ticks.autoSkip = false;
-
-            charts.desempenhoGarcons = new Chart(ctxGarcons, {
-                type: 'bar',
-                data: {
-                    labels: garconsData.map(function (item) { return item.nome; }),
-                    datasets: [{
-                        label: 'Faturamento (R$)',
-                        data: garconsData.map(function (item) { return item.faturamento; }),
-                        backgroundColor: '#0f766e',
-                        borderRadius: 6,
-                        barThickness: mobile ? 14 : 18
-                    }]
-                },
-                options: garconsOptions
-            });
-        }
-
-        var ctxCaixas = document.getElementById('chartDesempenhoCaixas');
-        if (ctxCaixas) {
-            var chartWrapperCaixas = ctxCaixas.closest('.performance-chart-container');
-            var caixasData = data.desempenho_caixas || [];
-            if (chartWrapperCaixas) {
-                chartWrapperCaixas.style.height = mobile
-                    ? Math.max(220, caixasData.length * 56) + 'px'
-                    : '300px';
-            }
-
-            var caixasOptions = buildChartOptions('bar', mobile);
-            caixasOptions.indexAxis = 'y';
-            caixasOptions.plugins.legend.display = false;
-            caixasOptions.scales.x.ticks.callback = function (value) {
-                return moeda(value);
-            };
-            caixasOptions.scales.y.ticks.autoSkip = false;
-
-            charts.desempenhoCaixas = new Chart(ctxCaixas, {
-                type: 'bar',
-                data: {
-                    labels: caixasData.map(function (item) { return item.nome; }),
-                    datasets: [{
-                        label: 'Faturamento (R$)',
-                        data: caixasData.map(function (item) { return item.faturamento; }),
-                        backgroundColor: '#155e75',
-                        borderRadius: 6,
-                        barThickness: mobile ? 14 : 18
-                    }]
-                },
-                options: caixasOptions
-            });
-        }
+        charts.receitaDespesas = new Chart(document.getElementById('chartReceitaDespesas'), {
+            type: 'line',
+            data: {
+                labels: (data.receita_vs_despesas || []).map(function (x) { return x.data_curta; }),
+                datasets: [
+                    { label: 'Receita', data: (data.receita_vs_despesas || []).map(function (x) { return x.faturamento; }), borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,.12)', fill: true, tension: .25 },
+                    { label: 'Despesas', data: (data.receita_vs_despesas || []).map(function (x) { return x.despesas; }), borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,.08)', fill: true, tension: .25 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+        charts.margens = new Chart(document.getElementById('chartMargens'), {
+            type: 'line',
+            data: {
+                labels: (data.margens_periodo || []).map(function (x) { return x.data_curta; }),
+                datasets: [
+                    { label: 'Margem bruta %', data: (data.margens_periodo || []).map(function (x) { return x.margem_bruta_pct; }), borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.14)', fill: true, tension: .25 },
+                    { label: 'Margem operacional %', data: (data.margens_periodo || []).map(function (x) { return x.margem_operacional_pct; }), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,.12)', fill: true, tension: .25 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+        charts.categorias = new Chart(document.getElementById('chartCmvCategorias'), {
+            type: 'bar',
+            data: {
+                labels: (data.cmv_vs_categorias || []).map(function (x) { return x.categoria; }),
+                datasets: [{ label: 'Valor (R$)', data: (data.cmv_vs_categorias || []).map(function (x) { return x.valor; }), backgroundColor: '#155e75' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+        charts.pagamento = new Chart(document.getElementById('chartPagamento'), {
+            type: 'doughnut',
+            data: {
+                labels: (data.metodos_pagamento || []).map(function (x) { return x.metodo; }),
+                datasets: [{ data: (data.metodos_pagamento || []).map(function (x) { return x.quantidade; }), backgroundColor: ['#0f766e', '#2563eb', '#f59e0b', '#16a34a', '#9333ea'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
     }
 
-    function carregarAnalytics() {
-        fetch(buildUrl())
-            .then(function (r) { return r.json(); })
-            .then(function (res) {
-                if (!res || !res.success || !res.data) return;
-                atualizarKpis(res.data);
-                renderCharts(res.data);
-            })
-            .catch(function (err) {
-                console.error('Falha ao carregar analytics do dashboard', err);
-            });
+    function load() {
+        fetch(buildUrl()).then(function (r) { return r.json(); }).then(function (res) {
+            if (!res || !res.success || !res.data) return;
+            renderKpis(res.data);
+            renderAlerts(res.data.alertas || []);
+            renderTables(res.data);
+            renderCharts(res.data);
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        carregarAnalytics();
+        var preset = document.getElementById('periodoPreset');
+        if (preset) preset.addEventListener('change', function () {
+            if (preset.value !== 'personalizado') applyPreset();
+        });
+        var ini = document.getElementById('data_inicial');
+        var fim = document.getElementById('data_final');
+        if ((!ini || !ini.value) && (!fim || !fim.value)) applyPreset();
+        load();
         var form = document.querySelector('.dashboard-filter-form');
-        if (form) {
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                var filtro = getFiltro();
-                var params = new URLSearchParams();
-                if (filtro.data_inicial) params.set('data_inicial', filtro.data_inicial);
-                if (filtro.data_final) params.set('data_final', filtro.data_final);
-                var newUrl = window.location.pathname + '?' + params.toString();
-                history.replaceState({}, '', newUrl);
-                carregarAnalytics();
-            });
-        }
-
-        window.addEventListener('resize', function () {
-            var mobileNow = isMobileViewport();
-            if (mobileNow === lastMobileState) return;
-            lastMobileState = mobileNow;
-            if (analyticsData) renderCharts(analyticsData);
+        if (form) form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            history.replaceState({}, '', window.location.pathname + '?' + buildUrl().split('?')[1]);
+            load();
         });
     });
 })();

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Painel em Tempo Real - Estoque{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Painel em Tempo Real</h1>
+        <p class="text-muted mb-0">Fluxo atual de separação, entrega e recebimentos (últimos 30 dias).</p>
+    </div>
+    <div class="header-actions">
+        <span class="badge bg-primary" id="rtStatus">Atualizando...</span>
+</div>
+</div>
+
+<div class="cards-container analytics-cards">
+    <div class="card card-primary">
+        <div class="card-content">
+            <h3>Separação em andamento</h3>
+            <p class="card-value" id="rtSeparacaoQtd">0</p>
+            <div class="progress"><div class="progress-bar bg-primary" id="rtSeparacaoPct" style="width:0%"></div></div>
+        </div>
+    </div>
+    <div class="card card-info">
+        <div class="card-content">
+            <h3>Entregas em rota</h3>
+            <p class="card-value" id="rtEntregasAndamento">0</p>
+            <div class="progress"><div class="progress-bar bg-info" id="rtEntregasPct" style="width:0%"></div></div>
+        </div>
+    </div>
+    <div class="card card-success">
+        <div class="card-content">
+            <h3>Entregas concluídas (30d)</h3>
+            <p class="card-value" id="rtEntregasConcluidas">0</p>
+            <div class="progress"><div class="progress-bar bg-success" id="rtEntregasConcluidasPct" style="width:0%"></div></div>
+        </div>
+    </div>
+    <div class="card card-warning">
+        <div class="card-content">
+            <h3>Recebimentos pendentes</h3>
+            <p class="card-value" id="rtRecebimentosPendentes">0</p>
+        </div>
+    </div>
+    <div class="card card-danger">
+        <div class="card-content">
+            <h3>Avarias (30d)</h3>
+            <p class="card-value" id="rtAvarias">0</p>
+        </div>
+    </div>
+    <div class="card card-secondary">
+        <div class="card-content">
+            <h3>Devoluções (30d)</h3>
+            <p class="card-value" id="rtDevolucoes">0</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/pages/estoque_realtime.js') }}"></script>
+{% endblock %}

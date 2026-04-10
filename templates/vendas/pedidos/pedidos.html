@@ -77,8 +77,9 @@
     </div>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
+<div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
+    <div class="table-responsive" style="overflow-x: auto;">
+        <table class="table table-hover align-middle">
         <thead>
             <tr>
                 <th>ID</th>
@@ -86,8 +87,6 @@
                 <th>Cliente</th>
                 <th>Total</th>
                 <th>Status</th>
-                <th>Fila atual</th>
-                <th>Proxima acao</th>
                 <th>Acoes</th>
             </tr>
         </thead>
@@ -116,49 +115,20 @@
                         {{ pedido.status }}
                     {% endif %}
                 </td>
-                <td data-label="Fila atual">
-                    <span class="pedido-fila-badge pedido-fila-{{ pedido.fluxo_operacional.chave }}">{{ pedido.fluxo_operacional.titulo }}</span>
-                    <div class="pedido-fila-texto">{{ pedido.fluxo_operacional.descricao }}</div>
-                </td>
-                <td data-label="Proxima acao">
-                    <div class="pedido-proxima-acao">{{ pedido.fluxo_operacional.proxima_acao }}</div>
-                    <div class="pedido-proxima-etapa">Depois: {{ pedido.fluxo_operacional.apos_concluir }}</div>
-                </td>
                 <td data-label="Acoes" class="actions-cell pedido-actions-cell">
                     <div class="pedido-actions">
-                        {% for acao in pedido.acoes_operacionais %}
-                            {% if acao.tipo == 'link' %}
-                            <a href="{{ acao.url }}" class="btn btn-sm {{ acao.classe }}">{{ acao.label }}</a>
-                            {% elif acao.tipo == 'status' %}
-                            <form method="POST" action="{{ url_for('alterar_status_pedido', pedido_id=pedido.id) }}" class="pedido-inline-form">
-                                {{ csrf_input|safe }}
-                                <input type="hidden" name="status" value="{{ acao.valor }}">
-                                <button type="submit" class="btn btn-sm {{ acao.classe }}">{{ acao.label }}</button>
-                            </form>
-                            {% elif acao.tipo == 'separacao' %}
-                            <form method="POST" action="{{ url_for('atualizar_separacao_entrega_pedido', pedido_id=pedido.id) }}" class="pedido-inline-form">
-                                {{ csrf_input|safe }}
-                                <input type="hidden" name="acao" value="{{ acao.valor }}">
-                                <button type="submit" class="btn btn-sm {{ acao.classe }}">{{ acao.label }}</button>
-                            </form>
-                            {% elif acao.tipo == 'despacho' %}
-                            <form method="POST" action="{{ url_for('atualizar_despacho_entrega', pedido_id=pedido.id) }}" class="pedido-inline-form">
-                                {{ csrf_input|safe }}
-                                <input type="hidden" name="acao" value="{{ acao.valor }}">
-                                <button type="submit" class="btn btn-sm {{ acao.classe }}">{{ acao.label }}</button>
-                            </form>
-                            {% endif %}
-                        {% endfor %}
+                        <a href="{{ url_for('detalhes_pedido', pedido_id=pedido.id) }}" class="btn btn-sm btn-outline-primary">Visualizar</a>
                     </div>
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="8" class="text-center">Nenhum pedido cadastrado</td>
+                <td colspan="6" class="text-center">Nenhum pedido cadastrado</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    </div>
 </div>
 
 {% if pagination and pagination.pages > 1 %}
