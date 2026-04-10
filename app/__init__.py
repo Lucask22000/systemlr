@@ -1429,6 +1429,33 @@ def _carregar_json_lista(valor_json):
     return []
 
 
+def _normalizar_json_lista_para_texto(valor_json):
+    linhas = []
+    for item in _carregar_json_lista(valor_json):
+        texto = ''
+        if isinstance(item, str):
+            texto = item.strip()
+        elif isinstance(item, dict):
+            for chave in ('nome', 'veiculo', 'empresa', 'titulo', 'descricao', 'texto', 'label'):
+                valor = item.get(chave)
+                if isinstance(valor, str) and valor.strip():
+                    texto = valor.strip()
+                    break
+            if not texto:
+                for valor in item.values():
+                    if isinstance(valor, str) and valor.strip():
+                        texto = valor.strip()
+                        break
+            if not texto:
+                texto = json.dumps(item, ensure_ascii=False)
+        elif item is not None:
+            texto = str(item).strip()
+
+        if texto:
+            linhas.append(texto)
+    return linhas
+
+
 def _normalizar_linhas_configuracao(valor_texto, tamanho_max=200):
     linhas = []
     for linha in (valor_texto or '').splitlines():
@@ -2716,8 +2743,10 @@ def editar_empresa():
         (EmpresaConfig.CANAL_OPERACAO_ECOMMERCE, 'Somente e-commerce'),
         (EmpresaConfig.CANAL_OPERACAO_HIBRIDO, 'Hibrido (fisico + e-commerce)'),
     ]
-    veiculos_texto = '\n'.join(_carregar_json_lista(empresa.entrega_veiculos_json if empresa else None))
-    terceirizadas_texto = '\n'.join(_carregar_json_lista(empresa.entrega_terceirizadas_json if empresa else None))
+    veiculos_texto = '\n'.join(_normalizar_json_lista_para_texto(empresa.entrega_veiculos_json if empresa else None))
+    terceirizadas_texto = '\n'.join(
+        _normalizar_json_lista_para_texto(empresa.entrega_terceirizadas_json if empresa else None)
+    )
     pagamentos_pdv_texto = payment_options_to_text(empresa.pagamentos_pdv_json if empresa else None, 'pdv')
     integracoes_pdv_texto = api_integrations_to_text(empresa.integracoes_pdv_json if empresa else None)
     return render_template(

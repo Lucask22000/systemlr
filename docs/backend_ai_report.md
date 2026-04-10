@@ -1,10 +1,10 @@
 # Relatorio Completo do Backend (para IA)
 
-- Gerado em: 2026-04-06 12:39:26
+- Gerado em: 2026-04-10 19:30:37
 
 - Projeto base: `C:/Users/lucas/OneDrive/Desktop/conveniencia`
 
-- Total de arquivos Python mapeados: **73**
+- Total de arquivos Python mapeados: **72**
 
 
 ## 1) Escopo
@@ -20,7 +20,6 @@
 - realtime.py
 - run.py
 - security.py
-- seed_data.py
 - app/
   - app/__init__.py
   - app/api_routes.py
@@ -97,7 +96,7 @@
 |---|---:|---:|---|
 | `app/__init__.py` | 7617 | 344.4 | `a479c3f136471b08` |
 | `app/api_routes.py` | 204 | 8.3 | `cb502270bf0af58e` |
-| `app/auth_routes.py` | 253 | 12.1 | `7ddfa12ae28cac53` |
+| `app/auth_routes.py` | 260 | 12.5 | `69ef39533d1f36c5` |
 | `app/blueprints/__init__.py` | 7 | 0.2 | `005d430cecfb715d` |
 | `app/blueprints/auth_bp.py` | 7 | 0.1 | `2c8e278b1badeaaa` |
 | `app/blueprints/estoque_bp.py` | 5 | 0.1 | `eaf3379106993a93` |
@@ -107,11 +106,11 @@
 | `app/cli.py` | 102 | 3.9 | `b8aa2ceed3a7b2e1` |
 | `app/constants.py` | 209 | 7.3 | `5f05511c4f5787d6` |
 | `app/dashboard_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
-| `app/decorators.py` | 61 | 2.1 | `69669f232ba0bd43` |
+| `app/decorators.py` | 61 | 2.1 | `47951730262febc8` |
 | `app/empresa_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
 | `app/exceptions.py` | 33 | 0.7 | `9fbe0aa5d2b49af0` |
 | `app/extensions.py` | 72 | 2.1 | `3c4218b2ab8e9448` |
-| `app/factory.py` | 102 | 3.9 | `3839aaa61511cafc` |
+| `app/factory.py` | 112 | 4.1 | `b4f3d964226bfaa3` |
 | `app/helpers.py` | 112 | 3.6 | `8e805e4e51a83608` |
 | `app/rh_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
 | `app/services/analytics.py` | 602 | 23.3 | `0865c4b1344035a0` |
@@ -156,7 +155,7 @@
 | `app/validators/rh_validators.py` | 14 | 0.4 | `89b0196b7cd3aae5` |
 | `app/validators/vendas_validators.py` | 13 | 0.4 | `8d29465e33dc4c19` |
 | `config.py` | 65 | 1.7 | `f96bba2a1405838c` |
-| `fix_admin_access.py` | 48 | 1.4 | `b0fe4cf4de27aa58` |
+| `fix_admin_access.py` | 53 | 1.6 | `9ba54ed26a3f9f3a` |
 | `models.py` | 1423 | 64.4 | `0586b4b9e4aee349` |
 | `realtime.py` | 32 | 0.9 | `b6c9bc77daea6074` |
 | `routes/__init__.py` | 2 | 0.0 | `84b29b334b20301c` |
@@ -165,11 +164,10 @@
 | `routes/vendas_routes.py` | 3204 | 134.3 | `6e0eee136cd3af21` |
 | `run.py` | 24 | 0.6 | `fa867285dce10aa1` |
 | `security.py` | 116 | 3.3 | `c8d725f6a5f16fac` |
-| `seed_data.py` | 231 | 10.0 | `360da908ebbf99a8` |
 | `utils/__init__.py` | 2 | 0.0 | `870bc525a3cbeecd` |
 | `utils/endereco_codigo.py` | 502 | 17.8 | `8e379c1cde723bed` |
 
-**Total de linhas backend:** 26107
+**Total de linhas backend:** 25898
 
 
 ## 4) Codigo fonte consolidado
@@ -8016,12 +8014,12 @@ def register_routes(app, context):
 
 
 ### Arquivo: `app/auth_routes.py`
-- Linhas: 253
-- Tamanho: 12.1 KB
+- Linhas: 260
+- Tamanho: 12.5 KB
 - Status: completo
 
 ```python
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import current_app, flash, redirect, render_template, request, session, url_for
 
 from app.services.auth_service import AuthService
 from app.validators.auth_validators import LoginSchema, RegistroSchema
@@ -8064,8 +8062,15 @@ def register_routes(app, context):
         paginas_rh_gestao = {'funcionarios', 'rh_funcoes'}
         return bool(set(paginas_permitidas_para_funcionario(funcionario)).intersection(paginas_rh_gestao))
 
+    def _login_rate_limit_rule():
+        attempts = int(current_app.config.get('LOGIN_MAX_ATTEMPTS', 5))
+        window_seconds = int(current_app.config.get('LOGIN_WINDOW_SECONDS', 300))
+        if window_seconds % 60 == 0:
+            return f'{attempts} per {max(1, window_seconds // 60)} minute'
+        return f'{attempts} per {window_seconds} second'
+
     @app.route('/login', methods=['GET', 'POST'])
-    @limit('5 per 5 minute')
+    @limit(_login_rate_limit_rule, methods=['POST'])
     def login():
         if request.method == 'POST':
             ip_addr = client_ip()
@@ -8765,11 +8770,11 @@ def require_role(*roles):
     return decorator
 
 
-def _limit(rule):
+def _limit(rule, *args, **kwargs):
     def decorator(func):
         if extensions.limiter is None:
             return func
-        return extensions.limiter.limit(rule)(func)
+        return extensions.limiter.limit(rule, *args, **kwargs)(func)
 
     return decorator
 
@@ -8912,8 +8917,8 @@ def init_extensions(app, db):
 
 
 ### Arquivo: `app/factory.py`
-- Linhas: 102
-- Tamanho: 3.9 KB
+- Linhas: 112
+- Tamanho: 4.1 KB
 - Status: completo
 
 ```python
@@ -8933,6 +8938,16 @@ load_dotenv()
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 
+def _env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 def create_app(config_name=None, *, register_routes=False, route_contexts=None):
     if config_name is None:
         config_name = (os.environ.get('FLASK_CONFIG') or os.environ.get('APP_ENV') or 'development').strip().lower()
@@ -8948,8 +8963,8 @@ def create_app(config_name=None, *, register_routes=False, route_contexts=None):
     app.config['SESSION_PERMANENT'] = False
     app.config['SESSION_TYPE'] = app.config.get('SESSION_TYPE') or 'filesystem'
     app.config.setdefault('TEMPLATES_AUTO_RELOAD', True)
-    app.config.setdefault('LOGIN_MAX_ATTEMPTS', 5)
-    app.config.setdefault('LOGIN_WINDOW_SECONDS', 300)
+    app.config.setdefault('LOGIN_MAX_ATTEMPTS', _env_int('LOGIN_MAX_ATTEMPTS', 5))
+    app.config.setdefault('LOGIN_WINDOW_SECONDS', _env_int('LOGIN_WINDOW_SECONDS', 300))
     app.config.setdefault('MENU_DEBUG_ENABLED', app.config.get('ENV_NAME') != 'production')
     app.config.setdefault('LOCAL_AI_ENABLED', os.environ.get('SYSTEMLR_LOCAL_AI_ENABLED', '1') not in {'0', 'false', 'False'})
     app.config.setdefault(
@@ -15305,55 +15320,60 @@ config = {
 
 
 ### Arquivo: `fix_admin_access.py`
-- Linhas: 48
-- Tamanho: 1.4 KB
+- Linhas: 53
+- Tamanho: 1.6 KB
 - Status: completo
 
 ```python
 """
-Script para corrigir/criar acesso do admin
+Script para corrigir/criar acesso do admin.
 Execute: python fix_admin_access.py
 """
+
+from __future__ import annotations
+
 import os
 
-from app import app, db
-from models import Funcionario
 
-def fix_admin_access():
-    """Cria ou atualiza o admin"""
-    
+def get_admin_credentials() -> tuple[str, str, str]:
+    """Retorna as credenciais principais do admin (env + defaults)."""
+    email = os.environ.get("SYSTEMLR_ADMIN_EMAIL", "admin@systemlr.com").strip().lower()
+    senha = os.environ.get("SYSTEMLR_ADMIN_PASSWORD", "12345678")
+    nome = os.environ.get("SYSTEMLR_ADMIN_NAME", "Administrador").strip() or "Administrador"
+    return email, senha, nome
+
+
+def fix_admin_access() -> None:
+    """Cria ou atualiza o admin principal e exige troca de senha no primeiro login."""
+    from app import app, db
+    from models import Funcionario
+
     with app.app_context():
-        email = os.environ.get("SYSTEMLR_ADMIN_EMAIL", "admin@conveniencia.local")
-        senha = os.environ.get("SYSTEMLR_ADMIN_PASSWORD", "142536")
-        nome = os.environ.get("SYSTEMLR_ADMIN_NAME", "Administrador")
-        
-        # Procurar por admin existente
+        email, senha, nome = get_admin_credentials()
         admin = Funcionario.query.filter_by(email=email).first()
-        
+
         if admin:
-            print(f"✏️  Atualizando admin existente: {admin.nome}")
-            admin.set_password(senha)
-            admin.role = "admin"
-            admin.ativo = True
+            print(f"Atualizando admin existente: {admin.nome}")
         else:
-            print(f"✨ Criando novo admin...")
-            admin = Funcionario(
-                nome=nome,
-                email=email,
-                role="admin",
-                ativo=True
-            )
-            admin.set_password(senha)
+            print("Criando novo admin...")
+            admin = Funcionario()
             db.session.add(admin)
-        if admin and admin.nome != nome:
-            admin.nome = nome
-        
+
+        admin.nome = nome
+        admin.email = email
+        admin.role = "admin"
+        admin.ativo = True
+        admin.senha_provisoria = True
+        admin.set_password(senha)
+
         db.session.commit()
-        print(f"✅ Acesso de admin corrigido com sucesso!")
-        print(f"   Email: {email}")
-        print(f"   Senha: {senha}")
-        print(f"   Role: admin")
-        print(f"   Ativo: {admin.ativo}")
+        print("Acesso de admin corrigido com sucesso.")
+        print(f"  Email: {email}")
+        print(f"  Senha: {senha}")
+        print("  Role: admin")
+        print(f"  Ativo: {admin.ativo}")
+        print(f"  Senha provisoria: {admin.senha_provisoria}")
+
 
 if __name__ == "__main__":
     fix_admin_access()
@@ -26174,246 +26194,6 @@ def role_required(*roles):
         return wrapper
 
     return decorator
-
-```
-
-
-### Arquivo: `seed_data.py`
-- Linhas: 231
-- Tamanho: 10.0 KB
-- Status: completo
-
-```python
-"""
-Script para popular o banco de dados com dados de teste.
-Execute: python seed_data.py
-"""
-import sys
-import secrets
-
-from app import app, db
-from models import (
-    Categoria, Produto, Fornecedor, Funcionario, Mesa, Caixa, 
-    Movimentacao, PermissaoAcesso, Pedido
-)
-
-def seed_database():
-    """Popula o banco com dados de teste"""
-    
-    with app.app_context():
-        # Limpar dados existentes
-        print("🗑️  Limpando dados existentes...")
-        db.drop_all()
-        db.create_all()
-        
-        print("📝 Criando funcionários...")
-        # Criar funcionários
-        admin = Funcionario(
-            nome="Administrador",
-            email="admin@conveniencia.local",
-            role="admin",
-            ativo=True
-        )
-        admin.set_password("admin123")
-        
-        gerente = Funcionario(
-            nome="Gerente",
-            email="gerente@conveniencia.local",
-            role="gerente",
-            ativo=True
-        )
-        gerente.set_password("gerente123")
-        
-        operador1 = Funcionario(
-            nome="João Operador",
-            email="joao@conveniencia.local",
-            role="operador",
-            ativo=True
-        )
-        operador1.set_password("joao123")
-        
-        operador2 = Funcionario(
-            nome="Maria Caixa",
-            email="maria@conveniencia.local",
-            role="caixa",
-            ativo=True
-        )
-        operador2.set_password("maria123")
-        
-        db.session.add_all([admin, gerente, operador1, operador2])
-        db.session.commit()
-        
-        print("📂 Criando categorias...")
-        # Criar categorias
-        categorias_data = [
-            {"nome": "Bebidas", "descricao": "Refrigerantes, sucos e bebidas em geral"},
-            {"nome": "Alimentos", "descricao": "Snacks, lanches e alimentos diversos"},
-            {"nome": "Doces", "descricao": "Chocolates, balas e doces"},
-            {"nome": "Cuidados Pessoais", "descricao": "Produtos de higiene e cuidados"},
-            {"nome": "Outros", "descricao": "Diversos"}
-        ]
-        
-        categorias = []
-        for cat_data in categorias_data:
-            cat = Categoria(**cat_data)
-            categorias.append(cat)
-            db.session.add(cat)
-        db.session.commit()
-        
-        print("🤝 Criando fornecedores...")
-        # Criar fornecedores
-        fornecedores_data = [
-            {"nome": "Distribuidora ABC", "contato": "João Silva", "telefone": "(11) 3000-0000", "email": "vendas@distributora-abc.com"},
-            {"nome": "Sua Bebida", "contato": "Carlos", "telefone": "(11) 2000-0000", "email": "vendas@suabebida.com"},
-            {"nome": "Alimentos Brasil", "contato": "Pedro", "telefone": "(11) 1000-0000", "email": "contato@alimentosbrasil.com"},
-            {"nome": "Premium Doces", "contato": "Ana", "telefone": "(11) 4000-0000", "email": "vendas@premiumdoces.com"},
-        ]
-        
-        fornecedores = []
-        for forn_data in fornecedores_data:
-            forn = Fornecedor(**forn_data)
-            fornecedores.append(forn)
-            db.session.add(forn)
-        db.session.commit()
-        
-        print("📦 Criando produtos...")
-        # Criar produtos
-        produtos_data = [
-            # Bebidas
-            {"codigo": "BEB001", "nome": "Coca-Cola 2L", "categoria_id": categorias[0].id, "preco_custo": 5.00, "preco_venda": 8.50, "quantidade_estoque": 50},
-            {"codigo": "BEB002", "nome": "Suco Natural Laranja 1L", "categoria_id": categorias[0].id, "preco_custo": 3.50, "preco_venda": 6.90, "quantidade_estoque": 30},
-            {"codigo": "BEB003", "nome": "Água Mineral 1.5L", "categoria_id": categorias[0].id, "preco_custo": 1.20, "preco_venda": 2.50, "quantidade_estoque": 100},
-            
-            # Alimentos
-            {"codigo": "ALI001", "nome": "Biscoito Água e Sal", "categoria_id": categorias[1].id, "preco_custo": 1.50, "preco_venda": 3.50, "quantidade_estoque": 80},
-            {"codigo": "ALI002", "nome": "Bolo de Chocolate", "categoria_id": categorias[1].id, "preco_custo": 4.00, "preco_venda": 8.90, "quantidade_estoque": 20},
-            {"codigo": "ALI003", "nome": "Batata Frita Pequena", "categoria_id": categorias[1].id, "preco_custo": 2.00, "preco_venda": 4.90, "quantidade_estoque": 60},
-            
-            # Doces
-            {"codigo": "DOC001", "nome": "Chocolate Ao Leite", "categoria_id": categorias[2].id, "preco_custo": 3.00, "preco_venda": 6.50, "quantidade_estoque": 45},
-            {"codigo": "DOC002", "nome": "Bala Sortida", "categoria_id": categorias[2].id, "preco_custo": 0.50, "preco_venda": 1.50, "quantidade_estoque": 200},
-            {"codigo": "DOC003", "nome": "Brigadeiro", "categoria_id": categorias[2].id, "preco_custo": 1.50, "preco_venda": 3.50, "quantidade_estoque": 35},
-            
-            # Cuidados Pessoais
-            {"codigo": "CUI001", "nome": "Papel Higiênico 4 rolos", "categoria_id": categorias[3].id, "preco_custo": 4.50, "preco_venda": 8.90, "quantidade_estoque": 25},
-            {"codigo": "CUI002", "nome": "Desinfetante", "categoria_id": categorias[3].id, "preco_custo": 2.50, "preco_venda": 5.50, "quantidade_estoque": 15},
-        ]
-        
-        produtos = []
-        for prod_data in produtos_data:
-            prod = Produto(**prod_data)
-            produtos.append(prod)
-            db.session.add(prod)
-        db.session.commit()
-        
-        print("🏪 Criando mesas...")
-        # Criar mesas
-        mesas_data = [
-            {"numero": "1", "capacidade": 2, "status": "livre"},
-            {"numero": "2", "capacidade": 2, "status": "livre"},
-            {"numero": "3", "capacidade": 4, "status": "ocupada"},
-            {"numero": "4", "capacidade": 4, "status": "livre"},
-            {"numero": "5", "capacidade": 6, "status": "livre"},
-            {"numero": "6", "capacidade": 4, "status": "ocupada"},
-        ]
-        
-        mesas = []
-        for mesa_data in mesas_data:
-            mesa = Mesa(**mesa_data)
-            mesa.qr_token = secrets.token_urlsafe(12)
-            mesas.append(mesa)
-            db.session.add(mesa)
-        db.session.commit()
-        
-        print("💰 Criando caixas...")
-        # Criar caixas
-        caixas_data = [
-            {"nome": "Caixa 1", "funcionario_id": maria.id if (maria := operador2) else None, "saldo_inicial": 0.0, "aberto": False},
-            {"nome": "Caixa 2", "funcionario_id": None, "saldo_inicial": 0.0, "aberto": False},
-            {"nome": "Caixa 3", "funcionario_id": None, "saldo_inicial": 0.0, "aberto": False},
-        ]
-        
-        caixas = []
-        for caixa_data in caixas_data:
-            caixa = Caixa(**caixa_data)
-            caixa.saldo_atual = caixa_data["saldo_inicial"]
-            caixas.append(caixa)
-            db.session.add(caixa)
-        db.session.commit()
-        
-        # sample pedido with payment
-        print("💳 Criando um pedido de exemplo com pagamento")
-        if caixas and produtos:
-            ped = Pedido(caixa_id=caixas[0].id, total=produtos[0].preco_venda, metodo_pagamento='dinheiro', valor_pago=produtos[0].preco_venda)
-            db.session.add(ped)
-            db.session.commit()
-
-        print("📋 Criando movimentações de estoque...")
-        # Criar algumas movimentações para histórico
-        for i, produto in enumerate(produtos[:5]):
-            mov = Movimentacao(
-                produto_id=produto.id,
-                fornecedor_id=fornecedores[0].id,
-                tipo=Movimentacao.TIPO_ENTRADA,
-                quantidade=100,
-                motivo="Compra inicial",
-                observacoes="Estoque de abertura"
-            )
-            db.session.add(mov)
-        db.session.commit()
-        
-        print("🔐 Configurando permissões...")
-        # Adicionar permissões para funcionários
-        paginas_admin = ['inicio', 'produtos', 'categorias', 'fornecedores', 'movimentacoes', 
-                        'relatorios', 'caixas', 'mesas', 'pedidos', 'vendas', 'funcionarios']
-        paginas_gerente = ['inicio', 'produtos', 'categorias', 'movimentacoes', 'relatorios', 
-                          'caixas', 'mesas', 'pedidos', 'vendas']
-        paginas_operador = ['inicio', 'produtos', 'pedidos', 'vendas']
-        
-        # Admin
-        for pagina in paginas_admin:
-            perm = PermissaoAcesso(funcionario_id=admin.id, pagina=pagina)
-            db.session.add(perm)
-        
-        # Gerente
-        for pagina in paginas_gerente:
-            perm = PermissaoAcesso(funcionario_id=gerente.id, pagina=pagina)
-            db.session.add(perm)
-        
-        # Operadores
-        for pagina in paginas_operador:
-            perm = PermissaoAcesso(funcionario_id=operador1.id, pagina=pagina)
-            db.session.add(perm)
-            perm = PermissaoAcesso(funcionario_id=operador2.id, pagina=pagina)
-            db.session.add(perm)
-        
-        db.session.commit()
-        
-        print("\n" + "="*60)
-        print("✅ BANCO DE DADOS POPULADO COM SUCESSO!")
-        print("="*60)
-        print("\n📊 Dados Criados:")
-        print(f"  • {len([admin, gerente, operador1, operador2])} funcionários")
-        print(f"  • {len(categorias)} categorias")
-        print(f"  • {len(fornecedores)} fornecedores")
-        print(f"  • {len(produtos)} produtos")
-        print(f"  • {len(mesas)} mesas")
-        print(f"  • {len(caixas)} caixas")
-        print("\n🔐 Contas para Teste:")
-        print("  Admin:      admin@conveniencia.local / admin123")
-        print("  Gerente:    gerente@conveniencia.local / gerente123")
-        print("  Operador:   joao@conveniencia.local / joao123")
-        print("  Caixa:      maria@conveniencia.local / maria123")
-        print("\n" + "="*60)
-
-if __name__ == '__main__':
-    try:
-        seed_database()
-    except Exception as e:
-        print(f"❌ Erro ao popular banco: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
 
 ```
 

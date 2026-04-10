@@ -1,0 +1,1 @@
+﻿"""assistente domain module."""
