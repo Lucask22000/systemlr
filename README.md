@@ -1,175 +1,249 @@
 # SystemLR
 
-ERP completo com gestao de estoque, vendas, financeiro, RH, e-commerce e IA integrada para automacao de processos empresariais.
+![Python](https://img.shields.io/badge/Python-3.x-blue)
+![Flask](https://img.shields.io/badge/Flask-Web-black)
+![Status](https://img.shields.io/badge/status-em%20desenvolvimento-orange)
+![License](https://img.shields.io/badge/license-privado-red)
 
-Plataforma operacional para varejo, estoque, vendas, expedicao, financeiro, RH, servicos e e-commerce em uma unica base. O projeto usa Flask, SQLAlchemy, SQLite, Jinja2 e Bootstrap, com foco em operacao web responsiva para desktop e mobile.
+**ERP web completo para gestão empresarial com automação inteligente e assistente integrado.**
 
-## Nova Casa do Projeto
+---
 
-Este diretorio representa a casa oficial do produto como repositorio independente `SystemLR`.
+## 📌 Descrição
 
-- Nome do repositorio recomendado: `SystemLR`
-- Pasta local recomendada: `C:\Users\lucas\OneDrive\Desktop\SystemLR`
-- Remote sugerido: `https://github.com/Lucask22000/systemlr.git`
+O **SystemLR** é uma plataforma ERP completa desenvolvida em Python com Flask, projetada para centralizar e automatizar operações empresariais em uma única aplicação.
 
-## Visao Geral
+O sistema atende principalmente operações de **varejo e gestão empresarial**, integrando módulos essenciais como estoque, vendas, financeiro, recursos humanos, expedição e e-commerce.
 
-- Dashboard operacional e gerencial
-- PDV, pedidos, mesas, caixas e expedicao
-- Estoque com produtos, enderecos, movimentacoes, recebimentos e relatorios
-- RH com funcionarios, perfis, permissoes e organograma
-- Financeiro com lancamentos, fundos e metricas
-- Assistente local "Marcia" com busca hibrida, contexto de pagina e feedback like/dislike
-- API interna para analytics e assistente
+Um dos grandes diferenciais do projeto é a presença da assistente inteligente **Márcia**, que auxilia na operação com base no contexto do sistema.
 
-## Arquitetura Atual
+---
 
-A base esta em transicao de um `app/__init__.py` monolitico para uma estrutura modular.
+## 🚀 Funcionalidades
 
-Principais modulos novos:
+### 📊 Gestão e Operação
 
-- `app/factory.py`: cria a app e configura extensoes
-- `app/decorators.py`: `login_required`, `require_role`, `_limit`
-- `app/helpers.py`: helpers reutilizaveis de request, login e analytics
-- `app/exceptions.py`: excecoes padronizadas de dominio
-- `app/utils/validators.py`: validacoes e normalizacoes compartilhadas
-- `app/utils/helpers.py`: helpers comuns como `slugify`, `sem_acentos` e `parse_date_range`
+* Dashboard operacional e gerencial
+* Indicadores de desempenho em tempo real
 
-Camada de servicos:
+### 💰 Financeiro
 
-- `app/services/pedido_service.py`
-- `app/services/estoque_service.py`
-- `app/services/financeiro_service.py`
-- `app/services/rh_service.py`
-- `app/services/assistente_service.py`
-- `app/services/utils_service.py`
+* Lançamentos financeiros e contábeis
+* Gestão de fundos
+* Métricas e análises
 
-Rotas novas ja extraidas:
+### 🛒 Vendas
 
-- `app/auth_routes.py`
-- `app/api_routes.py`
+* PDV (Ponto de Venda)
+* Gestão de pedidos
+* Mesas, caixas e garçons
+* Fluxo de expedição
 
-Rotas ainda em migracao gradual:
+### 📦 Estoque
 
-- `app/dashboard_routes.py`
-- `app/rh_routes.py`
-- `app/empresa_routes.py`
-- `app/services_routes.py`
+* Cadastro de produtos
+* Endereçamento de estoque
+* Movimentações e transferências
+* Recebimento de mercadorias
+* Relatórios operacionais
 
-## Assistente Local
+### 👥 Recursos Humanos (RH)
 
-A Marcia agora possui:
+* Gestão de funcionários
+* Perfis de acesso e permissões
+* Organograma empresarial
 
-- configuracao de modelo por ambiente
-- candidatos de embeddings com fallback
-- busca hibrida: lexical + BM25 + semantica + feedback + contexto da pagina
-- contexto recente de conversa
-- respostas por intencao: `howto`, `problem`, `location`, `permission`, `follow_up`
-- feedback persistente por `like` e `dislike`
+### 🌐 E-commerce
 
-Variaveis uteis:
+* Configuração de loja online
+* Gestão de campanhas e cupons
 
-- `SYSTEMLR_LOCAL_AI_ENABLED`
-- `SYSTEMLR_LOCAL_AI_AUTO_INSTALL`
-- `SYSTEMLR_LOCAL_AI_MODEL`
-- `SYSTEMLR_LOCAL_AI_MODEL_CANDIDATES`
-- `SYSTEMLR_LOCAL_AI_MAX_HISTORY_MESSAGES`
+### 🤖 Assistente Inteligente (Márcia)
 
-## Testes
+* Busca híbrida (lexical + semântica)
+* Contexto baseado na página atual
+* Histórico de conversas
+* Respostas por intenção
+* Sistema de feedback (like/dislike)
 
-O projeto agora possui base `pytest` em `tests/` com fixtures compartilhadas e suites por dominio:
+---
 
-- `tests/conftest.py`
-- `tests/test_auth.py`
-- `tests/test_pedidos.py`
-- `tests/test_estoque.py`
-- `tests/test_caixa.py`
-- `tests/test_rh.py`
-- `tests/test_assistente.py`
+## 🛠️ Tecnologias
 
-Tambem existem testes legados em `tests/test_system_flows.py`.
+* **Python**
+* **Flask**
+* **SQLAlchemy**
+* **SQLite**
+* **Jinja2**
+* **Bootstrap**
+* **Flask-Migrate / Alembic**
+* **Pytest**
 
-Executar:
+---
+
+## 🏗️ Arquitetura
+
+O sistema está em evolução de uma arquitetura monolítica para uma estrutura modular.
+
+### 🔹 Núcleo
+
+* `app/factory.py` → criação e configuração da aplicação
+* `app/decorators.py` → autenticação e controle de acesso
+* `app/helpers.py` → utilitários reutilizáveis
+* `app/exceptions.py` → tratamento de exceções
+* `app/utils/validators.py` → validações compartilhadas
+
+### 🔹 Serviços
+
+* `pedido_service.py`
+* `estoque_service.py`
+* `financeiro_service.py`
+* `rh_service.py`
+* `assistente_service.py`
+
+### 🔹 Rotas
+
+* `auth_routes.py`
+* `api_routes.py`
+
+### 🔹 Em migração
+
+* `dashboard_routes.py`
+* `rh_routes.py`
+* `empresa_routes.py`
+
+---
+
+## 🤖 Assistente Local Márcia
+
+A assistente **Márcia** é integrada ao sistema e oferece suporte operacional inteligente.
+
+### Funcionalidades:
+
+* Busca híbrida (BM25 + semântica)
+* Contexto da página atual
+* Histórico de interações
+* Classificação de intenção (how-to, problema, etc.)
+* Feedback contínuo para aprendizado
+
+### Variáveis importantes:
+
+* `SYSTEMLR_LOCAL_AI_ENABLED`
+* `SYSTEMLR_LOCAL_AI_MODEL`
+* `SYSTEMLR_LOCAL_AI_MODEL_CANDIDATES`
+* `SYSTEMLR_LOCAL_AI_MAX_HISTORY_MESSAGES`
+
+---
+
+## ⚙️ Instalação
 
 ```bash
-.venv\Scripts\python.exe -m pytest -q
-.venv\Scripts\python.exe -m pytest --cov=app --cov=routes --cov-report=term-missing
-```
-
-## Instalacao
-
-```bash
-cd C:\Users\lucas\OneDrive\Desktop\SystemLR
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Execucao
+---
+
+## ▶️ Execução
 
 ```bash
 .venv\Scripts\python.exe run.py
 ```
 
-Se necessario, ajuste:
+---
 
-- `FLASK_CONFIG=development`
-- `SECRET_KEY`
-- configuracoes de cache/Redis em producao
+## 🔐 Variáveis de Ambiente
 
-## Banco e Migrations
+Principais configurações:
 
-O projeto usa `Flask-Migrate/Alembic` como caminho oficial de evolucao de schema.
+* `FLASK_CONFIG=development`
+* `SECRET_KEY`
+* `SYSTEMLR_LOCAL_AI_ENABLED`
+* `SYSTEMLR_LOCAL_AI_MODEL`
 
-Antes de subir a aplicacao em ambiente novo ou apos atualizar codigo com mudancas estruturais, rode:
+Recomendado criar um arquivo `.env`.
+
+---
+
+## 🧪 Testes
+
+Executar testes:
+
+```bash
+.venv\Scripts\python.exe -m pytest -q
+```
+
+Cobertura:
+
+```bash
+.venv\Scripts\python.exe -m pytest --cov=app --cov=routes --cov-report=term-missing
+```
+
+---
+
+## 🗄️ Banco de Dados e Migrations
+
+O projeto utiliza **Flask-Migrate (Alembic)** para controle de versão do banco.
 
 ```bash
 .venv\Scripts\flask.exe db upgrade
 ```
 
-Existe documentacao de rollout e compatibilidade em `docs/database_migrations.md`.
-
-Fallback legado:
-
-- `SYSTEMLR_ENABLE_RUNTIME_SCHEMA_PATCHES=1`
-
-Use apenas como contingencia temporaria para ambientes antigos enquanto a migracao formal nao foi aplicada.
-
-## Relatorios e Documentacao
-
-Gerar relatorios de apoio:
+Fallback (uso temporário):
 
 ```bash
-.venv\Scripts\python.exe scripts/generate_backend_ai_report.py
-.venv\Scripts\python.exe scripts/generate_system_documentation.py
+SYSTEMLR_ENABLE_RUNTIME_SCHEMA_PATCHES=1
 ```
 
-Saidas:
+---
 
-- `docs/backend_ai_report.md`
-- `docs/system_overview_ai.md`
+## 📁 Estrutura do Projeto
 
-Healthcheck tecnico:
-
-```bash
-.venv\Scripts\python.exe scripts/healthcheck.py
+```text
+app/
+routes/
+tests/
+docs/
+scripts/
+models.py
+run.py
+config.py
 ```
 
-## Smoke Test Manual
+---
 
-Fluxo recomendado apos alteracoes maiores:
+## 🛣️ Roadmap
 
-1. Fazer login com um usuario admin ou gerente.
-2. Abrir dashboard e financeiro.
-3. Criar um pedido via PDV ou API.
-4. Finalizar o pedido e validar saldo de caixa e baixa de estoque.
-5. Registrar movimentacao de estoque.
-6. Criar e conferir um recebimento.
-7. Abrir analytics de estoque e RH.
-8. Testar a Marcia com uma saudacao e uma pergunta operacional.
+* [x] Estrutura inicial do ERP
+* [x] Módulos principais (estoque, vendas, financeiro, RH)
+* [x] Assistente inteligente integrada
+* [ ] Modularização completa das rotas
+* [ ] Melhorias de responsividade
+* [ ] Otimização de performance
+* [ ] Expansão do e-commerce
+* [ ] API pública externa
 
-## Observacoes
+---
 
-- Este repositorio marca o inicio da fase oficial do produto como `SystemLR`.
-- Revise `git status` antes de commitar, especialmente apos copiar novos assets ou gerar relatorios locais.
-- Os indices adicionados em `models.py` precisam de migration/aplicacao no banco para efeito completo em producao.
+## ⚠️ Observações
+
+* Projeto em evolução contínua
+* Revisar migrations antes de deploy
+* Evitar subir arquivos sensíveis (.env, banco local)
+* Estrutura está sendo progressivamente modularizada
+
+---
+
+## 📌 Status
+
+🚧 Em desenvolvimento ativo
+
+---
+
+## 💡 Autor
+
+Lucas Ramalho
+Especialista em automação, sistemas e desenvolvimento Python
+
+---
