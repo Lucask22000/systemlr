@@ -1,5 +1,7 @@
 # SystemLR
 
+ERP completo com gestao de estoque, vendas, financeiro, RH, e-commerce e IA integrada para automacao de processos empresariais.
+
 Plataforma operacional para varejo, estoque, vendas, expedicao, financeiro, RH, servicos e e-commerce em uma unica base. O projeto usa Flask, SQLAlchemy, SQLite, Jinja2 e Bootstrap, com foco em operacao web responsiva para desktop e mobile.
 
 ## Nova Casa do Projeto
