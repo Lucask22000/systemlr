@@ -10,10 +10,16 @@
 <div class="form-container">
     <form method="POST" enctype="multipart/form-data" class="form">
         {{ csrf_input|safe }}
+        {% if return_flow %}
+        <input type="hidden" name="return_to" value="{{ return_flow.return_to or '' }}">
+        <input type="hidden" name="origem" value="{{ return_flow.origem or '' }}">
+        <input type="hidden" name="contexto" value="{{ return_flow.contexto or '' }}">
+        <input type="hidden" name="context_key" value="{{ return_flow.context_key or '' }}">
+        {% endif %}
         <div class="form-group">
             <label for="codigo">Codigo de barras (EAN-13) *</label>
             <div class="barcode-input-group">
-                <input type="text" id="codigo" name="codigo" required placeholder="Ex: 7891234567895" class="input-text" inputmode="numeric" maxlength="14">
+                <input type="text" id="codigo" name="codigo" value="{{ form_data.codigo if form_data else '' }}" required placeholder="Ex: 7891234567895" class="input-text" inputmode="numeric" maxlength="14">
                 <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="codigo">Camera</button>
             </div>
             <small id="codigoErro" class="text-danger"></small>
@@ -21,12 +27,12 @@
 
         <div class="form-group">
             <label for="nome">Nome do Produto *</label>
-            <input type="text" id="nome" name="nome" required placeholder="Ex: Refrigerante 2L" class="input-text">
+            <input type="text" id="nome" name="nome" value="{{ form_data.nome if form_data else '' }}" required placeholder="Ex: Refrigerante 2L" class="input-text">
         </div>
 
         <div class="form-group">
             <label for="descricao">Descricao</label>
-            <textarea id="descricao" name="descricao" placeholder="Descrever o produto..." class="input-textarea" rows="4"></textarea>
+            <textarea id="descricao" name="descricao" placeholder="Descrever o produto..." class="input-textarea" rows="4">{{ form_data.descricao if form_data else '' }}</textarea>
         </div>
 
         <div class="form-group">
@@ -39,7 +45,7 @@
             <select id="categoria_id" name="categoria_id" required class="input-select">
                 <option value="">Selecione uma categoria</option>
                 {% for cat in categorias %}
-                <option value="{{ cat.id }}">{{ cat.nome }}</option>
+                <option value="{{ cat.id }}" {% if form_data and form_data.categoria_id == cat.id %}selected{% endif %}>{{ cat.nome }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -49,9 +55,10 @@
             <select id="fornecedor_id" name="fornecedor_id" required class="input-select">
                 <option value="">Selecione um fornecedor</option>
                 {% for fornecedor in fornecedores %}
-                <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
+                <option value="{{ fornecedor.id }}" {% if form_data and form_data.fornecedor_id == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
                 {% endfor %}
             </select>
+            <small class="text-muted d-block mt-1">Se o fornecedor ainda nao existir, volte ao fluxo anterior e use o cadastro rapido para manter o contexto.</small>
         </div>
 
         <div class="form-group">
@@ -59,7 +66,7 @@
             <select id="endereco_id" name="endereco_id" class="input-select">
                 <option value="">Nao definido</option>
                 {% for endereco in enderecos %}
-                <option value="{{ endereco.id }}">{{ endereco.nome }}</option>
+                <option value="{{ endereco.id }}" {% if form_data and form_data.endereco_id == endereco.id %}selected{% endif %}>{{ endereco.nome }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -67,19 +74,19 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="preco_custo">Preco de Custo *</label>
-                <input type="number" id="preco_custo" name="preco_custo" step="0.01" required placeholder="0.00" class="input-text">
+                <input type="number" id="preco_custo" name="preco_custo" value="{{ form_data.preco_custo if form_data else '' }}" step="0.01" required placeholder="0.00" class="input-text">
             </div>
 
             <div class="form-group">
                 <label for="preco_venda">Preco de Venda *</label>
-                <input type="number" id="preco_venda" name="preco_venda" step="0.01" required placeholder="0.00" class="input-text">
+                <input type="number" id="preco_venda" name="preco_venda" value="{{ form_data.preco_venda if form_data else '' }}" step="0.01" required placeholder="0.00" class="input-text">
             </div>
 
             <div class="form-group">
                 <label for="status_disponibilidade">Disponibilidade operacional</label>
                 <select id="status_disponibilidade" name="status_disponibilidade" class="input-select">
                     {% for chave, label in status_disponibilidade_labels.items() %}
-                    <option value="{{ chave }}" {% if chave == 'online' %}selected{% endif %}>{{ label }}</option>
+                    <option value="{{ chave }}" {% if (form_data and form_data.status_disponibilidade == chave) or (not form_data and chave == 'online') %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -90,17 +97,17 @@
                 <label for="tipo_movimentacao">Tipo de movimentacao no estoque</label>
                 <select id="tipo_movimentacao" name="tipo_movimentacao" class="input-select">
                     {% for chave, label in tipos_movimentacao_produto.items() %}
-                    <option value="{{ chave }}" {% if chave == 'manual' %}selected{% endif %}>{{ label }}</option>
+                    <option value="{{ chave }}" {% if (form_data and form_data.tipo_movimentacao == chave) or (not form_data and chave == 'manual') %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
                 <label for="prioridade_reabastecimento">Prioridade de reabastecimento</label>
-                <input type="number" id="prioridade_reabastecimento" name="prioridade_reabastecimento" class="input-text" min="1" max="999" placeholder="1 = maior prioridade">
+                <input type="number" id="prioridade_reabastecimento" name="prioridade_reabastecimento" value="{{ form_data.prioridade_reabastecimento if form_data else '' }}" class="input-text" min="1" max="999" placeholder="1 = maior prioridade">
             </div>
             <div class="form-group" style="display:flex;align-items:flex-end;">
                 <label class="checkbox-inline">
-                    <input type="checkbox" name="fora_picking">
+                    <input type="checkbox" name="fora_picking" {% if form_data and form_data.fora_picking %}checked{% endif %}>
                     Produto fora de picking
                 </label>
             </div>
@@ -109,13 +116,13 @@
         <div class="form-row">
             <div class="form-group" style="display:flex;align-items:flex-end;">
                 <label class="checkbox-inline">
-                    <input type="checkbox" name="servico_montagem_disponivel">
+                    <input type="checkbox" name="servico_montagem_disponivel" {% if form_data and form_data.servico_montagem_disponivel %}checked{% endif %}>
                     Permitir servico de montagem
                 </label>
             </div>
             <div class="form-group" style="display:flex;align-items:flex-end;">
                 <label class="checkbox-inline">
-                    <input type="checkbox" name="servico_instalacao_disponivel">
+                    <input type="checkbox" name="servico_instalacao_disponivel" {% if form_data and form_data.servico_instalacao_disponivel %}checked{% endif %}>
                     Permitir servico de instalacao
                 </label>
             </div>
@@ -124,18 +131,18 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="quantidade_estoque">Quantidade Inicial</label>
-                <input type="number" id="quantidade_estoque" name="quantidade_estoque" value="0" placeholder="0" class="input-text">
+                <input type="number" id="quantidade_estoque" name="quantidade_estoque" value="{{ form_data.quantidade_estoque if form_data else '0' }}" placeholder="0" class="input-text">
             </div>
 
             <div class="form-group">
                 <label for="quantidade_minima">Quantidade Minima</label>
-                <input type="number" id="quantidade_minima" name="quantidade_minima" value="5" placeholder="5" class="input-text">
+                <input type="number" id="quantidade_minima" name="quantidade_minima" value="{{ form_data.quantidade_minima if form_data else '5' }}" placeholder="5" class="input-text">
             </div>
         </div>
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Salvar produto</button>
-            <a href="{{ url_for('listar_produtos') }}" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ return_flow.cancel_url if return_flow else url_for('listar_produtos') }}" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>

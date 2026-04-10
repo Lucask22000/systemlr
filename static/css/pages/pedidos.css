@@ -1,4 +1,96 @@
-﻿    .pedido-filtros {
+    .pedido-flow-overview {
+        margin-bottom: 18px;
+    }
+
+    .pedido-flow-header h2 {
+        margin: 0 0 4px;
+        font-size: 1.08rem;
+    }
+
+    .pedido-flow-header p {
+        margin: 0;
+        color: #64748b;
+    }
+
+    .pedido-flow-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .pedido-flow-card {
+        border: 1px solid #dbe5f3;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        padding: 16px;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .pedido-flow-card-registro {
+        border-color: #bfdbfe;
+    }
+
+    .pedido-flow-card-preparo {
+        border-color: #fde68a;
+    }
+
+    .pedido-flow-card-separacao {
+        border-color: #c7d2fe;
+    }
+
+    .pedido-flow-card-roteirizacao {
+        border-color: #a7f3d0;
+    }
+
+    .pedido-flow-card-em_rota {
+        border-color: #bae6fd;
+    }
+
+    .pedido-flow-card-fechamento {
+        border-color: #99f6e4;
+    }
+
+    .pedido-flow-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .pedido-flow-count {
+        color: #0f172a;
+        font-size: 1.9rem;
+        line-height: 1;
+    }
+
+    .pedido-flow-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #0f172a;
+        font-size: 0.78rem;
+        font-weight: 800;
+        padding: 6px 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .pedido-flow-description {
+        color: #475569;
+        font-size: 0.92rem;
+        margin-bottom: 10px;
+    }
+
+    .pedido-flow-step {
+        color: #0f172a;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    .pedido-filtros {
         margin-bottom: 14px;
     }
 
@@ -13,6 +105,12 @@
     .pedido-filtros-form .form-select {
         min-width: 180px;
         flex: 1 1 220px;
+    }
+
+    .pedido-results-meta {
+        margin-top: 10px;
+        color: #64748b;
+        font-size: 0.88rem;
     }
 
     .pedido-status-badge {
@@ -55,6 +153,69 @@
         margin-top: 4px;
     }
 
+    .pedido-fila-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+    }
+
+    .pedido-fila-registro {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+
+    .pedido-fila-preparo {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .pedido-fila-separacao {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+
+    .pedido-fila-roteirizacao {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .pedido-fila-em_rota {
+        background: #cffafe;
+        color: #0f766e;
+    }
+
+    .pedido-fila-fechamento {
+        background: #ccfbf1;
+        color: #115e59;
+    }
+
+    .pedido-fila-concluido {
+        background: #e2e8f0;
+        color: #334155;
+    }
+
+    .pedido-fila-cancelado {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .pedido-fila-texto,
+    .pedido-proxima-etapa {
+        color: #64748b;
+        font-size: 0.82rem;
+        margin-top: 6px;
+    }
+
+    .pedido-proxima-acao {
+        color: #0f172a;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
     .pedido-actions-cell {
         min-width: 320px;
     }
@@ -64,6 +225,10 @@
         flex-wrap: wrap;
         gap: 8px;
         align-items: flex-start;
+    }
+
+    .pedido-inline-form {
+        margin: 0;
     }
 
     .pedido-status-form {
@@ -84,16 +249,12 @@
     }
 
     @media (max-width: 768px) {
-        .col-celular,
-        .col-garcom,
-        .col-pagamento,
-        .col-valor-pago,
-        .col-separacao {
-            display: none;
-        }
-
         .pedido-actions-cell {
             min-width: 0;
+        }
+
+        .pedido-flow-grid {
+            grid-template-columns: 1fr;
         }
 
         .pedido-filtros-form .form-control,

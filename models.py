@@ -391,6 +391,7 @@ class RecebimentoFornecedor(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)
+    local_recebimento_id = db.Column(db.Integer, db.ForeignKey('enderecos_estoque.id'), nullable=True)
     tipo_recebimento = db.Column(db.String(40), nullable=False, default=TIPO_COMPRA_REVENDA)
     fornecedor_documento = db.Column(db.String(30), nullable=True)
     data_entrega = db.Column(db.Date, nullable=True)
@@ -412,6 +413,7 @@ class RecebimentoFornecedor(db.Model):
 
     itens = db.relationship('RecebimentoItem', backref='recebimento', lazy=True, cascade='all, delete-orphan')
     recebedor_funcionario = db.relationship('Funcionario', foreign_keys=[recebedor_funcionario_id], lazy='select')
+    local_recebimento = db.relationship('EnderecoEstoque', foreign_keys=[local_recebimento_id], lazy='select')
 
     def __repr__(self):
         return f'<RecebimentoFornecedor {self.id} - {self.status}>'

@@ -35,10 +35,15 @@
             </div>
 
             <div class="form-group">
+                <label for="numero_cadastro">Numero de cadastro</label>
+                <input type="text" id="numero_cadastro" name="numero_cadastro" class="form-control" maxlength="12" value="{{ funcionario.numero_cadastro or '' }}" readonly>
+            </div>
+
+            <div class="form-group">
                 <label for="matricula">Matricula</label>
                 <input type="text" id="matricula" name="matricula" class="form-control" maxlength="30" value="{{ funcionario.matricula or '' }}" readonly>
                 <small style="display:block; margin-top:8px; color:#6c757d;">
-                    Padrao: codigo da empresa + codigo da filial principal + sequencial do colaborador.
+                    Padrao: codigo da filial principal + numero de cadastro do colaborador.
                 </small>
             </div>
 
@@ -118,7 +123,7 @@
                     {% endfor %}
                 </select>
                 <small style="display:block; margin-top:8px; color:#6c757d;">
-                    Usa um conjunto padrao de paginas. Voce ainda pode ajustar acessos individuais na tela "Editar acessos".
+                    Usa um conjunto padrao de paginas. Voce ainda pode ajustar acessos individuais na tela "Editar acessos". <a href="{{ url_for('listar_perfis_rh') }}">Gerenciar perfis</a>.
                 </small>
             </div>
 
@@ -134,7 +139,7 @@
                     {% endif %}
                 </select>
                 <small style="display:block; margin-top:8px; color:#6c757d;">
-                    Cargo descreve a funcao organizacional. O perfil de acesso fica separado para evitar confusao.
+                    Cargo descreve a funcao organizacional. O perfil de acesso fica separado para evitar confusao. <a href="{{ url_for('listar_funcoes_rh') }}">Gerenciar cargos</a>.
                 </small>
             </div>
 

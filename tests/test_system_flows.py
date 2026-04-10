@@ -535,6 +535,8 @@ class SystemFlowsTestCase(unittest.TestCase):
         estoque_inicial = self.produto.quantidade_estoque
         create_response = self.client.post('/estoque/recebimentos/novo', data={
             'fornecedor_id': fornecedor.id,
+            'tipo_recebimento': RecebimentoFornecedor.TIPO_COMPRA_REVENDA,
+            'local_recebimento_id': endereco.id,
             'info_nota': 'NF 123',
             'produto_id[]': [self.produto.id],
             'qtd_recebida[]': ['5'],
@@ -669,6 +671,8 @@ class SystemFlowsTestCase(unittest.TestCase):
 
             criar = self.client.post('/estoque/recebimentos/novo', data={
                 'fornecedor_id': fornecedor.id,
+                'tipo_recebimento': RecebimentoFornecedor.TIPO_COMPRA_REVENDA,
+                'local_recebimento_id': destino.id,
                 'info_nota': f'NF-MULTI-{idx + 1}',
                 'produto_id[]': [produto.id],
                 'qtd_recebida[]': [str(qtd_recebida)],

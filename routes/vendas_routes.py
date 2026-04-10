@@ -16,10 +16,14 @@ from app.exceptions import AppError, BusinessRuleError, ValidationError
 from app.services.financeiro_service import _build_payment_data
 from app.services.pedido_service import (
     _aplicar_transicao_status as service_aplicar_transicao_status,
+    create_order as service_create_order,
     _normalizar_item_payload,
     _processar_fechamento_pedido as service_processar_fechamento_pedido,
     _recalcular_total_pedido,
+    update_order as service_update_order,
 )
+from app.services.workflow import ExpedicaoStatus, transition_expedicao_status
+from app.services.operational_rules import require_cancel_reason
 from app.services.utils_service import _to_float, _to_int
 from app.utils.payment_config import default_payment_id, infer_payment_method_id, load_payment_options, payment_methods_map
 
@@ -814,6 +818,13 @@ def _garcom_logado_id():
     return garcom.id if garcom else None
 
 
+def _funcionario_logado_vendas():
+    funcionario_id = session.get('funcionario_id')
+    if not funcionario_id:
+        return None
+    return Funcionario.query.get(funcionario_id)
+
+
 def _parse_status(value, default='aberto'):
     status = (value or default).strip().lower()
     return status if status in ORDER_ALLOWED_TRANSITIONS else default
@@ -888,16 +899,18 @@ def _processar_fechamento_pedido(pedido):
         pedido.mesa.status = 'livre'
 
 
-def _aplicar_transicao_status(pedido, novo_status):
-    return pedido.transitar_para(novo_status, on_fechamento=_processar_fechamento_pedido)
-
-
 def _processar_fechamento_pedido(pedido):
     return service_processar_fechamento_pedido(pedido)
 
 
-def _aplicar_transicao_status(pedido, novo_status):
-    return service_aplicar_transicao_status(pedido, novo_status)
+def _aplicar_transicao_status(pedido, novo_status, *, actor=None, detalhes=None, require_delivery_separation=False):
+    return service_aplicar_transicao_status(
+        pedido,
+        novo_status,
+        actor=actor,
+        detalhes=detalhes,
+        require_delivery_separation=require_delivery_separation,
+    )
 
 
 def register_vendas_routes(app, login_required, require_role):
@@ -1813,19 +1826,36 @@ def register_vendas_routes(app, login_required, require_role):
         acao = (request.form.get('acao') or '').strip().lower()
         try:
             if acao == 'sair':
-                pedido.saiu_para_entrega_em = datetime.utcnow()
                 if not pedido.motorista_nome:
                     pedido.motorista_nome = empresa.entrega_motorista_padrao
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.EM_ROTA,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Despacho de saida para entrega.',
+                )
                 flash(f'Pedido #{pedido.id} marcado como saiu para entrega.', 'success')
             elif acao == 'entregar':
-                if not pedido.saiu_para_entrega_em:
-                    pedido.saiu_para_entrega_em = datetime.utcnow()
-                pedido.entrega_concluida_em = datetime.utcnow()
-                pedido.transitar_para(Pedido.STATUS_ENTREGUE)
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.ENTREGUE,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Entrega confirmada na expedicao.',
+                )
                 flash(f'Pedido #{pedido.id} marcado como entregue.', 'success')
             elif acao == 'reabrir':
-                pedido.entrega_concluida_em = None
-                pedido.saiu_para_entrega_em = None
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.SEPARADO,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Reabertura do despacho para nova expedicao.',
+                )
                 flash(f'Pedido #{pedido.id} retornou para aguardando despacho.', 'success')
             else:
                 flash('Acao de despacho invalida.', 'warning')
@@ -1855,7 +1885,14 @@ def register_vendas_routes(app, login_required, require_role):
         acao = (request.form.get('acao') or 'concluir').strip().lower()
         try:
             if acao == 'reabrir':
-                pedido.marcar_separacao_entrega(False)
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.PENDENTE_SEPARACAO,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Reabertura da separacao de entrega.',
+                )
                 mensagem = f'Pedido #{pedido.id} retornou para fila de separacao.'
             else:
                 rota_entrega = (request.form.get('rota_entrega') or '').strip() or None
@@ -1877,19 +1914,26 @@ def register_vendas_routes(app, login_required, require_role):
                     if placa_veiculo_cfg and not veiculo_placa:
                         veiculo_placa = placa_veiculo_cfg
 
-                pedido.rota_entrega = rota_entrega
-                pedido.ordem_rota = ordem_rota
-                pedido.local_saida = local_saida or empresa.entrega_local_saida_padrao
-                pedido.veiculo_tipo = veiculo_tipo or empresa.entrega_veiculo_padrao
-                pedido.veiculo_placa = veiculo_placa
-                pedido.motorista_nome = motorista_nome or empresa.entrega_motorista_padrao
-                pedido.empresa_terceirizada = empresa_terceirizada
-                pedido.nota_fiscal_numero = nota_fiscal_numero
-                pedido.nota_fiscal_chave = nota_fiscal_chave
-                if emitir_nota and empresa.emissao_nota_entrega_ativa is not False:
-                    pedido.nota_fiscal_emitida_em = datetime.utcnow()
-
-                pedido.marcar_separacao_entrega(True)
+                transition_expedicao_status(
+                    pedido,
+                    ExpedicaoStatus.SEPARADO,
+                    actor=_funcionario_logado_vendas(),
+                    enabled=_separacao_entrega_ativa(empresa),
+                    allowed_origins=_origens_separacao_entrega(empresa),
+                    detalhes='Separacao de entrega concluida.',
+                    metadata={
+                        'rota_entrega': rota_entrega,
+                        'ordem_rota': ordem_rota,
+                        'local_saida': local_saida or empresa.entrega_local_saida_padrao,
+                        'veiculo_tipo': veiculo_tipo or empresa.entrega_veiculo_padrao,
+                        'veiculo_placa': veiculo_placa,
+                        'motorista_nome': motorista_nome or empresa.entrega_motorista_padrao,
+                        'empresa_terceirizada': empresa_terceirizada,
+                        'nota_fiscal_numero': nota_fiscal_numero,
+                        'nota_fiscal_chave': nota_fiscal_chave,
+                        'nota_fiscal_emitida': bool(emitir_nota and empresa.emissao_nota_entrega_ativa is not False),
+                    },
+                )
                 mensagem = f'Pedido #{pedido.id} marcado como separado.'
                 corte_roteirizacao = _config_corte_roteirizacao(empresa)
                 referencia_roteirizacao = _referencia_pedido_roteirizacao(pedido)
@@ -1962,7 +2006,16 @@ def register_vendas_routes(app, login_required, require_role):
 
         pedido = Pedido.query.get_or_404(pedido_id)
         try:
-            _aplicar_transicao_status(pedido, novo_status)
+            detalhes = None
+            if novo_status == Pedido.STATUS_CANCELADO:
+                detalhes = require_cancel_reason(request.form.get('motivo_cancelamento'), entity_label='pedido')
+            _aplicar_transicao_status(
+                pedido,
+                novo_status,
+                actor=_funcionario_logado_vendas(),
+                detalhes=detalhes,
+                require_delivery_separation=_pedido_na_fila_entrega(pedido, _obter_empresa_config()),
+            )
             db.session.commit()
             status_label = 'venda concluida' if novo_status == 'fechado' else novo_status
             flash(f'Pedido {pedido.id} atualizado para {status_label}.', 'success')
@@ -1987,51 +2040,25 @@ def register_vendas_routes(app, login_required, require_role):
                 caixa_id = request.form.get('caixa_id', type=int) or None
                 observacoes = request.form.get('observacoes')
 
-                if caixa_id:
-                    caixa = Caixa.query.get(caixa_id)
-                    if not caixa or not caixa.aberto:
-                        flash('Caixa invalida ou fechada.', 'danger')
-                        return redirect(url_for('novo_pedido'))
+                caixa = Caixa.query.get(caixa_id) if caixa_id else None
+                mesa = Mesa.query.get(mesa_id) if atendimento_mesas_ativo and mesa_id else None
+                itens_payload = [
+                    {
+                        'produto_id': request.form.get(f'produto_{i}'),
+                        'quantidade': request.form.get(f'quantidade_{i}', 1),
+                    }
+                    for i in range(int(request.form.get('item_count', 0)))
+                ]
 
-                pedido = Pedido(
-                    mesa_id=mesa_id,
-                    caixa_id=caixa_id,
-                    garcom_id=_garcom_logado_id() if atendimento_mesas_ativo else None,
-                    observacoes=observacoes,
-                    status='aberto',
-                    estoque_processado=False,
-                    financeiro_processado=False
+                pedido = service_create_order(
+                    caixa=caixa,
+                    itens_payload=itens_payload,
+                    mesa=mesa,
+                    garcom_id=_garcom_logado_id(),
+                    atendimento_mesas_ativo=atendimento_mesas_ativo,
+                    normalizar_item_payload=_normalizar_item_payload,
                 )
-                db.session.add(pedido)
-                db.session.flush()
-
-                itens_validos = 0
-                for i in range(int(request.form.get('item_count', 0))):
-                    pid = request.form.get(f'produto_{i}')
-                    qty = request.form.get(f'quantidade_{i}', 1)
-                    if not pid:
-                        continue
-                    normalizado, erro = _normalizar_item_payload({'produto_id': pid, 'quantidade': qty})
-                    if erro:
-                        continue
-
-                    produto = normalizado['produto']
-                    quantidade = normalizado['quantidade']
-                    ip = ItemPedido(
-                        pedido_id=pedido.id,
-                        produto_id=produto.id,
-                        quantidade=quantidade,
-                        preco_unitario=produto.preco_venda
-                    )
-                    db.session.add(ip)
-                    itens_validos += 1
-
-                if itens_validos == 0:
-                    raise ValueError('Adicione ao menos um item valido ao pedido.')
-
-                _recalcular_total_pedido(pedido)
-                if atendimento_mesas_ativo and pedido.mesa:
-                    pedido.mesa.status = 'ocupada'
+                pedido.observacoes = observacoes
                 db.session.commit()
                 flash('Pedido criado com sucesso!', 'success')
                 return redirect(url_for('listar_pedidos'))
@@ -2050,6 +2077,9 @@ def register_vendas_routes(app, login_required, require_role):
     @require_role(*vendas_operacao_roles)
     def editar_pedido(pedido_id):
         pedido = Pedido.query.get_or_404(pedido_id)
+        if _parse_status(pedido.status) in ORDER_IMMUTABLE_STATUSES and request.method == 'POST':
+            flash('Pedido finalizado/cancelado nao pode ser editado.', 'danger')
+            return redirect(url_for('listar_pedidos'))
         produtos = Produto.query.filter_by(ativo=True).all()
         atendimento_mesas_ativo = _atendimento_mesas_ativo()
         mesas = Mesa.query.all() if atendimento_mesas_ativo else []
@@ -2061,48 +2091,20 @@ def register_vendas_routes(app, login_required, require_role):
             try:
                 status_atual = _parse_status(pedido.status)
                 novo_status = _parse_status(request.form.get('status', pedido.status), default=status_atual)
-                if status_atual in ORDER_IMMUTABLE_STATUSES and novo_status != status_atual:
-                    raise ValueError(f'Pedido {status_atual} e imutavel.')
+                caixa_id = request.form.get('caixa_id', type=int) or None
+                caixa = Caixa.query.get(caixa_id) if caixa_id else None
+                if caixa_id and not caixa:
+                    raise ValueError('Caixa informada nao existe.')
+                mesa_id = request.form.get('mesa_id', type=int) or None
+                mesa = Mesa.query.get(mesa_id) if atendimento_mesas_ativo and mesa_id else None
 
-                pedido.mesa_id = request.form.get('mesa_id', type=int) or None
-                if not atendimento_mesas_ativo:
-                    pedido.mesa_id = None
-                    pedido.garcom_id = None
-                pedido.caixa_id = request.form.get('caixa_id', type=int) or None
-                pedido.observacoes = request.form.get('observacoes', pedido.observacoes)
-
-                if pedido.caixa_id:
-                    caixa = Caixa.query.get(pedido.caixa_id)
-                    if not caixa:
-                        raise ValueError('Caixa informada nao existe.')
-                    if novo_status == 'fechado' and not caixa.aberto:
-                        raise ValueError('Caixa informada esta fechada.')
-
-                if status_atual not in ORDER_IMMUTABLE_STATUSES:
-                    pedido.itens.clear()
-                    itens_validos = 0
-                    for i in range(int(request.form.get('item_count', 0))):
-                        pid = request.form.get(f'produto_{i}')
-                        qty = request.form.get(f'quantidade_{i}', 1)
-                        if not pid:
-                            continue
-                        normalizado, erro = _normalizar_item_payload({'produto_id': pid, 'quantidade': qty})
-                        if erro:
-                            continue
-                        produto = normalizado['produto']
-                        quantidade = normalizado['quantidade']
-                        ip = ItemPedido(
-                            pedido_id=pedido.id,
-                            produto_id=produto.id,
-                            quantidade=quantidade,
-                            preco_unitario=produto.preco_venda
-                        )
-                        db.session.add(ip)
-                        itens_validos += 1
-                    if itens_validos == 0:
-                        raise ValueError('Adicione ao menos um item valido no pedido.')
-
-                    _recalcular_total_pedido(pedido)
+                itens_payload = [
+                    {
+                        'produto_id': request.form.get(f'produto_{i}'),
+                        'quantidade': request.form.get(f'quantidade_{i}', 1),
+                    }
+                    for i in range(int(request.form.get('item_count', 0)))
+                ]
 
                 metodo = request.form.get('metodo_pagamento')
                 if metodo:
@@ -2123,7 +2125,26 @@ def register_vendas_routes(app, login_required, require_role):
                     pedido.metodo_pagamento = None
                     pedido.valor_pago = None
 
-                _aplicar_transicao_status(pedido, novo_status)
+                detalhes = None
+                if novo_status == Pedido.STATUS_CANCELADO:
+                    detalhes = require_cancel_reason(request.form.get('motivo_cancelamento'), entity_label='pedido')
+
+                service_update_order(
+                    pedido,
+                    novo_status=novo_status,
+                    caixa=caixa,
+                    mesa=mesa,
+                    atendimento_mesas_ativo=atendimento_mesas_ativo,
+                    observacoes=request.form.get('observacoes', pedido.observacoes),
+                    itens_payload=itens_payload,
+                    metodo_pagamento=pedido.metodo_pagamento,
+                    valor_pago=pedido.valor_pago,
+                    actor=_funcionario_logado_vendas(),
+                    detalhes=detalhes,
+                    require_delivery_separation=_pedido_na_fila_entrega(pedido, empresa),
+                    normalizar_item_payload=_normalizar_item_payload,
+                    status_transition=_aplicar_transicao_status,
+                )
                 db.session.commit()
                 flash('Pedido atualizado com sucesso!', 'success')
                 return redirect(url_for('listar_pedidos'))
@@ -2241,48 +2262,16 @@ def register_vendas_routes(app, login_required, require_role):
                 return json_response(False, 'Caixa e produtos sao obrigatorios.', status=400, code='validation_error')
 
             caixa = Caixa.query.get(caixa_id)
-            if not caixa or not caixa.aberto:
-                return json_response(False, 'Caixa nao esta aberta.', status=409, code='business_rule')
-
-            pedido = Pedido(
-                mesa_id=mesa_id,
-                caixa_id=caixa_id,
-                garcom_id=_garcom_logado_id() if atendimento_mesas_ativo else None,
-                status='aberto',
-                estoque_processado=False,
-                financeiro_processado=False
+            mesa = Mesa.query.get(mesa_id) if atendimento_mesas_ativo and mesa_id else None
+            pedido = service_create_order(
+                caixa=caixa,
+                itens_payload=itens,
+                mesa=mesa,
+                garcom_id=_garcom_logado_id(),
+                atendimento_mesas_ativo=atendimento_mesas_ativo,
+                normalizar_item_payload=_normalizar_item_payload,
+                empty_items_message='Nenhum item valido para criar o pedido.',
             )
-            db.session.add(pedido)
-            db.session.flush()
-
-            itens_validos = 0
-            for item in itens:
-                normalizado, erro = _normalizar_item_payload(item)
-                if erro:
-                    continue
-
-                produto = normalizado['produto']
-                quantidade = normalizado['quantidade']
-                ip = ItemPedido(
-                    pedido_id=pedido.id,
-                    produto_id=produto.id,
-                    quantidade=quantidade,
-                    preco_unitario=produto.preco_venda
-                )
-                db.session.add(ip)
-                itens_validos += 1
-
-            if itens_validos == 0:
-                db.session.rollback()
-                return json_response(False, 'Nenhum item valido para criar o pedido.', status=400, code='validation_error')
-
-            _recalcular_total_pedido(pedido)
-
-            mesa = None
-            if atendimento_mesas_ativo and mesa_id:
-                mesa = Mesa.query.get(mesa_id)
-                if mesa:
-                    mesa.status = 'ocupada'
 
             db.session.commit()
             try:
@@ -2302,6 +2291,14 @@ def register_vendas_routes(app, login_required, require_role):
                 True,
                 f'Pedido #{pedido.id} criado com sucesso.',
                 data={'pedido_id': pedido.id, 'total': float(pedido.total or 0.0)}
+            )
+        except AppError as e:
+            db.session.rollback()
+            return json_response(
+                False,
+                str(e),
+                status=getattr(e, 'status_code', 400),
+                code=getattr(e, 'code', 'app_error'),
             )
         except Exception as e:
             db.session.rollback()
@@ -2332,7 +2329,7 @@ def register_vendas_routes(app, login_required, require_role):
                 pedido.metodo_pagamento = metodo_texto
                 pedido.valor_pago = valor_pago
 
-            _aplicar_transicao_status(pedido, 'fechado')
+            _aplicar_transicao_status(pedido, 'fechado', actor=_funcionario_logado_vendas())
             db.session.commit()
 
             return json_response(

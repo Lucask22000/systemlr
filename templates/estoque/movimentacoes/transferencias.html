@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Transferencias entre Lojas e CDs - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Transferencias entre Lojas e CDs</h1>
+        <p class="text-muted mb-0">Historico exclusivo de remanejamentos entre estoques, lojas e centros de distribuicao.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('transferir_armazenamento') }}" class="btn btn-primary">Nova Transferencia</a>
+    </div>
+</div>
+
+<div class="filters-section" data-filter-panel data-filter-title="Filtros das transferencias">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <input type="text" name="busca" class="input-search" value="{{ busca or '' }}" placeholder="Buscar por produto, codigo, motivo ou observacoes">
+        </div>
+        <div class="filter-group">
+            <select name="produto_id" class="input-select">
+                <option value="">Todos os produtos</option>
+                {% for prod in produtos %}
+                <option value="{{ prod.id }}" {% if produto_selecionado == prod.id %}selected{% endif %}>{{ prod.codigo }} - {{ prod.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <input type="date" name="data_inicio" class="input-search" value="{{ data_inicio or '' }}" title="Data inicial">
+        </div>
+        <div class="filter-group">
+            <input type="date" name="data_fim" class="input-search" value="{{ data_fim or '' }}" title="Data final">
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+        <a href="{{ url_for('listar_transferencias_estoque') }}" class="btn btn-secondary">Limpar</a>
+    </form>
+</div>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Quantidade</th>
+                <th>Origem</th>
+                <th>Destino</th>
+                <th>Motivo</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mov in transferencias %}
+            <tr>
+                <td data-label="Produto">
+                    {% if mov.produto %}
+                    {{ mov.produto.codigo }} - {{ mov.produto.nome }}
+                    {% else %}
+                    Produto removido
+                    {% endif %}
+                </td>
+                <td data-label="Quantidade">{{ mov.quantidade }}</td>
+                <td data-label="Origem">
+                    {% if mov.endereco_origem %}
+                    {{ mov.endereco_origem.nome }}
+                    {% if mov.endereco_origem.estoque %}
+                    <div class="text-muted">{{ mov.endereco_origem.estoque.nome }}</div>
+                    {% endif %}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td data-label="Destino">
+                    {% if mov.endereco_destino %}
+                    {{ mov.endereco_destino.nome }}
+                    {% if mov.endereco_destino.estoque %}
+                    <div class="text-muted">{{ mov.endereco_destino.estoque.nome }}</div>
+                    {% endif %}
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td data-label="Motivo">{{ mov.motivo or '-' }}</td>
+                <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Nenhuma transferencia encontrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_transferencias_estoque', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_transferencias_estoque', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

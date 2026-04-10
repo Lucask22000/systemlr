@@ -35,10 +35,15 @@
             </div>
 
             <div class="form-group">
+                <label for="numero_cadastro">Numero de cadastro</label>
+                <input type="text" id="numero_cadastro" name="numero_cadastro" class="form-control" maxlength="12" value="Gerado automaticamente apos salvar" readonly>
+            </div>
+
+            <div class="form-group">
                 <label for="matricula">Matricula</label>
                 <input type="text" id="matricula" name="matricula" class="form-control" maxlength="30" value="Gerada automaticamente apos salvar" readonly>
                 <small style="display:block; margin-top:8px; color:#6c757d;">
-                    Padrao: codigo da empresa + codigo da filial principal + sequencial do colaborador.
+                    Padrao: codigo da filial principal + numero de cadastro do colaborador.
                 </small>
             </div>
 
@@ -120,7 +125,7 @@
                     {% endfor %}
                 </select>
                 <small style="display:block; margin-top:8px; color:#6c757d;">
-                    Predefine as paginas liberadas. Depois voce ainda pode adicionar ou remover paginas no cadastro do colaborador.
+                    Predefine as paginas liberadas. Depois voce ainda pode adicionar ou remover paginas no cadastro do colaborador. <a href="{{ url_for('listar_perfis_rh') }}">Gerenciar perfis</a>.
                 </small>
             </div>
 
@@ -133,7 +138,7 @@
                     {% endfor %}
                 </select>
                 <small style="display:block; margin-top:8px; color:#6c757d;">
-                    Nao encontrou o cargo? <a href="{{ url_for('listar_perfis_rh') }}">Cadastrar cargo ou perfil de acesso</a>.
+                    Nao encontrou o cargo? <a href="{{ url_for('listar_funcoes_rh') }}">Cadastrar cargo</a>.
                 </small>
             </div>
 

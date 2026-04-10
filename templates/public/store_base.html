@@ -1,0 +1,111 @@
+{% set store_brand = (empresa.nome_fantasia if empresa is defined and empresa and empresa.nome_fantasia else (empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else (app_name if app_name is defined else 'SystemLR'))) %}
+{% set store_logo_path = (empresa.logo_path if empresa is defined and empresa and empresa.logo_path else (empresa_config.logo_path if empresa_config and empresa_config.logo_path else None)) %}
+{% set store_icon_path = (app_icon_path or store_logo_path or store_favicon_path or 'uploads/empresa/Loja_do_Lucas_logo.png') %}
+{% set store_footer_bg = (empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#16202b') %}
+{% set store_primary = (empresa_config.ecom_cor_primaria if empresa_config and empresa_config.ecom_cor_primaria else '#ff7848') %}
+{% set store_secondary = (empresa_config.ecom_cor_secundaria if empresa_config and empresa_config.ecom_cor_secundaria else '#ff5a2a') %}
+{% set store_cart_qty = (resumo_carrinho.quantidade_itens if resumo_carrinho is defined else (carrinho_site.quantidade_itens if carrinho_site is defined and carrinho_site else 0)) %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="theme-color" content="{{ store_primary }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ store_brand }}">
+    {% if store_favicon_path %}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=store_favicon_path) }}">
+    {% endif %}
+    <link rel="manifest" href="{{ url_for('store_pwa_manifest') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename=store_icon_path) }}">
+    <title>{{ store_title if store_title is defined else (store_brand ~ ' | Loja online') }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public/storefront.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body
+    class="storefront-app storefront-page-{{ store_page if store_page is defined else 'generic' }}"
+    data-app-install-name="{{ store_brand }}"
+    style="--store-primary: {{ store_primary }}; --store-secondary: {{ store_secondary }}; --store-footer-bg: {{ store_footer_bg }};"
+>
+    <div class="store-site-shell">
+        <header class="store-header">
+            <div class="store-header-shell">
+                <a class="store-brand" href="{{ url_for('index') }}">
+                    {% if store_logo_path %}
+                    <img src="{{ url_for('static', filename=store_logo_path) }}" alt="Logo da loja">
+                    {% endif %}
+                    <span>{{ store_brand }}</span>
+                </a>
+
+                <nav class="store-nav" aria-label="Navegação principal">
+                    <a href="{{ url_for('index') }}" class="{% if (store_nav if store_nav is defined else '') == 'home' %}is-active{% endif %}">Início</a>
+                    <a href="{{ url_for('public.cadastro_cliente_site') }}" class="{% if (store_nav if store_nav is defined else '') == 'cadastro' %}is-active{% endif %}">Cadastro</a>
+                    <a href="{{ url_for('public.carrinho_site') }}" class="store-nav-cart {% if (store_nav if store_nav is defined else '') == 'cart' %}is-active{% endif %}">
+                        Carrinho
+                        <span>{{ store_cart_qty }}</span>
+                    </a>
+                </nav>
+            </div>
+        </header>
+
+        <section class="store-install-banner" data-store-install-banner hidden>
+            <div class="store-install-banner-copy">
+                <strong data-store-install-title>Baixar app</strong>
+                <p data-store-install-copy>Adicione a loja à tela inicial para comprar mais rápido no celular.</p>
+            </div>
+            <div class="store-install-banner-actions">
+                <button type="button" class="store-btn store-btn-primary" data-store-install-action>Baixar app</button>
+                <button type="button" class="store-btn store-btn-ghost" data-store-install-dismiss>Agora não</button>
+            </div>
+        </section>
+
+        <main class="store-main">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="store-flash-stack">
+                    {% for category, message in messages %}
+                    <div class="store-flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block store_content %}{% endblock %}
+        </main>
+
+        <footer class="store-footer">
+            <div class="store-footer-shell">
+                <div class="store-footer-copy">
+                    <p>&copy; {{ ano_atual }} {{ store_brand }}.</p>
+                    <p>{{ empresa_config.ecom_footer_texto if empresa_config and empresa_config.ecom_footer_texto else 'Loja oficial com pedidos online.' }}</p>
+                    <p>{{ empresa_config.ecom_footer_contato if empresa_config and empresa_config.ecom_footer_contato else 'Contato: suporte@systemlr.com' }}</p>
+                    <p>{{ empresa_config.ecom_footer_creditos if empresa_config and empresa_config.ecom_footer_creditos else 'Créditos: SystemLR' }}</p>
+                </div>
+                {% if funcionario_logado %}
+                <a href="{{ url_for('dashboard') }}" class="store-internal-link">Painel interno</a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="store-internal-link">Acesso interno</a>
+                {% endif %}
+            </div>
+        </footer>
+    </div>
+
+    <nav class="store-mobile-dock" aria-label="Navegação rápida">
+        <a href="{{ url_for('index') }}" class="{% if (store_nav if store_nav is defined else '') == 'home' %}is-active{% endif %}">Início</a>
+        <a href="{{ url_for('public.carrinho_site') }}" class="{% if (store_nav if store_nav is defined else '') == 'cart' %}is-active{% endif %}">Carrinho</a>
+        <a href="{{ url_for('public.cadastro_cliente_site') }}" class="{% if (store_nav if store_nav is defined else '') == 'cadastro' %}is-active{% endif %}">Cadastro</a>
+        <button type="button" data-store-install-shortcut hidden>App</button>
+    </nav>
+
+    <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/public/storefront.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/public/storefront-pwa.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

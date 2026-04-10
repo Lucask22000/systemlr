@@ -17,6 +17,7 @@
         <div class="funcionario-access-summary">
             <p>
                 <strong>Funcionario:</strong> {{ funcionario.nome }}<br>
+                <strong>Numero de cadastro:</strong> {{ funcionario.numero_cadastro or '-' }}<br>
                 <strong>Matricula:</strong> {{ funcionario.matricula or '-' }}<br>
                 <strong>Email:</strong> {{ funcionario.email }}<br>
                 <strong>Tipo de usuario:</strong>
@@ -25,11 +26,11 @@
                 <strong>Perfil de acesso padrao:</strong> {{ funcionario.perfil_acesso.nome if funcionario.perfil_acesso else 'Sem perfil padrao' }}<br>
                 <strong>Estoque principal:</strong> {{ funcionario.estoque_principal.nome if funcionario.estoque_principal else '-' }}<br>
                 <strong>Restricao por estoques:</strong> {{ 'Ativa' if funcionario.restricao_estoques_ativa else 'Livre' }}<br>
-                <strong>Estoques permitidos:</strong>
-                {% if funcionario.estoques_permitidos %}
+                <strong>Estoques/lojas vinculados:</strong>
+                {% if funcionario.restricao_estoques_ativa and funcionario.estoques_permitidos %}
                     {{ funcionario.estoques_permitidos | map(attribute='nome') | join(', ') }}<br>
                 {% else %}
-                    Todos os estoques/lojas<br>
+                    Todos os estoques/lojas cadastrados<br>
                 {% endif %}
                 <strong>Ajustes individuais gravados:</strong> {{ permissoes_personalizadas|length }}
             </p>
@@ -49,6 +50,47 @@
         <form method="POST" action="{{ url_for('editar_acessos_funcionario', funcionario_id=funcionario.id) }}">
             {{ csrf_input|safe }}
             <div>
+                <h3 class="funcionario-access-title">Filiais e Estoques</h3>
+
+                <div class="funcionario-access-tip">
+                    Escolha apenas itens da lista de estoques/lojas ja cadastrados no sistema. O colaborador podera alternar no menu superior entre as filiais liberadas ou visualizar tudo.
+                </div>
+
+                <div class="funcionario-access-config-grid">
+                    <div class="form-group">
+                        <label for="estoque_principal_id">Estoque/Loja principal</label>
+                        <select id="estoque_principal_id" name="estoque_principal_id" class="form-control">
+                            <option value="">Sem estoque principal definido</option>
+                            {% for estoque in estoques_cadastrados %}
+                                <option value="{{ estoque.id }}" {% if estoque_principal_id_form == estoque.id %}selected{% endif %}>
+                                    {{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}{% if not estoque.ativo %} - inativo{% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small>Usado como referencia principal do colaborador e na composicao da matricula.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-inline funcionario-access-checkbox">
+                            <input type="checkbox" name="restricao_estoques_ativa" {% if restricao_estoques_ativa_form %}checked{% endif %}>
+                            Restringir acesso a estoques/lojas especificos
+                        </label>
+                        <small>Quando desativado, o colaborador visualiza todas as filiais/estoques disponiveis no sistema.</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="estoques_permitidos_ids">Estoques/Lojas permitidos</label>
+                    <select id="estoques_permitidos_ids" name="estoques_permitidos_ids" class="form-control funcionario-access-multiselect" multiple size="7">
+                        {% for estoque in estoques_cadastrados %}
+                            <option value="{{ estoque.id }}" {% if estoque.id in estoques_permitidos_ids %}selected{% endif %}>
+                                {{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}{% if not estoque.ativo %} - inativo{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small>Selecione na lista os estoques/lojas que este colaborador podera usar. O estoque principal sera incluido automaticamente.</small>
+                </div>
+
                 <h3 class="funcionario-access-title">Permissoes de Acesso</h3>
 
                 <div class="funcionario-access-tip">

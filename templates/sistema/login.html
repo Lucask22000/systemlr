@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
     {% set app_install_name = empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' %}
-    {% set app_icon_path = (empresa_config.logo_path if empresa_config and empresa_config.logo_path else (favicon_path or 'uploads/empresa/Loja_do_Lucas_logo.png')) %}
+    {% if favicon_path %}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
+    {% endif %}
     <meta name="theme-color" content="#0f766e">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -73,6 +75,7 @@
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/form-enhancements.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
 </body>
 </html>

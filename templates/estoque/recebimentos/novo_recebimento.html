@@ -1,58 +1,67 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Novo Recebimento - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Novo Recebimento de Fornecedor</h1>
+    <div>
+        <h1>Novo Recebimento Operacional</h1>
+        <p class="text-muted mb-0">Classifique o recebimento e valide fornecedor, produto e local antes de concluir.</p>
+    </div>
 </div>
 
 <div class="form-container">
-    <form method="POST" class="form">
+    <form method="POST" class="form" id="recebimento-form" novalidate>
         {{ csrf_input|safe }}
-        <h3 class="mb-2">1. Cabecalho (Identificacao da entrega)</h3>
+        <input type="hidden" name="context_key" value="{{ context_key }}">
+
+        <h3 class="mb-2">1. Cabecalho</h3>
         <div class="form-row">
             <div class="form-group">
-                <label for="fornecedor_id">Fornecedor *</label>
-                <select id="fornecedor_id" name="fornecedor_id" class="input-select" required>
+                <label for="tipo_recebimento">Tipo de recebimento *</label>
+                <select id="tipo_recebimento" name="tipo_recebimento" class="input-select" required>
+                    {% for tipo, label in tipo_labels.items() %}
+                    <option value="{{ tipo }}" {% if tipo == tipo_recebimento_padrao %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fornecedor_id">Fornecedor</label>
+                <select id="fornecedor_id" name="fornecedor_id" class="input-select">
                     <option value="">Selecione</option>
                     {% for fornecedor in fornecedores %}
                     <option
                         value="{{ fornecedor.id }}"
                         data-documento="{{ fornecedor.documento or '' }}"
-                        data-contato="{{ fornecedor.contato or '' }}"
                         data-telefone="{{ fornecedor.telefone or '' }}"
-                        data-endereco-rua="{{ fornecedor.endereco_rua or '' }}"
-                        data-endereco-numero="{{ fornecedor.endereco_numero or '' }}"
-                        data-endereco-bairro="{{ fornecedor.endereco_bairro or '' }}"
-                        data-endereco-cidade="{{ fornecedor.endereco_cidade or '' }}"
+                        data-endereco="{{ [fornecedor.endereco_rua, fornecedor.endereco_numero, fornecedor.endereco_bairro, fornecedor.endereco_cidade]|select|join(', ') }}"
                         data-tipo-produtos="{{ fornecedor.tipo_produtos_fornece or '' }}"
                         data-observacoes="{{ fornecedor.observacoes_gerais or '' }}"
                     >{{ fornecedor.nome }}</option>
                     {% endfor %}
                 </select>
+                <small id="fornecedor-help" class="text-muted d-block mt-1">Obrigatorio para compras de revenda, bonificacoes, consignados e retornos de industrializacao.</small>
             </div>
             <div class="form-group">
                 <label for="fornecedor_documento">CNPJ/CPF</label>
                 <input type="text" id="fornecedor_documento" name="fornecedor_documento" class="input-text" placeholder="00.000.000/0000-00 ou 000.000.000-00">
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <a href="{{ cadastro_relacionado_urls.fornecedor }}" class="btn btn-outline-primary btn-sm" id="cadastrar-fornecedor-link">Cadastrar fornecedor</a>
+                </div>
+                <div class="alert alert-warning mt-2 mb-0 d-none" id="fornecedor-nao-cadastrado">
+                    <strong>Fornecedor nao cadastrado.</strong>
+                    <a href="{{ cadastro_relacionado_urls.fornecedor }}" id="fornecedor-nao-cadastrado-link">Cadastrar agora</a>
+                </div>
             </div>
             <div class="form-group">
-                <label for="fornecedor_telefone_info">Telefone do fornecedor</label>
-                <input type="text" id="fornecedor_telefone_info" class="input-text" readonly>
-            </div>
-            <div class="form-group">
-                <label for="fornecedor_endereco_info">Endereco do fornecedor</label>
-                <input type="text" id="fornecedor_endereco_info" class="input-text" readonly>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="fornecedor_tipo_produtos_info">Tipo de produtos que fornece</label>
-                <input type="text" id="fornecedor_tipo_produtos_info" class="input-text" readonly>
-            </div>
-            <div class="form-group">
-                <label for="fornecedor_observacoes_info">Observacoes do fornecedor</label>
-                <input type="text" id="fornecedor_observacoes_info" class="input-text" readonly>
+                <label for="local_recebimento_id">Local do recebimento *</label>
+                <select id="local_recebimento_id" name="local_recebimento_id" class="input-select" required>
+                    <option value="">Selecione</option>
+                    {% for local in locais_recebimento %}
+                    <option value="{{ local.id }}">{{ local.nome }}{% if local.codigo_localizacao %} - {{ local.codigo_localizacao }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted d-block mt-1">Somente locais ativos com tipo de area "recebimento".</small>
             </div>
             <div class="form-group">
                 <label for="data_entrega">Data da entrega</label>
@@ -64,17 +73,51 @@
             </div>
         </div>
 
-        <h3 class="mb-2 mt-3">2. Tabela de Produtos (itens recebidos)</h3>
+        {% if not locais_recebimento %}
+        <div class="alert alert-warning">
+            Nenhum local de recebimento ativo foi encontrado. Cadastre um endereco com tipo de area <strong>recebimento</strong> em
+            <a href="{{ url_for('novo_endereco_estoque') }}">Enderecos de Estoque</a>.
+        </div>
+        {% endif %}
+
         <div class="form-row">
             <div class="form-group">
-                <label for="código_produto_rápido">Codigo de barras / código do produto</label>
+                <label for="fornecedor_telefone_info">Telefone do fornecedor</label>
+                <input type="text" id="fornecedor_telefone_info" class="input-text" readonly>
+            </div>
+            <div class="form-group">
+                <label for="fornecedor_endereco_info">Endereco do fornecedor</label>
+                <input type="text" id="fornecedor_endereco_info" class="input-text" readonly>
+            </div>
+            <div class="form-group">
+                <label for="fornecedor_tipo_produtos_info">Tipo de produtos que fornece</label>
+                <input type="text" id="fornecedor_tipo_produtos_info" class="input-text" readonly>
+            </div>
+            <div class="form-group">
+                <label for="fornecedor_observacoes_info">Observacoes do fornecedor</label>
+                <input type="text" id="fornecedor_observacoes_info" class="input-text" readonly>
+            </div>
+        </div>
+
+        <h3 class="mb-2 mt-3">2. Itens</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="codigo_produto_rapido">Codigo de barras / codigo do produto</label>
                 <div class="barcode-input-group">
-                    <input type="text" id="código_produto_rápido" class="input-text" placeholder="Leia ou digite o código e adicione">
-                    <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="código_produto_rápido">Câmera</button>
-                    <button type="button" class="btn btn-primary" id="adicionar-por-código">Adicionar por código</button>
+                    <input type="text" id="codigo_produto_rapido" class="input-text" placeholder="Leia ou digite o codigo e adicione">
+                    <button type="button" class="btn btn-secondary barcode-btn js-open-barcode-scanner" data-barcode-target="codigo_produto_rapido">Camera</button>
+                    <button type="button" class="btn btn-primary" id="adicionar-por-codigo">Adicionar por codigo</button>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-2">
+                    <a href="{{ cadastro_relacionado_urls.produto }}" class="btn btn-outline-primary btn-sm" id="cadastrar-produto-link">Cadastrar produto</a>
+                </div>
+                <div class="alert alert-warning mt-2 mb-0 d-none" id="produto-nao-cadastrado">
+                    <strong>Produto nao cadastrado.</strong>
+                    <a href="{{ cadastro_relacionado_urls.produto }}" id="produto-nao-cadastrado-link">Cadastrar agora</a>
                 </div>
             </div>
         </div>
+
         <div class="table-responsive">
             <table class="table" id="itens-table">
                 <thead>
@@ -82,7 +125,7 @@
                         <th>Produto</th>
                         <th>Qtd recebida</th>
                         <th>Unidade</th>
-                        <th>Descricao do produto</th>
+                        <th>Descricao</th>
                         <th>Preco unitario (R$)</th>
                         <th>Total (R$)</th>
                         <th>Acoes</th>
@@ -94,17 +137,11 @@
                             <select name="produto_id[]" class="input-select" required>
                                 <option value="">Selecione</option>
                                 {% for produto in produtos %}
-                                <option
-                                    value="{{ produto.id }}"
-                                    data-código="{{ (produto.código or '')|upper }}"
-                                    data-preco-custo="{{ produto.preco_custo or 0 }}"
-                                >{{ produto.código }} - {{ produto.nome }} (Estoque atual: {{ produto.quantidade_estoque }})</option>
+                                <option value="{{ produto.id }}" data-codigo="{{ (produto.codigo or '')|upper }}" data-preco-custo="{{ produto.preco_custo or 0 }}" data-nome="{{ produto.nome }}">{{ produto.codigo }} - {{ produto.nome }} (Estoque atual: {{ produto.quantidade_estoque }})</option>
                                 {% endfor %}
                             </select>
                         </td>
-                        <td>
-                            <input type="number" name="qtd_recebida[]" class="input-text" min="0" value="0" required>
-                        </td>
+                        <td><input type="number" name="qtd_recebida[]" class="input-text" min="0" value="0" required></td>
                         <td>
                             <select name="unidade[]" class="input-select">
                                 <option value="UN">UN</option>
@@ -114,18 +151,10 @@
                                 <option value="CX">CX</option>
                             </select>
                         </td>
-                        <td>
-                            <input type="text" name="descricao_item[]" class="input-text" placeholder="Descricao detalhada do item">
-                        </td>
-                        <td>
-                            <input type="number" name="preco_unitario[]" class="input-text js-preco-unitario" min="0" step="0.01" value="0.00">
-                        </td>
-                        <td>
-                            <input type="text" name="total_item[]" class="input-text js-total-item" value="0.00" readonly>
-                        </td>
-                        <td>
-                            <button type="button" class="btn-small btn-danger remover-item">Remover</button>
-                        </td>
+                        <td><input type="text" name="descricao_item[]" class="input-text" placeholder="Descricao detalhada do item"></td>
+                        <td><input type="number" name="preco_unitario[]" class="input-text" min="0" step="0.01" value="0.00"></td>
+                        <td><input type="text" name="total_item[]" class="input-text" value="0.00" readonly></td>
+                        <td><button type="button" class="btn-small btn-danger remover-item">Remover</button></td>
                     </tr>
                 </tbody>
             </table>
@@ -150,22 +179,35 @@
 
         <h3 class="mb-2 mt-3">4. Observacoes</h3>
         <div class="form-group">
-            <label for="observacoes">Avarias, diferencas, atrasos e ocorrencias</label>
+            <label for="observacoes">Ocorrencias</label>
             <textarea id="observacoes" name="observacoes" class="input-textarea" rows="3" placeholder="Descreva avarias, diferencas, atrasos e outras ocorrencias"></textarea>
         </div>
 
         <h3 class="mb-2 mt-3">5. Assinaturas</h3>
         <div class="form-row">
             <div class="form-group">
-                <label for="recebedor_nome">Recebedor (mercado)</label>
+                <label for="recebedor_busca">Recebedor por matricula ou nome</label>
+                <input type="hidden" id="recebedor_funcionario_id" name="recebedor_funcionario_id">
+                <input type="text" id="recebedor_busca" name="recebedor_busca" class="input-text" list="recebedores-cadastrados" placeholder="Digite a matricula ou nome do colaborador">
+                <datalist id="recebedores-cadastrados">
+                    {% for funcionario in funcionarios_recebimento %}
+                    <option value="{{ funcionario.nome }}" data-funcionario-id="{{ funcionario.id }}" data-nome="{{ funcionario.nome }}"></option>
+                    {% if funcionario.matricula %}
+                    <option value="{{ funcionario.matricula }}" data-funcionario-id="{{ funcionario.id }}" data-nome="{{ funcionario.nome }}"></option>
+                    {% endif %}
+                    {% endfor %}
+                </datalist>
+            </div>
+            <div class="form-group">
+                <label for="recebedor_nome">Recebedor</label>
                 <input type="text" id="recebedor_nome" name="recebedor_nome" class="input-text" placeholder="Nome do funcionario que conferiu">
             </div>
+        </div>
+        <div class="form-row">
             <div class="form-group">
                 <label for="recebedor_assinatura">Assinatura do recebedor</label>
                 <input type="text" id="recebedor_assinatura" name="recebedor_assinatura" class="input-text" placeholder="Nome completo / rubrica">
             </div>
-        </div>
-        <div class="form-row">
             <div class="form-group">
                 <label for="entregador_nome">Fornecedor / Entregador</label>
                 <input type="text" id="entregador_nome" name="entregador_nome" class="input-text" placeholder="Nome de quem realizou a entrega">
@@ -183,7 +225,7 @@
         <div class="form-group mt-2">
             <label class="checkbox-inline">
                 <input type="checkbox" name="ir_para_armazenagem" checked>
-                Ir direto para armazenagem apos criar (enderecos ativos)
+                Ir direto para armazenagem apos criar
             </label>
         </div>
     </form>
@@ -193,241 +235,258 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const adicionarBtn = document.getElementById('adicionar-item');
-    const adicionarCodigoBtn = document.getElementById('adicionar-por-código');
-    const códigoRapidoEl = document.getElementById('código_produto_rápido');
+    const flowState = {{ flow_state|tojson }};
+    const storageKey = 'operational-flow:' + (flowState.context_key || 'recebimento-fornecedor');
+    const tiposFornecedorOpcional = new Set({{ tipos_fornecedor_opcional|tojson }});
+    const fornecedorUrlBase = {{ cadastro_relacionado_urls.fornecedor|tojson }};
+    const produtoUrlBase = {{ cadastro_relacionado_urls.produto|tojson }};
+    const flowApi = window.operationalFlow || null;
+    const form = document.getElementById('recebimento-form');
     const itensBody = document.getElementById('itens-body');
     const rowTemplate = itensBody.querySelector('tr').cloneNode(true);
+    const tipoRecebimento = document.getElementById('tipo_recebimento');
     const fornecedorSelect = document.getElementById('fornecedor_id');
     const fornecedorDocumento = document.getElementById('fornecedor_documento');
-    const fornecedorTelefoneInfo = document.getElementById('fornecedor_telefone_info');
-    const fornecedorEnderecoInfo = document.getElementById('fornecedor_endereco_info');
-    const fornecedorTipoProdutosInfo = document.getElementById('fornecedor_tipo_produtos_info');
-    const fornecedorObservacoesInfo = document.getElementById('fornecedor_observacoes_info');
-    const subtotalEl = document.getElementById('subtotal');
-    const descontoEl = document.getElementById('desconto');
-    const totalPagarEl = document.getElementById('total_pagar');
-
-    function toNumber(value) {
-        const normalized = String(value || '').replace(',', '.').trim();
-        const num = parseFloat(normalized);
-        return Number.isFinite(num) ? num : 0;
-    }
+    const fornecedorHelp = document.getElementById('fornecedor-help');
+    const fornecedorMissing = document.getElementById('fornecedor-nao-cadastrado');
+    const fornecedorMissingLink = document.getElementById('fornecedor-nao-cadastrado-link');
+    const fornecedorLink = document.getElementById('cadastrar-fornecedor-link');
+    const produtoCodigo = document.getElementById('codigo_produto_rapido');
+    const produtoMissing = document.getElementById('produto-nao-cadastrado');
+    const produtoMissingLink = document.getElementById('produto-nao-cadastrado-link');
+    const produtoLink = document.getElementById('cadastrar-produto-link');
+    const subtotal = document.getElementById('subtotal');
+    const desconto = document.getElementById('desconto');
+    const totalPagar = document.getElementById('total_pagar');
+    const recebedorBusca = document.getElementById('recebedor_busca');
+    const recebedorId = document.getElementById('recebedor_funcionario_id');
+    const recebedorNome = document.getElementById('recebedor_nome');
+    const recebedores = document.getElementById('recebedores-cadastrados');
 
     function money(value) {
-        return toNumber(value).toFixed(2);
+        const number = parseFloat(String(value || '').replace(',', '.'));
+        return Number.isFinite(number) ? number.toFixed(2) : '0.00';
     }
-
-    function normalizeDoc(value) {
-        return String(value || '').replace(/\D/g, '');
-    }
-
-    function cleanCode(value) {
-        return String(value || '').trim().toUpperCase();
-    }
-
-    function updateFornecedorInfo(option) {
-        const telefone = option ? (option.dataset.telefone || '') : '';
-        const rua = option ? (option.dataset.enderecoRua || '') : '';
-        const numero = option ? (option.dataset.enderecoNumero || '') : '';
-        const bairro = option ? (option.dataset.enderecoBairro || '') : '';
-        const cidade = option ? (option.dataset.enderecoCidade || '') : '';
-        const tipoProdutos = option ? (option.dataset.tipoProdutos || '') : '';
-        const obs = option ? (option.dataset.observacoes || '') : '';
-        const documento = option ? (option.dataset.documento || '') : '';
-        const endereco = [rua, numero, bairro, cidade].filter(Boolean).join(', ');
-
-        fornecedorTelefoneInfo.value = telefone;
-        fornecedorEnderecoInfo.value = endereco;
-        fornecedorTipoProdutosInfo.value = tipoProdutos;
-        fornecedorObservacoesInfo.value = obs;
-        if (documento) fornecedorDocumento.value = documento;
-    }
-
-    function syncFornecedorByDocumento() {
-        const docDigitado = normalizeDoc(fornecedorDocumento.value);
-        if (!docDigitado) return;
-        const options = Array.from(fornecedorSelect.options || []);
-        const match = options.find((opt) => normalizeDoc(opt.dataset.documento || '') === docDigitado);
-        if (!match) return;
-        fornecedorSelect.value = match.value;
-        updateFornecedorInfo(match);
-    }
-
-    function atualizarTotais() {
-        let subtotal = 0;
-        itensBody.querySelectorAll('tr').forEach((row) => {
-            const qtdInput = row.querySelector('input[name="qtd_recebida[]"]');
-            const precoInput = row.querySelector('input[name="preco_unitario[]"]');
-            const totalItemInput = row.querySelector('input[name="total_item[]"]');
-            const qtd = toNumber(qtdInput ? qtdInput.value : 0);
-            const preco = toNumber(precoInput ? precoInput.value : 0);
-            const totalItem = qtd * preco;
-            subtotal += totalItem;
-            if (totalItemInput) totalItemInput.value = money(totalItem);
+    function digits(value) { return String(value || '').replace(/\D/g, ''); }
+    function cleanCode(value) { return String(value || '').trim().toUpperCase(); }
+    function urlWith(base, params) {
+        const url = new URL(base, window.location.origin);
+        Object.entries(params || {}).forEach(function ([key, value]) {
+            if (value !== null && value !== undefined && value !== '') url.searchParams.set(key, value);
         });
-        const desconto = toNumber(descontoEl ? descontoEl.value : 0);
-        const totalPagar = Math.max(subtotal - desconto, 0);
-        if (subtotalEl) subtotalEl.value = money(subtotal);
-        if (totalPagarEl) totalPagarEl.value = money(totalPagar);
+        return url.pathname + url.search;
     }
-
-    function selecionarProdutoNaLinha(row, código) {
-        const produtoSelect = row.querySelector('select[name="produto_id[]"]');
-        const precoInput = row.querySelector('input[name="preco_unitario[]"]');
-        const descricaoInput = row.querySelector('input[name="descricao_item[]"]');
-        if (!produtoSelect) return false;
-
-        const códigoLimpo = cleanCode(código);
-        if (!códigoLimpo) return false;
-        const option = Array.from(produtoSelect.options || []).find((opt) => cleanCode(opt.dataset.código) === códigoLimpo);
-        if (!option) return false;
-
-        produtoSelect.value = option.value;
-        if (precoInput && (!precoInput.value || toNumber(precoInput.value) === 0)) {
-            precoInput.value = money(option.dataset.precoCusto || 0);
-        }
-        if (descricaoInput && !descricaoInput.value.trim()) {
-            descricaoInput.value = option.textContent.split('(Estoque atual:')[0].trim();
-        }
-        atualizarTotais();
+    function currentProductSelect() { return itensBody.querySelector('select[name="produto_id[]"]'); }
+    function productOptionByCode(code) {
+        const select = currentProductSelect();
+        if (!select) return null;
+        return Array.from(select.options || []).find(function (option) {
+            return cleanCode(option.dataset.codigo || '') === cleanCode(code);
+        }) || null;
+    }
+    function fillSupplierInfo(option) {
+        document.getElementById('fornecedor_telefone_info').value = option ? (option.dataset.telefone || '') : '';
+        document.getElementById('fornecedor_endereco_info').value = option ? (option.dataset.endereco || '') : '';
+        document.getElementById('fornecedor_tipo_produtos_info').value = option ? (option.dataset.tipoProdutos || '') : '';
+        document.getElementById('fornecedor_observacoes_info').value = option ? (option.dataset.observacoes || '') : '';
+        if (option && option.dataset.documento) fornecedorDocumento.value = option.dataset.documento;
+    }
+    function refreshSupplierRule() {
+        const required = !tiposFornecedorOpcional.has(String(tipoRecebimento.value || '').trim());
+        fornecedorSelect.required = required;
+        fornecedorHelp.textContent = required
+            ? 'Obrigatorio para este tipo de recebimento.'
+            : 'Fornecedor opcional para este tipo. Se ficar em branco, o sistema registra origem interna/nao informada.';
+    }
+    function resetRow(row) {
+        row.querySelector('select[name="produto_id[]"]').value = '';
+        row.querySelector('input[name="qtd_recebida[]"]').value = '0';
+        row.querySelector('select[name="unidade[]"]').value = 'UN';
+        row.querySelector('input[name="descricao_item[]"]').value = '';
+        row.querySelector('input[name="preco_unitario[]"]').value = '0.00';
+        row.querySelector('input[name="total_item[]"]').value = '0.00';
+    }
+    function bindRemove(button) {
+        button.addEventListener('click', function () {
+            const rows = itensBody.querySelectorAll('tr');
+            if (rows.length === 1) resetRow(rows[0]); else this.closest('tr').remove();
+            updateTotals();
+            saveDraft();
+        });
+    }
+    function createRow() {
+        const row = rowTemplate.cloneNode(true);
+        resetRow(row);
+        bindRemove(row.querySelector('.remover-item'));
+        return row;
+    }
+    function setProductOnRow(row, option) {
+        if (!row || !option) return false;
+        row.querySelector('select[name="produto_id[]"]').value = option.value;
+        const preco = row.querySelector('input[name="preco_unitario[]"]');
+        const descricao = row.querySelector('input[name="descricao_item[]"]');
+        if (!preco.value || parseFloat(preco.value) === 0) preco.value = money(option.dataset.precoCusto || 0);
+        if (!descricao.value.trim()) descricao.value = option.dataset.nome || option.textContent.split('(Estoque atual:')[0].trim();
+        updateTotals();
         return true;
     }
-
-    function bindRemover(btn) {
-        btn.addEventListener('click', function () {
-            const rows = itensBody.querySelectorAll('tr');
-            if (rows.length <= 1) {
-                const select = rows[0].querySelector('select');
-                const qtd = rows[0].querySelector('input[name=\"qtd_recebida[]\"]');
-                const preco = rows[0].querySelector('input[name=\"preco_unitario[]\"]');
-                const total = rows[0].querySelector('input[name=\"total_item[]\"]');
-                if (select) select.value = '';
-                if (qtd) qtd.value = '0';
-                if (preco) preco.value = '0.00';
-                if (total) total.value = '0.00';
-                atualizarTotais();
-                return;
-            }
-            this.closest('tr').remove();
-            atualizarTotais();
-        });
+    function emptyRow() {
+        return Array.from(itensBody.querySelectorAll('tr')).find(function (row) {
+            return !row.querySelector('select[name="produto_id[]"]').value;
+        }) || null;
     }
-
-    itensBody.querySelectorAll('.remover-item').forEach(bindRemover);
-    itensBody.addEventListener('change', function (event) {
-        const target = event.target;
-        if (!target) return;
-        if (target.name === 'produto_id[]') {
-            const row = target.closest('tr');
-            const selected = target.selectedOptions && target.selectedOptions[0] ? target.selectedOptions[0] : null;
-            if (!row || !selected) return;
-            const preco = row.querySelector('input[name="preco_unitario[]"]');
-            const desc = row.querySelector('input[name="descricao_item[]"]');
-            if (preco && (!preco.value || toNumber(preco.value) === 0)) {
-                preco.value = money(selected.dataset.precoCusto || 0);
-            }
-            if (desc && !desc.value.trim()) {
-                desc.value = selected.textContent.split('(Estoque atual:')[0].trim();
-            }
-            atualizarTotais();
-        }
-    });
-    itensBody.addEventListener('input', function (event) {
-        const target = event.target;
-        if (!target) return;
-        if (target.name === 'qtd_recebida[]' || target.name === 'preco_unitario[]') {
-            atualizarTotais();
-        }
-    });
-    if (descontoEl) {
-        descontoEl.addEventListener('input', atualizarTotais);
-    }
-
-    fornecedorSelect.addEventListener('change', function () {
-        const selected = fornecedorSelect.selectedOptions && fornecedorSelect.selectedOptions[0] ? fornecedorSelect.selectedOptions[0] : null;
-        updateFornecedorInfo(selected);
-    });
-    fornecedorDocumento.addEventListener('input', syncFornecedorByDocumento);
-
-    adicionarBtn.addEventListener('click', function () {
-        const novaLinha = rowTemplate.cloneNode(true);
-        const select = novaLinha.querySelector('select');
-        const qtd = novaLinha.querySelector('input[name=\"qtd_recebida[]\"]');
-        const unidade = novaLinha.querySelector('select[name=\"unidade[]\"]');
-        const descricao = novaLinha.querySelector('input[name=\"descricao_item[]\"]');
-        const preco = novaLinha.querySelector('input[name=\"preco_unitario[]\"]');
-        const total = novaLinha.querySelector('input[name=\"total_item[]\"]');
-        if (select) select.value = '';
-        if (qtd) qtd.value = '0';
-        if (unidade) unidade.value = 'UN';
-        if (descricao) descricao.value = '';
-        if (preco) preco.value = '0.00';
-        if (total) total.value = '0.00';
-        bindRemover(novaLinha.querySelector('.remover-item'));
-        itensBody.appendChild(novaLinha);
-        atualizarTotais();
-    });
-
-    function adicionarPorCodigo() {
-        const código = cleanCode(códigoRapidoEl.value);
-        if (!código) return;
-        const rows = Array.from(itensBody.querySelectorAll('tr'));
-        const linhaVazia = rows.find((row) => {
-            const select = row.querySelector('select[name="produto_id[]"]');
-            return select && !select.value;
+    function updateTotals() {
+        let sum = 0;
+        itensBody.querySelectorAll('tr').forEach(function (row) {
+            const qty = parseFloat(row.querySelector('input[name="qtd_recebida[]"]').value || 0) || 0;
+            const price = parseFloat(String(row.querySelector('input[name="preco_unitario[]"]').value || '0').replace(',', '.')) || 0;
+            const total = qty * price;
+            row.querySelector('input[name="total_item[]"]').value = money(total);
+            sum += total;
         });
-        if (linhaVazia) {
-            if (selecionarProdutoNaLinha(linhaVazia, código)) {
-                códigoRapidoEl.value = '';
-                return;
-            }
-        }
-        const novaLinha = rowTemplate.cloneNode(true);
-        const select = novaLinha.querySelector('select');
-        const qtd = novaLinha.querySelector('input[name=\"qtd_recebida[]\"]');
-        const unidade = novaLinha.querySelector('select[name=\"unidade[]\"]');
-        const descricao = novaLinha.querySelector('input[name=\"descricao_item[]\"]');
-        const preco = novaLinha.querySelector('input[name=\"preco_unitario[]\"]');
-        const total = novaLinha.querySelector('input[name=\"total_item[]\"]');
-        if (select) select.value = '';
-        if (qtd) qtd.value = '0';
-        if (unidade) unidade.value = 'UN';
-        if (descricao) descricao.value = '';
-        if (preco) preco.value = '0.00';
-        if (total) total.value = '0.00';
-        bindRemover(novaLinha.querySelector('.remover-item'));
-        itensBody.appendChild(novaLinha);
-        const ok = selecionarProdutoNaLinha(novaLinha, código);
-        if (!ok) {
-            novaLinha.remove();
-            alert('Codigo não encontrado na lista de produtos.');
+        subtotal.value = money(sum);
+        totalPagar.value = money(Math.max(sum - (parseFloat(String(desconto.value || '0').replace(',', '.')) || 0), 0));
+    }
+    function syncSupplierByDocument() {
+        const doc = digits(fornecedorDocumento.value);
+        const option = Array.from(fornecedorSelect.options || []).find(function (item) {
+            return digits(item.dataset.documento || '') === doc && doc;
+        });
+        const createUrl = urlWith(fornecedorUrlBase, { documento: doc });
+        fornecedorLink.href = createUrl;
+        fornecedorMissingLink.href = createUrl;
+        if (option) {
+            fornecedorSelect.value = option.value;
+            fillSupplierInfo(option);
+            fornecedorMissing.classList.add('d-none');
             return;
         }
-        códigoRapidoEl.value = '';
+        fornecedorMissing.classList.toggle('d-none', !(doc.length === 11 || doc.length === 14));
     }
-
-    if (adicionarCodigoBtn) {
-        adicionarCodigoBtn.addEventListener('click', adicionarPorCodigo);
+    function syncProductLink() {
+        const url = urlWith(produtoUrlBase, {
+            codigo: cleanCode(produtoCodigo.value),
+            fornecedor_id: fornecedorSelect.value || ''
+        });
+        produtoLink.href = url;
+        produtoMissingLink.href = url;
     }
-    if (códigoRapidoEl) {
-        códigoRapidoEl.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                adicionarPorCodigo();
+    function collectDraft() {
+        return {
+            fields: Object.fromEntries(new FormData(form).entries()),
+            items: Array.from(itensBody.querySelectorAll('tr')).map(function (row) {
+                return {
+                    produto_id: row.querySelector('select[name="produto_id[]"]').value,
+                    qtd_recebida: row.querySelector('input[name="qtd_recebida[]"]').value,
+                    unidade: row.querySelector('select[name="unidade[]"]').value,
+                    descricao_item: row.querySelector('input[name="descricao_item[]"]').value,
+                    preco_unitario: row.querySelector('input[name="preco_unitario[]"]').value
+                };
+            }),
+            ir_para_armazenagem: form.querySelector('input[name="ir_para_armazenagem"]').checked
+        };
+    }
+    function saveDraft() {
+        if (flowApi) flowApi.saveDraft(storageKey, collectDraft());
+    }
+    function restoreDraft() {
+        if (!flowApi) return;
+        const draft = flowApi.loadDraft(storageKey);
+        if (!draft || !draft.fields) return;
+        Object.entries(draft.fields).forEach(function ([name, value]) {
+            const field = form.querySelector('[name="' + name + '"]');
+            if (field && field.type !== 'checkbox') field.value = value;
+        });
+        form.querySelector('input[name="ir_para_armazenagem"]').checked = Boolean(draft.ir_para_armazenagem);
+        if (Array.isArray(draft.items) && draft.items.length) {
+            itensBody.innerHTML = '';
+            draft.items.forEach(function (item) {
+                const row = createRow();
+                row.querySelector('select[name="produto_id[]"]').value = item.produto_id || '';
+                row.querySelector('input[name="qtd_recebida[]"]').value = item.qtd_recebida || '0';
+                row.querySelector('select[name="unidade[]"]').value = item.unidade || 'UN';
+                row.querySelector('input[name="descricao_item[]"]').value = item.descricao_item || '';
+                row.querySelector('input[name="preco_unitario[]"]').value = item.preco_unitario || '0.00';
+                itensBody.appendChild(row);
+            });
+        }
+    }
+    function restoreReturnedEntity() {
+        if (flowState.entity === 'fornecedor' && flowState.entity_id) {
+            fornecedorSelect.value = String(flowState.entity_id);
+            fillSupplierInfo(fornecedorSelect.selectedOptions[0] || null);
+        }
+        if (flowState.entity === 'produto' && flowState.entity_id) {
+            const option = productOptionByCode(flowState.produto_codigo) || Array.from(currentProductSelect().options || []).find(function (item) {
+                return String(item.value) === String(flowState.entity_id);
+            });
+            if (option) {
+                const row = emptyRow() || createRow();
+                if (!row.parentNode) itensBody.appendChild(row);
+                setProductOnRow(row, option);
+                produtoMissing.classList.add('d-none');
             }
-        });
-        códigoRapidoEl.addEventListener('barcode:detected', function () {
-            adicionarPorCodigo();
-        });
+        }
     }
 
-    if (fornecedorSelect && fornecedorSelect.value) {
-        const selected = fornecedorSelect.selectedOptions && fornecedorSelect.selectedOptions[0] ? fornecedorSelect.selectedOptions[0] : null;
-        updateFornecedorInfo(selected);
-    }
-    atualizarTotais();
+    itensBody.querySelectorAll('.remover-item').forEach(bindRemove);
+    restoreDraft();
+    refreshSupplierRule();
+    syncSupplierByDocument();
+    restoreReturnedEntity();
+    updateTotals();
+    syncProductLink();
+    fillSupplierInfo(fornecedorSelect.selectedOptions[0] || null);
+
+    fornecedorSelect.addEventListener('change', function () {
+        fillSupplierInfo(fornecedorSelect.selectedOptions[0] || null);
+        fornecedorMissing.classList.add('d-none');
+        syncProductLink();
+        saveDraft();
+    });
+    fornecedorDocumento.addEventListener('input', function () { syncSupplierByDocument(); saveDraft(); });
+    tipoRecebimento.addEventListener('change', function () { refreshSupplierRule(); saveDraft(); });
+    produtoCodigo.addEventListener('input', function () { syncProductLink(); saveDraft(); });
+    desconto.addEventListener('input', function () { updateTotals(); saveDraft(); });
+    recebedorBusca.addEventListener('change', function () {
+        const option = Array.from(recebedores.options || []).find(function (item) { return item.value === recebedorBusca.value; });
+        recebedorId.value = option ? (option.dataset.funcionarioId || '') : '';
+        if (option && !recebedorNome.value.trim()) recebedorNome.value = option.dataset.nome || '';
+        saveDraft();
+    });
+    form.addEventListener('change', saveDraft);
+    form.addEventListener('input', function (event) {
+        if (event.target.name === 'qtd_recebida[]' || event.target.name === 'preco_unitario[]') updateTotals();
+        saveDraft();
+    });
+    document.getElementById('adicionar-item').addEventListener('click', function () {
+        itensBody.appendChild(createRow());
+        saveDraft();
+    });
+    document.getElementById('adicionar-por-codigo').addEventListener('click', function () {
+        const option = productOptionByCode(produtoCodigo.value);
+        if (!option) {
+            produtoMissing.classList.toggle('d-none', !cleanCode(produtoCodigo.value));
+            syncProductLink();
+            saveDraft();
+            return;
+        }
+        const row = emptyRow() || createRow();
+        if (!row.parentNode) itensBody.appendChild(row);
+        setProductOnRow(row, option);
+        produtoCodigo.value = '';
+        produtoMissing.classList.add('d-none');
+        saveDraft();
+    });
+    produtoCodigo.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            document.getElementById('adicionar-por-codigo').click();
+        }
+    });
+    [fornecedorLink, fornecedorMissingLink, produtoLink, produtoMissingLink].forEach(function (link) {
+        if (link) link.addEventListener('click', saveDraft);
+    });
 });
 </script>
 {% endblock %}
-

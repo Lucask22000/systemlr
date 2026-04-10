@@ -1,10 +1,13 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Movimentacao Rapida - SystemLR{% endblock %}
+{% block title %}Movimentacao Rapida Interna - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Movimentacao Rapida</h1>
+    <div>
+        <h1>Movimentacao Rapida Interna</h1>
+        <p class="text-muted mb-0">Use para acertos e consumos imediatos no estoque atual. Recebimentos e transferencias entre lojas/CDs devem usar as telas dedicadas.</p>
+    </div>
     <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Voltar</a>
 </div>
 
@@ -14,7 +17,7 @@
     <div class="info-cards-row">
         <div class="info-card">
             <h3>Codigo</h3>
-            <p class="value">{{ produto.código }}</p>
+            <p class="value">{{ produto.codigo }}</p>
         </div>
         <div class="info-card">
             <h3>Categoria</h3>
@@ -52,29 +55,19 @@
             </div>
         </div>
 
-        <div class="form-group" id="fornecedor-wrapper" style="display:block;">
-            <label for="fornecedor_id">Fornecedor (opcional no recebimento)</label>
-            <select id="fornecedor_id" name="fornecedor_id" class="input-select">
-                <option value="">Sem fornecedor</option>
-                {% for fornecedor in fornecedores %}
-                <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
+        <div class="form-group">
+            <label for="motivo">Motivo</label>
+            <input type="text" id="motivo" name="motivo" list="motivos-movimentacao-rapida" placeholder="Ex.: consumo_operacional, avaria_quebra, acerto_estoque" class="input-text">
+            <datalist id="motivos-movimentacao-rapida">
+                {% for motivo in motivos_sugeridos %}
+                <option value="{{ motivo }}"></option>
                 {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group" id="valor-compra-wrapper" style="display:none;">
-            <label for="valor_compra">Valor de compra (R$)</label>
-            <input type="number" step="0.01" id="valor_compra" name="valor_compra" placeholder="0.00" class="input-text">
-        </div>
-
-        <div class="form-group" id="nota-wrapper" style="display:none;">
-            <label for="info_nota">Informações da nota</label>
-            <input type="text" id="info_nota" name="info_nota" placeholder="Número, série, observações..." class="input-text">
+            </datalist>
         </div>
 
         <div class="form-group">
-            <label for="motivo">Motivo</label>
-            <input type="text" id="motivo" name="motivo" placeholder="Ex: Venda, Compra, Devolucao..." class="input-text">
+            <label for="info_nota">Documento ou referência interna</label>
+            <input type="text" id="info_nota" name="info_nota" placeholder="Checklist, inventário, OS ou justificativa" class="input-text">
         </div>
 
         <div class="form-group">
@@ -89,33 +82,5 @@
         </div>
     </form>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const tipo = document.getElementById('tipo');
-    const fornecedorWrapper = document.getElementById('fornecedor-wrapper');
-    const fornecedorSelect = document.getElementById('fornecedor_id');
-
-    const valorCompraWrapper = document.getElementById('valor-compra-wrapper');
-    const notaWrapper = document.getElementById('nota-wrapper');
-
-    function atualizarFornecedor() {
-        const entrada = tipo.value === 'entrada';
-        fornecedorWrapper.style.display = entrada ? 'block' : 'none';
-        valorCompraWrapper.style.display = entrada ? 'block' : 'none';
-        notaWrapper.style.display = entrada ? 'block' : 'none';
-        if (!entrada) {
-            fornecedorSelect.value = '';
-            document.getElementById('valor_compra').value = '';
-            document.getElementById('info_nota').value = '';
-        }
-    }
-
-    tipo.addEventListener('change', atualizarFornecedor);
-    atualizarFornecedor();
-});
-</script>
 {% endblock %}
 

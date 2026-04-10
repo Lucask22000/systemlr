@@ -10,75 +10,81 @@
 <div class="form-container">
     <form method="POST" class="form">
         {{ csrf_input|safe }}
+        {% if return_flow %}
+        <input type="hidden" name="return_to" value="{{ return_flow.return_to or '' }}">
+        <input type="hidden" name="origem" value="{{ return_flow.origem or '' }}">
+        <input type="hidden" name="contexto" value="{{ return_flow.contexto or '' }}">
+        <input type="hidden" name="context_key" value="{{ return_flow.context_key or '' }}">
+        {% endif %}
         <div class="form-group">
             <label for="nome">Nome / Razao Social *</label>
-            <input type="text" id="nome" name="nome" required class="input-text" placeholder="Nome da empresa ou pessoa fornecedora">
+            <input type="text" id="nome" name="nome" value="{{ form_data.nome if form_data else '' }}" required class="input-text" placeholder="Nome da empresa ou pessoa fornecedora">
         </div>
 
         <div class="form-group">
             <label for="documento">CNPJ ou CPF</label>
-            <input type="text" id="documento" name="documento" class="input-text" placeholder="00.000.000/0000-00 ou 000.000.000-00">
+            <input type="text" id="documento" name="documento" value="{{ form_data.documento if form_data else '' }}" class="input-text" placeholder="00.000.000/0000-00 ou 000.000.000-00">
         </div>
 
         <div class="form-group">
             <label for="contato">Contato</label>
-            <input type="text" id="contato" name="contato" class="input-text" placeholder="Nome da pessoa de contato">
+            <input type="text" id="contato" name="contato" value="{{ form_data.contato if form_data else '' }}" class="input-text" placeholder="Nome da pessoa de contato">
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label for="telefone">Telefone</label>
-                <input type="text" id="telefone" name="telefone" class="input-text" placeholder="(00) 00000-0000">
+                <input type="text" id="telefone" name="telefone" value="{{ form_data.telefone if form_data else '' }}" class="input-text" placeholder="(00) 00000-0000">
             </div>
 
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" class="input-text" placeholder="contato@fornecedor.com">
+                <input type="email" id="email" name="email" value="{{ form_data.email if form_data else '' }}" class="input-text" placeholder="contato@fornecedor.com">
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label for="endereco_rua">Endereco - Rua</label>
-                <input type="text" id="endereco_rua" name="endereco_rua" class="input-text" placeholder="Rua, avenida, travessa...">
+                <input type="text" id="endereco_rua" name="endereco_rua" value="{{ form_data.endereco_rua if form_data else '' }}" class="input-text" placeholder="Rua, avenida, travessa...">
             </div>
             <div class="form-group">
                 <label for="endereco_numero">Numero</label>
-                <input type="text" id="endereco_numero" name="endereco_numero" class="input-text" placeholder="Numero">
+                <input type="text" id="endereco_numero" name="endereco_numero" value="{{ form_data.endereco_numero if form_data else '' }}" class="input-text" placeholder="Numero">
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
                 <label for="endereco_bairro">Bairro</label>
-                <input type="text" id="endereco_bairro" name="endereco_bairro" class="input-text" placeholder="Bairro">
+                <input type="text" id="endereco_bairro" name="endereco_bairro" value="{{ form_data.endereco_bairro if form_data else '' }}" class="input-text" placeholder="Bairro">
             </div>
             <div class="form-group">
                 <label for="endereco_cidade">Cidade</label>
-                <input type="text" id="endereco_cidade" name="endereco_cidade" class="input-text" placeholder="Cidade">
+                <input type="text" id="endereco_cidade" name="endereco_cidade" value="{{ form_data.endereco_cidade if form_data else '' }}" class="input-text" placeholder="Cidade">
             </div>
         </div>
 
         <div class="form-group">
             <label for="tipo_produtos_fornece">Tipo de produtos que fornece</label>
-            <input type="text" id="tipo_produtos_fornece" name="tipo_produtos_fornece" class="input-text" placeholder="Ex: graos, bebidas, limpeza, frios...">
+            <input type="text" id="tipo_produtos_fornece" name="tipo_produtos_fornece" value="{{ form_data.tipo_produtos_fornece if form_data else '' }}" class="input-text" placeholder="Ex: graos, bebidas, limpeza, frios...">
         </div>
 
         <div class="form-group">
             <label for="observacoes_gerais">Observacoes gerais</label>
-            <textarea id="observacoes_gerais" name="observacoes_gerais" class="input-textarea" rows="4" placeholder="Pontualidade, restricoes, qualidade, condicoes comerciais, etc."></textarea>
+            <textarea id="observacoes_gerais" name="observacoes_gerais" class="input-textarea" rows="4" placeholder="Pontualidade, restricoes, qualidade, condicoes comerciais, etc.">{{ form_data.observacoes_gerais if form_data else '' }}</textarea>
         </div>
 
         <div class="form-group">
             <label>
-                <input type="checkbox" name="ativo" checked>
+                <input type="checkbox" name="ativo" {% if not form_data or form_data.ativo %}checked{% endif %}>
                 Fornecedor ativo
             </label>
         </div>
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Salvar fornecedor</button>
-            <a href="{{ url_for('listar_fornecedores') }}" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ return_flow.cancel_url if return_flow else url_for('listar_fornecedores') }}" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>

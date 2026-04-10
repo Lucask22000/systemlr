@@ -40,6 +40,17 @@
                 value="{{ empresa.entrega_veiculo_padrao or '' }}"
                 placeholder="Ex.: Van, Caminhao, Moto">
         </div>
+        <div class="col-12 col-md-4">
+            <label for="entrega_horario_fechamento_roteirizacao" class="form-label">Fechamento da roteirizacao</label>
+            <input
+                type="time"
+                class="form-control"
+                id="entrega_horario_fechamento_roteirizacao"
+                name="entrega_horario_fechamento_roteirizacao"
+                value="{{ empresa.entrega_horario_fechamento_roteirizacao or '' }}"
+                step="60">
+            <small class="text-muted">Pedidos separados apos esse horario entram no proximo ciclo.</small>
+        </div>
     </div>
 
     <div class="row g-3 mt-2">

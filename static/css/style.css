@@ -1564,17 +1564,42 @@ body {
 .navbar-menu {
     flex: 1;
     justify-content: flex-end;
+    gap: 4px;
+    flex-wrap: nowrap;
 }
 
 .nav-link,
 .nav-dropdown-toggle {
     border-radius: 8px;
+    white-space: nowrap;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
 }
 
 .nav-submenu {
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.08);
+    min-width: 250px;
+}
+
+.nav-sublink {
+    white-space: nowrap;
+    font-size: 0.97rem;
+}
+
+@media (min-width: 992px) {
+    .navbar-container {
+        max-width: 1380px;
+        padding: 0 16px;
+    }
+
+    .nav-link,
+    .nav-dropdown-toggle {
+        padding: 14px 16px;
+    }
 }
 
 .card,

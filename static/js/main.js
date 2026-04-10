@@ -102,6 +102,7 @@
     initBarcodeScannerButtons();
     initFormFieldTooltips();
     initCollapsiblePanels();
+    initNavContextSelector();
 });
 
 function formatarMoeda(valor) {
@@ -125,15 +126,19 @@ function validarFormulario(formId) {
     const form = document.getElementById(formId);
     if (!form) return true;
 
+    if (window.formEnhancements && typeof window.formEnhancements.validateForm === 'function') {
+        return window.formEnhancements.validateForm(form);
+    }
+
     const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
     let valido = true;
 
     inputs.forEach(function (input) {
         if (!input.value.trim()) {
-            input.style.borderColor = '#D9534F';
+            input.classList.add('field-invalid');
             valido = false;
         } else {
-            input.style.borderColor = '';
+            input.classList.remove('field-invalid');
         }
     });
 
@@ -238,6 +243,21 @@ function initBarcodeScannerButtons() {
     });
 }
 
+function initNavContextSelector() {
+    const selectors = document.querySelectorAll('[data-auto-submit-context]');
+    selectors.forEach(function (selector) {
+        selector.addEventListener('change', function () {
+            const form = this.closest('form');
+            if (!form) return;
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        });
+    });
+}
+
 function initFormFieldTooltips() {
     if (typeof bootstrap === 'undefined' || typeof bootstrap.Tooltip === 'undefined') return;
 
@@ -246,6 +266,7 @@ function initFormFieldTooltips() {
         if (!field || field.dataset.tooltipReady === '1') return;
         if (field.type === 'hidden') return;
         if (field.disabled) return;
+        if (field.dataset.skipTooltip === '1') return;
 
         const explicit = (field.getAttribute('data-tooltip') || '').trim();
         const label = getFieldLabelText(field);

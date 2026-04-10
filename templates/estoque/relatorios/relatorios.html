@@ -103,6 +103,12 @@
         <div class="action-buttons" style="margin-top:8px;">
             <a href="{{ url_for('enderecos_inteligentes') }}" class="btn btn-primary">Aplicar no Enderecamento Inteligente</a>
             <a href="{{ url_for('listar_produtos', fora_picking='sim') }}" class="btn btn-secondary">Ver produtos fora de picking</a>
+            {% if not empresa or empresa.emissao_etiqueta_loja_ativa != False %}
+            <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="btn btn-secondary" target="_blank">Etiquetas de Loja</a>
+            {% endif %}
+            {% if not empresa or empresa.emissao_etiqueta_endereco_ativa != False %}
+            <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="btn btn-secondary" target="_blank">Etiquetas de Endereco</a>
+            {% endif %}
         </div>
     </section>
 </div>

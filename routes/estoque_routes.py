@@ -6,12 +6,28 @@ import uuid
 
 from sqlalchemy.orm import load_only, selectinload
 from app import extensions
+from app.utils.operational_flow import (
+    build_related_create_url,
+    build_related_return_url,
+    get_flow_metadata,
+)
 
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
 
 from app.exceptions import AppError, ValidationError
+from app.services.workflow import RecebimentoStatus, transition_recebimento_status
+from app.services.operational_rules import (
+    require_cancel_reason,
+    validate_active_product_payload,
+)
+from app.services.master_data import (
+    validate_stock_master_payload,
+    validate_supplier_payload,
+)
+from app.services.recebimento_service import armazenar_recebimento, conferir_recebimento, create_recebimento
+from app.services.estoque_service import registrar_movimentacao_manual, transferir_estoque
 from app.utils.helpers import sem_acentos
-from app.utils.validators import normalizar_codigo_barras
+from app.utils.validators import normalizar_codigo_barras, validar_cpf, validar_cnpj
 from models import (
     AlmoxarifadoAtribuicao,
     db,
@@ -164,6 +180,64 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             and tipo_normalizado not in recebimento_tipos_fornecedor_opcional
         )
 
+    def _normalizar_documento_dependencia(valor):
+        digitos = re.sub(r'\D+', '', str(valor or '').strip())
+        return digitos or None
+
+    def _validar_documento_dependencia(valor):
+        documento = _normalizar_documento_dependencia(valor)
+        if not documento:
+            return None, None
+        if len(documento) == 11:
+            cpf = validar_cpf(documento)
+            if cpf == '__invalid__':
+                return documento, 'CPF invalido. Informe 11 digitos validos.'
+            return documento, None
+        if len(documento) == 14:
+            cnpj = validar_cnpj(documento)
+            if cnpj == '__invalid__':
+                return documento, 'CNPJ invalido. Informe 14 digitos validos.'
+            return documento, None
+        return documento, 'Documento invalido. Informe um CPF com 11 digitos ou CNPJ com 14 digitos.'
+
+    def _buscar_fornecedor_por_documento(documento, *, somente_ativos=False, ignorar_id=None):
+        documento_normalizado = _normalizar_documento_dependencia(documento)
+        if not documento_normalizado:
+            return None
+        query = Fornecedor.query.filter(Fornecedor.documento.isnot(None))
+        if somente_ativos:
+            query = query.filter(Fornecedor.ativo.is_(True))
+        fornecedores = query.order_by(Fornecedor.nome.asc()).all()
+        for fornecedor in fornecedores:
+            if ignorar_id and fornecedor.id == ignorar_id:
+                continue
+            if _normalizar_documento_dependencia(fornecedor.documento) == documento_normalizado:
+                return fornecedor
+        return None
+
+    def _obter_locais_recebimento_validos(funcionario=None):
+        return _endereco_query_permitida(funcionario).filter(
+            EnderecoEstoque.ativo.is_(True),
+            EnderecoEstoque.status == 'ativo',
+            db.or_(
+                EnderecoEstoque.tipo_area == 'recebimento',
+                EnderecoEstoque.tipo_endereco == 'recebimento',
+            ),
+        ).order_by(EnderecoEstoque.nome.asc()).all()
+
+    def _carregar_local_recebimento_valido(local_recebimento_id, funcionario=None):
+        if not local_recebimento_id:
+            return None
+        return _endereco_query_permitida(funcionario).filter(
+            EnderecoEstoque.id == local_recebimento_id,
+            EnderecoEstoque.ativo.is_(True),
+            EnderecoEstoque.status == 'ativo',
+            db.or_(
+                EnderecoEstoque.tipo_area == 'recebimento',
+                EnderecoEstoque.tipo_endereco == 'recebimento',
+            ),
+        ).first()
+
     def _obter_fornecedor_padrao_recebimento():
         fornecedor = Fornecedor.query.filter(
             db.func.lower(Fornecedor.nome) == fornecedor_padrao_recebimento_nome.lower()
@@ -180,6 +254,17 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         db.session.add(fornecedor)
         db.session.flush()
         return fornecedor
+
+    def _gerar_context_key_fluxo(prefixo):
+        valor = (request.values.get('context_key') or '').strip()
+        if valor:
+            return valor
+        return f'{prefixo}-{uuid.uuid4().hex[:12]}'
+
+    def _url_novo_recebimento_contexto(context_key, **extra):
+        params = {'context_key': context_key}
+        params.update({key: value for key, value in extra.items() if value not in (None, '')})
+        return url_for('novo_recebimento_fornecedor', **params)
 
     def _resolver_funcionario_por_matricula_ou_nome(texto_busca='', funcionario_id=None):
         if funcionario_id:
@@ -852,6 +937,53 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @require_role(*estoque_write_roles)
     def novo_produto():
         funcionario_logado = _funcionario_logado_estoque()
+        flow_metadata = get_flow_metadata(
+            default_origin='novo_recebimento_fornecedor',
+            default_context='recebimento_fornecedor',
+        )
+        form_data = {
+            'codigo': (request.values.get('codigo') or '').strip(),
+            'nome': (request.values.get('nome') or '').strip(),
+            'descricao': (request.values.get('descricao') or '').strip(),
+            'categoria_id': request.values.get('categoria_id', type=int),
+            'fornecedor_id': request.values.get('fornecedor_id', type=int),
+            'endereco_id': request.values.get('endereco_id', type=int),
+            'preco_custo': (request.values.get('preco_custo') or '').strip(),
+            'preco_venda': (request.values.get('preco_venda') or '').strip(),
+            'quantidade_estoque': (request.values.get('quantidade_estoque') or '0').strip(),
+            'quantidade_minima': (request.values.get('quantidade_minima') or '5').strip(),
+            'status_disponibilidade': (
+                (request.values.get('status_disponibilidade') or Produto.STATUS_DISPONIVEL_ONLINE).strip().lower()
+            ),
+            'tipo_movimentacao': (request.values.get('tipo_movimentacao') or 'manual').strip().lower(),
+            'prioridade_reabastecimento': (request.values.get('prioridade_reabastecimento') or '').strip(),
+            'fora_picking': (request.values.get('fora_picking') == 'on'),
+            'servico_montagem_disponivel': (request.values.get('servico_montagem_disponivel') == 'on'),
+            'servico_instalacao_disponivel': (request.values.get('servico_instalacao_disponivel') == 'on'),
+        }
+
+        def _render_novo_produto():
+            categorias = Categoria.query.order_by(Categoria.nome.asc()).all()
+            fornecedores = Fornecedor.query.filter(
+                Fornecedor.ativo.is_(True),
+                db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
+            ).order_by(Fornecedor.nome.asc()).all()
+            enderecos = _endereco_query_permitida(funcionario_logado).filter_by(ativo=True).order_by(EnderecoEstoque.nome.asc()).all()
+            return render_template(
+                'estoque/produtos/novo_produto.html',
+                categorias=categorias,
+                fornecedores=fornecedores,
+                enderecos=enderecos,
+                status_disponibilidade_labels=STATUS_DISPONIBILIDADE_LABELS,
+                tipos_movimentacao_produto=TIPOS_MOVIMENTACAO_PRODUTO,
+                codigos_existentes=[c[0] for c in db.session.query(Produto.codigo).all()],
+                form_data=form_data,
+                return_flow={
+                    **flow_metadata,
+                    'cancel_url': flow_metadata.get('return_to') or url_for('listar_produtos'),
+                },
+            )
+
         if request.method == 'POST':
             nova_imagem_path = None
             try:
@@ -859,22 +991,25 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 fornecedor_id = request.form.get('fornecedor_id', type=int)
                 categoria = Categoria.query.get(categoria_id)
                 if not categoria:
-                    flash('Categoria invalida', 'error')
-                    return redirect(url_for('novo_produto'))
+                    flash('Categoria invalida. Selecione uma categoria antes de salvar o produto.', 'error')
+                    return _render_novo_produto()
                 fornecedor = Fornecedor.query.get(fornecedor_id) if fornecedor_id else None
                 if not fornecedor:
                     flash('Fornecedor invalido. Selecione um fornecedor para o produto.', 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
+                if not fornecedor.ativo:
+                    flash('Fornecedor inativo nao pode ser usado em produto ativo.', 'error')
+                    return _render_novo_produto()
 
                 endereco_id = request.form.get('endereco_id', type=int) or None
                 if endereco_id and not _carregar_endereco_permitido(endereco_id, funcionario_logado, apenas_ativo=True):
                     flash('Endereco invalido ou fora dos estoques permitidos.', 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
 
                 codigo_barras, erro_codigo = _normalizar_codigo_barras(request.form.get('codigo'))
                 if erro_codigo:
                     flash(erro_codigo, 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
 
                 nova_imagem_path, erro_imagem = _save_product_image(
                     request.files.get('imagem'),
@@ -882,7 +1017,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 )
                 if erro_imagem:
                     flash(erro_imagem, 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
 
                 produto = Produto(
                     codigo=codigo_barras,
@@ -903,31 +1038,37 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     servico_montagem_disponivel=(request.form.get('servico_montagem_disponivel') == 'on'),
                     servico_instalacao_disponivel=(request.form.get('servico_instalacao_disponivel') == 'on'),
                 )
+                validate_active_product_payload(
+                    codigo=produto.codigo,
+                    nome=produto.nome,
+                    categoria_id=produto.categoria_id,
+                    fornecedor_id=produto.fornecedor_id,
+                    preco_custo=produto.preco_custo,
+                    preco_venda=produto.preco_venda,
+                    quantidade_minima=produto.quantidade_minima,
+                    ativo=produto.ativo,
+                )
                 db.session.add(produto)
                 db.session.commit()
                 flash(f'Produto "{produto.nome}" criado com sucesso!', 'success')
+                if flow_metadata.get('return_to'):
+                    return redirect(
+                        build_related_return_url(
+                            'listar_produtos',
+                            entity='produto',
+                            entity_id=produto.id,
+                            extra_params={'produto_codigo': produto.codigo or ''},
+                        )
+                    )
                 return redirect(url_for('listar_produtos'))
             except Exception as e:
                 db.session.rollback()
                 if nova_imagem_path:
                     _delete_image_file(nova_imagem_path)
                 flash(f'Erro ao criar produto: {str(e)}', 'error')
+                return _render_novo_produto()
 
-        categorias = Categoria.query.all()
-        fornecedores = Fornecedor.query.filter(
-            Fornecedor.ativo.is_(True),
-            db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
-        ).order_by(Fornecedor.nome.asc()).all()
-        enderecos = _endereco_query_permitida(funcionario_logado).filter_by(ativo=True).order_by(EnderecoEstoque.nome.asc()).all()
-        return render_template(
-            'estoque/produtos/novo_produto.html',
-            categorias=categorias,
-            fornecedores=fornecedores,
-            enderecos=enderecos,
-            status_disponibilidade_labels=STATUS_DISPONIBILIDADE_LABELS,
-            tipos_movimentacao_produto=TIPOS_MOVIMENTACAO_PRODUTO,
-            codigos_existentes=[c[0] for c in db.session.query(Produto.codigo).all()]
-        )
+        return _render_novo_produto()
 
     @app.route('/produtos/<int:produto_id>/editar', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
@@ -945,6 +1086,9 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 fornecedor = Fornecedor.query.get(fornecedor_id) if fornecedor_id else None
                 if not fornecedor:
                     flash('Fornecedor invalido. Selecione um fornecedor para o produto.', 'error')
+                    return redirect(url_for('editar_produto', produto_id=produto_id))
+                if not fornecedor.ativo:
+                    flash('Fornecedor inativo nao pode ser usado em produto ativo.', 'error')
                     return redirect(url_for('editar_produto', produto_id=produto_id))
                 endereco_id = request.form.get('endereco_id', type=int) or None
                 if endereco_id and not _carregar_endereco_permitido(endereco_id, funcionario_logado, apenas_ativo=True):
@@ -969,6 +1113,16 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 produto.prioridade_reabastecimento = request.form.get('prioridade_reabastecimento', type=int)
                 produto.servico_montagem_disponivel = (request.form.get('servico_montagem_disponivel') == 'on')
                 produto.servico_instalacao_disponivel = (request.form.get('servico_instalacao_disponivel') == 'on')
+                validate_active_product_payload(
+                    codigo=produto.codigo,
+                    nome=produto.nome,
+                    categoria_id=produto.categoria_id,
+                    fornecedor_id=produto.fornecedor_id,
+                    preco_custo=produto.preco_custo,
+                    preco_venda=produto.preco_venda,
+                    quantidade_minima=produto.quantidade_minima,
+                    ativo=produto.ativo,
+                )
 
                 remover_imagem = request.form.get('remover_imagem') == 'on'
                 arquivo_imagem = request.files.get('imagem')
@@ -1508,11 +1662,53 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @app.route('/fornecedores/novo', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
     def novo_fornecedor():
+        flow_metadata = get_flow_metadata(
+            default_origin='novo_recebimento_fornecedor',
+            default_context='recebimento_fornecedor',
+        )
+        form_data = {
+            'nome': (request.values.get('nome') or '').strip(),
+            'documento': (request.values.get('documento') or '').strip(),
+            'contato': (request.values.get('contato') or '').strip(),
+            'telefone': (request.values.get('telefone') or '').strip(),
+            'email': (request.values.get('email') or '').strip(),
+            'endereco_rua': (request.values.get('endereco_rua') or '').strip(),
+            'endereco_numero': (request.values.get('endereco_numero') or '').strip(),
+            'endereco_bairro': (request.values.get('endereco_bairro') or '').strip(),
+            'endereco_cidade': (request.values.get('endereco_cidade') or '').strip(),
+            'tipo_produtos_fornece': (request.values.get('tipo_produtos_fornece') or '').strip(),
+            'observacoes_gerais': (request.values.get('observacoes_gerais') or '').strip(),
+            'ativo': (request.values.get('ativo') == 'on') if request.method == 'POST' else True,
+        }
+
+        def _render_novo_fornecedor():
+            return render_template(
+                'estoque/fornecedores/novo_fornecedor.html',
+                form_data=form_data,
+                return_flow={
+                    **flow_metadata,
+                    'cancel_url': flow_metadata.get('return_to') or url_for('listar_fornecedores'),
+                },
+            )
+
         if request.method == 'POST':
             try:
+                documento_normalizado, erro_documento = _validar_documento_dependencia(request.form.get('documento'))
+                if erro_documento:
+                    flash(erro_documento, 'error')
+                    return _render_novo_fornecedor()
+                fornecedor_existente = _buscar_fornecedor_por_documento(documento_normalizado, ignorar_id=None)
+                if fornecedor_existente:
+                    flash(
+                        f'O documento informado ja pertence ao fornecedor "{fornecedor_existente.nome}". '
+                        'Use o cadastro existente para evitar duplicidade.',
+                        'warning'
+                    )
+                    return _render_novo_fornecedor()
+
                 fornecedor = Fornecedor(
                     nome=request.form.get('nome', '').strip(),
-                    documento=request.form.get('documento', '').strip() or None,
+                    documento=documento_normalizado,
                     contato=request.form.get('contato', '').strip() or None,
                     telefone=request.form.get('telefone', '').strip() or None,
                     email=request.form.get('email', '').strip() or None,
@@ -1524,17 +1720,33 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     observacoes_gerais=request.form.get('observacoes_gerais', '').strip() or None,
                     ativo=(request.form.get('ativo') == 'on')
                 )
-                if not fornecedor.nome:
-                    flash('Nome do fornecedor e obrigatorio.', 'error')
-                    return redirect(url_for('novo_fornecedor'))
+                validate_supplier_payload(
+                    nome=fornecedor.nome,
+                    documento=fornecedor.documento,
+                    telefone=fornecedor.telefone,
+                    email=fornecedor.email,
+                    endereco_cidade=fornecedor.endereco_cidade,
+                    tipo_produtos_fornece=fornecedor.tipo_produtos_fornece,
+                    ativo=fornecedor.ativo,
+                )
                 db.session.add(fornecedor)
                 db.session.commit()
                 flash(f'Fornecedor "{fornecedor.nome}" cadastrado com sucesso!', 'success')
+                if flow_metadata.get('return_to'):
+                    return redirect(
+                        build_related_return_url(
+                            'listar_fornecedores',
+                            entity='fornecedor',
+                            entity_id=fornecedor.id,
+                            extra_params={'fornecedor_documento': fornecedor.documento or ''},
+                        )
+                    )
                 return redirect(url_for('listar_fornecedores'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao cadastrar fornecedor: {str(e)}', 'error')
-        return render_template('estoque/fornecedores/novo_fornecedor.html')
+                return _render_novo_fornecedor()
+        return _render_novo_fornecedor()
 
     @app.route('/fornecedores/<int:fornecedor_id>/editar', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
@@ -1558,6 +1770,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 fornecedor.tipo_produtos_fornece = request.form.get('tipo_produtos_fornece', '').strip() or None
                 fornecedor.observacoes_gerais = request.form.get('observacoes_gerais', '').strip() or None
                 fornecedor.ativo = (request.form.get('ativo') == 'on')
+                validate_supplier_payload(
+                    nome=fornecedor.nome,
+                    documento=fornecedor.documento,
+                    telefone=fornecedor.telefone,
+                    email=fornecedor.email,
+                    endereco_cidade=fornecedor.endereco_cidade,
+                    tipo_produtos_fornece=fornecedor.tipo_produtos_fornece,
+                    ativo=fornecedor.ativo,
+                )
                 db.session.commit()
                 flash(f'Fornecedor "{fornecedor.nome}" atualizado com sucesso!', 'success')
                 return redirect(url_for('listar_fornecedores'))
@@ -1630,6 +1851,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             load_only(
                 RecebimentoFornecedor.id,
                 RecebimentoFornecedor.fornecedor_id,
+                RecebimentoFornecedor.local_recebimento_id,
                 RecebimentoFornecedor.tipo_recebimento,
                 RecebimentoFornecedor.info_nota,
                 RecebimentoFornecedor.subtotal,
@@ -1641,6 +1863,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 RecebimentoFornecedor.conferido_em,
             ),
             selectinload(RecebimentoFornecedor.fornecedor),
+            selectinload(RecebimentoFornecedor.local_recebimento),
             selectinload(RecebimentoFornecedor.recebedor_funcionario),
             selectinload(RecebimentoFornecedor.itens).selectinload(RecebimentoItem.produto),
         ).order_by(RecebimentoFornecedor.criado_em.desc()).paginate(
@@ -1686,11 +1909,14 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @require_role(*estoque_write_roles)
     def novo_recebimento_fornecedor():
         funcionario_logado = _funcionario_logado_estoque()
+        context_key = _gerar_context_key_fluxo('recebimento-fornecedor')
+        return_to_self = _url_novo_recebimento_contexto(context_key)
         fornecedores = Fornecedor.query.filter(
             Fornecedor.ativo.is_(True),
             db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
         ).order_by(Fornecedor.nome.asc()).all()
         produtos = _produto_query_permitida(Produto.query.filter_by(ativo=True), funcionario_logado).order_by(Produto.nome.asc()).all()
+        locais_recebimento = _obter_locais_recebimento_validos(funcionario_logado)
         funcionarios_recebimento = Funcionario.query.filter_by(ativo=True).options(
             load_only(
                 Funcionario.id,
@@ -1704,19 +1930,47 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         if request.method == 'POST':
             try:
                 fornecedor_id = request.form.get('fornecedor_id', type=int)
-                tipo_recebimento = (request.form.get('tipo_recebimento') or '').strip().lower()
+                tipo_recebimento = (
+                    (request.form.get('tipo_recebimento') or RecebimentoFornecedor.TIPO_COMPRA_REVENDA).strip().lower()
+                )
+                fornecedor_documento_digitado, erro_documento = _validar_documento_dependencia(
+                    request.form.get('fornecedor_documento')
+                )
+                if erro_documento:
+                    flash(erro_documento, 'error')
+                    return redirect(_url_novo_recebimento_contexto(context_key))
+
                 fornecedor = Fornecedor.query.get(fornecedor_id) if fornecedor_id else None
+                if not fornecedor and fornecedor_documento_digitado:
+                    fornecedor = _buscar_fornecedor_por_documento(fornecedor_documento_digitado, somente_ativos=True)
                 if tipo_recebimento not in RecebimentoFornecedor.TIPOS_VALIDOS:
                     flash('Selecione um tipo de recebimento valido.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
                 if fornecedor_id and not fornecedor:
                     flash('Selecione um fornecedor valido.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
                 if _tipo_recebimento_exige_fornecedor(tipo_recebimento) and not fornecedor:
-                    flash('Este tipo de recebimento exige fornecedor informado.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    if fornecedor_documento_digitado:
+                        flash(
+                            'O fornecedor informado pelo CNPJ/CPF nao esta cadastrado. '
+                            'Use "Cadastrar fornecedor" para concluir o recebimento sem perder o formulario.',
+                            'error'
+                        )
+                    else:
+                        flash('Este tipo de recebimento exige fornecedor informado.', 'error')
+                    return redirect(_url_novo_recebimento_contexto(context_key))
                 if not fornecedor:
                     fornecedor = _obter_fornecedor_padrao_recebimento()
+
+                local_recebimento_id = request.form.get('local_recebimento_id', type=int)
+                local_recebimento = _carregar_local_recebimento_valido(local_recebimento_id, funcionario_logado)
+                if not local_recebimento:
+                    flash(
+                        'Defina um local de recebimento ativo e valido antes de concluir. '
+                        'Ex.: Box 2, Doca 1 ou Area de conferencia.',
+                        'error'
+                    )
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
                 recebedor_funcionario = _resolver_funcionario_por_matricula_ou_nome(
                     texto_busca=(request.form.get('recebedor_busca') or request.form.get('recebedor_nome') or '').strip(),
@@ -1735,7 +1989,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 precos_unitarios = request.form.getlist('preco_unitario[]') or request.form.getlist('preco_unitario')
                 if not produto_ids:
                     flash('Informe ao menos um item no recebimento.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
                 data_entrega = None
                 data_entrega_txt = (request.form.get('data_entrega') or '').strip()
@@ -1744,21 +1998,20 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                         data_entrega = datetime.strptime(data_entrega_txt, '%Y-%m-%d').date()
                     except ValueError:
                         flash('Data de entrega invalida.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
-                subtotal = 0.0
                 desconto_raw = (request.form.get('desconto') or '').strip()
                 if desconto_raw:
                     try:
                         desconto = float(desconto_raw.replace(',', '.'))
                     except ValueError:
                         flash('Desconto invalido.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
                 else:
                     desconto = 0.0
                 if desconto < 0:
                     flash('Desconto nao pode ser negativo.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
                 itens_processados = []
                 for idx, raw_produto_id in enumerate(produto_ids):
@@ -1769,25 +2022,28 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                         produto_id = int(texto_produto_id)
                     except ValueError:
                         flash('Produto invalido em um dos itens.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     produto = Produto.query.get(produto_id)
                     if not produto or not produto.ativo:
                         flash('Um dos produtos informados nao existe ou esta inativo.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
                     if not _produto_em_estoque_permitido(produto, funcionario_logado):
                         flash(f'Voce nao possui acesso ao estoque do produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     raw_qtd = quantidades[idx] if idx < len(quantidades) else '0'
                     try:
                         qtd_recebida = int(str(raw_qtd or '0').strip() or '0')
                     except ValueError:
                         flash(f'Quantidade invalida para o produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
                     if qtd_recebida < 0:
                         flash(f'Quantidade recebida nao pode ser negativa para o produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
+                    if qtd_recebida == 0:
+                        flash(f'Quantidade recebida deve ser maior que zero para o produto "{produto.nome}".', 'error')
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     unidade = (unidades[idx] if idx < len(unidades) else '').strip().upper() or 'UN'
                     descricao_item = (descricoes_itens[idx] if idx < len(descricoes_itens) else '').strip() or produto.nome
@@ -1797,15 +2053,14 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                             preco_unitario = float(raw_preco.replace(',', '.'))
                         except ValueError:
                             flash(f'Preco unitario invalido para o produto "{produto.nome}".', 'error')
-                            return redirect(url_for('novo_recebimento_fornecedor'))
+                            return redirect(_url_novo_recebimento_contexto(context_key))
                     else:
                         preco_unitario = float(produto.preco_custo or 0.0)
                     if preco_unitario < 0:
                         flash(f'Preco unitario nao pode ser negativo para o produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     total_item = float(qtd_recebida) * float(preco_unitario)
-                    subtotal += total_item
                     itens_processados.append({
                         'produto_id': produto_id,
                         'qtd_recebida': qtd_recebida,
@@ -1817,47 +2072,27 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
                 if not itens_processados:
                     flash('Informe ao menos um item valido no recebimento.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
-                total_pagar = max(subtotal - desconto, 0.0)
-
-                recebimento = RecebimentoFornecedor(
-                    fornecedor_id=fornecedor.id,
+                ir_para_armazenagem = (request.form.get('ir_para_armazenagem') == 'on')
+                recebimento = create_recebimento(
+                    fornecedor=fornecedor,
+                    local_recebimento=local_recebimento,
                     tipo_recebimento=tipo_recebimento,
-                    fornecedor_documento=(request.form.get('fornecedor_documento') or '').strip() or None,
+                    itens_processados=itens_processados,
+                    fornecedor_documento=fornecedor_documento_digitado,
                     data_entrega=data_entrega,
                     info_nota=(request.form.get('info_nota') or '').strip() or None,
-                    subtotal=subtotal,
                     desconto=desconto,
-                    total_pagar=total_pagar,
                     observacoes=(request.form.get('observacoes') or '').strip() or None,
-                    recebedor_funcionario_id=(recebedor_funcionario.id if recebedor_funcionario else None),
+                    recebedor_funcionario=recebedor_funcionario,
                     recebedor_nome=recebedor_nome,
                     recebedor_assinatura=(request.form.get('recebedor_assinatura') or '').strip() or None,
                     entregador_nome=(request.form.get('entregador_nome') or '').strip() or None,
                     entregador_assinatura=(request.form.get('entregador_assinatura') or '').strip() or None,
-                    status=RecebimentoFornecedor.STATUS_CRIADO,
+                    ir_para_armazenagem=ir_para_armazenagem,
+                    actor=funcionario_logado,
                 )
-                ir_para_armazenagem = (request.form.get('ir_para_armazenagem') == 'on')
-                if ir_para_armazenagem:
-                    recebimento.status = RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-                    recebimento.conferido_em = datetime.utcnow()
-                db.session.add(recebimento)
-                db.session.flush()
-
-                for item in itens_processados:
-                    db.session.add(
-                        RecebimentoItem(
-                            recebimento_id=recebimento.id,
-                            produto_id=item['produto_id'],
-                            qtd_recebida=item['qtd_recebida'],
-                            unidade=item['unidade'],
-                            descricao_item=item['descricao_item'],
-                            preco_unitario=item['preco_unitario'],
-                            total_item=item['total_item'],
-                            qtd_avaria=0,
-                        )
-                    )
 
                 db.session.commit()
                 if ir_para_armazenagem:
@@ -1868,15 +2103,41 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar recebimento: {str(e)}', 'error')
+                return redirect(_url_novo_recebimento_contexto(context_key))
 
         return render_template(
             'estoque/recebimentos/novo_recebimento.html',
             fornecedores=fornecedores,
             produtos=produtos,
+            locais_recebimento=locais_recebimento,
             funcionarios_recebimento=funcionarios_recebimento,
             tipo_labels=recebimento_tipo_labels,
             tipo_recebimento_padrao=RecebimentoFornecedor.TIPO_COMPRA_REVENDA,
             tipos_fornecedor_opcional=sorted(recebimento_tipos_fornecedor_opcional),
+            context_key=context_key,
+            flow_state={
+                'entity': (request.args.get('flow_entity') or '').strip(),
+                'entity_id': request.args.get('flow_entity_id', type=int),
+                'fornecedor_documento': (request.args.get('fornecedor_documento') or '').strip(),
+                'produto_codigo': (request.args.get('produto_codigo') or '').strip(),
+                'context_key': context_key,
+            },
+            cadastro_relacionado_urls={
+                'fornecedor': build_related_create_url(
+                    'novo_fornecedor',
+                    return_to=return_to_self,
+                    origem='novo_recebimento_fornecedor',
+                    contexto='recebimento_fornecedor',
+                    context_key=context_key,
+                ),
+                'produto': build_related_create_url(
+                    'novo_produto',
+                    return_to=return_to_self,
+                    origem='novo_recebimento_fornecedor',
+                    contexto='recebimento_fornecedor',
+                    context_key=context_key,
+                ),
+            },
         )
 
     @app.route('/estoque/recebimentos/<int:recebimento_id>/conferir', methods=['GET', 'POST'])
@@ -1884,6 +2145,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     def conferir_recebimento_fornecedor(recebimento_id):
         recebimento = RecebimentoFornecedor.query.options(
             selectinload(RecebimentoFornecedor.fornecedor),
+            selectinload(RecebimentoFornecedor.local_recebimento),
             selectinload(RecebimentoFornecedor.recebedor_funcionario),
             selectinload(RecebimentoFornecedor.itens).selectinload(RecebimentoItem.produto),
         ).get_or_404(recebimento_id)
@@ -1894,47 +2156,25 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
         if request.method == 'POST':
             try:
+                conferencias_por_item = {}
                 for item in recebimento.itens:
                     prefix = f'item_{item.id}_'
-                    raw_qtd_recebida = request.form.get(f'{prefix}qtd_recebida', '0')
-                    raw_qtd_avaria = request.form.get(f'{prefix}qtd_avaria', '0')
-                    lote = (request.form.get(f'{prefix}lote') or '').strip() or None
-                    validade_texto = (request.form.get(f'{prefix}validade') or '').strip()
+                    conferencias_por_item[item.id] = {
+                        'qtd_recebida': request.form.get(f'{prefix}qtd_recebida', '0'),
+                        'qtd_avaria': request.form.get(f'{prefix}qtd_avaria', '0'),
+                        'lote': (request.form.get(f'{prefix}lote') or '').strip() or None,
+                        'validade': (request.form.get(f'{prefix}validade') or '').strip(),
+                    }
 
-                    try:
-                        qtd_recebida = int(str(raw_qtd_recebida or '0').strip() or '0')
-                    except ValueError:
-                        raise ValueError(f'Quantidade recebida invalida para o produto "{item.produto.nome}".')
-                    try:
-                        qtd_avaria = int(str(raw_qtd_avaria or '0').strip() or '0')
-                    except ValueError:
-                        raise ValueError(f'Quantidade avariada invalida para o produto "{item.produto.nome}".')
-
-                    if qtd_recebida < 0:
-                        raise ValueError(f'Quantidade recebida nao pode ser negativa para o produto "{item.produto.nome}".')
-                    if qtd_avaria < 0:
-                        raise ValueError(f'Quantidade avariada nao pode ser negativa para o produto "{item.produto.nome}".')
-                    if qtd_avaria > qtd_recebida:
-                        raise ValueError(f'Avaria nao pode ser maior que recebimento no produto "{item.produto.nome}".')
-
-                    validade = None
-                    if validade_texto:
-                        try:
-                            validade = datetime.strptime(validade_texto, '%Y-%m-%d').date()
-                        except ValueError:
-                            raise ValueError(f'Data de validade invalida para o produto "{item.produto.nome}".')
-
-                    item.qtd_recebida = qtd_recebida
-                    item.qtd_avaria = qtd_avaria
-                    item.lote = lote
-                    item.validade = validade
-
-                recebimento.status = RecebimentoFornecedor.STATUS_AGUARDANDO_ARMAZENAGEM
-                recebimento.conferido_em = datetime.utcnow()
+                conferir_recebimento(
+                    recebimento,
+                    conferencias_por_item=conferencias_por_item,
+                    actor=_funcionario_logado_estoque(),
+                )
                 db.session.commit()
                 flash('Conferencia salva. Proximo passo: armazenagem (put-away).', 'success')
                 return redirect(url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id))
-            except ValueError as e:
+            except (ValueError, ValidationError) as e:
                 db.session.rollback()
                 flash(str(e), 'error')
             except Exception as e:
@@ -1954,6 +2194,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         funcionario_logado = _funcionario_logado_estoque()
         recebimento = RecebimentoFornecedor.query.options(
             selectinload(RecebimentoFornecedor.fornecedor),
+            selectinload(RecebimentoFornecedor.local_recebimento),
             selectinload(RecebimentoFornecedor.recebedor_funcionario),
             selectinload(RecebimentoFornecedor.itens).selectinload(RecebimentoItem.produto).selectinload(Produto.categoria),
         ).get_or_404(recebimento_id)
@@ -1977,72 +2218,19 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     flash('Nao existem enderecos ativos para armazenagem.', 'error')
                     return redirect(url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id))
 
-                erros = []
                 destinos_por_item = {}
                 for item in recebimento.itens:
                     endereco_destino_id = request.form.get(f'endereco_destino_{item.id}', type=int)
-                    if not endereco_destino_id:
-                        erros.append(f'Informe o endereco destino para "{item.produto.nome}".')
-                        continue
                     endereco_destino = enderecos_por_id.get(endereco_destino_id)
-                    if not endereco_destino:
-                        erros.append(f'Endereco destino invalido/inativo para "{item.produto.nome}".')
-                        continue
-                    if item.qtd_liquida > 0 and (endereco_destino.controle_validade or 'nenhum') == 'fefo' and not item.validade:
-                        erros.append(f'Endereco "{endereco_destino.nome}" exige FEFO. Informe validade para "{item.produto.nome}".')
-                    restricoes = {parte.strip().lower() for parte in (endereco_destino.restricoes or '').split(',') if parte.strip()}
-                    if 'alimentos' in restricoes and _categoria_parece_quimico(item.produto):
-                        erros.append(
-                            f'Produto "{item.produto.nome}" (categoria quimica) nao pode ser armazenado no endereco de alimentos "{endereco_destino.nome}".'
-                        )
                     destinos_por_item[item.id] = endereco_destino
 
-                if erros:
-                    for erro in erros:
-                        flash(erro, 'error')
-                    return redirect(url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id))
-
-                for item in recebimento.itens:
-                    endereco_destino = destinos_por_item[item.id]
-                    item.endereco_destino_id = endereco_destino.id
-                    quantidade_entrada = item.qtd_liquida
-                    if quantidade_entrada <= 0:
-                        continue
-
-                    aplicar_movimentacao_estoque(item.produto, Movimentacao.TIPO_ENTRADA, quantidade_entrada)
-
-                    item.produto.endereco_id = endereco_destino.id
-                    tipo_recebimento_label = recebimento_tipo_labels.get(
-                        recebimento.tipo_recebimento,
-                        recebimento.tipo_recebimento or 'Recebimento'
-                    )
-                    tipo_recebimento_slug = (
-                        recebimento.tipo_recebimento
-                        if recebimento.tipo_recebimento in RecebimentoFornecedor.TIPOS_VALIDOS
-                        else 'compra_revenda'
-                    )
-                    observacoes_mov = f'Recebimento #{recebimento.id} | Tipo: {tipo_recebimento_label}'
-                    if item.lote:
-                        observacoes_mov += f' | Lote: {item.lote}'
-                    if item.validade:
-                        observacoes_mov += f' | Validade: {item.validade.strftime("%d/%m/%Y")}'
-                    if item.qtd_avaria:
-                        observacoes_mov += f' | Avaria: {item.qtd_avaria}'
-
-                    movimentacao = Movimentacao(
-                        produto_id=item.produto_id,
-                        fornecedor_id=recebimento.fornecedor_id,
-                        endereco_destino_id=endereco_destino.id,
-                        tipo=Movimentacao.TIPO_ENTRADA,
-                        quantidade=quantidade_entrada,
-                        info_nota=recebimento.info_nota,
-                        motivo=f'recebimento_{tipo_recebimento_slug}',
-                        observacoes=observacoes_mov,
-                    )
-                    db.session.add(movimentacao)
-
-                recebimento.status = RecebimentoFornecedor.STATUS_CONCLUIDO
-                recebimento.armazenado_em = datetime.utcnow()
+                armazenar_recebimento(
+                    recebimento,
+                    destinos_por_item=destinos_por_item,
+                    actor=funcionario_logado,
+                    categoria_quimico_predicate=_categoria_parece_quimico,
+                    tipo_labels=recebimento_tipo_labels,
+                )
                 db.session.commit()
                 flash('Armazenagem concluida. Estoque atualizado com sucesso.', 'success')
                 return redirect(url_for('listar_recebimentos_fornecedor'))
@@ -2072,7 +2260,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             if recebimento.status == RecebimentoFornecedor.STATUS_CANCELADO:
                 flash('Recebimento ja esta cancelado.', 'info')
                 return redirect(url_for('listar_recebimentos_fornecedor'))
-            recebimento.status = RecebimentoFornecedor.STATUS_CANCELADO
+            transition_recebimento_status(
+                recebimento,
+                RecebimentoStatus.CANCELADO,
+                actor=_funcionario_logado_estoque(),
+                detalhes=require_cancel_reason(
+                    request.form.get('motivo_cancelamento'),
+                    entity_label='recebimento',
+                ),
+            )
             db.session.commit()
             flash('Recebimento cancelado com sucesso.', 'success')
         except Exception as e:
@@ -2463,6 +2659,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if codigo_filial and Estoque.query.filter(db.func.lower(Estoque.codigo_filial) == codigo_filial.lower()).first():
                     flash('Codigo de filial ja utilizado por outro estoque.', 'error')
                     return redirect(url_for('novo_estoque'))
+                validate_stock_master_payload(nome=nome, codigo_filial=codigo_filial, ativo=ativo)
 
                 estoque = Estoque(nome=nome, codigo_filial=codigo_filial, descricao=descricao, ativo=ativo)
                 db.session.add(estoque)
@@ -2500,6 +2697,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if duplicado:
                     flash('Codigo de filial ja utilizado por outro estoque.', 'error')
                     return redirect(url_for('editar_estoque', estoque_id=estoque.id))
+                validate_stock_master_payload(nome=nome, codigo_filial=codigo_filial, ativo=ativo)
 
                 estoque.nome = nome
                 estoque.codigo_filial = codigo_filial
@@ -2931,8 +3129,6 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     flash('Tipo de movimentacao invalido.', 'error')
                     return redirect(url_for('movimentacao_rapida', produto_id=produto_id))
 
-                aplicar_movimentacao_estoque(produto, tipo, quantidade)
-
                 fornecedor = None
                 if tipo == Movimentacao.TIPO_ENTRADA and fornecedor_id:
                     fornecedor = Fornecedor.query.get(fornecedor_id)
@@ -2947,19 +3143,17 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if tipo == Movimentacao.TIPO_ENTRADA and recebimento_fornecedor and not motivo:
                     motivo = 'recebimento_fornecedor'
 
-                movimentacao = Movimentacao(
-                    produto_id=produto_id,
-                    fornecedor_id=(fornecedor.id if fornecedor else None),
+                movimentacao = registrar_movimentacao_manual(
+                    produto=produto,
                     tipo=tipo,
                     quantidade=quantidade,
+                    motivo=motivo,
+                    recebimento_fornecedor=recebimento_fornecedor,
+                    fornecedor=fornecedor,
                     valor_compra=request.form.get('valor_compra', type=float),
                     info_nota=request.form.get('info_nota'),
-                    motivo=motivo,
                     observacoes=request.form.get('observacoes'),
-                    endereco_origem_id=(produto.endereco_id if tipo == Movimentacao.TIPO_SAIDA else None),
-                    endereco_destino_id=(produto.endereco_id if tipo == Movimentacao.TIPO_ENTRADA else None),
                 )
-                db.session.add(movimentacao)
                 db.session.commit()
                 flash('Movimentacao registrada com sucesso!', 'success')
                 return redirect(url_for('listar_movimentacoes'))
@@ -3079,8 +3273,6 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                     flash('Você não possui acesso ao estoque deste produto.', 'danger')
                     return redirect(url_for('nova_movimentacao'))
 
-                aplicar_movimentacao_estoque(produto, tipo, quantidade)
-
                 fornecedor = None
                 if tipo == Movimentacao.TIPO_ENTRADA and fornecedor_id:
                     fornecedor = Fornecedor.query.get(fornecedor_id)
@@ -3095,28 +3287,28 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 if tipo == Movimentacao.TIPO_ENTRADA and recebimento_fornecedor and not motivo:
                     motivo = 'recebimento_fornecedor'
 
-                movimentacao = Movimentacao(
-                    produto_id=produto_id,
-                    fornecedor_id=(fornecedor.id if fornecedor else None),
+                movimentacao = registrar_movimentacao_manual(
+                    produto=produto,
                     tipo=tipo,
                     quantidade=quantidade,
+                    motivo=motivo,
+                    recebimento_fornecedor=recebimento_fornecedor,
+                    fornecedor=fornecedor,
                     valor_compra=request.form.get('valor_compra', type=float),
                     info_nota=request.form.get('info_nota'),
-                    motivo=motivo,
                     observacoes=request.form.get('observacoes'),
-                    endereco_origem_id=(produto.endereco_id if tipo == Movimentacao.TIPO_SAIDA else None),
-                    endereco_destino_id=(produto.endereco_id if tipo == Movimentacao.TIPO_ENTRADA else None),
                 )
-                db.session.add(movimentacao)
                 db.session.commit()
                 flash('Movimentacao registrada com sucesso!', 'success')
                 return redirect(url_for('listar_movimentacoes'))
             except AppError as e:
                 db.session.rollback()
                 flash(str(e), 'error')
+                return redirect(url_for('nova_movimentacao'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao registrar movimentacao: {str(e)}', 'error')
+                return redirect(url_for('nova_movimentacao'))
 
         produtos = _produto_query_permitida(Produto.query.filter_by(ativo=True), funcionario_logado).all()
         return render_template(
@@ -3189,7 +3381,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             try:
                 produto_id = request.form.get('produto_id', type=int)
                 endereco_destino_id = request.form.get('endereco_destino_id', type=int)
-                motivo = (request.form.get('motivo') or '').strip() or 'transferencia_armazenamento'
+                motivo = (request.form.get('motivo') or '').strip()
                 observacoes = (request.form.get('observacoes') or '').strip() or None
 
                 produto = Produto.query.get(produto_id)
@@ -3205,38 +3397,13 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
                 endereco_origem = _carregar_endereco_permitido(produto.endereco_id, funcionario_logado)
                 endereco_destino = _carregar_endereco_permitido(endereco_destino_id, funcionario_logado, apenas_ativo=True)
-                if not endereco_destino:
-                    flash('Endereco de destino invalido.', 'error')
-                    return redirect(url_for('transferir_armazenamento'))
-                if not endereco_origem:
-                    flash('Origem da transferencia nao localizada.', 'error')
-                    return redirect(url_for('transferir_armazenamento'))
-                if endereco_origem and endereco_origem.id == endereco_destino.id:
-                    flash('Origem e destino nao podem ser iguais.', 'error')
-                    return redirect(url_for('transferir_armazenamento'))
-                if (
-                    endereco_origem.estoque_id
-                    and endereco_destino.estoque_id
-                    and endereco_origem.estoque_id == endereco_destino.estoque_id
-                ):
-                    flash(
-                        'Esta tela e exclusiva para transferencias entre lojas/CDs. '
-                        'Para ajustes internos use Entradas e Saidas Internas ou Enderecos Inteligentes.',
-                        'warning'
-                    )
-                    return redirect(url_for('transferir_armazenamento'))
-
-                produto.endereco_id = endereco_destino.id
-                movimentacao = Movimentacao(
-                    produto_id=produto.id,
-                    tipo=Movimentacao.TIPO_TRANSFERENCIA,
-                    quantidade=max(int(produto.quantidade_estoque or 0), 0),
+                movimentacao = transferir_estoque(
+                    produto=produto,
+                    endereco_origem=endereco_origem,
+                    endereco_destino=endereco_destino,
                     motivo=motivo,
                     observacoes=observacoes,
-                    endereco_origem_id=(endereco_origem.id if endereco_origem else None),
-                    endereco_destino_id=endereco_destino.id,
                 )
-                db.session.add(movimentacao)
                 db.session.commit()
                 flash(
                     f'Transferencia concluida: produto "{produto.nome}" movido para "{endereco_destino.nome}".',
@@ -3246,6 +3413,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao transferir armazenamento: {str(e)}', 'error')
+                return redirect(url_for('transferir_armazenamento'))
 
         produtos = _produto_query_permitida(
             Produto.query.options(

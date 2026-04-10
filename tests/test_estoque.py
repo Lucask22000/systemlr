@@ -96,6 +96,8 @@ def test_recebimento_put_away_updates_stock_only_on_armazenagem(authenticated_cl
     estoque_inicial = produto.quantidade_estoque
     criar = authenticated_client.post('/estoque/recebimentos/novo', data={
         'fornecedor_id': fornecedor.id,
+        'tipo_recebimento': RecebimentoFornecedor.TIPO_COMPRA_REVENDA,
+        'local_recebimento_id': endereco.id,
         'info_nota': 'NF 123',
         'produto_id[]': [produto.id],
         'qtd_recebida[]': ['5'],
@@ -126,3 +128,20 @@ def test_recebimento_put_away_updates_stock_only_on_armazenagem(authenticated_cl
 
     db.session.refresh(produto)
     assert produto.quantidade_estoque == estoque_inicial + 4
+
+
+def test_cadastro_dependente_retorna_para_recebimento_com_entidade(authenticated_client, csrf_token):
+    response = authenticated_client.post('/fornecedores/novo', data={
+        'nome': 'Fornecedor Retorno',
+        'documento': '12345678000199',
+        'ativo': 'on',
+        'return_to': '/estoque/recebimentos/novo?context_key=abc123',
+        'origem': 'novo_recebimento_fornecedor',
+        'contexto': 'recebimento_fornecedor',
+        'context_key': 'abc123',
+        'csrf_token': csrf_token,
+    })
+
+    assert response.status_code == 302
+    assert '/estoque/recebimentos/novo?context_key=abc123' in response.headers['Location']
+    assert 'flow_entity=fornecedor' in response.headers['Location']

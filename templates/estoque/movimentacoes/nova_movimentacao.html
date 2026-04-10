@@ -1,12 +1,15 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Nova Movimentacao - SystemLR{% endblock %}
+{% block title %}Nova Entrada ou Saída Interna - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Nova Movimentacao</h1>
+    <div>
+        <h1>Nova Entrada ou Saída Interna</h1>
+        <p class="text-muted mb-0">Este formulário é para ajustes internos do estoque. Recebimentos de fornecedor e transferências entre lojas/CDs ficam em fluxos separados.</p>
+    </div>
     <div class="header-actions">
-        <a href="{{ url_for('novo_recebimento_fornecedor') }}" class="btn btn-secondary">Recebimento do fornecedor</a>
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Voltar</a>
     </div>
 </div>
 
@@ -18,7 +21,7 @@
             <select id="produto_id" name="produto_id" required class="input-select">
                 <option value="">Selecione um produto</option>
                 {% for prod in produtos %}
-                <option value="{{ prod.id }}">{{ prod.código }} - {{ prod.nome }} (Estoque: {{ prod.quantidade_estoque }})</option>
+                <option value="{{ prod.id }}">{{ prod.codigo }} - {{ prod.nome }} (Estoque: {{ prod.quantidade_estoque }})</option>
                 {% endfor %}
             </select>
         </div>
@@ -32,33 +35,6 @@
             </select>
         </div>
 
-        <div class="form-group" id="fornecedor-wrapper" style="display:none;">
-            <label for="fornecedor_id">Fornecedor (opcional no recebimento)</label>
-            <select id="fornecedor_id" name="fornecedor_id" class="input-select">
-                <option value="">Sem fornecedor</option>
-                {% for fornecedor in fornecedores %}
-                <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group" id="recebimento-fornecedor-wrapper" style="display:none;">
-            <label class="checkbox-inline">
-                <input type="checkbox" id="recebimento_fornecedor" name="recebimento_fornecedor">
-                Recebimento de produtos do fornecedor
-            </label>
-        </div>
-
-        <div class="form-group" id="valor-compra-wrapper" style="display:none;">
-            <label for="valor_compra">Valor de compra (R$)</label>
-            <input type="number" step="0.01" id="valor_compra" name="valor_compra" placeholder="0.00" class="input-text">
-        </div>
-
-        <div class="form-group" id="nota-wrapper" style="display:none;">
-            <label for="info_nota">Informações da nota</label>
-            <input type="text" id="info_nota" name="info_nota" placeholder="Número, série, observações..." class="input-text">
-        </div>
-
         <div class="form-group">
             <label for="quantidade">Quantidade *</label>
             <input type="number" id="quantidade" name="quantidade" required min="1" placeholder="0" class="input-text">
@@ -66,12 +42,23 @@
 
         <div class="form-group">
             <label for="motivo">Motivo</label>
-            <input type="text" id="motivo" name="motivo" placeholder="Ex: Venda, Compra, Devolucao, Perda..." class="input-text">
+            <input type="text" id="motivo" name="motivo" list="motivos-movimentacao-interna" placeholder="Ex.: consumo_operacional, perda_validade, acerto_estoque" class="input-text">
+            <datalist id="motivos-movimentacao-interna">
+                {% for motivo in motivos_sugeridos %}
+                <option value="{{ motivo }}"></option>
+                {% endfor %}
+            </datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="info_nota">Documento ou referência interna</label>
+            <input type="text" id="info_nota" name="info_nota" placeholder="OS, checklist, inventário, ajuste manual..." class="input-text">
         </div>
 
         <div class="form-group">
             <label for="observacoes">Observacoes</label>
-            <textarea id="observacoes" name="observacoes" placeholder="Observacoes adicionais..." class="input-textarea" rows="4"></textarea>
+            <textarea id="observacoes" name="observacoes" placeholder="Detalhe a perda, consumo, ajuste ou justificativa da movimentação." class="input-textarea" rows="4"></textarea>
+            <small class="text-muted">Perdas com reflexo financeiro, consumo da operação, energia, água, manutenção e outros gastos devem ser lançados também no Financeiro.</small>
         </div>
 
         <div class="form-actions">
@@ -80,51 +67,5 @@
         </div>
     </form>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const tipo = document.getElementById('tipo');
-    const recebimentoWrapper = document.getElementById('recebimento-fornecedor-wrapper');
-    const recebimentoCheckbox = document.getElementById('recebimento_fornecedor');
-    const fornecedorWrapper = document.getElementById('fornecedor-wrapper');
-    const fornecedorSelect = document.getElementById('fornecedor_id');
-    const valorCompraWrapper = document.getElementById('valor-compra-wrapper');
-    const notaWrapper = document.getElementById('nota-wrapper');
-    const valorCompraInput = document.getElementById('valor_compra');
-    const notaInput = document.getElementById('info_nota');
-    const motivoInput = document.getElementById('motivo');
-
-    function atualizarObrigatoriedadeFornecedor() {
-        const exigirFornecedor = tipo.value === 'entrada' && recebimentoCheckbox.checked;
-        fornecedorSelect.required = exigirFornecedor;
-    }
-
-    function atualizarFornecedor() {
-        const entrada = tipo.value === 'entrada';
-        recebimentoWrapper.style.display = entrada ? 'block' : 'none';
-        fornecedorWrapper.style.display = entrada ? 'block' : 'none';
-        valorCompraWrapper.style.display = entrada ? 'block' : 'none';
-        notaWrapper.style.display = entrada ? 'block' : 'none';
-        if (!entrada) {
-            recebimentoCheckbox.checked = false;
-            fornecedorSelect.value = '';
-            valorCompraInput.value = '';
-            notaInput.value = '';
-        }
-        atualizarObrigatoriedadeFornecedor();
-    }
-
-    tipo.addEventListener('change', atualizarFornecedor);
-    recebimentoCheckbox.addEventListener('change', function () {
-        atualizarObrigatoriedadeFornecedor();
-        if (this.checked && !motivoInput.value.trim()) {
-            motivoInput.value = 'recebimento_fornecedor';
-        }
-    });
-    atualizarFornecedor();
-});
-</script>
 {% endblock %}
 

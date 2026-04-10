@@ -35,6 +35,12 @@ from app.helpers import (
 )
 from app.services.assistente_service import LocalAIAssistant
 from app.services.estoque_service import aplicar_movimentacao_estoque
+from app.services.financeiro_operacional import aplicar_acao_fundo, criar_lancamento_financeiro, criar_solicitacao_fundo
+from app.services.master_data import (
+    normalize_cost_center,
+    validate_employee_payload,
+    validate_payment_options_configuration,
+)
 from app.services.rh_service import sincronizar_garcom_funcionario
 from app.constants import (
     CARGOS_PERMANENTES,
@@ -338,13 +344,14 @@ def _garantir_admin_primeiro_acesso():
 with app.app_context():
     # A estrutura do schema deve ser aplicada via Flask-Migrate/Alembic.
     inspector = inspect(db.engine)
-    colunas_funcoes = {col['name'] for col in inspector.get_columns('funcoes_rh')}
-    if 'permissoes_padrao' not in colunas_funcoes:
-        try:
-            db.session.execute(text('ALTER TABLE funcoes_rh ADD COLUMN permissoes_padrao TEXT'))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+    if inspector.has_table('funcoes_rh'):
+        colunas_funcoes = {col['name'] for col in inspector.get_columns('funcoes_rh')}
+        if 'permissoes_padrao' not in colunas_funcoes:
+            try:
+                db.session.execute(text('ALTER TABLE funcoes_rh ADD COLUMN permissoes_padrao TEXT'))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
     if not inspector.has_table('perfis_acesso'):
         PerfilAcesso.__table__.create(bind=db.engine, checkfirst=True)
     if inspector.has_table('funcionarios'):
@@ -516,6 +523,17 @@ with app.app_context():
                     text(
                         "ALTER TABLE recebimentos_fornecedor "
                         "ADD COLUMN tipo_recebimento VARCHAR(40) DEFAULT 'compra_revenda'"
+                    )
+                )
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+        if 'local_recebimento_id' not in colunas_recebimentos:
+            try:
+                db.session.execute(
+                    text(
+                        "ALTER TABLE recebimentos_fornecedor "
+                        "ADD COLUMN local_recebimento_id INTEGER"
                     )
                 )
                 db.session.commit()
@@ -1641,39 +1659,22 @@ def financeiro_fundos():
         fundo_id = request.form.get('fundo_id', type=int)
 
         if acao == 'solicitar':
-            tipo = (request.form.get('tipo') or '').strip().lower()
-            descricao = (request.form.get('descricao') or '').strip()
-            categoria = (request.form.get('categoria') or '').strip() or None
-            centro_custo = (request.form.get('centro_custo') or '').strip() or None
-            referencia_documento = (request.form.get('referencia_documento') or '').strip() or None
             valor_texto = (request.form.get('valor') or '').strip().replace('.', '').replace(',', '.')
             try:
                 valor = float(valor_texto)
             except Exception:
                 valor = 0.0
 
-            if tipo not in FundoSolicitacao.TIPOS_VALIDOS:
-                flash('Tipo de fundo invalido.', 'danger')
-                return redirect(url_for('financeiro_fundos'))
-            if not descricao:
-                flash('Descricao da solicitacao e obrigatoria.', 'danger')
-                return redirect(url_for('financeiro_fundos'))
-            if valor <= 0:
-                flash('Valor deve ser maior que zero.', 'danger')
-                return redirect(url_for('financeiro_fundos'))
-
-            fundo = FundoSolicitacao(
-                tipo=tipo,
-                descricao=descricao,
-                categoria=categoria,
-                valor=valor,
-                centro_custo=centro_custo,
-                referencia_documento=referencia_documento,
-                status=FundoSolicitacao.STATUS_SOLICITADA,
-                solicitado_por_id=(funcionario.id if funcionario else None),
-            )
             try:
-                db.session.add(fundo)
+                fundo = criar_solicitacao_fundo(
+                    tipo=request.form.get('tipo'),
+                    descricao=request.form.get('descricao'),
+                    categoria=request.form.get('categoria'),
+                    centro_custo=normalize_cost_center(request.form.get('centro_custo')),
+                    referencia_documento=request.form.get('referencia_documento'),
+                    valor=valor,
+                    solicitado_por_id=(funcionario.id if funcionario else None),
+                )
                 db.session.commit()
                 flash(f'Solicitacao de fundo #{fundo.id} registrada.', 'success')
             except Exception as exc:
@@ -1686,62 +1687,52 @@ def financeiro_fundos():
             if funcionario.role not in {'admin', 'gerente'}:
                 flash('Somente admin/gerente pode aprovar solicitacoes.', 'danger')
                 return redirect(url_for('financeiro_fundos'))
-            if fundo.status != FundoSolicitacao.STATUS_SOLICITADA:
-                flash('Apenas solicitacoes pendentes podem ser aprovadas.', 'warning')
-                return redirect(url_for('financeiro_fundos'))
-            fundo.status = FundoSolicitacao.STATUS_APROVADA
-            fundo.aprovado_por_id = funcionario.id if funcionario else None
-            fundo.aprovado_em = datetime.utcnow()
-            db.session.commit()
-            flash(f'Solicitacao #{fundo.id} aprovada.', 'success')
+            try:
+                aplicar_acao_fundo(
+                    fundo,
+                    acao='aprovar',
+                    actor=funcionario,
+                )
+                db.session.commit()
+                flash(f'Solicitacao #{fundo.id} aprovada.', 'success')
+            except AppError as exc:
+                db.session.rollback()
+                flash(str(exc), 'warning')
             return redirect(url_for('financeiro_fundos'))
 
         if acao == 'rejeitar':
             if funcionario.role not in {'admin', 'gerente'}:
                 flash('Somente admin/gerente pode rejeitar solicitacoes.', 'danger')
                 return redirect(url_for('financeiro_fundos'))
-            if fundo.status != FundoSolicitacao.STATUS_SOLICITADA:
-                flash('Apenas solicitacoes pendentes podem ser rejeitadas.', 'warning')
-                return redirect(url_for('financeiro_fundos'))
-            fundo.status = FundoSolicitacao.STATUS_REJEITADA
-            fundo.aprovado_por_id = funcionario.id if funcionario else None
-            fundo.aprovado_em = datetime.utcnow()
-            fundo.motivo_rejeicao = (request.form.get('motivo_rejeicao') or '').strip() or None
-            db.session.commit()
-            flash(f'Solicitacao #{fundo.id} rejeitada.', 'warning')
+            try:
+                aplicar_acao_fundo(
+                    fundo,
+                    acao='rejeitar',
+                    actor=funcionario,
+                    motivo_rejeicao=request.form.get('motivo_rejeicao'),
+                )
+                db.session.commit()
+                flash(f'Solicitacao #{fundo.id} rejeitada.', 'warning')
+            except AppError as exc:
+                db.session.rollback()
+                flash(str(exc), 'warning')
             return redirect(url_for('financeiro_fundos'))
 
         if acao == 'liberar':
             if funcionario.role not in {'admin', 'gerente'}:
                 flash('Somente admin/gerente pode liberar fundos.', 'danger')
                 return redirect(url_for('financeiro_fundos'))
-            if fundo.status not in {FundoSolicitacao.STATUS_APROVADA, FundoSolicitacao.STATUS_SOLICITADA}:
-                flash('Somente solicitacao aprovada/presente pode ser liberada.', 'warning')
-                return redirect(url_for('financeiro_fundos'))
             try:
-                tipo_lanc = LancamentoFinanceiro.TIPO_RECEITA if fundo.tipo == FundoSolicitacao.TIPO_APORTE else LancamentoFinanceiro.TIPO_DESPESA
-                lancamento = LancamentoFinanceiro(
-                    tipo=tipo_lanc,
-                    categoria=fundo.categoria or 'liberacao_fundos',
-                    descricao=f'Liberacao de fundo #{fundo.id} - {fundo.descricao}',
-                    valor=float(fundo.valor or 0.0),
-                    data_competencia=datetime.utcnow().date(),
-                    incluir_contabilidade=True,
-                    referencia_documento=fundo.referencia_documento,
-                    centro_custo=fundo.centro_custo,
-                    criado_por_id=(funcionario.id if funcionario else None),
+                aplicar_acao_fundo(
+                    fundo,
+                    acao='liberar',
+                    actor=funcionario,
                 )
-                db.session.add(lancamento)
-                db.session.flush()
-                fundo.status = FundoSolicitacao.STATUS_LIBERADA
-                if not fundo.aprovado_por_id:
-                    fundo.aprovado_por_id = funcionario.id if funcionario else None
-                    fundo.aprovado_em = datetime.utcnow()
-                fundo.liberado_por_id = funcionario.id if funcionario else None
-                fundo.liberado_em = datetime.utcnow()
-                fundo.lancamento_financeiro_id = lancamento.id
                 db.session.commit()
                 flash(f'Fundo #{fundo.id} liberado e lancamento financeiro gerado.', 'success')
+            except AppError as exc:
+                db.session.rollback()
+                flash(str(exc), 'warning')
             except Exception as exc:
                 db.session.rollback()
                 flash(f'Erro ao liberar fundo: {str(exc)}', 'danger')
@@ -1782,7 +1773,11 @@ def financeiro_lancamentos():
         descricao = (request.form.get('descricao') or '').strip()
         categoria = (request.form.get('categoria') or '').strip() or None
         referencia_documento = (request.form.get('referencia_documento') or '').strip() or None
-        centro_custo = (request.form.get('centro_custo') or '').strip() or None
+        try:
+            centro_custo = normalize_cost_center(request.form.get('centro_custo'))
+        except ValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(url_for('financeiro_lancamentos'))
         data_competencia = _parse_date_iso(request.form.get('data_competencia')) or datetime.utcnow().date()
         incluir_contabilidade = (request.form.get('incluir_contabilidade') == 'on')
 
@@ -1825,21 +1820,21 @@ def financeiro_lancamentos():
             flash('Ajuste deve ter valor diferente de zero.', 'danger')
             return redirect(url_for('financeiro_lancamentos'))
 
-        novo = LancamentoFinanceiro(
-            tipo=tipo,
-            categoria=categoria,
-            descricao=descricao,
-            valor=valor,
-            data_competencia=data_competencia,
-            incluir_contabilidade=incluir_contabilidade,
-            referencia_documento=referencia_documento,
-            centro_custo=centro_custo,
-            produto_id=(produto.id if produto else produto_id),
-            quantidade=quantidade if quantidade and quantidade > 0 else None,
-            criado_por_id=(funcionario.id if funcionario else None),
-        )
         try:
-            db.session.add(novo)
+            criar_lancamento_financeiro(
+                tipo=tipo,
+                categoria=categoria,
+                descricao=descricao,
+                valor=valor,
+                data_competencia=data_competencia,
+                incluir_contabilidade=incluir_contabilidade,
+                referencia_documento=referencia_documento,
+                centro_custo=centro_custo,
+                produto=produto,
+                produto_id=produto_id,
+                quantidade=quantidade,
+                criado_por_id=(funcionario.id if funcionario else None),
+            )
             db.session.commit()
             flash('Lancamento financeiro registrado com sucesso.', 'success')
         except Exception as exc:
@@ -2120,9 +2115,9 @@ def editar_empresa():
             )
             empresa.entrega_veiculos_json = json.dumps(veiculos_linhas, ensure_ascii=False) if veiculos_linhas else None
             empresa.entrega_terceirizadas_json = json.dumps(terceirizadas_linhas, ensure_ascii=False) if terceirizadas_linhas else None
-            empresa.pagamentos_pdv_json = payment_text_to_json(
+            empresa.pagamentos_pdv_json = validate_payment_options_configuration(
                 request.form.get('pagamentos_pdv_config', ''),
-                'pdv'
+                channel='pdv',
             )
             empresa.integracoes_pdv_json = api_integrations_text_to_json(
                 request.form.get('integracoes_pdv_config', '')
@@ -2351,9 +2346,9 @@ def configurar_ecommerce():
             empresa.ecom_footer_texto = request.form.get('ecom_footer_texto', '').strip() or None
             empresa.ecom_footer_contato = request.form.get('ecom_footer_contato', '').strip() or None
             empresa.ecom_footer_creditos = request.form.get('ecom_footer_creditos', '').strip() or None
-            empresa.pagamentos_ecommerce_json = payment_text_to_json(
+            empresa.pagamentos_ecommerce_json = validate_payment_options_configuration(
                 request.form.get('pagamentos_ecommerce_config', ''),
-                'ecommerce'
+                channel='ecommerce',
             )
             empresa.integracoes_ecommerce_json = api_integrations_text_to_json(
                 request.form.get('integracoes_ecommerce_config', '')
@@ -3416,6 +3411,368 @@ AJUDA_TOPICOS = {
     },
 }
 
+AJUDA_ETAPAS = {
+    'primeiros-passos': [
+        {
+            'titulo': 'Preparar responsaveis e acessos',
+            'descricao': 'Organize quem vai configurar o sistema e garanta que os perfis iniciais consigam navegar.',
+            'passos': [
+                'Defina quem sera o responsavel por empresa, acessos e operacao do dia a dia.',
+                'Revise cadastros de funcionarios, cargo e paginas liberadas antes de iniciar a implantacao.',
+                'Confirme quais modulos vao entrar em uso imediato para evitar liberar menu sem necessidade.',
+            ],
+        },
+        {
+            'titulo': 'Montar a base minima de operacao',
+            'descricao': 'Cadastre o essencial para o sistema conseguir simular a rotina real.',
+            'passos': [
+                'Preencha os dados da empresa e escolha o tipo de negocio e o canal principal de operacao.',
+                'Cadastre categorias e produtos de teste com preco, estoque e situacao corretos.',
+                'Revise meios de pagamento, estoques e recursos extras como expedicao ou e-commerce, se estiverem no escopo.',
+            ],
+        },
+        {
+            'titulo': 'Validar a operacao ponta a ponta',
+            'descricao': 'Execute um teste controlado antes de abrir a operacao para a equipe.',
+            'passos': [
+                'Abra um caixa de teste para simular o inicio do turno.',
+                'Registre uma venda no PDV ou um pedido interno com itens reais de exemplo.',
+                'Confira se pedido, caixa e estoque refletiram corretamente antes de liberar vendas reais.',
+            ],
+        },
+    ],
+    'duvidas-acesso': [
+        {
+            'titulo': 'Confirmar cadastro e sessao',
+            'descricao': 'Elimine primeiro os problemas basicos de usuario, senha ou sessao expirada.',
+            'passos': [
+                'Confirme se o colaborador esta ativo e com a matricula correta.',
+                'Valide se a senha usada corresponde ao cadastro atual ou se precisa redefinicao.',
+                'Peca um novo login sempre que houver troca de permissao ou suspeita de sessao desatualizada.',
+            ],
+        },
+        {
+            'titulo': 'Revisar perfil e paginas liberadas',
+            'descricao': 'Cheque se o bloqueio vem do cargo, do perfil ou de liberacao individual de pagina.',
+            'passos': [
+                'Abra Funcionarios e confira cargo, perfil e configuracao de acesso do colaborador.',
+                'Se o controle de acesso por pagina estiver ativo, revise pagina por pagina que o usuario precisa enxergar.',
+                'Confirme tambem se o modulo esta ativo nas configuracoes da empresa.',
+            ],
+        },
+        {
+            'titulo': 'Validar o comportamento na tela',
+            'descricao': 'Depois do ajuste, teste exatamente a tela ou a acao que estava bloqueada.',
+            'passos': [
+                'Compare o menu do usuario com um perfil que ja possua o acesso esperado.',
+                'Peca para o colaborador abrir novamente a tela ou executar a acao que estava indisponivel.',
+                'Se o bloqueio continuar, anote a mensagem exibida para identificar se o caso e permissao, configuracao ou rota.',
+            ],
+        },
+    ],
+    'estoque-operacao': [
+        {
+            'titulo': 'Preparar cadastros base',
+            'descricao': 'Comece pelos registros que sustentam entradas, saidas e reposicao.',
+            'passos': [
+                'Cadastre fornecedores, estoques e categorias antes de criar um volume grande de produtos.',
+                'Defina um padrao de descricao, unidade e organizacao para o catalogo.',
+                'Revise se os estoques necessarios para loja, retaguarda ou CD ja estao criados.',
+            ],
+        },
+        {
+            'titulo': 'Padronizar cadastro e saldo dos produtos',
+            'descricao': 'Deixe cada item pronto para compra, venda e controle interno.',
+            'passos': [
+                'Cadastre produtos com preco de custo, preco de venda e estoque minimo.',
+                'Associe o produto ao estoque correto e, quando aplicavel, ao endereco de armazenagem.',
+                'Confirme se os itens de maior giro ficaram com parametros suficientes para reposicao e picking.',
+            ],
+        },
+        {
+            'titulo': 'Operar entradas, saidas e acompanhamento',
+            'descricao': 'Registre as movimentacoes no fluxo certo e acompanhe os indicadores.',
+            'passos': [
+                'Use recebimentos por fornecedor para entrada formal e movimentacoes para ajustes internos.',
+                'Evite alterar saldo manualmente sem uma movimentacao correspondente.',
+                'Acompanhe relatorios, alertas de ruptura e necessidade de reposicao para corrigir desvios cedo.',
+            ],
+        },
+    ],
+    'vendas-pdv': [
+        {
+            'titulo': 'Abrir o turno de venda',
+            'descricao': 'Garanta que a operacao comece com caixa, regras e parametros corretos.',
+            'passos': [
+                'Abra o caixa com o valor inicial previsto para o turno.',
+                'Confira se os meios de pagamento e itens de venda estao liberados.',
+                'Se houver mesa, comanda ou garcom, valide a configuracao da empresa antes da primeira venda.',
+            ],
+        },
+        {
+            'titulo': 'Registrar e finalizar a venda',
+            'descricao': 'Conduza a venda do lancamento dos itens ate a confirmacao do pagamento.',
+            'passos': [
+                'Lance os itens no PDV e revise quantidades, observacoes e totais.',
+                'Escolha o metodo de pagamento e confirme o valor recebido ou a forma de fechamento.',
+                'Finalize a venda apenas depois de revisar o resumo do pedido.',
+            ],
+        },
+        {
+            'titulo': 'Acompanhar pedidos e encerrar o turno',
+            'descricao': 'Monitore o que ficou em aberto e feche o caixa com seguranca.',
+            'passos': [
+                'Use a tela de Pedidos para acompanhar status, preparo e entregas vinculadas.',
+                'Resolva pagamentos pendentes, pedidos travados ou divergencias antes do fechamento.',
+                'Feche o caixa ao final do expediente e confira historico, sangrias e saldo final.',
+            ],
+        },
+    ],
+    'expedicao-entregas': [
+        {
+            'titulo': 'Preparar a fila de entrega',
+            'descricao': 'Somente pedidos prontos e elegiveis devem entrar no fluxo de saida.',
+            'passos': [
+                'Confirme se a separacao de entrega esta ativa na empresa e se a fila do dia esta organizada.',
+                'Valide se os pedidos ja foram separados e estao aptos para roteirizacao.',
+                'Cheque frota, etiquetas e regras de despacho antes de iniciar a montagem das rotas.',
+            ],
+        },
+        {
+            'titulo': 'Roteirizar e despachar',
+            'descricao': 'Monte a saida com informacoes suficientes para rastrear a operacao.',
+            'passos': [
+                'Finalize separacao e embalagem conforme a fila operacional.',
+                'Preencha rota, ordem, local de saida, motorista e veiculo responsavel.',
+                'Emita etiqueta e nota fiscal quando o pedido estiver elegivel para despacho.',
+            ],
+        },
+        {
+            'titulo': 'Acompanhar entrega e abastecimento',
+            'descricao': 'Feche o ciclo controlando status de entrega e reposicao entre estoques.',
+            'passos': [
+                'Use o Painel de Expedicao para acompanhar saida, andamento e retorno da operacao.',
+                'Registre transferencias entre lojas ou CDs quando houver abastecimento fisico.',
+                'Revise pedidos que nao liberaram, etiquetas falhadas ou pendencias de conferencia ao fim do ciclo.',
+            ],
+        },
+    ],
+    'financeiro-lancamentos': [
+        {
+            'titulo': 'Definir o contexto do registro',
+            'descricao': 'Comece sabendo em qual periodo, natureza e centro o lancamento deve entrar.',
+            'passos': [
+                'Escolha o periodo de analise antes de criar ou revisar registros.',
+                'Confirme natureza, competencia e centro responsavel do movimento.',
+                'Separe o que e despesa operacional, consumo proprio, fundo interno ou item contabil.',
+            ],
+        },
+        {
+            'titulo': 'Registrar e classificar os movimentos',
+            'descricao': 'Padronize os cadastros para a conciliacao funcionar sem retrabalho.',
+            'passos': [
+                'Cadastre lancamentos com os dados monetarios e classificacoes obrigatorias.',
+                'Marque para contabilidade apenas o que precisa entrar no fluxo contabil.',
+                'Registre fundos, liberacoes e solicitacoes conforme a politica da empresa.',
+            ],
+        },
+        {
+            'titulo': 'Conferir e exportar',
+            'descricao': 'Feche o periodo revisando filtros, pendencias e consistencia dos valores.',
+            'passos': [
+                'Revise o periodo, os filtros e a consistencia dos totais antes de exportar.',
+                'Compare os registros com caixas, pedidos e demais origens operacionais quando houver divergencia.',
+                'Exporte os arquivos para conferencia final e envio ao contador.',
+            ],
+        },
+    ],
+    'rh-seguranca': [
+        {
+            'titulo': 'Desenhar cargos e regras de acesso',
+            'descricao': 'Defina a estrutura antes de liberar muitos usuarios no sistema.',
+            'passos': [
+                'Crie cargos e perfis com as paginas que cada grupo realmente precisa acessar.',
+                'Defina uma regra clara para acessos administrativos, gerenciais e operacionais.',
+                'Decida quando o controle de acesso por pagina sera ativado.',
+            ],
+        },
+        {
+            'titulo': 'Vincular a equipe a estrutura correta',
+            'descricao': 'Associe cada colaborador ao cargo, superior e nivel adequados.',
+            'passos': [
+                'Cadastre ou revise colaboradores com cargo, matricula e status ativo.',
+                'Informe superior, departamento, time e nivel organizacional quando fizer parte da rotina.',
+                'Confirme se cada colaborador ficou ligado ao perfil de acesso esperado.',
+            ],
+        },
+        {
+            'titulo': 'Ativar controles e auditar',
+            'descricao': 'Depois de configurar, mantenha a revisao periodica dos acessos.',
+            'passos': [
+                'Ative o controle de acesso somente depois da revisao inicial das permissoes.',
+                'Peca novo login para atualizar a sessao apos mudancas relevantes.',
+                'Use a auditoria para acompanhar alteracoes sensiveis em cadastros, financeiro e operacao.',
+            ],
+        },
+    ],
+    'ecommerce-config': [
+        {
+            'titulo': 'Ativar o canal e separar materiais',
+            'descricao': 'Antes de mexer na vitrine, confirme se a loja pode ser publicada.',
+            'passos': [
+                'Verifique na ativacao da loja se o canal publico esta liberado.',
+                'Separe logos, banners, textos e imagens oficiais antes da configuracao.',
+                'Defina a vigencia esperada para campanhas e promocoes que vao entrar no ar.',
+            ],
+        },
+        {
+            'titulo': 'Configurar a vitrine e as campanhas',
+            'descricao': 'Ajuste identidade visual, banners e comunicacao comercial do site.',
+            'passos': [
+                'Configure tema, paleta, mensagem principal e rodape da loja online.',
+                'Cadastre banners e campanhas com inicio e fim definidos.',
+                'Revise favicon, imagem padrao de produto e demais elementos visuais de apoio.',
+            ],
+        },
+        {
+            'titulo': 'Validar a loja publica',
+            'descricao': 'Sempre revise a experiencia final antes de divulgar o link aos clientes.',
+            'passos': [
+                'Abra a loja em mobile e desktop para validar leitura, contraste e encaixe dos banners.',
+                'Confirme se os produtos aparecem com foto, preco e fallback correto.',
+                'Divulgue o link somente apos a revisao final da vitrine publicada.',
+            ],
+        },
+    ],
+    'servicos-tecnicos': [
+        {
+            'titulo': 'Abrir a demanda correta',
+            'descricao': 'Escolha o tipo de registro certo para a necessidade interna.',
+            'passos': [
+                'Decida se o caso deve nascer como chamado interno ou ordem tecnica.',
+                'Registre descricao objetiva, local, prioridade e contexto do problema.',
+                'Quando houver servico de montagem ou instalacao, confirme se empresa e produto estao habilitados.',
+            ],
+        },
+        {
+            'titulo': 'Encaminhar e executar',
+            'descricao': 'Direcione a demanda para quem vai tratar o caso e acompanhe a execucao.',
+            'passos': [
+                'Classifique responsavel, observacoes e urgencia da solicitacao.',
+                'Converta ou vincule o chamado a uma ordem tecnica quando a atividade exigir execucao operacional.',
+                'Acompanhe status, execucao em campo e retorno do tecnico durante o atendimento.',
+            ],
+        },
+        {
+            'titulo': 'Fechar com rastreabilidade',
+            'descricao': 'O encerramento deve deixar claro o que foi feito e qual foi o resultado.',
+            'passos': [
+                'Registre retorno tecnico, resultado da visita e observacoes finais.',
+                'Valide com a area solicitante se a demanda foi resolvida ou precisa nova tratativa.',
+                'Encerre o chamado ou a ordem somente depois de documentar o motivo do fechamento.',
+            ],
+        },
+    ],
+    'app-mobile': [
+        {
+            'titulo': 'Confirmar o ambiente do aparelho',
+            'descricao': 'Prepare o celular para instalar o atalho sem falhas de compatibilidade.',
+            'passos': [
+                'Abra o sistema em um navegador atualizado no celular.',
+                'Confirme que a pagina carregou normalmente e que o login foi concluido.',
+                'Verifique se o atalho ainda nao foi instalado anteriormente no aparelho.',
+            ],
+        },
+        {
+            'titulo': 'Instalar o atalho na tela inicial',
+            'descricao': 'Siga o caminho correto conforme o sistema operacional do aparelho.',
+            'passos': [
+                'No Android, aceite a sugestao de adicionar o app quando o navegador exibir o aviso.',
+                'No iPhone, use Compartilhar > Adicionar a Tela de Inicio para criar o atalho.',
+                'Aguarde a criacao do icone e confirme se o nome do atalho ficou identificavel para a equipe.',
+            ],
+        },
+        {
+            'titulo': 'Validar o uso diario',
+            'descricao': 'Depois da instalacao, teste o comportamento do atalho como app.',
+            'passos': [
+                'Abra o atalho criado e confira se o sistema abriu em tela cheia.',
+                'Teste o acesso rapido nas telas mais usadas pela operacao.',
+                'Se o aviso de instalacao nao voltar, remova o atalho e repita o processo pelo navegador principal do aparelho.',
+            ],
+        },
+    ],
+}
+
+
+def _textos_unicos_ajuda(itens):
+    vistos = set()
+    resultado = []
+    for item in itens or []:
+        texto = (item or '').strip()
+        chave = texto.lower()
+        if not texto or chave in vistos:
+            continue
+        vistos.add(chave)
+        resultado.append(texto)
+    return resultado
+
+
+def _etapas_topico_ajuda(topico):
+    slug = topico.get('slug')
+    etapas_brutas = list(topico.get('etapas') or AJUDA_ETAPAS.get(slug) or [])
+    etapas = []
+    for indice, item in enumerate(etapas_brutas, start=1):
+        if not isinstance(item, dict):
+            continue
+        titulo = (item.get('titulo') or f'Etapa {indice}').strip() or f'Etapa {indice}'
+        descricao = (item.get('descricao') or '').strip()
+        passos = _textos_unicos_ajuda(item.get('passos') or [])
+        if not descricao and not passos:
+            continue
+        etapas.append({
+            'ordem': indice,
+            'titulo': titulo,
+            'descricao': descricao,
+            'passos': passos,
+        })
+
+    if etapas:
+        return etapas
+
+    checklist = _textos_unicos_ajuda(topico.get('checklist') or [])
+    passos = _textos_unicos_ajuda(topico.get('passos') or [])
+    etapas = []
+    if checklist:
+        etapas.append({
+            'ordem': 1,
+            'titulo': 'Preparacao',
+            'descricao': 'Confirme os pre-requisitos antes de executar o fluxo.',
+            'passos': checklist[:3],
+        })
+    if passos:
+        etapas.append({
+            'ordem': len(etapas) + 1,
+            'titulo': 'Execucao',
+            'descricao': 'Siga a sequencia principal da operacao.',
+            'passos': passos[:4],
+        })
+        if len(passos) > 4:
+            etapas.append({
+                'ordem': len(etapas) + 1,
+                'titulo': 'Conferencia',
+                'descricao': 'Finalize revisando as ultimas validacoes do processo.',
+                'passos': passos[4:],
+            })
+    return etapas
+
+
+def _passos_topico_ajuda(topico):
+    passos = list(topico.get('passos') or [])
+    for etapa in _etapas_topico_ajuda(topico):
+        passos.extend(etapa.get('passos') or [])
+    return _textos_unicos_ajuda(passos)
+
 AJUDA_MENU_TOPICOS = {
     'Dashboard': ('primeiros-passos', 'duvidas-acesso', 'app-mobile'),
     'Gestao': (),
@@ -3468,8 +3825,12 @@ def _enriquecer_topico_ajuda(topico, secao_nome=None, secao_paginas=()):
         fluxo_paginas = [pagina for pagina in secao_paginas if pagina in paginas_topico]
     if not fluxo_paginas:
         fluxo_paginas = paginas_topico
+    etapas = _etapas_topico_ajuda(topico)
     topico_formatado['menu_secao'] = secao_nome
     topico_formatado['fluxo_paginas'] = _rotulo_paginas_fluxo(fluxo_paginas)
+    topico_formatado['etapas'] = etapas
+    topico_formatado['passos_tutorial'] = _passos_topico_ajuda(topico)
+    topico_formatado['etapas_total'] = len(etapas)
     return topico_formatado
 
 
@@ -3623,7 +3984,10 @@ def _resumo_topico_assistente(topico):
         topico.get('resumo'),
         topico.get('objetivo'),
     ]
-    passos = [item for item in (topico.get('passos') or []) if item]
+    etapas = [item.get('titulo') for item in _etapas_topico_ajuda(topico) if item.get('titulo')]
+    if etapas:
+        partes.append('Etapas: ' + ' '.join(etapas[:3]))
+    passos = _passos_topico_ajuda(topico)
     if passos:
         partes.append('Fluxo: ' + ' '.join(passos[:3]))
     duvidas = [item.get('pergunta') for item in (topico.get('duvidas') or []) if item.get('pergunta')]
@@ -3730,8 +4094,11 @@ def _construir_documentos_assistente_local():
                     palavras_chave.add(item['titulo'])
                 if item.get('slug'):
                     palavras_chave.add(item['slug'].replace('-', ' '))
+                for etapa in _etapas_topico_ajuda(item):
+                    if etapa.get('titulo'):
+                        palavras_chave.add(etapa['titulo'])
                 faq_pairs.extend(_faq_pairs(item))
-                passos_relacionados.extend(item.get('passos') or [])
+                passos_relacionados.extend(_passos_topico_ajuda(item))
                 checklist_relacionado.extend(item.get('checklist') or [])
                 alertas_relacionados.extend(item.get('alertas') or [])
                 problemas_relacionados.extend(item.get('problemas') or [])
@@ -3777,9 +4144,14 @@ def _construir_documentos_assistente_local():
             secao_nome,
             'fluxo',
             'passo a passo',
+            'etapas',
+            'tutorial',
             'ajuda',
             'como fazer',
         }
+        for etapa in _etapas_topico_ajuda(topico):
+            if etapa.get('titulo'):
+                palavras_chave.add(etapa['titulo'])
         for pergunta in topico.get('duvidas') or []:
             if pergunta.get('pergunta'):
                 palavras_chave.add(pergunta['pergunta'])
@@ -3796,7 +4168,7 @@ def _construir_documentos_assistente_local():
             'snippet': resumo,
             'keywords': sorted(item for item in palavras_chave if item),
             'faq_pairs': faq_pairs,
-            'steps': _deduplicar_textos(topico.get('passos') or []),
+            'steps': _deduplicar_textos(_passos_topico_ajuda(topico)),
             'checklist': _deduplicar_textos(topico.get('checklist') or []),
             'alerts': _deduplicar_textos(topico.get('alertas') or []),
             'problems': problems,
@@ -3833,7 +4205,7 @@ def _construir_documentos_assistente_local():
                     'resposta',
                 } - {None, ''}),
                 'faq_pairs': [item],
-                'steps': _deduplicar_textos(topico.get('passos') or []),
+                'steps': _deduplicar_textos(_passos_topico_ajuda(topico)),
                 'checklist': _deduplicar_textos(topico.get('checklist') or []),
                 'alerts': _deduplicar_textos(topico.get('alertas') or []),
                 'problems': problems,
@@ -3871,7 +4243,7 @@ def _construir_documentos_assistente_local():
                     'erro',
                 } - {None, ''}),
                 'faq_pairs': faq_pairs,
-                'steps': _deduplicar_textos(topico.get('passos') or []),
+                'steps': _deduplicar_textos(_passos_topico_ajuda(topico)),
                 'checklist': _deduplicar_textos(topico.get('checklist') or []),
                 'alerts': _deduplicar_textos(topico.get('alertas') or []),
                 'problems': [item],
@@ -3940,7 +4312,8 @@ def central_ajuda():
 
     resumo_ajuda = {
         'topicos': len(topicos_ordenados),
-        'passos': sum(len(topico.get('passos') or []) for topico in topicos_ordenados),
+        'passos': sum(len(topico.get('passos_tutorial') or []) for topico in topicos_ordenados),
+        'etapas': sum(len(topico.get('etapas') or []) for topico in topicos_ordenados),
         'fluxogramas': sum(1 for topico in topicos_ordenados if topico.get('fluxograma')),
     }
 
@@ -4131,6 +4504,27 @@ def criar_funcionario():
             flash(erro_vinculos_estoque, 'danger')
             return redirect(url_for('criar_funcionario'))
 
+        try:
+            validate_employee_payload(
+                nome=nome,
+                email=email,
+                role=role,
+                cargo=(cargo or _role_para_cargo_padrao(role)),
+                departamento=departamento,
+                ativo=True,
+                controle_acesso_ativo=bool(perfil_acesso),
+                perfil_acesso_id=(perfil_acesso.id if perfil_acesso else None),
+                restricao_estoques_ativa=bool(vinculos_estoque and vinculos_estoque['restricao_estoques_ativa']),
+                estoque_principal_id=(
+                    vinculos_estoque['estoque_principal'].id
+                    if vinculos_estoque and vinculos_estoque['estoque_principal']
+                    else None
+                ),
+            )
+        except ValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(url_for('criar_funcionario'))
+
         nivel_hierarquico = nivel_organograma or _role_para_nivel_organograma(role)
         if not superior_id and _deve_exigir_superior_hierarquico(role, nivel_hierarquico):
             flash('Informe o responsavel direto do colaborador para manter o organograma organizado.', 'danger')
@@ -4270,6 +4664,27 @@ def editar_funcionario(funcionario_id):
             if not perfil_acesso:
                 flash('Perfil de acesso padrao invalido.', 'danger')
                 return redirect(url_for('editar_funcionario', funcionario_id=funcionario_id))
+
+        try:
+            validate_employee_payload(
+                nome=nome,
+                email=email,
+                role=(role if funcionario_logado.role == 'admin' else funcionario.role),
+                cargo=(cargo or funcionario.cargo or _role_para_cargo_padrao(funcionario.role)),
+                departamento=departamento,
+                ativo=ativo,
+                controle_acesso_ativo=bool(perfil_acesso or funcionario.controle_acesso_ativo),
+                perfil_acesso_id=(perfil_acesso.id if perfil_acesso else funcionario.perfil_acesso_id),
+                restricao_estoques_ativa=bool(vinculos_estoque and vinculos_estoque['restricao_estoques_ativa']),
+                estoque_principal_id=(
+                    vinculos_estoque['estoque_principal'].id
+                    if vinculos_estoque and vinculos_estoque['estoque_principal']
+                    else None
+                ),
+            )
+        except ValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(url_for('editar_funcionario', funcionario_id=funcionario_id))
 
         funcionario.nome = nome
         funcionario.email = email

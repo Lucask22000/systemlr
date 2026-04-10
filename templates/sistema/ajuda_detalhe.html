@@ -35,14 +35,40 @@
             </div>
             {% endif %}
 
+            {% if topico.etapas %}
             <div class="section">
-                <h2>Passo a passo</h2>
+                <h2>Etapas do tutorial</h2>
+                <div class="help-stage-grid">
+                    {% for etapa in topico.etapas %}
+                    <article class="help-stage-card">
+                        <div class="help-stage-label">Etapa {{ etapa.ordem }}</div>
+                        <h3>{{ etapa.titulo }}</h3>
+                        {% if etapa.descricao %}
+                        <p class="text-muted mb-0">{{ etapa.descricao }}</p>
+                        {% endif %}
+                        {% if etapa.passos %}
+                        <ol class="mb-0">
+                            {% for passo in etapa.passos %}
+                            <li>{{ passo }}</li>
+                            {% endfor %}
+                        </ol>
+                        {% endif %}
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if topico.passos_tutorial %}
+            <div class="section">
+                <h2>Passo a passo consolidado</h2>
                 <ol class="mb-0">
-                    {% for passo in topico.passos %}
+                    {% for passo in topico.passos_tutorial %}
                     <li>{{ passo }}</li>
                     {% endfor %}
                 </ol>
             </div>
+            {% endif %}
 
             {% if topico.fluxo_paginas %}
             <div class="section">
@@ -100,6 +126,20 @@
                 <ul class="help-checklist-list">
                     {% for item in topico.checklist %}
                     <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if topico.etapas %}
+            <div class="help-summary-box">
+                <h3>Mapa rapido do guia</h3>
+                <ul class="help-stage-summary-list">
+                    {% for etapa in topico.etapas %}
+                    <li>
+                        <strong>Etapa {{ etapa.ordem }}</strong>
+                        <span>{{ etapa.titulo }}</span>
+                    </li>
                     {% endfor %}
                 </ul>
             </div>

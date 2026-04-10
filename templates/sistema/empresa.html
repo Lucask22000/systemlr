@@ -25,6 +25,36 @@
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label for="favicon">Favicon do Sistema</label>
+                <input type="file" id="favicon" name="favicon" accept=".ico,.png,.svg,.jpg,.jpeg,.webp" class="input-text">
+                <small class="text-muted">Usado na aba do navegador e como favicon padrão do sistema.</small>
+                {% if empresa and empresa.favicon_path %}
+                <div class="product-image-preview">
+                    <img src="{{ url_for('static', filename=empresa.favicon_path) }}" alt="Favicon do sistema" style="max-width:48px;max-height:48px;">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="remover_favicon">
+                        Remover favicon atual
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="app_icon">Icone do App</label>
+                <input type="file" id="app_icon" name="app_icon" accept=".png,.jpg,.jpeg,.webp" class="input-text">
+                <small class="text-muted">Usado no PWA e ao adicionar o sistema na tela inicial. Prefira imagem quadrada.</small>
+                {% if empresa and empresa.app_icon_path %}
+                <div class="product-image-preview">
+                    <img src="{{ url_for('static', filename=empresa.app_icon_path) }}" alt="Icone do app" style="max-width:72px;max-height:72px;">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="remover_app_icon">
+                        Remover icone atual
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label for="razao_social">Razão Social</label>
                 <input type="text" id="razao_social" name="razao_social" value="{{ empresa.razao_social if empresa else '' }}" class="input-text">
             </div>
@@ -111,13 +141,12 @@
 
             <div class="form-row">
                 <label class="checkbox-inline">
-                    <input type="checkbox" name="ecommerce_ativo" {% if not empresa or empresa.ecommerce_ativo != False %}checked{% endif %}>
-                    Ativar vitrine/catálogo online
-                </label>
-                <label class="checkbox-inline">
                     <input type="checkbox" name="aplicar_preset_operacao">
                     Aplicar preset automático para este tipo/canal
                 </label>
+            </div>
+            <div class="form-actions" style="margin-top: 12px;">
+                <a href="{{ url_for('configurar_ativacao_ecommerce') }}" class="btn btn-secondary">Abrir ativação do e-commerce</a>
             </div>
         </div>
 
@@ -166,6 +195,34 @@
 
             <div class="form-actions" style="margin-top: 12px;">
                 <a href="{{ url_for('preview_cardapio_empresa') }}" target="_blank" class="btn btn-secondary">Visualizar cardapio como cliente</a>
+            </div>
+        </div>
+
+        <div id="config-loja-fisica" class="section" style="margin: 16px 0 0;">
+            <h2>Loja fisica, reposicao e etiquetas</h2>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="reposicao_loja_fisica_ativa" {% if not empresa or empresa.reposicao_loja_fisica_ativa != False %}checked{% endif %}>
+                    Ativar rotina de reposicao da loja fisica com estoque de apoio e picking
+                </label>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="emissao_etiqueta_loja_ativa" {% if not empresa or empresa.emissao_etiqueta_loja_ativa != False %}checked{% endif %}>
+                    Ativar emissao de etiquetas de loja/gondola
+                </label>
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="emissao_etiqueta_endereco_ativa" {% if not empresa or empresa.emissao_etiqueta_endereco_ativa != False %}checked{% endif %}>
+                    Ativar emissao de etiquetas de enderecos de estoque
+                </label>
+            </div>
+
+            <div class="form-actions" style="margin-top: 12px;">
+                <a href="{{ url_for('enderecos_inteligentes') }}" class="btn btn-secondary">Abrir reposicao e picking</a>
+                <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="btn btn-secondary" target="_blank">Etiquetas de loja</a>
+                <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="btn btn-secondary" target="_blank">Etiquetas de enderecos</a>
             </div>
         </div>
 
@@ -219,6 +276,17 @@
                 <div class="form-group">
                     <label for="entrega_motorista_padrao">Motorista padrão</label>
                     <input type="text" id="entrega_motorista_padrao" name="entrega_motorista_padrao" value="{{ empresa.entrega_motorista_padrao if empresa else '' }}" class="input-text" placeholder="Ex.: João da Silva">
+                </div>
+                <div class="form-group">
+                    <label for="entrega_horario_fechamento_roteirizacao">Horario de fechamento para roteirizacao</label>
+                    <input
+                        type="time"
+                        id="entrega_horario_fechamento_roteirizacao"
+                        name="entrega_horario_fechamento_roteirizacao"
+                        value="{{ empresa.entrega_horario_fechamento_roteirizacao if empresa and empresa.entrega_horario_fechamento_roteirizacao else '' }}"
+                        class="input-text"
+                        step="60">
+                    <small class="text-muted">Pedidos separados apos esse horario ficam para o proximo ciclo de roteirizacao.</small>
                 </div>
             </div>
 

@@ -6,9 +6,11 @@ from flask import current_app
 from PIL import Image
 
 from app.exceptions import BusinessRuleError, ValidationError
+from app.services.operational_rules import validate_stock_movement_payload, validate_stock_transfer_payload
+from app.services.transaction import atomic_transaction
 from app.utils.helpers import sem_acentos
 from app.utils.validators import normalizar_codigo_barras
-from models import EmpresaConfig, Movimentacao, Produto
+from models import EmpresaConfig, Movimentacao, Produto, db
 
 
 ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.webp', '.gif'}
@@ -36,6 +38,92 @@ def aplicar_movimentacao_estoque(produto, tipo, quantidade, *, tipos_validos=Non
 
     produto.quantidade_estoque -= quantidade
     return None
+
+
+def registrar_movimentacao_manual(
+    *,
+    produto,
+    tipo,
+    quantidade,
+    motivo,
+    recebimento_fornecedor=False,
+    fornecedor=None,
+    valor_compra=None,
+    info_nota=None,
+    observacoes=None,
+    movimentacao_model=Movimentacao,
+    failure_hook=None,
+):
+    with atomic_transaction():
+        motivo_normalizado = validate_stock_movement_payload(
+            tipo=tipo,
+            quantidade=quantidade,
+            motivo=motivo,
+            recebimento_fornecedor=recebimento_fornecedor,
+        )
+        aplicar_movimentacao_estoque(produto, tipo, quantidade, movimentacao_model=movimentacao_model)
+        if failure_hook:
+            failure_hook('after_stock')
+
+        movimentacao = movimentacao_model(
+            produto_id=produto.id,
+            fornecedor_id=(fornecedor.id if fornecedor else None),
+            tipo=tipo,
+            quantidade=quantidade,
+            valor_compra=valor_compra,
+            info_nota=info_nota,
+            motivo=motivo_normalizado,
+            observacoes=observacoes,
+            endereco_origem_id=(produto.endereco_id if tipo == movimentacao_model.TIPO_SAIDA else None),
+            endereco_destino_id=(produto.endereco_id if tipo == movimentacao_model.TIPO_ENTRADA else None),
+        )
+        db.session.add(movimentacao)
+    return movimentacao
+
+
+def transferir_estoque(
+    *,
+    produto,
+    endereco_origem,
+    endereco_destino,
+    motivo,
+    observacoes=None,
+    allow_same_stock=False,
+    movimentacao_model=Movimentacao,
+    failure_hook=None,
+):
+    with atomic_transaction():
+        validate_stock_transfer_payload(
+            produto=produto,
+            endereco_origem=endereco_origem,
+            endereco_destino=endereco_destino,
+            motivo=motivo,
+        )
+        if (
+            not allow_same_stock
+            and endereco_origem.estoque_id
+            and endereco_destino.estoque_id
+            and endereco_origem.estoque_id == endereco_destino.estoque_id
+        ):
+            raise BusinessRuleError(
+                'Esta tela e exclusiva para transferencias entre lojas/CDs. '
+                'Para ajustes internos use Entradas e Saidas Internas ou Enderecos Inteligentes.'
+            )
+
+        produto.endereco_id = endereco_destino.id
+        if failure_hook:
+            failure_hook('after_address')
+        movimentacao = movimentacao_model(
+            produto_id=produto.id,
+            tipo=movimentacao_model.TIPO_TRANSFERENCIA,
+            quantidade=max(int(produto.quantidade_estoque or 0), 0),
+            motivo=(motivo or '').strip(),
+            observacoes=observacoes,
+            endereco_origem_id=(endereco_origem.id if endereco_origem else None),
+            endereco_destino_id=endereco_destino.id,
+        )
+        db.session.add(movimentacao)
+    return movimentacao
 
 
 def _normalizar_codigo_barras(valor):

@@ -19,7 +19,7 @@
                 <h3>Usuario atual</h3>
                 <p class="card-value">{{ funcionario.nome }}</p>
                 <p class="card-meta">{{ funcionario.cargo or funcionario.role|upper }}</p>
-                <p class="card-meta">Matricula: {{ funcionario.matricula or '-' }}</p>
+                <p class="card-meta">Cadastro: {{ funcionario.numero_cadastro or '-' }} | Matricula: {{ funcionario.matricula or '-' }}</p>
             </div>
         </div>
         <div class="card card-secondary">
@@ -78,6 +78,10 @@
                 <div class="form-group">
                     <label for="matricula">Matricula</label>
                     <input type="text" id="matricula" class="form-control" value="{{ funcionario.matricula or '' }}" maxlength="30" readonly disabled>
+                </div>
+                <div class="form-group">
+                    <label for="numero_cadastro">Numero de cadastro</label>
+                    <input type="text" id="numero_cadastro" class="form-control" value="{{ funcionario.numero_cadastro or '' }}" maxlength="12" readonly disabled>
                 </div>
 
                 <div class="form-group">

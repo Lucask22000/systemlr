@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Ativação do E-commerce - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Ativação do E-commerce</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Status da loja online</h2>
+            <p style="margin: 0 0 12px; color: #5b6575;">
+                Controle aqui se a vitrine pública deve permanecer disponível para os clientes.
+            </p>
+            <div class="form-row">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="ecommerce_ativo" {% if not empresa or empresa.ecommerce_ativo != False %}checked{% endif %}>
+                    Deixar o e-commerce ativo para acesso externo
+                </label>
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
+            <h2>Orientação operacional</h2>
+            <div class="form-group">
+                <label>Situação atual</label>
+                <div class="input-text" style="background: #f5f7fb;">
+                    {% if not empresa or empresa.ecommerce_ativo != False %}
+                    Loja online ativa e pronta para divulgação aos clientes.
+                    {% else %}
+                    Loja online desativada. O canal público deve permanecer fora de divulgação.
+                    {% endif %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Próximo passo recomendado</label>
+                <div class="input-text" style="background: #f5f7fb;">
+                    Depois da ativação, revise tema, banners, campanhas, pagamentos e integrações na tela de configuração da loja online.
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-success">Salvar ativação</button>
+            <a href="{{ url_for('configurar_ecommerce') }}" class="btn btn-secondary">Abrir tema e loja online</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

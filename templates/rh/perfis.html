@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Cargos e Perfis de Acesso - SystemLR{% endblock %}
+{% block title %}Perfis de Acesso - SystemLR{% endblock %}
 
 {% block extra_css %}
 <style>
 .setor-permissao-grid,
-.rh-structure-grid,
 .rh-summary-grid {
     display: grid;
     gap: 12px;
@@ -13,11 +12,6 @@
 
 .setor-permissao-grid {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.rh-structure-grid {
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    align-items: start;
 }
 
 .rh-summary-grid {
@@ -93,166 +87,97 @@
 {% block content %}
 <div class="page-header">
     <div>
-        <h1>Cargos e Perfis de Acesso</h1>
-        <p class="text-muted mb-0">Cargo organiza a estrutura da empresa. Perfil de acesso define paginas padrao. Os ajustes finos continuam por colaborador.</p>
+        <h1>Perfis de Acesso</h1>
+        <p class="text-muted mb-0">Perfis servem apenas para predefinir paginas e acelerar o cadastro dos colaboradores. O ajuste fino continua por usuario.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Cargos da Empresa</a>
     </div>
 </div>
 
 <section class="rh-summary-grid">
     <article class="rh-summary-card">
-        <span>Cargos</span>
-        <strong>{{ resumo_cargos.total }}</strong>
-        <small>{{ resumo_cargos.ativas }} ativos no catalogo.</small>
-    </article>
-    <article class="rh-summary-card">
-        <span>Cargos em uso</span>
-        <strong>{{ resumo_cargos.em_uso }}</strong>
-        <small>Colaboradores com cargo preenchido.</small>
-    </article>
-    <article class="rh-summary-card">
-        <span>Perfis de acesso</span>
+        <span>Total cadastrado</span>
         <strong>{{ resumo_perfis.total }}</strong>
-        <small>{{ resumo_perfis.ativos }} ativos para novos cadastros.</small>
+        <small>Perfis disponiveis para montar permissões padrao.</small>
     </article>
     <article class="rh-summary-card">
-        <span>Perfis com paginas</span>
+        <span>Ativos</span>
+        <strong>{{ resumo_perfis.ativos }}</strong>
+        <small>Perfis prontos para uso em novos cadastros.</small>
+    </article>
+    <article class="rh-summary-card">
+        <span>Com paginas</span>
         <strong>{{ resumo_perfis.com_paginas }}</strong>
-        <small>Prontos para aplicar no cadastro da equipe.</small>
+        <small>Perfis que ja possuem um conjunto padrao definido.</small>
+    </article>
+    <article class="rh-summary-card">
+        <span>Sem paginas</span>
+        <strong>{{ resumo_perfis.sem_paginas }}</strong>
+        <small>Perfis que ainda precisam ser configurados.</small>
     </article>
 </section>
 
-<section class="rh-structure-grid">
-    <div class="card">
-        <div class="card-header">Novo cargo da empresa</div>
-        <div class="card-body">
-            <p class="rh-card-intro">Use cargos para representar a funcao organizacional do colaborador no organograma e nos relatórios.</p>
-            <form method="POST" action="{{ url_for('nova_funcao_rh') }}" class="form">
-                {{ csrf_input|safe }}
-                <div class="form-group">
-                    <label for="cargo_nome">Nome do cargo *</label>
-                    <input type="text" id="cargo_nome" name="nome" class="input-text" maxlength="100" required placeholder="Ex: Atendente, Supervisor, Estoquista">
-                </div>
-                <div class="form-group">
-                    <label for="cargo_descricao">Descricao</label>
-                    <input type="text" id="cargo_descricao" name="descricao" class="input-text" maxlength="255" placeholder="Breve resumo da responsabilidade do cargo">
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-inline">
-                        <input type="checkbox" name="ativo" checked>
-                        Cargo ativo
-                    </label>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Salvar cargo</button>
-                </div>
-            </form>
-        </div>
-    </div>
+<div class="card">
+    <div class="card-header">Novo perfil de acesso</div>
+    <div class="card-body">
+        <p class="rh-card-intro">Use perfis para definir um ponto de partida de acesso. Se precisar, depois voce adiciona ou remove paginas individualmente em cada colaborador.</p>
+        <form method="POST" action="{{ url_for('novo_perfil_acesso_rh') }}" class="form">
+            {{ csrf_input|safe }}
+            <div class="form-group">
+                <label for="perfil_nome">Nome do perfil *</label>
+                <input type="text" id="perfil_nome" name="nome" class="input-text" maxlength="100" required placeholder="Ex: Loja Operacional, Lider de Estoque, Financeiro">
+            </div>
+            <div class="form-group">
+                <label for="perfil_descricao">Descricao</label>
+                <input type="text" id="perfil_descricao" name="descricao" class="input-text" maxlength="255" placeholder="Breve resumo do conjunto de acessos">
+            </div>
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="ativo" checked>
+                    Perfil ativo
+                </label>
+            </div>
 
-    <div class="card">
-        <div class="card-header">Novo perfil de acesso</div>
-        <div class="card-body">
-            <p class="rh-card-intro">Perfis de acesso funcionam como predefinicao de paginas. Depois voce ainda pode liberar ou bloquear paginas por colaborador.</p>
-            <form method="POST" action="{{ url_for('novo_perfil_acesso_rh') }}" class="form">
-                {{ csrf_input|safe }}
-                <div class="form-group">
-                    <label for="perfil_nome">Nome do perfil *</label>
-                    <input type="text" id="perfil_nome" name="nome" class="input-text" maxlength="100" required placeholder="Ex: Loja Operacional, Lider de Estoque, Financeiro">
-                </div>
-                <div class="form-group">
-                    <label for="perfil_descricao">Descricao</label>
-                    <input type="text" id="perfil_descricao" name="descricao" class="input-text" maxlength="255" placeholder="Breve resumo do conjunto de acessos">
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-inline">
-                        <input type="checkbox" name="ativo" checked>
-                        Perfil ativo
-                    </label>
-                </div>
-
-                <div class="section">
-                    <h3>Paginas padrao</h3>
-                    <p class="setor-hint">Marque acesso total ao setor ou expanda para escolher paginas especificas.</p>
-                    <div class="setor-permissao-grid">
-                        {% for secao_nome, itens in paginas_ordenadas_menu %}
-                        <article class="setor-permissao-card" data-permission-block>
-                            <header class="setor-permissao-header">
-                                <h4 class="setor-permissao-title">{{ secao_nome }}</h4>
-                                <button type="button" class="btn-small btn-secondary js-toggle-setor">Expandir</button>
-                            </header>
+            <div class="section">
+                <h3>Paginas padrao</h3>
+                <p class="setor-hint">Marque acesso total ao setor ou expanda para escolher paginas especificas.</p>
+                <div class="setor-permissao-grid">
+                    {% for secao_nome, itens in paginas_ordenadas_menu %}
+                    <article class="setor-permissao-card" data-permission-block>
+                        <header class="setor-permissao-header">
+                            <h4 class="setor-permissao-title">{{ secao_nome }}</h4>
+                            <button type="button" class="btn-small btn-secondary js-toggle-setor">Expandir</button>
+                        </header>
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="setores_totais" value="{{ secao_nome }}" class="js-setor-total">
+                            Acesso total ao setor
+                        </label>
+                        <div class="setor-permissao-items is-collapsed">
+                            {% for pagina_key, pagina_label in itens %}
                             <label class="checkbox-inline">
-                                <input type="checkbox" name="setores_totais" value="{{ secao_nome }}" class="js-setor-total">
-                                Acesso total ao setor
+                                <input type="checkbox" name="paginas" value="{{ pagina_key }}" class="js-setor-pagina">
+                                {{ pagina_label }}
                             </label>
-                            <div class="setor-permissao-items is-collapsed">
-                                {% for pagina_key, pagina_label in itens %}
-                                <label class="checkbox-inline">
-                                    <input type="checkbox" name="paginas" value="{{ pagina_key }}" class="js-setor-pagina">
-                                    {{ pagina_label }}
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </article>
-                        {% endfor %}
-                    </div>
+                            {% endfor %}
+                        </div>
+                    </article>
+                    {% endfor %}
                 </div>
+            </div>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Salvar perfil</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
-
-<div class="section">
-    <h2>Cargos cadastrados</h2>
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Descricao</th>
-                    <th>Colaboradores</th>
-                    <th>Status</th>
-                    <th>Criado em</th>
-                    <th>Acoes</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for funcao in funcoes %}
-                <tr>
-                    <td data-label="Nome"><strong>{{ funcao.nome }}</strong></td>
-                    <td data-label="Descricao">{{ funcao.descricao or '-' }}</td>
-                    <td data-label="Colaboradores">{{ funcionarios_por_cargo.get((funcao.nome or '').strip().lower(), 0) }}</td>
-                    <td data-label="Status">
-                        {% if funcao.ativo %}
-                        <span class="badge badge-success">Ativo</span>
-                        {% else %}
-                        <span class="badge badge-danger">Inativo</span>
-                        {% endif %}
-                    </td>
-                    <td data-label="Criado em">{{ funcao.criado_em.strftime('%d/%m/%Y %H:%M') if funcao.criado_em else '-' }}</td>
-                    <td data-label="Acoes" class="actions-cell">
-                        <a href="{{ url_for('editar_funcao_rh', funcao_id=funcao.id) }}" class="btn-small btn-warning">Editar</a>
-                        <form method="POST" action="{{ url_for('deletar_funcao_rh', funcao_id=funcao.id) }}" class="inline-form" data-confirm-message="Excluir cargo {{ funcao.nome }}?">
-                            {{ csrf_input|safe }}
-                            <button type="submit" class="btn-small btn-danger">Excluir</button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="6" class="text-center">Nenhum cargo cadastrado.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar perfil</button>
+            </div>
+        </form>
     </div>
 </div>
 
 <div class="section">
-    <h2>Perfis de acesso cadastrados</h2>
+    <div class="page-header">
+        <h2>Perfis cadastrados</h2>
+        <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Ir para cargos</a>
+    </div>
     <div class="table-responsive">
         <table class="table">
             <thead>

@@ -13,7 +13,11 @@
             <h1>Produtos</h1>
             <p class="text-muted mb-0">Listagem preparada para navegar em volumes maiores com filtros, ordenacao e pagina controlada.</p>
         </div>
-        <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">Novo Produto</a>
+        <div class="header-actions">
+            <a href="{{ url_for('enderecos_inteligentes') }}" class="btn btn-outline-secondary">Reposicao e Picking</a>
+            <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="btn btn-outline-secondary" target="_blank">Etiquetas de Loja</a>
+            <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">Novo Produto</a>
+        </div>
     </div>
 
     <section class="produtos-overview-grid">
@@ -39,7 +43,7 @@
         </article>
     </section>
 
-    <section class="filters-section">
+    <section class="filters-section" data-filter-panel data-filter-title="Filtros dos produtos">
         <div class="produtos-filter-head">
             <div>
                 <h2>Filtros e ordenacao</h2>
@@ -174,7 +178,7 @@
                     <img src="{{ url_for('static', filename=(produto.imagem_path or produto_imagem_padrao_path)) }}" alt="{{ produto.nome }}" class="produto-mobile-thumb" loading="lazy" decoding="async">
                     <div class="produto-mobile-meta">
                         <div class="produto-mobile-name">{{ produto.nome }}</div>
-                        <div class="produto-mobile-code">Cod: {{ produto.código }}</div>
+                        <div class="produto-mobile-code">Cod: {{ produto.codigo }}</div>
                         <div>
                             {% if produto.ativo %}
                             <span class="badge badge-success">Ativo</span>
@@ -248,7 +252,7 @@
                 <tbody>
                     {% for produto in produtos %}
                     <tr class="{% if produto.em_falta %}row-warning{% endif %}">
-                        <td data-label="Codigo">{{ produto.código }}</td>
+                        <td data-label="Codigo">{{ produto.codigo }}</td>
                         <td data-label="Nome">
                             <div class="product-name-cell">
                                 <img src="{{ url_for('static', filename=(produto.imagem_path or produto_imagem_padrao_path)) }}" alt="{{ produto.nome }}" class="product-thumb" loading="lazy" decoding="async">

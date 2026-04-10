@@ -45,6 +45,17 @@
             <strong>{{ resumo_roteirizacao.veiculos_configurados }}</strong>
             <span>Veiculos cadastrados para distribuicao automatica.</span>
         </article>
+        <article class="routing-kpi-card">
+            <small>Fechamento da roteirizacao</small>
+            <strong>{{ corte_roteirizacao.horario if corte_roteirizacao.ativo else 'Livre' }}</strong>
+            <span>
+                {% if corte_roteirizacao.ativo %}
+                {{ resumo_roteirizacao.proximo_ciclo }} pedido(s) aguardando o proximo ciclo.
+                {% else %}
+                Sem horario limite configurado para o ciclo atual.
+                {% endif %}
+            </span>
+        </article>
     </section>
 
     <section class="section">
@@ -202,6 +213,14 @@
                     <span>Pedidos sem rota</span>
                     <strong>{{ resumo_roteirizacao.sem_rota }}</strong>
                 </div>
+                <div class="routing-summary-item">
+                    <span>Fechamento configurado</span>
+                    <strong>{{ corte_roteirizacao.horario if corte_roteirizacao.ativo else 'Nao definido' }}</strong>
+                </div>
+                <div class="routing-summary-item">
+                    <span>Pedidos no proximo ciclo</span>
+                    <strong>{{ resumo_roteirizacao.proximo_ciclo }}</strong>
+                </div>
             </div>
 
             <hr>
@@ -226,11 +245,68 @@
         </aside>
     </div>
 
+    {% if corte_roteirizacao.ativo %}
     <section class="section">
         <div class="routing-section-head">
             <div>
-                <h2>Pedidos prontos para despacho</h2>
-                <p class="text-muted mb-0">Acompanhe a rota, o veiculo e o status de cada entrega.</p>
+                <h2>Controle de fechamento do ciclo</h2>
+                <p class="text-muted mb-0">
+                    Pedidos separados apos {{ corte_roteirizacao.horario }} ficam fora da roteirizacao automatica do ciclo atual.
+                </p>
+            </div>
+            <span class="routing-chip">
+                {% if corte_roteirizacao.janela_aberta %}
+                Ciclo ainda aberto
+                {% else %}
+                Proximo ciclo libera em {{ corte_roteirizacao.proximo_ciclo_em.strftime('%d/%m %H:%M') if corte_roteirizacao.proximo_ciclo_em else '-' }}
+                {% endif %}
+            </span>
+        </div>
+
+        {% if pedidos_proximo_ciclo %}
+        <div class="table-responsive table-scroll-sticky routing-table-wrap">
+            <table class="table routing-table">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Referencia do corte</th>
+                        <th>Rota atual</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos_proximo_ciclo %}
+                    <tr>
+                        <td>#{{ pedido.id }}</td>
+                        <td>
+                            <div>{{ pedido.cliente_nome or '-' }}</div>
+                            <small class="text-muted">{{ pedido.cliente_celular or '-' }}</small>
+                        </td>
+                        <td>
+                            {% set referencia_corte = pedido.separacao_entrega_em or pedido.fechado_em or pedido.criado_em %}
+                            {{ referencia_corte.strftime('%d/%m/%Y %H:%M') if referencia_corte else '-' }}
+                        </td>
+                        <td>{{ pedido.rota_entrega or '-' }}</td>
+                        <td><span class="badge text-bg-secondary">Proximo ciclo</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="routing-empty-state">
+            Nenhum pedido ficou para o proximo ciclo de roteirizacao neste momento.
+        </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="section">
+        <div class="routing-section-head">
+            <div>
+                <h2>Pedidos liberados para despacho</h2>
+                <p class="text-muted mb-0">Acompanhe a rota, o veiculo e o status de cada entrega dentro do ciclo atual.</p>
             </div>
             <span class="routing-chip">{{ resumo_roteirizacao.total_pedidos }} pedidos</span>
         </div>

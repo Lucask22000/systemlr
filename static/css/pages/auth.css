@@ -126,6 +126,73 @@
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.2);
 }
 
+.auth-field input[data-field-kind],
+.auth-field select[data-field-kind] {
+    --field-kind-color: #94a3b8;
+    box-shadow: inset 3px 0 0 var(--field-kind-color);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
+}
+
+.auth-field input[data-field-kind="email"],
+.auth-field select[data-field-kind="email"] {
+    --field-kind-color: #2563eb;
+}
+
+.auth-field input[data-field-kind="cpf"],
+.auth-field input[data-field-kind="cnpj"],
+.auth-field input[data-field-kind="cpf_cnpj"],
+.auth-field select[data-field-kind="cpf"],
+.auth-field select[data-field-kind="cnpj"],
+.auth-field select[data-field-kind="cpf_cnpj"] {
+    --field-kind-color: #7c3aed;
+}
+
+.auth-field input[data-field-kind="cep"],
+.auth-field select[data-field-kind="cep"] {
+    --field-kind-color: #0891b2;
+}
+
+.auth-field input[data-field-kind="phone"],
+.auth-field select[data-field-kind="phone"] {
+    --field-kind-color: #0284c7;
+}
+
+.auth-field input[data-field-kind="currency"],
+.auth-field input[data-field-kind="decimal"],
+.auth-field input[data-field-kind="integer"],
+.auth-field select[data-field-kind="currency"],
+.auth-field select[data-field-kind="decimal"],
+.auth-field select[data-field-kind="integer"] {
+    --field-kind-color: #0f766e;
+}
+
+.auth-field input[data-field-kind="time"],
+.auth-field input[data-field-kind="uf"],
+.auth-field input[data-field-kind="code"],
+.auth-field select[data-field-kind="time"],
+.auth-field select[data-field-kind="uf"],
+.auth-field select[data-field-kind="code"] {
+    --field-kind-color: #f59e0b;
+}
+
+.auth-field input[data-field-kind]:focus,
+.auth-field select[data-field-kind]:focus {
+    box-shadow: inset 3px 0 0 var(--field-kind-color), 0 0 0 0.2rem rgba(13, 110, 253, 0.18);
+}
+
+.auth-field input.field-valid,
+.auth-field select.field-valid {
+    border-color: #0f766e;
+    box-shadow: inset 3px 0 0 #0f766e, 0 0 0 0.16rem rgba(15, 118, 110, 0.12);
+}
+
+.auth-field input.field-invalid,
+.auth-field select.field-invalid {
+    border-color: #dc2626;
+    background: #fff7f7;
+    box-shadow: inset 3px 0 0 #dc2626, 0 0 0 0.16rem rgba(220, 38, 38, 0.1);
+}
+
 .auth-actions {
     display: grid;
     gap: 10px;
@@ -168,6 +235,10 @@
     margin-top: 6px;
     color: #64748b;
     font-size: 0.88rem;
+}
+
+.auth-field .field-feedback {
+    margin-top: 6px;
 }
 
 .auth-help a,

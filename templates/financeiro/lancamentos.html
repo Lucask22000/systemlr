@@ -56,6 +56,7 @@
 
 <section class="section mb-3">
     <h2>Novo lancamento</h2>
+    <p class="text-muted">Use esta tela para perdas, consumo operacional, utilidades da loja, manutencoes e demais gastos que nao fazem parte da venda direta ao cliente.</p>
     <form method="post" class="lancamentos-grid">
         {{ csrf_input|safe }}
         <div>
@@ -74,7 +75,7 @@
         </div>
         <div>
             <label for="categoria">Categoria</label>
-            <input type="text" id="categoria" name="categoria" class="input-text" maxlength="80" placeholder="Ex.: energia, marketing, consumo interno">
+            <input type="text" id="categoria" name="categoria" list="categorias-financeiras" class="input-text" maxlength="80" placeholder="Ex.: energia, perda_avaria, consumo_interno_operacao">
         </div>
         <div>
             <label for="valor">Valor (R$)</label>
@@ -99,7 +100,7 @@
         </div>
         <div>
             <label for="centro_custo">Centro de custo</label>
-            <input type="text" id="centro_custo" name="centro_custo" class="input-text" maxlength="120" placeholder="Ex.: Administrativo">
+            <input type="text" id="centro_custo" name="centro_custo" list="centros-custo" class="input-text" maxlength="120" placeholder="Ex.: Operacao de Loja">
         </div>
         <div style="grid-column: 1 / -1;">
             <label for="descricao">Descricao</label>
@@ -113,9 +114,40 @@
             <button type="submit" class="btn btn-primary">Salvar lancamento</button>
         </div>
     </form>
+    <datalist id="categorias-financeiras">
+        <option value="energia"></option>
+        <option value="agua"></option>
+        <option value="gas"></option>
+        <option value="internet"></option>
+        <option value="telefone"></option>
+        <option value="material_limpeza"></option>
+        <option value="embalagens"></option>
+        <option value="material_escritorio"></option>
+        <option value="epi_uniforme"></option>
+        <option value="manutencao_predial"></option>
+        <option value="manutencao_equipamentos"></option>
+        <option value="frete_operacional"></option>
+        <option value="combustivel"></option>
+        <option value="taxas_bancarias"></option>
+        <option value="perda_avaria"></option>
+        <option value="perda_validade"></option>
+        <option value="quebra_operacional"></option>
+        <option value="consumo_interno_operacao"></option>
+        <option value="degustacao_amostra"></option>
+        <option value="marketing"></option>
+    </datalist>
+    <datalist id="centros-custo">
+        <option value="Operacao de Loja"></option>
+        <option value="Estoque"></option>
+        <option value="Centro de Distribuicao"></option>
+        <option value="Expedicao"></option>
+        <option value="Administrativo"></option>
+        <option value="Financeiro"></option>
+        <option value="Manutencao"></option>
+    </datalist>
 </section>
 
-<section class="section mb-3">
+<section class="section mb-3" data-filter-panel data-filter-title="Filtros financeiros">
     <h2>Filtro e exportacao</h2>
     <form method="get" class="dashboard-filter-form" style="display:flex; gap:8px; flex-wrap:wrap;">
         <input type="date" name="data_inicial" value="{{ data_inicial }}" class="input-text">

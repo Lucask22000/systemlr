@@ -150,6 +150,41 @@
     width: fit-content;
 }
 
+.help-stage-preview {
+    display: grid;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.help-stage-preview strong {
+    color: #0f172a;
+    font-size: 0.86rem;
+}
+
+.help-stage-preview-list {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 6px;
+}
+
+.help-stage-preview-list li {
+    color: #334155;
+}
+
+.help-stage-preview-list span {
+    display: inline-block;
+    margin-right: 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #2563eb;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
 .help-faq-list {
     display: grid;
     gap: 10px;
@@ -220,6 +255,49 @@
     box-shadow: var(--shadow);
 }
 
+.help-stage-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.help-stage-card {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border: 1px solid #dbeafe;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    box-shadow: var(--shadow);
+}
+
+.help-stage-card h3 {
+    margin: 0;
+    font-size: 1.02rem;
+}
+
+.help-stage-card ol {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 8px;
+}
+
+.help-stage-label {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 .help-detail-side {
     display: grid;
     gap: 16px;
@@ -248,6 +326,35 @@
     border: 1px solid #bfdbfe;
     font-size: 0.76rem;
     font-weight: 700;
+}
+
+.help-stage-summary-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+}
+
+.help-stage-summary-list li {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    background: #f8fbff;
+}
+
+.help-stage-summary-list strong {
+    color: #1d4ed8;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.help-stage-summary-list span {
+    color: #0f172a;
+    font-weight: 600;
 }
 
 @media (max-width: 900px) {

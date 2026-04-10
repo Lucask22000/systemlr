@@ -1,10 +1,10 @@
 # Relatorio Completo do Backend (para IA)
 
-- Gerado em: 2026-03-15 16:57:55
+- Gerado em: 2026-03-19 19:57:41
 
 - Projeto base: `C:/Users/lucas/OneDrive/Desktop/conveniencia`
 
-- Total de arquivos Python mapeados: **50**
+- Total de arquivos Python mapeados: **51**
 
 
 ## 1) Escopo
@@ -57,6 +57,7 @@
   - app/services_routes.py
   - app/utils/data.py
   - app/utils/helpers.py
+  - app/utils/operational_flow.py
   - app/utils/payment_config.py
   - app/utils/validators.py
 - routes/
@@ -72,7 +73,7 @@
 
 | Arquivo | Linhas | Tamanho (KB) | Hash (sha256-16) |
 |---|---:|---:|---|
-| `app/__init__.py` | 6149 | 267.4 | `955feb70f03152d7` |
+| `app/__init__.py` | 6527 | 285.5 | `e07e73bea646e788` |
 | `app/api_routes.py` | 144 | 6.5 | `2e56d487549b8395` |
 | `app/auth_routes.py` | 267 | 13.1 | `280931eea8524d96` |
 | `app/blueprints/__init__.py` | 7 | 0.2 | `005d430cecfb715d` |
@@ -97,7 +98,7 @@
 | `app/services/estoque_service.py` | 25 | 0.6 | `8b9e66e8ad786b39` |
 | `app/services/financeiro.py` | 60 | 2.5 | `c15f6f98ae49208f` |
 | `app/services/financeiro_service.py` | 23 | 0.5 | `2a9c27a9eddf234e` |
-| `app/services/local_ai.py` | 917 | 34.2 | `fda4fcf6352b4bbf` |
+| `app/services/local_ai.py` | 1557 | 63.3 | `faf5b831fd9b48dd` |
 | `app/services/pedido.py` | 76 | 2.9 | `9368e253db0e0c4f` |
 | `app/services/pedido_service.py` | 25 | 0.6 | `87f5dd990df7f75c` |
 | `app/services/rh.py` | 55 | 1.5 | `23d4f8058627636a` |
@@ -107,23 +108,24 @@
 | `app/services_routes.py` | 3 | 0.1 | `f1bc70fb6c0b7039` |
 | `app/utils/data.py` | 38 | 1.5 | `134a7ea208ac22eb` |
 | `app/utils/helpers.py` | 18 | 0.4 | `611e5a7b506abf6c` |
+| `app/utils/operational_flow.py` | 103 | 3.1 | `47852305f17a171b` |
 | `app/utils/payment_config.py` | 199 | 7.3 | `0a6ed1e979bd5372` |
 | `app/utils/validators.py` | 106 | 2.6 | `a18b0ba69427ee4d` |
 | `config.py` | 57 | 1.4 | `855d0f2f355a7721` |
 | `fix_admin_access.py` | 48 | 1.4 | `b0fe4cf4de27aa58` |
-| `models.py` | 1149 | 51.3 | `b0a9f464f68ad7b9` |
+| `models.py` | 1151 | 51.5 | `29e26a37554c3d79` |
 | `realtime.py` | 30 | 0.7 | `004d2d4fd0c38805` |
 | `routes/__init__.py` | 2 | 0.0 | `84b29b334b20301c` |
-| `routes/estoque_routes.py` | 3529 | 173.1 | `65d4f14dddab3637` |
+| `routes/estoque_routes.py` | 3763 | 184.8 | `3f6ac15ae81d7d5f` |
 | `routes/public_routes.py` | 869 | 31.8 | `18718b91964bcf89` |
 | `routes/vendas_routes.py` | 2550 | 106.0 | `b1e387b7544b9ffe` |
-| `run.py` | 9 | 0.1 | `0f10c009722e4911` |
+| `run.py` | 24 | 0.6 | `fa867285dce10aa1` |
 | `security.py` | 110 | 3.1 | `82be211f11ec6f6b` |
 | `seed_data.py` | 231 | 10.0 | `360da908ebbf99a8` |
 | `utils/__init__.py` | 2 | 0.0 | `870bc525a3cbeecd` |
 | `utils/endereco_codigo.py` | 502 | 17.8 | `8e379c1cde723bed` |
 
-**Total de linhas backend:** 18418
+**Total de linhas backend:** 19790
 
 
 ## 4) Codigo fonte consolidado
@@ -131,8 +133,8 @@ Observacao: arquivos muito grandes podem ser truncados para manter o relatorio u
 
 
 ### Arquivo: `app/__init__.py`
-- Linhas: 6149
-- Tamanho: 267.4 KB
+- Linhas: 6527
+- Tamanho: 285.5 KB
 - Status: completo
 
 ```python
@@ -3554,6 +3556,368 @@ AJUDA_TOPICOS = {
     },
 }
 
+AJUDA_ETAPAS = {
+    'primeiros-passos': [
+        {
+            'titulo': 'Preparar responsaveis e acessos',
+            'descricao': 'Organize quem vai configurar o sistema e garanta que os perfis iniciais consigam navegar.',
+            'passos': [
+                'Defina quem sera o responsavel por empresa, acessos e operacao do dia a dia.',
+                'Revise cadastros de funcionarios, cargo e paginas liberadas antes de iniciar a implantacao.',
+                'Confirme quais modulos vao entrar em uso imediato para evitar liberar menu sem necessidade.',
+            ],
+        },
+        {
+            'titulo': 'Montar a base minima de operacao',
+            'descricao': 'Cadastre o essencial para o sistema conseguir simular a rotina real.',
+            'passos': [
+                'Preencha os dados da empresa e escolha o tipo de negocio e o canal principal de operacao.',
+                'Cadastre categorias e produtos de teste com preco, estoque e situacao corretos.',
+                'Revise meios de pagamento, estoques e recursos extras como expedicao ou e-commerce, se estiverem no escopo.',
+            ],
+        },
+        {
+            'titulo': 'Validar a operacao ponta a ponta',
+            'descricao': 'Execute um teste controlado antes de abrir a operacao para a equipe.',
+            'passos': [
+                'Abra um caixa de teste para simular o inicio do turno.',
+                'Registre uma venda no PDV ou um pedido interno com itens reais de exemplo.',
+                'Confira se pedido, caixa e estoque refletiram corretamente antes de liberar vendas reais.',
+            ],
+        },
+    ],
+    'duvidas-acesso': [
+        {
+            'titulo': 'Confirmar cadastro e sessao',
+            'descricao': 'Elimine primeiro os problemas basicos de usuario, senha ou sessao expirada.',
+            'passos': [
+                'Confirme se o colaborador esta ativo e com a matricula correta.',
+                'Valide se a senha usada corresponde ao cadastro atual ou se precisa redefinicao.',
+                'Peca um novo login sempre que houver troca de permissao ou suspeita de sessao desatualizada.',
+            ],
+        },
+        {
+            'titulo': 'Revisar perfil e paginas liberadas',
+            'descricao': 'Cheque se o bloqueio vem do cargo, do perfil ou de liberacao individual de pagina.',
+            'passos': [
+                'Abra Funcionarios e confira cargo, perfil e configuracao de acesso do colaborador.',
+                'Se o controle de acesso por pagina estiver ativo, revise pagina por pagina que o usuario precisa enxergar.',
+                'Confirme tambem se o modulo esta ativo nas configuracoes da empresa.',
+            ],
+        },
+        {
+            'titulo': 'Validar o comportamento na tela',
+            'descricao': 'Depois do ajuste, teste exatamente a tela ou a acao que estava bloqueada.',
+            'passos': [
+                'Compare o menu do usuario com um perfil que ja possua o acesso esperado.',
+                'Peca para o colaborador abrir novamente a tela ou executar a acao que estava indisponivel.',
+                'Se o bloqueio continuar, anote a mensagem exibida para identificar se o caso e permissao, configuracao ou rota.',
+            ],
+        },
+    ],
+    'estoque-operacao': [
+        {
+            'titulo': 'Preparar cadastros base',
+            'descricao': 'Comece pelos registros que sustentam entradas, saidas e reposicao.',
+            'passos': [
+                'Cadastre fornecedores, estoques e categorias antes de criar um volume grande de produtos.',
+                'Defina um padrao de descricao, unidade e organizacao para o catalogo.',
+                'Revise se os estoques necessarios para loja, retaguarda ou CD ja estao criados.',
+            ],
+        },
+        {
+            'titulo': 'Padronizar cadastro e saldo dos produtos',
+            'descricao': 'Deixe cada item pronto para compra, venda e controle interno.',
+            'passos': [
+                'Cadastre produtos com preco de custo, preco de venda e estoque minimo.',
+                'Associe o produto ao estoque correto e, quando aplicavel, ao endereco de armazenagem.',
+                'Confirme se os itens de maior giro ficaram com parametros suficientes para reposicao e picking.',
+            ],
+        },
+        {
+            'titulo': 'Operar entradas, saidas e acompanhamento',
+            'descricao': 'Registre as movimentacoes no fluxo certo e acompanhe os indicadores.',
+            'passos': [
+                'Use recebimentos por fornecedor para entrada formal e movimentacoes para ajustes internos.',
+                'Evite alterar saldo manualmente sem uma movimentacao correspondente.',
+                'Acompanhe relatorios, alertas de ruptura e necessidade de reposicao para corrigir desvios cedo.',
+            ],
+        },
+    ],
+    'vendas-pdv': [
+        {
+            'titulo': 'Abrir o turno de venda',
+            'descricao': 'Garanta que a operacao comece com caixa, regras e parametros corretos.',
+            'passos': [
+                'Abra o caixa com o valor inicial previsto para o turno.',
+                'Confira se os meios de pagamento e itens de venda estao liberados.',
+                'Se houver mesa, comanda ou garcom, valide a configuracao da empresa antes da primeira venda.',
+            ],
+        },
+        {
+            'titulo': 'Registrar e finalizar a venda',
+            'descricao': 'Conduza a venda do lancamento dos itens ate a confirmacao do pagamento.',
+            'passos': [
+                'Lance os itens no PDV e revise quantidades, observacoes e totais.',
+                'Escolha o metodo de pagamento e confirme o valor recebido ou a forma de fechamento.',
+                'Finalize a venda apenas depois de revisar o resumo do pedido.',
+            ],
+        },
+        {
+            'titulo': 'Acompanhar pedidos e encerrar o turno',
+            'descricao': 'Monitore o que ficou em aberto e feche o caixa com seguranca.',
+            'passos': [
+                'Use a tela de Pedidos para acompanhar status, preparo e entregas vinculadas.',
+                'Resolva pagamentos pendentes, pedidos travados ou divergencias antes do fechamento.',
+                'Feche o caixa ao final do expediente e confira historico, sangrias e saldo final.',
+            ],
+        },
+    ],
+    'expedicao-entregas': [
+        {
+            'titulo': 'Preparar a fila de entrega',
+            'descricao': 'Somente pedidos prontos e elegiveis devem entrar no fluxo de saida.',
+            'passos': [
+                'Confirme se a separacao de entrega esta ativa na empresa e se a fila do dia esta organizada.',
+                'Valide se os pedidos ja foram separados e estao aptos para roteirizacao.',
+                'Cheque frota, etiquetas e regras de despacho antes de iniciar a montagem das rotas.',
+            ],
+        },
+        {
+            'titulo': 'Roteirizar e despachar',
+            'descricao': 'Monte a saida com informacoes suficientes para rastrear a operacao.',
+            'passos': [
+                'Finalize separacao e embalagem conforme a fila operacional.',
+                'Preencha rota, ordem, local de saida, motorista e veiculo responsavel.',
+                'Emita etiqueta e nota fiscal quando o pedido estiver elegivel para despacho.',
+            ],
+        },
+        {
+            'titulo': 'Acompanhar entrega e abastecimento',
+            'descricao': 'Feche o ciclo controlando status de entrega e reposicao entre estoques.',
+            'passos': [
+                'Use o Painel de Expedicao para acompanhar saida, andamento e retorno da operacao.',
+                'Registre transferencias entre lojas ou CDs quando houver abastecimento fisico.',
+                'Revise pedidos que nao liberaram, etiquetas falhadas ou pendencias de conferencia ao fim do ciclo.',
+            ],
+        },
+    ],
+    'financeiro-lancamentos': [
+        {
+            'titulo': 'Definir o contexto do registro',
+            'descricao': 'Comece sabendo em qual periodo, natureza e centro o lancamento deve entrar.',
+            'passos': [
+                'Escolha o periodo de analise antes de criar ou revisar registros.',
+                'Confirme natureza, competencia e centro responsavel do movimento.',
+                'Separe o que e despesa operacional, consumo proprio, fundo interno ou item contabil.',
+            ],
+        },
+        {
+            'titulo': 'Registrar e classificar os movimentos',
+            'descricao': 'Padronize os cadastros para a conciliacao funcionar sem retrabalho.',
+            'passos': [
+                'Cadastre lancamentos com os dados monetarios e classificacoes obrigatorias.',
+                'Marque para contabilidade apenas o que precisa entrar no fluxo contabil.',
+                'Registre fundos, liberacoes e solicitacoes conforme a politica da empresa.',
+            ],
+        },
+        {
+            'titulo': 'Conferir e exportar',
+            'descricao': 'Feche o periodo revisando filtros, pendencias e consistencia dos valores.',
+            'passos': [
+                'Revise o periodo, os filtros e a consistencia dos totais antes de exportar.',
+                'Compare os registros com caixas, pedidos e demais origens operacionais quando houver divergencia.',
+                'Exporte os arquivos para conferencia final e envio ao contador.',
+            ],
+        },
+    ],
+    'rh-seguranca': [
+        {
+            'titulo': 'Desenhar cargos e regras de acesso',
+            'descricao': 'Defina a estrutura antes de liberar muitos usuarios no sistema.',
+            'passos': [
+                'Crie cargos e perfis com as paginas que cada grupo realmente precisa acessar.',
+                'Defina uma regra clara para acessos administrativos, gerenciais e operacionais.',
+                'Decida quando o controle de acesso por pagina sera ativado.',
+            ],
+        },
+        {
+            'titulo': 'Vincular a equipe a estrutura correta',
+            'descricao': 'Associe cada colaborador ao cargo, superior e nivel adequados.',
+            'passos': [
+                'Cadastre ou revise colaboradores com cargo, matricula e status ativo.',
+                'Informe superior, departamento, time e nivel organizacional quando fizer parte da rotina.',
+                'Confirme se cada colaborador ficou ligado ao perfil de acesso esperado.',
+            ],
+        },
+        {
+            'titulo': 'Ativar controles e auditar',
+            'descricao': 'Depois de configurar, mantenha a revisao periodica dos acessos.',
+            'passos': [
+                'Ative o controle de acesso somente depois da revisao inicial das permissoes.',
+                'Peca novo login para atualizar a sessao apos mudancas relevantes.',
+                'Use a auditoria para acompanhar alteracoes sensiveis em cadastros, financeiro e operacao.',
+            ],
+        },
+    ],
+    'ecommerce-config': [
+        {
+            'titulo': 'Ativar o canal e separar materiais',
+            'descricao': 'Antes de mexer na vitrine, confirme se a loja pode ser publicada.',
+            'passos': [
+                'Verifique na ativacao da loja se o canal publico esta liberado.',
+                'Separe logos, banners, textos e imagens oficiais antes da configuracao.',
+                'Defina a vigencia esperada para campanhas e promocoes que vao entrar no ar.',
+            ],
+        },
+        {
+            'titulo': 'Configurar a vitrine e as campanhas',
+            'descricao': 'Ajuste identidade visual, banners e comunicacao comercial do site.',
+            'passos': [
+                'Configure tema, paleta, mensagem principal e rodape da loja online.',
+                'Cadastre banners e campanhas com inicio e fim definidos.',
+                'Revise favicon, imagem padrao de produto e demais elementos visuais de apoio.',
+            ],
+        },
+        {
+            'titulo': 'Validar a loja publica',
+            'descricao': 'Sempre revise a experiencia final antes de divulgar o link aos clientes.',
+            'passos': [
+                'Abra a loja em mobile e desktop para validar leitura, contraste e encaixe dos banners.',
+                'Confirme se os produtos aparecem com foto, preco e fallback correto.',
+                'Divulgue o link somente apos a revisao final da vitrine publicada.',
+            ],
+        },
+    ],
+    'servicos-tecnicos': [
+        {
+            'titulo': 'Abrir a demanda correta',
+            'descricao': 'Escolha o tipo de registro certo para a necessidade interna.',
+            'passos': [
+                'Decida se o caso deve nascer como chamado interno ou ordem tecnica.',
+                'Registre descricao objetiva, local, prioridade e contexto do problema.',
+                'Quando houver servico de montagem ou instalacao, confirme se empresa e produto estao habilitados.',
+            ],
+        },
+        {
+            'titulo': 'Encaminhar e executar',
+            'descricao': 'Direcione a demanda para quem vai tratar o caso e acompanhe a execucao.',
+            'passos': [
+                'Classifique responsavel, observacoes e urgencia da solicitacao.',
+                'Converta ou vincule o chamado a uma ordem tecnica quando a atividade exigir execucao operacional.',
+                'Acompanhe status, execucao em campo e retorno do tecnico durante o atendimento.',
+            ],
+        },
+        {
+            'titulo': 'Fechar com rastreabilidade',
+            'descricao': 'O encerramento deve deixar claro o que foi feito e qual foi o resultado.',
+            'passos': [
+                'Registre retorno tecnico, resultado da visita e observacoes finais.',
+                'Valide com a area solicitante se a demanda foi resolvida ou precisa nova tratativa.',
+                'Encerre o chamado ou a ordem somente depois de documentar o motivo do fechamento.',
+            ],
+        },
+    ],
+    'app-mobile': [
+        {
+            'titulo': 'Confirmar o ambiente do aparelho',
+            'descricao': 'Prepare o celular para instalar o atalho sem falhas de compatibilidade.',
+            'passos': [
+                'Abra o sistema em um navegador atualizado no celular.',
+                'Confirme que a pagina carregou normalmente e que o login foi concluido.',
+                'Verifique se o atalho ainda nao foi instalado anteriormente no aparelho.',
+            ],
+        },
+        {
+            'titulo': 'Instalar o atalho na tela inicial',
+            'descricao': 'Siga o caminho correto conforme o sistema operacional do aparelho.',
+            'passos': [
+                'No Android, aceite a sugestao de adicionar o app quando o navegador exibir o aviso.',
+                'No iPhone, use Compartilhar > Adicionar a Tela de Inicio para criar o atalho.',
+                'Aguarde a criacao do icone e confirme se o nome do atalho ficou identificavel para a equipe.',
+            ],
+        },
+        {
+            'titulo': 'Validar o uso diario',
+            'descricao': 'Depois da instalacao, teste o comportamento do atalho como app.',
+            'passos': [
+                'Abra o atalho criado e confira se o sistema abriu em tela cheia.',
+                'Teste o acesso rapido nas telas mais usadas pela operacao.',
+                'Se o aviso de instalacao nao voltar, remova o atalho e repita o processo pelo navegador principal do aparelho.',
+            ],
+        },
+    ],
+}
+
+
+def _textos_unicos_ajuda(itens):
+    vistos = set()
+    resultado = []
+    for item in itens or []:
+        texto = (item or '').strip()
+        chave = texto.lower()
+        if not texto or chave in vistos:
+            continue
+        vistos.add(chave)
+        resultado.append(texto)
+    return resultado
+
+
+def _etapas_topico_ajuda(topico):
+    slug = topico.get('slug')
+    etapas_brutas = list(topico.get('etapas') or AJUDA_ETAPAS.get(slug) or [])
+    etapas = []
+    for indice, item in enumerate(etapas_brutas, start=1):
+        if not isinstance(item, dict):
+            continue
+        titulo = (item.get('titulo') or f'Etapa {indice}').strip() or f'Etapa {indice}'
+        descricao = (item.get('descricao') or '').strip()
+        passos = _textos_unicos_ajuda(item.get('passos') or [])
+        if not descricao and not passos:
+            continue
+        etapas.append({
+            'ordem': indice,
+            'titulo': titulo,
+            'descricao': descricao,
+            'passos': passos,
+        })
+
+    if etapas:
+        return etapas
+
+    checklist = _textos_unicos_ajuda(topico.get('checklist') or [])
+    passos = _textos_unicos_ajuda(topico.get('passos') or [])
+    etapas = []
+    if checklist:
+        etapas.append({
+            'ordem': 1,
+            'titulo': 'Preparacao',
+            'descricao': 'Confirme os pre-requisitos antes de executar o fluxo.',
+            'passos': checklist[:3],
+        })
+    if passos:
+        etapas.append({
+            'ordem': len(etapas) + 1,
+            'titulo': 'Execucao',
+            'descricao': 'Siga a sequencia principal da operacao.',
+            'passos': passos[:4],
+        })
+        if len(passos) > 4:
+            etapas.append({
+                'ordem': len(etapas) + 1,
+                'titulo': 'Conferencia',
+                'descricao': 'Finalize revisando as ultimas validacoes do processo.',
+                'passos': passos[4:],
+            })
+    return etapas
+
+
+def _passos_topico_ajuda(topico):
+    passos = list(topico.get('passos') or [])
+    for etapa in _etapas_topico_ajuda(topico):
+        passos.extend(etapa.get('passos') or [])
+    return _textos_unicos_ajuda(passos)
+
 AJUDA_MENU_TOPICOS = {
     'Dashboard': ('primeiros-passos', 'duvidas-acesso', 'app-mobile'),
     'Gestao': (),
@@ -3606,8 +3970,12 @@ def _enriquecer_topico_ajuda(topico, secao_nome=None, secao_paginas=()):
         fluxo_paginas = [pagina for pagina in secao_paginas if pagina in paginas_topico]
     if not fluxo_paginas:
         fluxo_paginas = paginas_topico
+    etapas = _etapas_topico_ajuda(topico)
     topico_formatado['menu_secao'] = secao_nome
     topico_formatado['fluxo_paginas'] = _rotulo_paginas_fluxo(fluxo_paginas)
+    topico_formatado['etapas'] = etapas
+    topico_formatado['passos_tutorial'] = _passos_topico_ajuda(topico)
+    topico_formatado['etapas_total'] = len(etapas)
     return topico_formatado
 
 
@@ -3761,7 +4129,10 @@ def _resumo_topico_assistente(topico):
         topico.get('resumo'),
         topico.get('objetivo'),
     ]
-    passos = [item for item in (topico.get('passos') or []) if item]
+    etapas = [item.get('titulo') for item in _etapas_topico_ajuda(topico) if item.get('titulo')]
+    if etapas:
+        partes.append('Etapas: ' + ' '.join(etapas[:3]))
+    passos = _passos_topico_ajuda(topico)
     if passos:
         partes.append('Fluxo: ' + ' '.join(passos[:3]))
     duvidas = [item.get('pergunta') for item in (topico.get('duvidas') or []) if item.get('pergunta')]
@@ -3868,8 +4239,11 @@ def _construir_documentos_assistente_local():
                     palavras_chave.add(item['titulo'])
                 if item.get('slug'):
                     palavras_chave.add(item['slug'].replace('-', ' '))
+                for etapa in _etapas_topico_ajuda(item):
+                    if etapa.get('titulo'):
+                        palavras_chave.add(etapa['titulo'])
                 faq_pairs.extend(_faq_pairs(item))
-                passos_relacionados.extend(item.get('passos') or [])
+                passos_relacionados.extend(_passos_topico_ajuda(item))
                 checklist_relacionado.extend(item.get('checklist') or [])
                 alertas_relacionados.extend(item.get('alertas') or [])
                 problemas_relacionados.extend(item.get('problemas') or [])
@@ -3915,9 +4289,14 @@ def _construir_documentos_assistente_local():
             secao_nome,
             'fluxo',
             'passo a passo',
+            'etapas',
+            'tutorial',
             'ajuda',
             'como fazer',
         }
+        for etapa in _etapas_topico_ajuda(topico):
+            if etapa.get('titulo'):
+                palavras_chave.add(etapa['titulo'])
         for pergunta in topico.get('duvidas') or []:
             if pergunta.get('pergunta'):
                 palavras_chave.add(pergunta['pergunta'])
@@ -3934,7 +4313,7 @@ def _construir_documentos_assistente_local():
             'snippet': resumo,
             'keywords': sorted(item for item in palavras_chave if item),
             'faq_pairs': faq_pairs,
-            'steps': _deduplicar_textos(topico.get('passos') or []),
+            'steps': _deduplicar_textos(_passos_topico_ajuda(topico)),
             'checklist': _deduplicar_textos(topico.get('checklist') or []),
             'alerts': _deduplicar_textos(topico.get('alertas') or []),
             'problems': problems,
@@ -3971,7 +4350,7 @@ def _construir_documentos_assistente_local():
                     'resposta',
                 } - {None, ''}),
                 'faq_pairs': [item],
-                'steps': _deduplicar_textos(topico.get('passos') or []),
+                'steps': _deduplicar_textos(_passos_topico_ajuda(topico)),
                 'checklist': _deduplicar_textos(topico.get('checklist') or []),
                 'alerts': _deduplicar_textos(topico.get('alertas') or []),
                 'problems': problems,
@@ -4009,7 +4388,7 @@ def _construir_documentos_assistente_local():
                     'erro',
                 } - {None, ''}),
                 'faq_pairs': faq_pairs,
-                'steps': _deduplicar_textos(topico.get('passos') or []),
+                'steps': _deduplicar_textos(_passos_topico_ajuda(topico)),
                 'checklist': _deduplicar_textos(topico.get('checklist') or []),
                 'alerts': _deduplicar_textos(topico.get('alertas') or []),
                 'problems': [item],
@@ -4078,7 +4457,8 @@ def central_ajuda():
 
     resumo_ajuda = {
         'topicos': len(topicos_ordenados),
-        'passos': sum(len(topico.get('passos') or []) for topico in topicos_ordenados),
+        'passos': sum(len(topico.get('passos_tutorial') or []) for topico in topicos_ordenados),
+        'etapas': sum(len(topico.get('etapas') or []) for topico in topicos_ordenados),
         'fluxogramas': sum(1 for topico in topicos_ordenados if topico.get('fluxograma')),
     }
 
@@ -8105,8 +8485,8 @@ __all__ = [
 
 
 ### Arquivo: `app/services/local_ai.py`
-- Linhas: 917
-- Tamanho: 34.2 KB
+- Linhas: 1557
+- Tamanho: 63.3 KB
 - Status: completo
 
 ```python
@@ -8128,6 +8508,155 @@ LOCAL_AI_PACKAGES = (
     'huggingface-hub==0.26.2',
     'safetensors==0.4.5',
 )
+LOCAL_SEMANTIC_VECTOR_SIZE = 384
+
+TOPIC_PROFILES = {
+    'estoque': {
+        'overview': 'Estoque normalmente envolve cadastro de produtos, entradas e saidas, saldo disponivel, estoque minimo e relatorios de acompanhamento.',
+        'starter_steps': [
+            'Cadastre categorias, produtos e dados basicos do item.',
+            'Registre recebimentos, transferencias e demais movimentacoes de entrada e saida.',
+            'Acompanhe saldo, estoque minimo, enderecamento e inconsistencias.',
+            'Use relatorios para conferir giro, ruptura e necessidade de reposicao.',
+        ],
+        'refinements': ['cadastro de produtos', 'recebimentos', 'movimentacoes', 'enderecamento', 'relatorios'],
+        'aliases': ('estoque', 'produto', 'produtos', 'recebimento', 'recebimentos', 'movimentacao', 'movimentacoes', 'enderecamento'),
+    },
+    'pedidos': {
+        'overview': 'Pedidos cobrem abertura, inclusao de itens, conferencia de totais, transicoes de status e fechamento com caixa ou entrega.',
+        'starter_steps': [
+            'Abra ou localize o pedido correto.',
+            'Inclua itens, quantidades e observacoes necessarias.',
+            'Confira status, totais, pagamento e liberacoes operacionais.',
+            'Finalize o pedido e acompanhe a proxima etapa da operacao.',
+        ],
+        'refinements': ['criacao', 'itens', 'status', 'pagamento', 'finalizacao'],
+        'aliases': ('pedido', 'pedidos', 'venda', 'vendas', 'roteirizacao', 'entrega'),
+    },
+    'caixa': {
+        'overview': 'Caixa envolve abertura, recebimentos, sangrias, conferencias e fechamento do turno com rastreabilidade financeira.',
+        'starter_steps': [
+            'Abra o caixa do turno com o valor inicial correto.',
+            'Registre entradas, saidas e recebimentos vinculados as vendas.',
+            'Acompanhe divergencias, sangrias e saldo parcial durante o expediente.',
+            'Feche o caixa com conferencia final e justificativa quando necessario.',
+        ],
+        'refinements': ['abertura', 'movimentacoes', 'recebimentos', 'sangria', 'fechamento'],
+        'aliases': ('caixa', 'caixas', 'sangria', 'fechamento de caixa', 'abertura de caixa'),
+    },
+    'financeiro': {
+        'overview': 'Financeiro concentra lancamentos, competencias, contas a pagar e receber, conciliacao e indicadores do negocio.',
+        'starter_steps': [
+            'Cadastre ou importe os lancamentos com data e tipo corretos.',
+            'Classifique receitas, despesas e formas de pagamento.',
+            'Acompanhe vencimentos, competencias e status de quitacao.',
+            'Use os indicadores para analisar fluxo de caixa e resultado.',
+        ],
+        'refinements': ['lancamentos', 'competencia', 'contas', 'conciliacao', 'indicadores'],
+        'aliases': ('financeiro', 'lancamento', 'lancamentos', 'contas', 'receitas', 'despesas'),
+    },
+    'rh': {
+        'overview': 'RH reune cadastro de funcionarios, perfis de acesso, funcoes, organograma e indicadores de equipe.',
+        'starter_steps': [
+            'Cadastre o funcionario com dados pessoais e matricula.',
+            'Defina funcao, perfil de acesso e vinculos necessarios.',
+            'Revise permissoes, lotacao e estrutura organizacional.',
+            'Acompanhe indicadores e historico administrativo da equipe.',
+        ],
+        'refinements': ['funcionarios', 'permissoes', 'funcoes', 'organograma', 'indicadores'],
+        'aliases': ('rh', 'recursos humanos', 'funcionario', 'funcionarios', 'acessos', 'permissoes', 'organograma'),
+    },
+    'expedicao': {
+        'overview': 'Expedicao cobre separacao, roteirizacao, conferencias de saida, frota e acompanhamento da entrega.',
+        'starter_steps': [
+            'Organize os pedidos liberados para expedicao.',
+            'Monte a carga ou rota conforme prioridade operacional.',
+            'Confirme itens, volumes e responsaveis pela entrega.',
+            'Acompanhe a saida e o retorno da operacao.',
+        ],
+        'refinements': ['roteirizacao', 'separacao', 'conferencia', 'frota', 'entrega'],
+        'aliases': ('expedicao', 'frota', 'rota', 'roteirizacao', 'entrega'),
+    },
+    'ecommerce': {
+        'overview': 'E-commerce envolve vitrine, configuracoes da loja, pedidos online, checkout e acompanhamento do fluxo digital.',
+        'starter_steps': [
+            'Revise configuracoes da loja e publicacao de produtos.',
+            'Garanta preco, estoque e disponibilidade corretos no canal online.',
+            'Acompanhe pedidos, checkout e confirmacoes de pagamento.',
+            'Monitore a experiencia do cliente e integracoes do canal.',
+        ],
+        'refinements': ['configuracao', 'produtos', 'checkout', 'pedidos online', 'integracoes'],
+        'aliases': ('ecommerce', 'e-commerce', 'loja online', 'checkout', 'site'),
+    },
+}
+
+# Intent labels
+INTENT_LABELS = {
+    'greeting',
+    'broad_exploration',
+    'operational_how_to',
+    'incident_problem',
+    'navigation_request',
+    'access_permission',
+    'fallback_unknown',
+}
+
+# Score thresholds
+MIN_GUIDE_SCORE = 0.24
+MIN_COHERENCE_SCORE = 0.12
+
+# Domain/action keyword hints (normalized ascii, lower)
+DOMAIN_KEYWORDS = {
+    'recebimento': {'receber', 'recebimento', 'fornecedor', 'entrada', 'mercadoria', 'nota', 'nf', 'doca', 'armazenar'},
+    'estoque': {'estoque', 'produto', 'produtos', 'saldo', 'picking', 'enderecamento', 'ruptura'},
+    'pedidos': {'pedido', 'pedidos', 'venda', 'pdv', 'caixa', 'mesa', 'garcom'},
+    'expedicao': {'expedicao', 'roteirizacao', 'entrega', 'entregas', 'separacao', 'roteiro', 'etiqueta'},
+    'financeiro': {'financeiro', 'lancamento', 'lancamentos', 'contas', 'competencia', 'fundo'},
+    'rh': {'rh', 'acesso', 'permissao', 'perfil', 'cargo', 'organograma'},
+    'ecommerce': {'ecommerce', 'loja', 'vitrine', 'banner', 'campanha'},
+    'servicos': {'chamado', 'ordem', 'servico', 'os', 'tecnico', 'manutencao'},
+}
+
+ACTION_KEYWORDS = {
+    'operational_how_to': {'receber', 'conferir', 'lancar', 'registrar', 'abrir', 'fechar', 'finalizar', 'transferir'},
+    'incident_problem': {'nao consigo', 'erro', 'falha', 'travou', 'sumiu', 'negativo', 'nao aparece', 'bloqueado'},
+    'navigation_request': {'onde', 'menu', 'fica', 'como abrir', 'qual tela', 'em qual menu'},
+    'access_permission': {'sem acesso', 'sem permissao', 'bloqueado', 'nao tenho acesso', 'perfil'},
+}
+
+
+class LightweightSemanticEncoder:
+    def __init__(self, dimension=LOCAL_SEMANTIC_VECTOR_SIZE):
+        self.dimension = max(int(dimension or LOCAL_SEMANTIC_VECTOR_SIZE), 128)
+
+    def encode(self, texts, normalize_embeddings=True, convert_to_numpy=False, show_progress_bar=False):
+        vectors = [self._encode_text(text, normalize_embeddings=normalize_embeddings) for text in (texts or [])]
+        return vectors
+
+    def _encode_text(self, text, *, normalize_embeddings=True):
+        normalized = unicodedata.normalize('NFKD', str(text or ''))
+        normalized = normalized.encode('ascii', 'ignore').decode('ascii').lower()
+        tokens = re.findall(r'[a-z0-9]{2,}', normalized)
+        vector = [0.0] * self.dimension
+        features = list(tokens)
+        compact = normalized.replace(' ', '')
+        for size in (3, 4):
+            if len(compact) < size:
+                continue
+            for index in range(len(compact) - size + 1):
+                features.append(compact[index:index + size])
+        for index in range(len(tokens) - 1):
+            features.append(f'{tokens[index]}_{tokens[index + 1]}')
+        for feature in features:
+            bucket = hash(feature) % self.dimension
+            sign = -1.0 if (hash(f'sign:{feature}') % 2) else 1.0
+            weight = 1.3 if '_' in feature else 1.0
+            vector[bucket] += sign * weight
+        if normalize_embeddings:
+            norm = math.sqrt(sum(value * value for value in vector))
+            if norm:
+                vector = [value / norm for value in vector]
+        return vector
 
 
 class LocalAIAssistant:
@@ -8167,6 +8696,7 @@ class LocalAIAssistant:
         self._query_vector_cache = {}
         self._avg_doc_length = 0.0
         self._idf_map = {}
+        self._dependency_install_attempted = False
 
     def start_background_prepare(self):
         if not self.enabled:
@@ -8186,16 +8716,7 @@ class LocalAIAssistant:
     def status(self):
         self._ensure_documents()
         if self._status.get('state') == 'idle':
-            if self.auto_install:
-                self._ensure_prepare_started()
-            else:
-                self._set_status(
-                    ready=True,
-                    state='ready',
-                    mode='lexical',
-                    message='Marcia esta em modo local basico. O modelo semantico automatico esta desabilitado.',
-                    last_error=None,
-                )
+            self._ensure_prepare_started()
         payload = dict(self._status)
         payload['document_count'] = len(self._documents)
         return payload
@@ -8224,6 +8745,9 @@ class LocalAIAssistant:
         self._ensure_documents()
         self._ensure_prepare_started()
         paginas_permitidas = set(paginas_permitidas or [])
+        intent = self._detect_intent(pergunta)
+        entities, actions = self._extract_entities_actions(pergunta)
+        domain = self._infer_domain(entities, actions, pagina_atual)
 
         saudacao = self._match_greeting_reply(pergunta)
         if saudacao:
@@ -8255,33 +8779,79 @@ class LocalAIAssistant:
         ranking = self._rank_documents(
             question_context['query_text'],
             documentos,
+            intent=intent,
             pagina_atual=pagina_atual,
             feedback_items=feedback_items,
+            domain=domain,
+            actions=actions,
         )
         melhores = [item for item in ranking[:3] if item['score'] > 0]
         if not melhores:
             melhores = ranking[:2]
 
-        resposta = self._compose_answer(
-            pergunta,
-            melhores,
-            pagina_atual=pagina_atual,
-            tela_atual=tela_atual,
-        )
-        acoes = self._build_actions(
-            melhores,
-            paginas_permitidas=paginas_permitidas,
-            pagina_atual=pagina_atual,
+        clarification = self._build_clarifying_answer(pergunta, ranking, intent)
+        resposta = clarification or ''
+
+        selected_doc = melhores[0]['doc'] if melhores else None
+
+        if not resposta:
+            resposta = self._generate_structured_response(
+                intent=intent,
+                question=pergunta,
+                domain=domain,
+                actions=actions,
+                doc=selected_doc,
+                pagina_atual=pagina_atual,
+                tela_atual=tela_atual,
+            )
+
+        guia_score = melhores[0]['score'] if melhores else 0.0
+        coherence_score = self._validate_coherence(
+            user_message=pergunta,
+            domain=domain,
+            actions=actions,
+            doc=selected_doc,
+            draft=resposta,
         )
 
+        if guia_score < MIN_GUIDE_SCORE or coherence_score < MIN_COHERENCE_SCORE:
+            if len(melhores) > 1:
+                selected_doc = melhores[1]['doc']
+                resposta = self._generate_structured_response(
+                    intent=intent,
+                    question=pergunta,
+                    domain=domain,
+                    actions=actions,
+                    doc=selected_doc,
+                    pagina_atual=pagina_atual,
+                    tela_atual=tela_atual,
+                )
+                coherence_score = self._validate_coherence(
+                    user_message=pergunta,
+                    domain=domain,
+                    actions=actions,
+                    doc=selected_doc,
+                    draft=resposta,
+                )
+
+        if coherence_score < MIN_COHERENCE_SCORE:
+            resposta = self._fallback_refinement(intent, domain, actions)
+
+        acoes = []
+        if selected_doc and intent not in {'broad_exploration', 'general_help'}:
+            acoes = self._build_actions(
+                [{'doc': selected_doc, 'score': guia_score}],
+                paginas_permitidas=paginas_permitidas,
+                pagina_atual=pagina_atual,
+            )
+
         fontes = []
-        for item in melhores:
-            doc = item['doc']
+        if selected_doc:
             fontes.append({
-                'title': doc.get('title'),
-                'url': doc.get('url'),
-                'kind': doc.get('kind'),
-                'section': doc.get('section'),
+                'title': selected_doc.get('title'),
+                'url': selected_doc.get('url'),
+                'kind': selected_doc.get('kind'),
+                'section': selected_doc.get('section'),
             })
 
         return {
@@ -8313,22 +8883,12 @@ class LocalAIAssistant:
         )
         try:
             self._ensure_documents(force=True)
-            if not self.auto_install:
-                self._set_status(
-                    ready=True,
-                    state='ready',
-                    mode='lexical',
-                    message='Marcia esta em modo local basico. O modelo semantico automatico esta desabilitado.',
-                    last_error=None,
-                )
-                return
-
             if self._try_prepare_semantic_model():
                 self._set_status(
                     ready=True,
                     state='ready',
                     mode='semantic',
-                    message='Marcia esta pronta para uso offline.',
+                    message='Marcia esta pronta para uso offline com busca semantica local.',
                     last_error=None,
                 )
                 return
@@ -8352,38 +8912,43 @@ class LocalAIAssistant:
 
     def _try_prepare_semantic_model(self):
         modules = self._ensure_runtime_dependencies()
-        if not modules:
-            return False
-
-        SentenceTransformer = modules['sentence_transformer']
-        self.instance_dir.mkdir(parents=True, exist_ok=True)
-
         encoder = None
         errors = []
-        try:
-            if self.model_dir.exists():
-                encoder = SentenceTransformer(str(self.model_dir), device='cpu')
-        except Exception as exc:
-            errors.append(str(exc))
-            encoder = None
 
-        if encoder is None:
-            for candidate in self.model_candidates:
-                try:
-                    encoder = SentenceTransformer(candidate, device='cpu')
-                    self.model_id = candidate
+        if modules:
+            SentenceTransformer = modules['sentence_transformer']
+            self.instance_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                if self.model_dir.exists():
+                    encoder = SentenceTransformer(str(self.model_dir), device='cpu')
+            except Exception as exc:
+                errors.append(str(exc))
+                encoder = None
+
+            if encoder is None:
+                for candidate in self.model_candidates:
                     try:
-                        encoder.save(str(self.model_dir))
-                    except Exception:
-                        pass
-                    break
-                except Exception as exc:
-                    errors.append(f'{candidate}: {exc}')
+                        encoder = SentenceTransformer(candidate, device='cpu')
+                        self.model_id = candidate
+                        try:
+                            encoder.save(str(self.model_dir))
+                        except Exception:
+                            pass
+                        break
+                    except Exception as exc:
+                        errors.append(f'{candidate}: {exc}')
 
         if encoder is None:
-            self._status['last_error'] = '; '.join(errors[-3:]) if errors else 'modelo indisponivel'
-            self.app.logger.warning('Nao foi possivel carregar o modelo semantico local: %s', self._status['last_error'])
-            return False
+            encoder = LightweightSemanticEncoder()
+            self.model_id = 'local-lightweight-semantic-v1'
+            if errors:
+                self._status['last_error'] = '; '.join(errors[-3:])
+                self.app.logger.warning(
+                    'Usando encoder semantico local leve apos falha no sentence-transformers: %s',
+                    self._status['last_error'],
+                )
+            else:
+                self._status['last_error'] = None
 
         textos = [item['search_text'] for item in self._documents]
         try:
@@ -8411,6 +8976,16 @@ class LocalAIAssistant:
         except Exception:
             if not self.auto_install:
                 return None
+
+        if sys.version_info >= (3, 13):
+            self._status['last_error'] = (
+                f'Python {sys.version_info.major}.{sys.version_info.minor} usando encoder semantico local leve.'
+            )
+            return None
+
+        if self._dependency_install_attempted:
+            return None
+        self._dependency_install_attempted = True
 
         try:
             subprocess.check_call(
@@ -8460,6 +9035,7 @@ class LocalAIAssistant:
             doc['doc_length'] = len(doc['token_list'])
             doc['title_tokens'] = self._tokenize(doc.get('title') or '')
             doc['keyword_tokens'] = self._tokenize(' '.join(doc.get('keywords') or ()))
+            doc['domain'] = self._infer_doc_domain(doc)
             preparados.append(doc)
         self._documents = preparados
         total_docs = len(preparados) or 1
@@ -8476,7 +9052,7 @@ class LocalAIAssistant:
         self._status['document_count'] = len(preparados)
         self._query_vector_cache = {}
 
-    def _rank_documents(self, question, documents, *, pagina_atual=None, feedback_items=None):
+    def _rank_documents(self, question, documents, *, intent='general', pagina_atual=None, feedback_items=None, domain=None, actions=None):
         query_text = question.strip()
         query_tokens = self._tokenize(query_text)
         query_text_normalized = self._normalize_text(query_text)
@@ -8506,11 +9082,15 @@ class LocalAIAssistant:
             )
 
             page_boost = self._page_context_boost(doc, query_text, pagina_atual=pagina_atual)
-            score = (lexical * 0.46) + (bm25 * 0.24) + feedback_score + page_boost
+            intent_score = self._intent_document_boost(intent, doc)
+            topic_score = self._topic_alignment_boost(query_text, doc)
+            domain_score = self._domain_alignment_score(domain, doc)
+            action_score = self._action_alignment_score(actions, doc)
+            score = (lexical * 0.36) + (bm25 * 0.18) + feedback_score + page_boost + intent_score + topic_score + domain_score + action_score
             if semantic > 0:
                 score = max(
                     score,
-                    (semantic * 0.42) + (lexical * 0.24) + (bm25 * 0.16) + max(feedback_score, 0.0) + page_boost,
+                    (semantic * 0.38) + (lexical * 0.22) + (bm25 * 0.14) + max(feedback_score, 0.0) + page_boost + max(intent_score, 0.0) + topic_score + domain_score + action_score,
                 )
 
             ranking.append({
@@ -8521,16 +9101,21 @@ class LocalAIAssistant:
                 'semantic_score': semantic,
                 'feedback_score': feedback_score,
                 'page_score': page_boost,
+                'intent_score': intent_score,
+                'topic_score': topic_score,
+                'domain_score': domain_score,
+                'action_score': action_score,
             })
 
         ranking.sort(key=lambda item: item['score'], reverse=True)
         return ranking
 
-    def _compose_answer(self, question, ranking, *, pagina_atual=None, tela_atual=None):
+    def _compose_answer(self, question, ranking, *, intent=None, pagina_atual=None, tela_atual=None):
         if not ranking:
             return 'Nao encontrei uma rota segura para esta pergunta. Abra a Ajuda ou use a Home Operacional para continuar.'
 
-        intent = self._detect_intent(question)
+        if intent is None:
+            intent = self._detect_intent(question)
         return self._generate_answer(
             question,
             ranking,
@@ -8722,11 +9307,16 @@ class LocalAIAssistant:
         historico = historico[-self.max_history_messages:]
 
         perguntas_anteriores = [item['text'] for item in historico if item['role'] == 'user']
+        respostas_anteriores = [item['text'] for item in historico if item['role'] == 'assistant']
         if perguntas_anteriores and self._normalize_text(perguntas_anteriores[-1]) == self._normalize_text(question):
             perguntas_anteriores = perguntas_anteriores[:-1]
 
         precisa_contexto = self._question_needs_history(question)
-        contexto = perguntas_anteriores[-3:] if precisa_contexto else []
+        contexto = []
+        if precisa_contexto:
+            if respostas_anteriores:
+                contexto.append(respostas_anteriores[-1])
+            contexto.extend(perguntas_anteriores[-2:])
         partes = contexto + [question]
         return {
             'query_text': ' '.join(item for item in partes if item).strip(),
@@ -8782,19 +9372,386 @@ class LocalAIAssistant:
 
     def _detect_intent(self, question):
         texto = self._normalize_short_message(question)
-        if re.search(r'\b(nao consigo|nao aparece|erro|falha|problema|travou|bloqueado|invalid|incorreto)\b', texto):
-            return 'problem'
-        if re.search(r'\b(e depois|depois disso|proximo passo|qual o proximo|e agora|como continuo)\b', texto):
-            return 'follow_up'
-        if re.search(r'\b(onde|onde fica|onde altero|onde configuro|localizar|em qual tela|fica em qual menu)\b', texto):
-            return 'location'
-        if re.search(r'\b(como|passo a passo|quais passos|o que fazer|registrar|configurar|criar|finalizar|lancar)\b', texto):
-            return 'howto'
-        if re.search(r'\b(posso|permissao|acesso|liberar|perfil)\b', texto):
-            return 'permission'
+        if not texto:
+            return 'fallback_unknown'
+        if self._is_broad_teaching_request(texto):
+            return 'broad_exploration'
+        if any(term in texto for term in ('ola', 'oi', 'bom dia', 'boa tarde', 'boa noite', 'opa', 'iae', 'e ai')):
+            return 'greeting'
+        if re.search(r'\b(nao consigo|nao aparece|erro|falha|problema|travou|bloqueado|invalid|incorreto|negativo)\b', texto):
+            return 'incident_problem'
+        if re.search(r'\b(onde|onde fica|onde altero|onde configuro|localizar|em qual tela|fica em qual menu|onde encontro)\b', texto):
+            return 'navigation_request'
+        if re.search(r'\b(posso|permissao|acesso|liberar|perfil|sem acesso|sem permissao|menu bloqueado)\b', texto):
+            return 'access_permission'
+        if re.search(r'\b(como|passo a passo|quais passos|o que fazer|registrar|configurar|criar|finalizar|lancar|receber|conferir|abrir|fechar)\b', texto):
+            return 'operational_how_to'
         if re.search(r'\b(ajuda|explica|entender|duvida)\b', texto):
-            return 'general_help'
-        return 'general'
+            return 'broad_exploration'
+        return 'fallback_unknown'
+
+    def _is_broad_teaching_request(self, texto):
+        if not texto:
+            return False
+        topic_terms = tuple(TOPIC_PROFILES.keys()) + ('funcionarios', 'vendas', 'recebimentos', 'movimentacoes', 'ajuda')
+        teaching_terms = (
+            'quero saber sobre',
+            'me explica',
+            'me explique',
+            'explica sobre',
+            'falar sobre',
+            'entender',
+            'entender melhor',
+            'como funciona',
+            'quero aprender',
+            'duvida sobre',
+            'sobre ',
+        )
+        tokens = texto.split()
+        if len(tokens) <= 5 and any(term == texto for term in topic_terms):
+            return True
+        return any(term in texto for term in teaching_terms) and any(topic in texto for topic in topic_terms)
+
+    def _extract_question_topics(self, text):
+        texto = self._normalize_short_message(text)
+        temas = []
+        for topic, profile in TOPIC_PROFILES.items():
+            for alias in profile.get('aliases') or (topic,):
+                if alias and alias in texto:
+                    temas.append(topic)
+                    break
+        return temas
+
+    def _detect_primary_topic(self, text, doc=None):
+        temas = self._extract_question_topics(text)
+        if temas:
+            return temas[0]
+        if not doc:
+            return None
+        base = ' '.join(
+            item
+            for item in (
+                doc.get('section'),
+                doc.get('title'),
+                doc.get('source_topic'),
+                ' '.join(doc.get('pages') or ()),
+                ' '.join(doc.get('keywords') or ()),
+            )
+            if item
+        )
+        temas_doc = self._extract_question_topics(base)
+        return temas_doc[0] if temas_doc else None
+
+    def _intent_document_boost(self, intent, doc):
+        intent = {
+            'broad_exploration': 'broad_teaching',
+            'operational_how_to': 'howto',
+            'incident_problem': 'problem',
+            'navigation_request': 'location',
+            'access_permission': 'permission',
+            'fallback_unknown': 'general',
+            'greeting': 'general',
+        }.get(intent, intent)
+        kind = doc.get('kind')
+        boost_map = {
+            'broad_teaching': {'topic': 0.24, 'page': 0.12, 'faq': 0.04, 'issue': -0.18},
+            'general_help': {'topic': 0.18, 'page': 0.1, 'faq': 0.05, 'issue': -0.12},
+            'general': {'topic': 0.1, 'page': 0.06, 'faq': 0.03, 'issue': -0.08},
+            'howto': {'topic': 0.14, 'faq': 0.1, 'page': 0.05, 'issue': -0.04},
+            'follow_up': {'topic': 0.08, 'faq': 0.08, 'page': 0.04, 'issue': 0.02},
+            'location': {'page': 0.18, 'topic': 0.08, 'faq': 0.03, 'issue': -0.08},
+            'permission': {'faq': 0.12, 'page': 0.08, 'topic': 0.06, 'issue': -0.05},
+            'problem': {'issue': 0.2, 'faq': 0.08, 'topic': 0.03, 'page': 0.0},
+        }
+        boost = boost_map.get(intent, boost_map['general']).get(kind, 0.0)
+        if intent in {'broad_teaching', 'general_help', 'general'} and doc.get('steps'):
+            boost += 0.05
+        if intent in {'howto', 'follow_up'} and doc.get('steps'):
+            boost += 0.07
+        if intent == 'problem' and doc.get('problems'):
+            boost += 0.06
+        if intent == 'location' and doc.get('url'):
+            boost += 0.04
+        return boost
+
+    def _topic_alignment_boost(self, question, doc):
+        temas = self._extract_question_topics(question)
+        if not temas:
+            return 0.0
+        texto_doc = self._normalize_text(' '.join(
+            item
+            for item in (
+                doc.get('section'),
+                doc.get('title'),
+                doc.get('source_topic'),
+                ' '.join(doc.get('pages') or ()),
+                ' '.join(doc.get('keywords') or ()),
+                doc.get('summary'),
+            )
+            if item
+        ))
+        for topic in temas:
+            profile = TOPIC_PROFILES.get(topic) or {}
+            aliases = profile.get('aliases') or (topic,)
+            if any(alias and alias in texto_doc for alias in aliases):
+                return 0.16
+        return 0.0
+
+    def _extract_entities_actions(self, question):
+        texto = self._normalize_text(question)
+        tokens = self._tokenize(texto)
+        entities = set()
+        actions = set()
+        for domain, kws in DOMAIN_KEYWORDS.items():
+            if tokens.intersection(kws):
+                entities.add(domain)
+        for intent_key, kws in ACTION_KEYWORDS.items():
+            if any(k in texto for k in kws):
+                actions.add(intent_key)
+        return entities, actions
+
+    def _infer_domain(self, entities, actions, pagina_atual):
+        candidatos = {}
+        tokens_pagina = self._tokenize(pagina_atual or '')
+        for domain, kws in DOMAIN_KEYWORDS.items():
+            score = 0
+            if domain in entities:
+                score += 2
+            if tokens_pagina.intersection(kws):
+                score += 1.5
+            if actions and 'operational_how_to' in actions and domain in {'recebimento', 'estoque', 'pedidos', 'expedicao', 'financeiro'}:
+                score += 0.5
+            candidatos[domain] = score
+        if not candidatos:
+            return None
+        melhor = max(candidatos.items(), key=lambda item: item[1])
+        return melhor[0] if melhor[1] > 0 else None
+
+    def _infer_doc_domain(self, doc):
+        base = ' '.join(
+            item for item in [
+                doc.get('title') or '',
+                doc.get('summary') or '',
+                doc.get('section') or '',
+                ' '.join(doc.get('pages') or ()),
+                ' '.join(doc.get('keywords') or ()),
+            ] if item
+        )
+        texto = self._normalize_text(base)
+        tokens = self._tokenize(texto)
+        best = (None, 0.0)
+        for domain, kws in DOMAIN_KEYWORDS.items():
+            overlap = len(tokens.intersection(kws))
+            if overlap > best[1]:
+                best = (domain, overlap)
+        return best[0]
+
+    def _domain_alignment_score(self, domain, doc):
+        if not doc:
+            return 0.0
+        doc_domain = doc.get('domain') or self._infer_doc_domain(doc)
+        if not domain or not doc_domain:
+            return 0.0
+        if domain == doc_domain:
+            return 0.18
+        return -0.12
+
+    def _action_alignment_score(self, actions, doc):
+        if not actions or not doc:
+            return 0.0
+        text = self._normalize_text(' '.join([
+            doc.get('title') or '',
+            doc.get('summary') or '',
+            ' '.join(doc.get('keywords') or ()),
+        ]))
+        score = 0.0
+        if 'operational_how_to' in actions and re.search(r'\b(receber|conferir|lancar|registrar|abrir|fechar|finalizar|transferir)\b', text):
+            score += 0.08
+        if 'incident_problem' in actions and re.search(r'\b(erro|falha|problema|negativo|travou)\b', text):
+            score += 0.06
+        return score
+
+    def _validate_coherence(self, user_message, domain, actions, doc, draft):
+        texto = self._normalize_text(draft or '')
+        if not doc:
+            return 0.0
+        doc_domain = doc.get('domain') or self._infer_doc_domain(doc)
+        if not doc_domain:
+            return 0.0
+        expected = {
+            'recebimento': {'receber', 'fornecedor', 'entrada', 'mercadoria', 'conferencia', 'estoque', 'nota'},
+            'estoque': {'estoque', 'produto', 'saldo', 'picking', 'enderecamento'},
+            'pedidos': {'pedido', 'venda', 'pdv', 'caixa', 'mesa'},
+            'expedicao': {'expedicao', 'entrega', 'separacao', 'roteirizacao', 'etiqueta'},
+            'financeiro': {'financeiro', 'lancamento', 'competencia', 'fundo'},
+            'rh': {'acesso', 'permissao', 'perfil', 'cargo', 'organograma', 'rh'},
+        }
+        unexpected = {
+            'recebimento': {'pdv', 'caixa', 'rh', 'perfil', 'permissao', 'chamado', 'garcom'},
+            'estoque': {'pdv', 'caixa', 'rh', 'chamado'},
+        }
+        exp_terms = expected.get(doc_domain, set())
+        unexp_terms = unexpected.get(doc_domain, set())
+        tokens = self._tokenize(texto)
+        score = 0.0
+        if exp_terms and tokens.intersection(exp_terms):
+            score += min(0.2, len(tokens.intersection(exp_terms)) * 0.05)
+        if unexp_terms and tokens.intersection(unexp_terms):
+            score -= min(0.2, len(tokens.intersection(unexp_terms)) * 0.08)
+        # penalize if no expected terms
+        if exp_terms and not tokens.intersection(exp_terms):
+            score -= 0.1
+        return score
+
+    def _fallback_refinement(self, intent, domain, actions):
+        if intent == 'greeting':
+            return 'Ola! Como posso ajudar?'
+        opcoes = []
+        if domain in {'recebimento', 'estoque'}:
+            opcoes = [
+                'cadastrar fornecedor',
+                'receber mercadoria',
+                'conferir itens recebidos',
+                'lancar entrada no sistema',
+            ]
+        elif intent == 'access_permission':
+            return 'Quero responder certo. Voce esta sem acesso a qual menu? Financeiro, Estoque, Vendas ou outro?'
+        elif intent == 'navigation_request':
+            return 'Posso te mostrar o caminho. Qual tela voce quer abrir agora?'
+        if opcoes:
+            return (
+                'Quero te responder certo. Voce quer saber como: '
+                + '; '.join(opcoes[:4])
+                + '?'
+            )
+        return 'Posso ajudar melhor se voce der um pouco mais de contexto ou o modulo que quer usar.'
+
+    def _generate_structured_response(self, intent, question, domain, actions, doc, pagina_atual=None, tela_atual=None):
+        titulo = (doc or {}).get('title') or tela_atual or 'esta area'
+        passos = (doc or {}).get('steps') or []
+        checklist = (doc or {}).get('checklist') or []
+        alertas = (doc or {}).get('alerts') or []
+        problemas = (doc or {}).get('problems') or []
+
+        def format_passos(lista, limite=5):
+            return [self._ensure_sentence(item) for item in lista[:limite]]
+
+        if intent == 'greeting':
+            return 'Ola! Como posso ajudar?'
+
+        if intent == 'broad_exploration':
+            resumo = (doc or {}).get('summary') or (doc or {}).get('snippet') or 'Posso detalhar as partes principais.'
+            topicos = []
+            if doc and doc.get('checklist'):
+                topicos.append('pre-requisitos')
+            if passos:
+                topicos.append('passo a passo')
+            if alertas:
+                topicos.append('alertas operacionais')
+            extras = f" Posso detalhar {', '.join(topicos)}." if topicos else ''
+            return f'Claro! Posso te explicar {titulo.lower()} passo a passo. {resumo} Qual parte voce quer entender primeiro?{extras}'
+
+        if intent == 'operational_how_to':
+            corpo = []
+            corpo.append(f'Posso te ajudar com {titulo.lower()}.')
+            if domain == 'recebimento':
+                corpo.append('Objetivo: registrar a entrada da mercadoria, conferir itens e atualizar o estoque.')
+            elif domain == 'estoque':
+                corpo.append('Objetivo: manter o estoque correto enquanto voce registra entradas e saidas.')
+            if passos:
+                corpo.append('Passos sugeridos:')
+                for idx, passo in enumerate(format_passos(passos), start=1):
+                    corpo.append(f'{idx}. {passo}')
+            if checklist:
+                corpo.append('Antes de executar, confira:')
+                for item in checklist[:3]:
+                    corpo.append(f'- {self._ensure_sentence(item)}')
+            if alertas:
+                corpo.append('Atencao: ' + self._ensure_sentence(alertas[0]))
+            corpo.append('Se precisar, posso detalhar algum passo ou mostrar a tela certa.')
+            return '\n'.join(corpo)
+
+        if intent == 'incident_problem':
+            corpo = [f'Vamos tratar o problema em {titulo}.']
+            if problemas:
+                corpo.append('Causas provaveis e acoes:')
+                for item in problemas[:3]:
+                    corpo.append(f'- {self._ensure_sentence(item.get("situation"))}: {self._ensure_sentence(item.get("action"))}')
+            else:
+                corpo.append('Cheque primeiros: filtros da tela, status do registro e permissoes.')
+            if alertas:
+                corpo.append('Alerta: ' + self._ensure_sentence(alertas[0]))
+            corpo.append('Se persistir, me diga o erro exato ou mensagem na tela para detalharmos.')
+            return '\n'.join(corpo)
+
+        if intent == 'navigation_request':
+            caminho = (doc or {}).get('page_labels') or []
+            caminho_txt = ' > '.join(caminho) if caminho else titulo
+            return f'Voce encontra isso em {caminho_txt}. Abra e siga o fluxo indicado para continuar.'
+
+        if intent == 'access_permission':
+            passos_chk = [
+                'Confirmar se o usuario esta ativo e com cargo/perfil corretos.',
+                'Revisar paginas liberadas para o perfil no modulo de acessos.',
+                'Fazer novo login apos ajustar permissoes.',
+            ]
+            corpo = ['Parece falta de permissao.']
+            for idx, passo in enumerate(passos_chk, start=1):
+                corpo.append(f'{idx}. {passo}')
+            corpo.append('Se mesmo assim nao aparecer, informe o menu exato para eu detalhar.')
+            return '\n'.join(corpo)
+
+        return 'Posso detalhar melhor se voce explicar o que quer fazer.'
+
+    def _build_clarifying_answer(self, question, ranking, intent):
+        intent_alias = {
+            'incident_problem': 'problem',
+            'navigation_request': 'location',
+            'access_permission': 'permission',
+            'broad_exploration': 'broad_teaching',
+        }.get(intent, intent)
+        if not ranking or intent_alias in {'problem', 'follow_up', 'location', 'permission', 'broad_teaching'}:
+            return ''
+
+        best = ranking[0]
+        second = ranking[1] if len(ranking) > 1 else None
+        best_score = float(best.get('score') or 0.0)
+        score_gap = best_score - float(second.get('score') or 0.0) if second else best_score
+        same_section = bool(
+            second
+            and (best['doc'].get('section') or '').strip().lower() == (second['doc'].get('section') or '').strip().lower()
+        )
+        question_tokens = self._tokenize(question)
+        very_short = len(question_tokens) <= 3
+        low_confidence = best_score < 0.18 or (best_score < 0.28 and score_gap < 0.05 and not same_section)
+        if not low_confidence and not very_short:
+            return ''
+
+        topic = self._detect_primary_topic(question, best.get('doc'))
+        profile = TOPIC_PROFILES.get(topic or '')
+        if profile:
+            partes = ', '.join(profile.get('refinements')[:4])
+            return (
+                f'Posso te ajudar com mais precisao em {topic}. '
+                f'Normalmente essa area envolve {profile.get("overview").rstrip(".")}. '
+                f'Se quiser, eu detalho {partes}. Qual parte voce quer ver primeiro?'
+            )
+
+        opcoes = []
+        vistos = set()
+        for item in ranking[:3]:
+            label = (item['doc'].get('source_topic') or item['doc'].get('title') or item['doc'].get('section') or '').strip()
+            chave = label.lower()
+            if not label or chave in vistos:
+                continue
+            vistos.add(chave)
+            opcoes.append(label)
+        if not opcoes:
+            return ''
+        return (
+            'Posso te orientar melhor se voce me disser qual parte quer entender primeiro. '
+            f'As opcoes mais proximas da sua pergunta agora sao: {", ".join(opcoes[:3])}.'
+        )
 
     def _generate_answer(self, question, ranking, intent, *, pagina_atual=None, tela_atual=None):
         principal = ranking[0]['doc']
@@ -8802,6 +9759,11 @@ class LocalAIAssistant:
         resposta_direta = self._resolve_direct_answer(question, ranking, intent)
         passos = self._select_steps(question, ranking, intent)
         alerta = self._select_alert(ranking, question)
+
+        if intent == 'broad_teaching':
+            return self._generate_teaching_answer(question, ranking)
+        if intent == 'general_help' and self._detect_primary_topic(question, principal):
+            return self._generate_teaching_answer(question, ranking)
 
         if pagina_atual and self._question_targets_current_screen(question) and tela_atual:
             abertura = f'Voce esta em {tela_atual}.'
@@ -8846,10 +9808,63 @@ class LocalAIAssistant:
 
         return '\n'.join(item for item in linhas if item).strip()
 
+    def _generate_teaching_answer(self, question, ranking):
+        principal = ranking[0]['doc']
+        topic_key = self._detect_primary_topic(question, principal)
+        tema = self._extract_topic_label(question, principal)
+        profile = TOPIC_PROFILES.get(topic_key or '')
+        resumo = self._ensure_sentence(
+            (profile or {}).get('overview')
+            or principal.get('summary')
+            or principal.get('snippet')
+            or f'{tema} envolve cadastros, operacao do dia a dia, controles e acompanhamento.'
+        )
+        passos = list((profile or {}).get('starter_steps') or ())
+        if not passos:
+            passos = self._select_steps(question, ranking, 'howto')
+        if not passos:
+            passos = self._collect_onboarding_steps(ranking)
+
+        linhas = [
+            f'Claro! Posso te explicar {tema} passo a passo.',
+            resumo,
+        ]
+        if passos:
+            linhas.append('Se voce estiver comecando, o fluxo mais comum e:')
+            for indice, passo in enumerate(passos[:4], start=1):
+                linhas.append(f'{indice}. {self._ensure_sentence(passo)}')
+        refinements = list((profile or {}).get('refinements') or ())
+        if refinements:
+            linhas.append(f'Posso te explicar primeiro {", ".join(refinements[:4])}.')
+        linhas.append('Posso te explicar qual parte primeiro?')
+        return '\n'.join(linhas)
+
+    def _extract_topic_label(self, question, principal):
+        topic = self._detect_primary_topic(question, principal)
+        if topic:
+            return topic
+        return (principal.get('section') or principal.get('title') or 'essa area').strip().lower()
+
+    def _collect_onboarding_steps(self, ranking):
+        passos = []
+        vistos = set()
+        for item in ranking[:3]:
+            doc = item['doc']
+            for passo in doc.get('steps') or ():
+                chave = self._normalize_text(passo)
+                if not chave or chave in vistos:
+                    continue
+                vistos.add(chave)
+                passos.append(passo)
+                if len(passos) >= 4:
+                    return passos
+        return passos
+
     def _resolve_direct_answer(self, question, ranking, intent):
         principal = ranking[0]['doc']
         if principal.get('kind') in {'faq', 'issue'} and principal.get('summary'):
-            return principal.get('summary')
+            if intent != 'broad_teaching':
+                return principal.get('summary')
 
         if intent == 'location':
             secao = principal.get('section')
@@ -8864,6 +9879,9 @@ class LocalAIAssistant:
             melhor_problema = self._best_problem_match(question, ranking)
             if melhor_problema:
                 return melhor_problema.get('action')
+
+        if intent == 'broad_teaching':
+            return principal.get('summary') or principal.get('snippet')
 
         return principal.get('summary') or principal.get('snippet') or 'Use a opcao indicada para continuar com seguranca.'
 
@@ -8898,6 +9916,8 @@ class LocalAIAssistant:
         candidatos = []
         for doc_pos, item in enumerate(ranking[:3]):
             doc = item['doc']
+            if intent == 'problem' and doc.get('kind') not in {'issue', 'faq'} and not doc.get('problems'):
+                continue
             for step_pos, passo in enumerate(doc.get('steps') or ()):
                 score = self._text_match_score(query_tokens, passo)
                 if intent == 'follow_up' and step_pos > 0:
@@ -9470,6 +10490,118 @@ __all__ = ['sem_acentos', 'slugify', 'parse_date_range']
 ```
 
 
+### Arquivo: `app/utils/operational_flow.py`
+- Linhas: 103
+- Tamanho: 3.1 KB
+- Status: completo
+
+```python
+from __future__ import annotations
+
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+
+from flask import request, url_for
+
+
+RETURN_PARAM_NAMES = ('return_to', 'next')
+ORIGIN_PARAM_NAMES = ('origem', 'origin')
+CONTEXT_PARAM_NAMES = ('contexto', 'context')
+CONTEXT_KEY_PARAM_NAMES = ('context_key', 'storage_key')
+
+
+def _first_value(source, names):
+    for name in names:
+        value = source.get(name)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return None
+
+
+def is_safe_local_url(target: str | None) -> bool:
+    if not target:
+        return False
+    parsed = urlparse(str(target).strip())
+    return not parsed.scheme and not parsed.netloc and (parsed.path or '').startswith('/')
+
+
+def get_flow_metadata(*, default_origin=None, default_context=None, default_context_key=None):
+    return {
+        'return_to': _first_value(request.values, RETURN_PARAM_NAMES),
+        'origem': _first_value(request.values, ORIGIN_PARAM_NAMES) or default_origin,
+        'contexto': _first_value(request.values, CONTEXT_PARAM_NAMES) or default_context,
+        'context_key': _first_value(request.values, CONTEXT_KEY_PARAM_NAMES) or default_context_key,
+    }
+
+
+def get_return_url(default_endpoint: str, *, default_params=None) -> str:
+    return_to = _first_value(request.values, RETURN_PARAM_NAMES)
+    if is_safe_local_url(return_to):
+        return return_to
+    return url_for(default_endpoint, **(default_params or {}))
+
+
+def append_query_params(url: str, **params) -> str:
+    parsed = urlparse(url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    for key, value in params.items():
+        if value is None or value == '':
+            query.pop(key, None)
+            continue
+        query[key] = str(value)
+    return urlunparse(parsed._replace(query=urlencode(query, doseq=True)))
+
+
+def build_related_create_url(
+    endpoint: str,
+    *,
+    return_to: str | None,
+    origem: str | None = None,
+    contexto: str | None = None,
+    context_key: str | None = None,
+    **extra_params,
+) -> str:
+    params = {}
+    if is_safe_local_url(return_to):
+        params['return_to'] = return_to
+    if origem:
+        params['origem'] = origem
+    if contexto:
+        params['contexto'] = contexto
+    if context_key:
+        params['context_key'] = context_key
+    params.update({key: value for key, value in extra_params.items() if value not in (None, '')})
+    return url_for(endpoint, **params)
+
+
+def build_related_return_url(
+    default_endpoint: str,
+    *,
+    entity: str | None = None,
+    entity_id: int | str | None = None,
+    default_params=None,
+    extra_params=None,
+) -> str:
+    target = get_return_url(default_endpoint, default_params=default_params)
+    metadata = get_flow_metadata()
+    params = {
+        'origem': metadata.get('origem'),
+        'contexto': metadata.get('contexto'),
+        'context_key': metadata.get('context_key'),
+    }
+    if entity:
+        params['flow_entity'] = entity
+    if entity_id not in (None, ''):
+        params['flow_entity_id'] = entity_id
+    if extra_params:
+        params.update(extra_params)
+    return append_query_params(target, **params)
+
+```
+
+
 ### Arquivo: `app/utils/payment_config.py`
 - Linhas: 199
 - Tamanho: 7.3 KB
@@ -9917,8 +11049,8 @@ if __name__ == "__main__":
 
 
 ### Arquivo: `models.py`
-- Linhas: 1149
-- Tamanho: 51.3 KB
+- Linhas: 1151
+- Tamanho: 51.5 KB
 - Status: completo
 
 ```python
@@ -10315,6 +11447,7 @@ class RecebimentoFornecedor(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     fornecedor_id = db.Column(db.Integer, db.ForeignKey('fornecedores.id'), nullable=True)
+    local_recebimento_id = db.Column(db.Integer, db.ForeignKey('enderecos_estoque.id'), nullable=True)
     tipo_recebimento = db.Column(db.String(40), nullable=False, default=TIPO_COMPRA_REVENDA)
     fornecedor_documento = db.Column(db.String(30), nullable=True)
     data_entrega = db.Column(db.Date, nullable=True)
@@ -10336,6 +11469,7 @@ class RecebimentoFornecedor(db.Model):
 
     itens = db.relationship('RecebimentoItem', backref='recebimento', lazy=True, cascade='all, delete-orphan')
     recebedor_funcionario = db.relationship('Funcionario', foreign_keys=[recebedor_funcionario_id], lazy='select')
+    local_recebimento = db.relationship('EnderecoEstoque', foreign_keys=[local_recebimento_id], lazy='select')
 
     def __repr__(self):
         return f'<RecebimentoFornecedor {self.id} - {self.status}>'
@@ -11125,8 +12259,8 @@ def sse_stream():
 
 
 ### Arquivo: `routes/estoque_routes.py`
-- Linhas: 3529
-- Tamanho: 173.1 KB
+- Linhas: 3763
+- Tamanho: 184.8 KB
 - Status: completo
 
 ```python
@@ -11138,12 +12272,17 @@ import uuid
 
 from sqlalchemy.orm import load_only, selectinload
 from app import extensions
+from app.utils.operational_flow import (
+    build_related_create_url,
+    build_related_return_url,
+    get_flow_metadata,
+)
 
 from flask import render_template, request, redirect, url_for, flash, jsonify, session
 
 from app.exceptions import AppError, ValidationError
 from app.utils.helpers import sem_acentos
-from app.utils.validators import normalizar_codigo_barras
+from app.utils.validators import normalizar_codigo_barras, validar_cpf, validar_cnpj
 from models import (
     AlmoxarifadoAtribuicao,
     db,
@@ -11296,6 +12435,64 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             and tipo_normalizado not in recebimento_tipos_fornecedor_opcional
         )
 
+    def _normalizar_documento_dependencia(valor):
+        digitos = re.sub(r'\D+', '', str(valor or '').strip())
+        return digitos or None
+
+    def _validar_documento_dependencia(valor):
+        documento = _normalizar_documento_dependencia(valor)
+        if not documento:
+            return None, None
+        if len(documento) == 11:
+            cpf = validar_cpf(documento)
+            if cpf == '__invalid__':
+                return documento, 'CPF invalido. Informe 11 digitos validos.'
+            return documento, None
+        if len(documento) == 14:
+            cnpj = validar_cnpj(documento)
+            if cnpj == '__invalid__':
+                return documento, 'CNPJ invalido. Informe 14 digitos validos.'
+            return documento, None
+        return documento, 'Documento invalido. Informe um CPF com 11 digitos ou CNPJ com 14 digitos.'
+
+    def _buscar_fornecedor_por_documento(documento, *, somente_ativos=False, ignorar_id=None):
+        documento_normalizado = _normalizar_documento_dependencia(documento)
+        if not documento_normalizado:
+            return None
+        query = Fornecedor.query.filter(Fornecedor.documento.isnot(None))
+        if somente_ativos:
+            query = query.filter(Fornecedor.ativo.is_(True))
+        fornecedores = query.order_by(Fornecedor.nome.asc()).all()
+        for fornecedor in fornecedores:
+            if ignorar_id and fornecedor.id == ignorar_id:
+                continue
+            if _normalizar_documento_dependencia(fornecedor.documento) == documento_normalizado:
+                return fornecedor
+        return None
+
+    def _obter_locais_recebimento_validos(funcionario=None):
+        return _endereco_query_permitida(funcionario).filter(
+            EnderecoEstoque.ativo.is_(True),
+            EnderecoEstoque.status == 'ativo',
+            db.or_(
+                EnderecoEstoque.tipo_area == 'recebimento',
+                EnderecoEstoque.tipo_endereco == 'recebimento',
+            ),
+        ).order_by(EnderecoEstoque.nome.asc()).all()
+
+    def _carregar_local_recebimento_valido(local_recebimento_id, funcionario=None):
+        if not local_recebimento_id:
+            return None
+        return _endereco_query_permitida(funcionario).filter(
+            EnderecoEstoque.id == local_recebimento_id,
+            EnderecoEstoque.ativo.is_(True),
+            EnderecoEstoque.status == 'ativo',
+            db.or_(
+                EnderecoEstoque.tipo_area == 'recebimento',
+                EnderecoEstoque.tipo_endereco == 'recebimento',
+            ),
+        ).first()
+
     def _obter_fornecedor_padrao_recebimento():
         fornecedor = Fornecedor.query.filter(
             db.func.lower(Fornecedor.nome) == fornecedor_padrao_recebimento_nome.lower()
@@ -11312,6 +12509,17 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         db.session.add(fornecedor)
         db.session.flush()
         return fornecedor
+
+    def _gerar_context_key_fluxo(prefixo):
+        valor = (request.values.get('context_key') or '').strip()
+        if valor:
+            return valor
+        return f'{prefixo}-{uuid.uuid4().hex[:12]}'
+
+    def _url_novo_recebimento_contexto(context_key, **extra):
+        params = {'context_key': context_key}
+        params.update({key: value for key, value in extra.items() if value not in (None, '')})
+        return url_for('novo_recebimento_fornecedor', **params)
 
     def _resolver_funcionario_por_matricula_ou_nome(texto_busca='', funcionario_id=None):
         if funcionario_id:
@@ -11984,6 +13192,53 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @require_role(*estoque_write_roles)
     def novo_produto():
         funcionario_logado = _funcionario_logado_estoque()
+        flow_metadata = get_flow_metadata(
+            default_origin='novo_recebimento_fornecedor',
+            default_context='recebimento_fornecedor',
+        )
+        form_data = {
+            'codigo': (request.values.get('codigo') or '').strip(),
+            'nome': (request.values.get('nome') or '').strip(),
+            'descricao': (request.values.get('descricao') or '').strip(),
+            'categoria_id': request.values.get('categoria_id', type=int),
+            'fornecedor_id': request.values.get('fornecedor_id', type=int),
+            'endereco_id': request.values.get('endereco_id', type=int),
+            'preco_custo': (request.values.get('preco_custo') or '').strip(),
+            'preco_venda': (request.values.get('preco_venda') or '').strip(),
+            'quantidade_estoque': (request.values.get('quantidade_estoque') or '0').strip(),
+            'quantidade_minima': (request.values.get('quantidade_minima') or '5').strip(),
+            'status_disponibilidade': (
+                (request.values.get('status_disponibilidade') or Produto.STATUS_DISPONIVEL_ONLINE).strip().lower()
+            ),
+            'tipo_movimentacao': (request.values.get('tipo_movimentacao') or 'manual').strip().lower(),
+            'prioridade_reabastecimento': (request.values.get('prioridade_reabastecimento') or '').strip(),
+            'fora_picking': (request.values.get('fora_picking') == 'on'),
+            'servico_montagem_disponivel': (request.values.get('servico_montagem_disponivel') == 'on'),
+            'servico_instalacao_disponivel': (request.values.get('servico_instalacao_disponivel') == 'on'),
+        }
+
+        def _render_novo_produto():
+            categorias = Categoria.query.order_by(Categoria.nome.asc()).all()
+            fornecedores = Fornecedor.query.filter(
+                Fornecedor.ativo.is_(True),
+                db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
+            ).order_by(Fornecedor.nome.asc()).all()
+            enderecos = _endereco_query_permitida(funcionario_logado).filter_by(ativo=True).order_by(EnderecoEstoque.nome.asc()).all()
+            return render_template(
+                'estoque/produtos/novo_produto.html',
+                categorias=categorias,
+                fornecedores=fornecedores,
+                enderecos=enderecos,
+                status_disponibilidade_labels=STATUS_DISPONIBILIDADE_LABELS,
+                tipos_movimentacao_produto=TIPOS_MOVIMENTACAO_PRODUTO,
+                codigos_existentes=[c[0] for c in db.session.query(Produto.codigo).all()],
+                form_data=form_data,
+                return_flow={
+                    **flow_metadata,
+                    'cancel_url': flow_metadata.get('return_to') or url_for('listar_produtos'),
+                },
+            )
+
         if request.method == 'POST':
             nova_imagem_path = None
             try:
@@ -11991,22 +13246,22 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 fornecedor_id = request.form.get('fornecedor_id', type=int)
                 categoria = Categoria.query.get(categoria_id)
                 if not categoria:
-                    flash('Categoria invalida', 'error')
-                    return redirect(url_for('novo_produto'))
+                    flash('Categoria invalida. Selecione uma categoria antes de salvar o produto.', 'error')
+                    return _render_novo_produto()
                 fornecedor = Fornecedor.query.get(fornecedor_id) if fornecedor_id else None
                 if not fornecedor:
                     flash('Fornecedor invalido. Selecione um fornecedor para o produto.', 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
 
                 endereco_id = request.form.get('endereco_id', type=int) or None
                 if endereco_id and not _carregar_endereco_permitido(endereco_id, funcionario_logado, apenas_ativo=True):
                     flash('Endereco invalido ou fora dos estoques permitidos.', 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
 
                 codigo_barras, erro_codigo = _normalizar_codigo_barras(request.form.get('codigo'))
                 if erro_codigo:
                     flash(erro_codigo, 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
 
                 nova_imagem_path, erro_imagem = _save_product_image(
                     request.files.get('imagem'),
@@ -12014,7 +13269,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 )
                 if erro_imagem:
                     flash(erro_imagem, 'error')
-                    return redirect(url_for('novo_produto'))
+                    return _render_novo_produto()
 
                 produto = Produto(
                     codigo=codigo_barras,
@@ -12038,28 +13293,24 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 db.session.add(produto)
                 db.session.commit()
                 flash(f'Produto "{produto.nome}" criado com sucesso!', 'success')
+                if flow_metadata.get('return_to'):
+                    return redirect(
+                        build_related_return_url(
+                            'listar_produtos',
+                            entity='produto',
+                            entity_id=produto.id,
+                            extra_params={'produto_codigo': produto.codigo or ''},
+                        )
+                    )
                 return redirect(url_for('listar_produtos'))
             except Exception as e:
                 db.session.rollback()
                 if nova_imagem_path:
                     _delete_image_file(nova_imagem_path)
                 flash(f'Erro ao criar produto: {str(e)}', 'error')
+                return _render_novo_produto()
 
-        categorias = Categoria.query.all()
-        fornecedores = Fornecedor.query.filter(
-            Fornecedor.ativo.is_(True),
-            db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
-        ).order_by(Fornecedor.nome.asc()).all()
-        enderecos = _endereco_query_permitida(funcionario_logado).filter_by(ativo=True).order_by(EnderecoEstoque.nome.asc()).all()
-        return render_template(
-            'estoque/produtos/novo_produto.html',
-            categorias=categorias,
-            fornecedores=fornecedores,
-            enderecos=enderecos,
-            status_disponibilidade_labels=STATUS_DISPONIBILIDADE_LABELS,
-            tipos_movimentacao_produto=TIPOS_MOVIMENTACAO_PRODUTO,
-            codigos_existentes=[c[0] for c in db.session.query(Produto.codigo).all()]
-        )
+        return _render_novo_produto()
 
     @app.route('/produtos/<int:produto_id>/editar', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
@@ -12640,11 +13891,53 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @app.route('/fornecedores/novo', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
     def novo_fornecedor():
+        flow_metadata = get_flow_metadata(
+            default_origin='novo_recebimento_fornecedor',
+            default_context='recebimento_fornecedor',
+        )
+        form_data = {
+            'nome': (request.values.get('nome') or '').strip(),
+            'documento': (request.values.get('documento') or '').strip(),
+            'contato': (request.values.get('contato') or '').strip(),
+            'telefone': (request.values.get('telefone') or '').strip(),
+            'email': (request.values.get('email') or '').strip(),
+            'endereco_rua': (request.values.get('endereco_rua') or '').strip(),
+            'endereco_numero': (request.values.get('endereco_numero') or '').strip(),
+            'endereco_bairro': (request.values.get('endereco_bairro') or '').strip(),
+            'endereco_cidade': (request.values.get('endereco_cidade') or '').strip(),
+            'tipo_produtos_fornece': (request.values.get('tipo_produtos_fornece') or '').strip(),
+            'observacoes_gerais': (request.values.get('observacoes_gerais') or '').strip(),
+            'ativo': (request.values.get('ativo') == 'on') if request.method == 'POST' else True,
+        }
+
+        def _render_novo_fornecedor():
+            return render_template(
+                'estoque/fornecedores/novo_fornecedor.html',
+                form_data=form_data,
+                return_flow={
+                    **flow_metadata,
+                    'cancel_url': flow_metadata.get('return_to') or url_for('listar_fornecedores'),
+                },
+            )
+
         if request.method == 'POST':
             try:
+                documento_normalizado, erro_documento = _validar_documento_dependencia(request.form.get('documento'))
+                if erro_documento:
+                    flash(erro_documento, 'error')
+                    return _render_novo_fornecedor()
+                fornecedor_existente = _buscar_fornecedor_por_documento(documento_normalizado, ignorar_id=None)
+                if fornecedor_existente:
+                    flash(
+                        f'O documento informado ja pertence ao fornecedor "{fornecedor_existente.nome}". '
+                        'Use o cadastro existente para evitar duplicidade.',
+                        'warning'
+                    )
+                    return _render_novo_fornecedor()
+
                 fornecedor = Fornecedor(
                     nome=request.form.get('nome', '').strip(),
-                    documento=request.form.get('documento', '').strip() or None,
+                    documento=documento_normalizado,
                     contato=request.form.get('contato', '').strip() or None,
                     telefone=request.form.get('telefone', '').strip() or None,
                     email=request.form.get('email', '').strip() or None,
@@ -12658,15 +13951,25 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 )
                 if not fornecedor.nome:
                     flash('Nome do fornecedor e obrigatorio.', 'error')
-                    return redirect(url_for('novo_fornecedor'))
+                    return _render_novo_fornecedor()
                 db.session.add(fornecedor)
                 db.session.commit()
                 flash(f'Fornecedor "{fornecedor.nome}" cadastrado com sucesso!', 'success')
+                if flow_metadata.get('return_to'):
+                    return redirect(
+                        build_related_return_url(
+                            'listar_fornecedores',
+                            entity='fornecedor',
+                            entity_id=fornecedor.id,
+                            extra_params={'fornecedor_documento': fornecedor.documento or ''},
+                        )
+                    )
                 return redirect(url_for('listar_fornecedores'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao cadastrar fornecedor: {str(e)}', 'error')
-        return render_template('estoque/fornecedores/novo_fornecedor.html')
+                return _render_novo_fornecedor()
+        return _render_novo_fornecedor()
 
     @app.route('/fornecedores/<int:fornecedor_id>/editar', methods=['GET', 'POST'])
     @require_role(*estoque_write_roles)
@@ -12762,6 +14065,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             load_only(
                 RecebimentoFornecedor.id,
                 RecebimentoFornecedor.fornecedor_id,
+                RecebimentoFornecedor.local_recebimento_id,
                 RecebimentoFornecedor.tipo_recebimento,
                 RecebimentoFornecedor.info_nota,
                 RecebimentoFornecedor.subtotal,
@@ -12773,6 +14077,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 RecebimentoFornecedor.conferido_em,
             ),
             selectinload(RecebimentoFornecedor.fornecedor),
+            selectinload(RecebimentoFornecedor.local_recebimento),
             selectinload(RecebimentoFornecedor.recebedor_funcionario),
             selectinload(RecebimentoFornecedor.itens).selectinload(RecebimentoItem.produto),
         ).order_by(RecebimentoFornecedor.criado_em.desc()).paginate(
@@ -12818,11 +14123,14 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     @require_role(*estoque_write_roles)
     def novo_recebimento_fornecedor():
         funcionario_logado = _funcionario_logado_estoque()
+        context_key = _gerar_context_key_fluxo('recebimento-fornecedor')
+        return_to_self = _url_novo_recebimento_contexto(context_key)
         fornecedores = Fornecedor.query.filter(
             Fornecedor.ativo.is_(True),
             db.func.lower(Fornecedor.nome) != fornecedor_padrao_recebimento_nome.lower(),
         ).order_by(Fornecedor.nome.asc()).all()
         produtos = _produto_query_permitida(Produto.query.filter_by(ativo=True), funcionario_logado).order_by(Produto.nome.asc()).all()
+        locais_recebimento = _obter_locais_recebimento_validos(funcionario_logado)
         funcionarios_recebimento = Funcionario.query.filter_by(ativo=True).options(
             load_only(
                 Funcionario.id,
@@ -12836,19 +14144,47 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         if request.method == 'POST':
             try:
                 fornecedor_id = request.form.get('fornecedor_id', type=int)
-                tipo_recebimento = (request.form.get('tipo_recebimento') or '').strip().lower()
+                tipo_recebimento = (
+                    (request.form.get('tipo_recebimento') or RecebimentoFornecedor.TIPO_COMPRA_REVENDA).strip().lower()
+                )
+                fornecedor_documento_digitado, erro_documento = _validar_documento_dependencia(
+                    request.form.get('fornecedor_documento')
+                )
+                if erro_documento:
+                    flash(erro_documento, 'error')
+                    return redirect(_url_novo_recebimento_contexto(context_key))
+
                 fornecedor = Fornecedor.query.get(fornecedor_id) if fornecedor_id else None
+                if not fornecedor and fornecedor_documento_digitado:
+                    fornecedor = _buscar_fornecedor_por_documento(fornecedor_documento_digitado, somente_ativos=True)
                 if tipo_recebimento not in RecebimentoFornecedor.TIPOS_VALIDOS:
                     flash('Selecione um tipo de recebimento valido.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
                 if fornecedor_id and not fornecedor:
                     flash('Selecione um fornecedor valido.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
                 if _tipo_recebimento_exige_fornecedor(tipo_recebimento) and not fornecedor:
-                    flash('Este tipo de recebimento exige fornecedor informado.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    if fornecedor_documento_digitado:
+                        flash(
+                            'O fornecedor informado pelo CNPJ/CPF nao esta cadastrado. '
+                            'Use "Cadastrar fornecedor" para concluir o recebimento sem perder o formulario.',
+                            'error'
+                        )
+                    else:
+                        flash('Este tipo de recebimento exige fornecedor informado.', 'error')
+                    return redirect(_url_novo_recebimento_contexto(context_key))
                 if not fornecedor:
                     fornecedor = _obter_fornecedor_padrao_recebimento()
+
+                local_recebimento_id = request.form.get('local_recebimento_id', type=int)
+                local_recebimento = _carregar_local_recebimento_valido(local_recebimento_id, funcionario_logado)
+                if not local_recebimento:
+                    flash(
+                        'Defina um local de recebimento ativo e valido antes de concluir. '
+                        'Ex.: Box 2, Doca 1 ou Area de conferencia.',
+                        'error'
+                    )
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
                 recebedor_funcionario = _resolver_funcionario_por_matricula_ou_nome(
                     texto_busca=(request.form.get('recebedor_busca') or request.form.get('recebedor_nome') or '').strip(),
@@ -12867,7 +14203,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                 precos_unitarios = request.form.getlist('preco_unitario[]') or request.form.getlist('preco_unitario')
                 if not produto_ids:
                     flash('Informe ao menos um item no recebimento.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
                 data_entrega = None
                 data_entrega_txt = (request.form.get('data_entrega') or '').strip()
@@ -12876,7 +14212,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                         data_entrega = datetime.strptime(data_entrega_txt, '%Y-%m-%d').date()
                     except ValueError:
                         flash('Data de entrega invalida.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                 subtotal = 0.0
                 desconto_raw = (request.form.get('desconto') or '').strip()
@@ -12885,12 +14221,12 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                         desconto = float(desconto_raw.replace(',', '.'))
                     except ValueError:
                         flash('Desconto invalido.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
                 else:
                     desconto = 0.0
                 if desconto < 0:
                     flash('Desconto nao pode ser negativo.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
                 itens_processados = []
                 for idx, raw_produto_id in enumerate(produto_ids):
@@ -12901,25 +14237,28 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                         produto_id = int(texto_produto_id)
                     except ValueError:
                         flash('Produto invalido em um dos itens.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     produto = Produto.query.get(produto_id)
                     if not produto or not produto.ativo:
                         flash('Um dos produtos informados nao existe ou esta inativo.', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
                     if not _produto_em_estoque_permitido(produto, funcionario_logado):
                         flash(f'Voce nao possui acesso ao estoque do produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     raw_qtd = quantidades[idx] if idx < len(quantidades) else '0'
                     try:
                         qtd_recebida = int(str(raw_qtd or '0').strip() or '0')
                     except ValueError:
                         flash(f'Quantidade invalida para o produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
                     if qtd_recebida < 0:
                         flash(f'Quantidade recebida nao pode ser negativa para o produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
+                    if qtd_recebida == 0:
+                        flash(f'Quantidade recebida deve ser maior que zero para o produto "{produto.nome}".', 'error')
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     unidade = (unidades[idx] if idx < len(unidades) else '').strip().upper() or 'UN'
                     descricao_item = (descricoes_itens[idx] if idx < len(descricoes_itens) else '').strip() or produto.nome
@@ -12929,12 +14268,12 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
                             preco_unitario = float(raw_preco.replace(',', '.'))
                         except ValueError:
                             flash(f'Preco unitario invalido para o produto "{produto.nome}".', 'error')
-                            return redirect(url_for('novo_recebimento_fornecedor'))
+                            return redirect(_url_novo_recebimento_contexto(context_key))
                     else:
                         preco_unitario = float(produto.preco_custo or 0.0)
                     if preco_unitario < 0:
                         flash(f'Preco unitario nao pode ser negativo para o produto "{produto.nome}".', 'error')
-                        return redirect(url_for('novo_recebimento_fornecedor'))
+                        return redirect(_url_novo_recebimento_contexto(context_key))
 
                     total_item = float(qtd_recebida) * float(preco_unitario)
                     subtotal += total_item
@@ -12949,14 +14288,15 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
 
                 if not itens_processados:
                     flash('Informe ao menos um item valido no recebimento.', 'error')
-                    return redirect(url_for('novo_recebimento_fornecedor'))
+                    return redirect(_url_novo_recebimento_contexto(context_key))
 
                 total_pagar = max(subtotal - desconto, 0.0)
 
                 recebimento = RecebimentoFornecedor(
                     fornecedor_id=fornecedor.id,
+                    local_recebimento_id=local_recebimento.id,
                     tipo_recebimento=tipo_recebimento,
-                    fornecedor_documento=(request.form.get('fornecedor_documento') or '').strip() or None,
+                    fornecedor_documento=fornecedor_documento_digitado or fornecedor.documento or None,
                     data_entrega=data_entrega,
                     info_nota=(request.form.get('info_nota') or '').strip() or None,
                     subtotal=subtotal,
@@ -13000,15 +14340,41 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
             except Exception as e:
                 db.session.rollback()
                 flash(f'Erro ao criar recebimento: {str(e)}', 'error')
+                return redirect(_url_novo_recebimento_contexto(context_key))
 
         return render_template(
             'estoque/recebimentos/novo_recebimento.html',
             fornecedores=fornecedores,
             produtos=produtos,
+            locais_recebimento=locais_recebimento,
             funcionarios_recebimento=funcionarios_recebimento,
             tipo_labels=recebimento_tipo_labels,
             tipo_recebimento_padrao=RecebimentoFornecedor.TIPO_COMPRA_REVENDA,
             tipos_fornecedor_opcional=sorted(recebimento_tipos_fornecedor_opcional),
+            context_key=context_key,
+            flow_state={
+                'entity': (request.args.get('flow_entity') or '').strip(),
+                'entity_id': request.args.get('flow_entity_id', type=int),
+                'fornecedor_documento': (request.args.get('fornecedor_documento') or '').strip(),
+                'produto_codigo': (request.args.get('produto_codigo') or '').strip(),
+                'context_key': context_key,
+            },
+            cadastro_relacionado_urls={
+                'fornecedor': build_related_create_url(
+                    'novo_fornecedor',
+                    return_to=return_to_self,
+                    origem='novo_recebimento_fornecedor',
+                    contexto='recebimento_fornecedor',
+                    context_key=context_key,
+                ),
+                'produto': build_related_create_url(
+                    'novo_produto',
+                    return_to=return_to_self,
+                    origem='novo_recebimento_fornecedor',
+                    contexto='recebimento_fornecedor',
+                    context_key=context_key,
+                ),
+            },
         )
 
     @app.route('/estoque/recebimentos/<int:recebimento_id>/conferir', methods=['GET', 'POST'])
@@ -13016,6 +14382,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
     def conferir_recebimento_fornecedor(recebimento_id):
         recebimento = RecebimentoFornecedor.query.options(
             selectinload(RecebimentoFornecedor.fornecedor),
+            selectinload(RecebimentoFornecedor.local_recebimento),
             selectinload(RecebimentoFornecedor.recebedor_funcionario),
             selectinload(RecebimentoFornecedor.itens).selectinload(RecebimentoItem.produto),
         ).get_or_404(recebimento_id)
@@ -13086,6 +14453,7 @@ def register_estoque_routes(app, login_required, require_role, aplicar_movimenta
         funcionario_logado = _funcionario_logado_estoque()
         recebimento = RecebimentoFornecedor.query.options(
             selectinload(RecebimentoFornecedor.fornecedor),
+            selectinload(RecebimentoFornecedor.local_recebimento),
             selectinload(RecebimentoFornecedor.recebedor_funcionario),
             selectinload(RecebimentoFornecedor.itens).selectinload(RecebimentoItem.produto).selectinload(Produto.categoria),
         ).get_or_404(recebimento_id)
@@ -18100,11 +19468,13 @@ def register_vendas_routes(app, login_required, require_role):
 
 
 ### Arquivo: `run.py`
-- Linhas: 9
-- Tamanho: 0.1 KB
+- Linhas: 24
+- Tamanho: 0.6 KB
 - Status: completo
 
 ```python
+import os
+
 from app import create_app
 
 
@@ -18112,7 +19482,20 @@ app = create_app()
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug = (os.environ.get('SYSTEMLR_DEBUG') or '0').strip().lower() in {'1', 'true', 'yes', 'on'}
+    use_reloader = (os.environ.get('SYSTEMLR_USE_RELOADER') or '').strip().lower() in {'1', 'true', 'yes', 'on'}
+    host = (os.environ.get('SYSTEMLR_HOST') or '0.0.0.0').strip() or '0.0.0.0'
+    try:
+        port = int((os.environ.get('SYSTEMLR_PORT') or '5000').strip())
+    except ValueError:
+        port = 5000
+
+    app.run(
+        debug=debug,
+        use_reloader=use_reloader if debug else False,
+        host=host,
+        port=port,
+    )
 
 ```
 

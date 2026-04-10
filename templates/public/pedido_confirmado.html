@@ -1,123 +1,62 @@
-﻿<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    {% if favicon_path %}
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
-    {% endif %}
-    <title>Pedido confirmado | {{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home-varejo.css') }}">
-</head>
-<body class="retail-home retail-app-page retail-market-app">
-    <style>
-        :root {
-            --market-primary: {{ empresa_config.ecom_cor_primaria if empresa_config and empresa_config.ecom_cor_primaria else '#ff7848' }};
-            --market-secondary: {{ empresa_config.ecom_cor_secundaria if empresa_config and empresa_config.ecom_cor_secundaria else '#ff5a2a' }};
-        }
-    </style>
-    <header class="retail-topbar">
-        <div class="retail-topbar-inner">
-            <a class="brand" href="{{ url_for('index') }}">
-                {% if empresa and empresa.logo_path %}
-                <img src="{{ url_for('static', filename=empresa.logo_path) }}" alt="Logo da empresa">
-                {% endif %}
-                <span>{{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</span>
-            </a>
-            <nav class="top-links" aria-label="Navegação">
-                <a href="{{ url_for('index') }}">Vitrine</a>
-                <a href="{{ url_for('public.carrinho_site') }}" class="cart-link">
-                    Carrinho <span>{{ resumo_carrinho.quantidade_itens }}</span>
-                </a>
-                <a href="{{ url_for('public.cadastro_cliente_site') }}">Cadastro</a>
-            </nav>
-        </div>
-    </header>
+{% extends 'public/store_base.html' %}
+{% set store_page = 'pedido' %}
+{% set store_nav = 'home' %}
+{% set store_title = 'Pedido confirmado | ' ~ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR') %}
 
-    <main class="commerce-shell">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="flash-stack">
-                {% for category, message in messages %}
-                <div class="flash-item {{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-            {% endif %}
-        {% endwith %}
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Pedido confirmado</span>
+    <h1>Pedido #{{ pedido.id }} confirmado</h1>
+    <p>Recebemos seu pedido com sucesso. Em breve ele seguirá para as próximas etapas da operação.</p>
+</section>
 
-        <section class="commerce-header">
-            <h1>Pedido #{{ pedido.id }} confirmado</h1>
-            <p>Recebemos seu pedido com sucesso. Em breve ele seguirá para as próximas etapas.</p>
-        </section>
-
-        <section class="commerce-grid">
-            <article class="commerce-card">
-                <h2>Itens do pedido</h2>
-                <div class="summary-list">
-                    {% for item in pedido.itens %}
-                    <div class="summary-line">
-                        <span>{{ item.quantidade }}x {{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</span>
-                        <strong>R$ {{ '%.2f'|format((item.quantidade or 0) * (item.preco_unitario or 0))|replace('.', ',') }}</strong>
-                    </div>
-                    {% endfor %}
-                    <div class="summary-line total">
-                        <span>Total do pedido</span>
-                        <strong>R$ {{ '%.2f'|format(pedido.total or 0)|replace('.', ',') }}</strong>
-                    </div>
-                </div>
-            </article>
-
-            <aside class="commerce-card">
-                <h2>Dados de entrega e pagamento</h2>
-                {% set cliente = detalhes.get('cliente_cadastro', {}) %}
-                <div class="summary-list">
-                    <div class="summary-line"><span>Cliente</span><strong>{{ pedido.cliente_nome or '-' }}</strong></div>
-                    <div class="summary-line"><span>Celular</span><strong>{{ pedido.cliente_celular or '-' }}</strong></div>
-                    <div class="summary-line"><span>Endereço</span><strong>{{ cliente.get('endereco', '-') }} {{ cliente.get('numero', '') }}</strong></div>
-                    <div class="summary-line"><span>Bairro/Cidade</span><strong>{{ cliente.get('bairro', '-') }} - {{ cliente.get('cidade', '-') }}/{{ cliente.get('estado', '-') }}</strong></div>
-                    <div class="summary-line"><span>Método</span><strong>{{ pedido.metodo_pagamento or '-' }}</strong></div>
-                    <div class="summary-line"><span>Valor informado</span><strong>R$ {{ '%.2f'|format(pedido.valor_pago or pedido.total or 0)|replace('.', ',') }}</strong></div>
-                    {% set troco = detalhes.get('pagamento', {}).get('troco') %}
-                    {% if troco is not none and troco > 0 %}
-                    <div class="summary-line"><span>Troco</span><strong>R$ {{ '%.2f'|format(troco)|replace('.', ',') }}</strong></div>
-                    {% endif %}
-                </div>
-                <div style="margin-top: 12px; display:grid; gap:8px;">
-                    <a href="{{ url_for('index') }}" class="btn-action primary wide" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">Nova compra</a>
-                    <a href="{{ url_for('public.cadastro_cliente_site') }}" class="btn-action secondary wide" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;">Atualizar cadastro</a>
-                </div>
-            </aside>
-        </section>
-    </main>
-
-    <nav class="app-bottom-nav" aria-label="Navegação rápida">
-        <a href="{{ url_for('index') }}"><span aria-hidden="true">&#127968;</span>Início</a>
-        <a href="{{ url_for('public.carrinho_site') }}"><span aria-hidden="true">&#128722;</span>Carrinho</a>
-        <a href="{{ url_for('public.checkout_site') }}"><span aria-hidden="true">&#128179;</span>Checkout</a>
-        <a href="{{ url_for('public.cadastro_cliente_site') }}"><span aria-hidden="true">&#128100;</span>Cadastro</a>
-    </nav>
-
-    <footer class="retail-footer" style="background: {{ empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#1f2b38' }};">
-        <div class="retail-footer-inner">
+<section class="store-grid store-grid--commerce">
+    <article class="store-panel">
+        <div class="store-panel-header">
             <div>
-                <p>&copy; {{ ano_atual }} {{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}.</p>
-                <p>{{ empresa_config.ecom_footer_texto if empresa_config and empresa_config.ecom_footer_texto else 'Loja oficial com pedidos online.' }}</p>
-                <p>{{ empresa_config.ecom_footer_contato if empresa_config and empresa_config.ecom_footer_contato else 'Contato: suporte@systemlr.com' }}</p>
-                <p>{{ empresa_config.ecom_footer_creditos if empresa_config and empresa_config.ecom_footer_creditos else 'Créditos: SystemLR' }}</p>
+                <h2 class="store-card-title">Itens do pedido</h2>
             </div>
-            {% if funcionario_logado %}
-            <a href="{{ url_for('dashboard') }}" class="quiet-login">painel interno</a>
-            {% else %}
-            <a href="{{ url_for('login') }}" class="quiet-login">acesso interno</a>
+        </div>
+
+        <div class="store-summary-list">
+            {% for item in pedido.itens %}
+            <div class="store-summary-line">
+                <span>{{ item.quantidade }}x {{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</span>
+                <strong>R$ {{ '%.2f'|format((item.quantidade or 0) * (item.preco_unitario or 0))|replace('.', ',') }}</strong>
+            </div>
+            {% endfor %}
+            <div class="store-summary-line total">
+                <span>Total do pedido</span>
+                <strong>R$ {{ '%.2f'|format(pedido.total or 0)|replace('.', ',') }}</strong>
+            </div>
+        </div>
+    </article>
+
+    <aside class="store-panel">
+        <div class="store-panel-header">
+            <div>
+                <h2 class="store-card-title">Entrega e pagamento</h2>
+            </div>
+        </div>
+
+        {% set cliente = detalhes.get('cliente_cadastro', {}) %}
+        <div class="store-summary-list">
+            <div class="store-summary-line"><span>Cliente</span><strong>{{ pedido.cliente_nome or '-' }}</strong></div>
+            <div class="store-summary-line"><span>Celular</span><strong>{{ pedido.cliente_celular or '-' }}</strong></div>
+            <div class="store-summary-line"><span>Endereço</span><strong>{{ cliente.get('endereco', '-') }} {{ cliente.get('numero', '') }}</strong></div>
+            <div class="store-summary-line"><span>Bairro/Cidade</span><strong>{{ cliente.get('bairro', '-') }} - {{ cliente.get('cidade', '-') }}/{{ cliente.get('estado', '-') }}</strong></div>
+            <div class="store-summary-line"><span>Método</span><strong>{{ pedido.metodo_pagamento or '-' }}</strong></div>
+            <div class="store-summary-line"><span>Valor informado</span><strong>R$ {{ '%.2f'|format(pedido.valor_pago or pedido.total or 0)|replace('.', ',') }}</strong></div>
+            {% set troco = detalhes.get('pagamento', {}).get('troco') %}
+            {% if troco is not none and troco > 0 %}
+            <div class="store-summary-line"><span>Troco</span><strong>R$ {{ '%.2f'|format(troco)|replace('.', ',') }}</strong></div>
             {% endif %}
         </div>
-    </footer>
-    <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
-</body>
-</html>
 
-
+        <div class="store-grid-actions" style="margin-top: 14px;">
+            <a href="{{ url_for('index') }}" class="store-btn store-btn-primary store-btn-wide">Nova compra</a>
+            <a href="{{ url_for('public.cadastro_cliente_site') }}" class="store-btn store-btn-secondary store-btn-wide">Atualizar cadastro</a>
+        </div>
+    </aside>
+</section>
+{% endblock %}

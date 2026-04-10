@@ -6,9 +6,21 @@
 <div class="page-header">
     <h1>Enderecos Inteligentes</h1>
     <div class="header-actions">
+        {% if etiquetas_loja_ativas %}
+        <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="btn btn-secondary" target="_blank">Etiquetas de Loja</a>
+        {% endif %}
+        {% if etiquetas_endereco_ativas %}
+        <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="btn btn-secondary" target="_blank">Etiquetas de Endereco</a>
+        {% endif %}
         <a href="{{ url_for('listar_enderecos_estoque') }}" class="btn btn-secondary">Enderecos</a>
     </div>
 </div>
+
+{% if not reposicao_loja_ativa %}
+<section class="section" style="margin-bottom: 16px;">
+    <p class="mb-0">A reposicao da loja fisica esta desativada na configuracao da empresa. O painel continua disponivel para analise, mas o fluxo operacional deve ser reativado antes de usar picking e abastecimento como rotina.</p>
+</section>
+{% endif %}
 
 <section class="filters-section">
     <form method="GET" class="filters-form">

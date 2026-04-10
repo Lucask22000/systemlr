@@ -1,207 +1,166 @@
-﻿<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    {% if favicon_path %}
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
-    {% endif %}
-    <title>{{ (empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else app_name) }} | Loja online</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/home-varejo.css') }}">
-</head>
-<body class="retail-home market-home">
-    <style>
-        :root {
-            --market-primary: {{ empresa_config.ecom_cor_primaria if empresa_config and empresa_config.ecom_cor_primaria else '#ff7848' }};
-            --market-secondary: {{ empresa_config.ecom_cor_secundaria if empresa_config and empresa_config.ecom_cor_secundaria else '#ff5a2a' }};
-        }
-    </style>
-    <header class="market-header">
-        <div class="market-shell">
-            <div class="market-top-row">
-                <a class="market-brand" href="{{ url_for('index') }}">
-                    {% if empresa_config and empresa_config.logo_path %}
-                    <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo da loja">
-                    {% endif %}
-                    <span>{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else app_name }}</span>
-                </a>
+{% extends 'public/store_base.html' %}
+{% set store_page = 'home' %}
+{% set store_nav = 'home' %}
+{% set store_title = ((empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else app_name) ~ ' | Loja online') %}
 
-                <a class="market-cart" href="{{ url_for('public.carrinho_site') }}" aria-label="Abrir carrinho">
-                    <span class="market-cart-icon" aria-hidden="true">&#128722;</span>
-                    <span class="market-cart-count">{{ carrinho_site.quantidade_itens if carrinho_site else 0 }}</span>
-                </a>
+{% block store_content %}
+<section class="store-home-hero">
+    <article class="store-home-hero-copy">
+        <span class="store-kicker">{{ campanha_principal if campanha_principal else 'Oferta relâmpago' }}</span>
+        <h1>{{ empresa_config.ecom_titulo_banner if empresa_config and empresa_config.ecom_titulo_banner else 'Loja leve, compra rápida e acesso direto no celular.' }}</h1>
+        <p>{{ empresa_config.ecom_subtitulo_banner if empresa_config and empresa_config.ecom_subtitulo_banner else 'Uma vitrine mais limpa, com navegação enxuta e pronta para virar app no seu aparelho.' }}</p>
+        <div class="store-hero-actions">
+            <a href="#ofertas" class="store-btn store-btn-primary">Comprar agora</a>
+            <button type="button" class="store-btn store-btn-secondary" data-store-install-shortcut hidden>Baixar app</button>
+        </div>
+
+        <form class="store-search" data-store-product-search>
+            <label for="storeSearchInput">Buscar na loja</label>
+            <div class="store-search-field">
+                <input id="storeSearchInput" type="search" placeholder="Digite produto ou categoria" data-store-search-input>
+                <button type="button" class="store-btn store-btn-ghost" data-store-search-clear hidden>Limpar</button>
             </div>
+            <p class="store-search-feedback" data-store-search-feedback>Exibindo {{ produtos_destaque|length }} produto(s) em destaque.</p>
+        </form>
 
-            <form class="market-search" action="#ofertas" method="get">
-                <span aria-hidden="true">&#128269;</span>
-                <input type="search" name="busca" placeholder="Buscar na loja" aria-label="Buscar produtos">
-                <button type="submit">Buscar</button>
-            </form>
+        <div class="store-hero-stats">
+            <div class="store-stat-chip">
+                <span>Itens ativos</span>
+                <strong>{{ total_produtos_ativos }}</strong>
+            </div>
+            <div class="store-stat-chip">
+                <span>No carrinho</span>
+                <strong>{{ carrinho_site.quantidade_itens if carrinho_site else 0 }}</strong>
+            </div>
+        </div>
+    </article>
 
-            <section class="market-hero">
-                <article>
-                    <p>{{ campanha_principal if campanha_principal else 'Oferta relâmpago' }}</p>
-                    <h1>{{ empresa_config.ecom_titulo_banner if empresa_config and empresa_config.ecom_titulo_banner else 'Cupons, frete promocional e itens em destaque.' }}</h1>
-                    {% if empresa_config and empresa_config.ecom_subtitulo_banner %}
-                    <p class="market-hero-sub">{{ empresa_config.ecom_subtitulo_banner }}</p>
-                    {% endif %}
-                    <a href="#ofertas">Comprar agora</a>
+    <aside class="store-home-hero-side">
+        <article class="store-highlight-card">
+            <span class="store-kicker">Acesso rápido</span>
+            <strong>Menu minimalista</strong>
+            <p>Início, cadastro, carrinho e opção de instalar o app sem misturar visual com a operação.</p>
+        </article>
+
+        {% if banners_ativos %}
+        <section class="store-carousel" data-store-carousel>
+            <div class="store-carousel-track">
+                {% for banner in banners_ativos %}
+                <article class="store-carousel-item{% if loop.first %} is-active{% endif %}" data-store-slide>
+                    <img src="{{ url_for('static', filename=banner.image_path) }}" alt="{{ banner.titulo or 'Banner promocional' }}" loading="lazy">
+                    <div class="store-carousel-overlay">
+                        {% if banner.titulo %}<h3>{{ banner.titulo }}</h3>{% endif %}
+                        {% if banner.subtitulo %}<p>{{ banner.subtitulo }}</p>{% endif %}
+                    </div>
                 </article>
-                <article>
-                    <p>Compre com praticidade</p>
-                    <strong>Ofertas</strong>
-                    <span>selecionadas para facilitar sua compra</span>
-                </article>
-            </section>
-
-            {% if banners_ativos %}
-            <section class="market-carousel" id="marketCarousel">
-                <div class="market-carousel-track">
-                    {% for banner in banners_ativos %}
-                    <article class="market-slide{% if loop.first %} is-active{% endif %}" data-slide-index="{{ loop.index0 }}">
-                        <img src="{{ url_for('static', filename=banner.image_path) }}" alt="{{ banner.titulo or 'Banner promocional' }}" loading="lazy">
-                        <div class="market-slide-overlay">
-                            {% if banner.titulo %}<h3>{{ banner.titulo }}</h3>{% endif %}
-                            {% if banner.subtitulo %}<p>{{ banner.subtitulo }}</p>{% endif %}
-                        </div>
-                    </article>
-                    {% endfor %}
-                </div>
-                {% if banners_ativos|length > 1 %}
-                <div class="market-carousel-dots">
-                    {% for _ in banners_ativos %}
-                    <button type="button" class="market-dot{% if loop.first %} is-active{% endif %}" data-dot-index="{{ loop.index0 }}" aria-label="Banner {{ loop.index }}"></button>
-                    {% endfor %}
-                </div>
-                {% endif %}
-            </section>
+                {% endfor %}
+            </div>
+            {% if banners_ativos|length > 1 %}
+            <div class="store-carousel-dots">
+                {% for _ in banners_ativos %}
+                <button type="button" class="{% if loop.first %}is-active{% endif %}" data-store-dot aria-label="Banner {{ loop.index }}"></button>
+                {% endfor %}
+            </div>
             {% endif %}
+        </section>
+        {% endif %}
+    </aside>
+</section>
+
+<section class="store-home-links" aria-label="Atalhos da loja">
+    <a href="#ofertas" class="store-link-card">
+        <strong>Ofertas</strong>
+        <span>Veja os itens com maior giro e compra rápida.</span>
+    </a>
+    <a href="{{ url_for('public.carrinho_site') }}" class="store-link-card">
+        <strong>Carrinho</strong>
+        <span>Acompanhe seus itens sem trocar de fluxo.</span>
+    </a>
+    <a href="{{ url_for('public.cadastro_cliente_site') }}" class="store-link-card">
+        <strong>Cadastro</strong>
+        <span>Salve seus dados para finalizar em menos etapas.</span>
+    </a>
+</section>
+
+<section class="store-app-panel" data-store-install-panel hidden>
+    <div class="store-app-panel-copy">
+        <span class="store-kicker">Web app da loja</span>
+        <h2 data-store-install-title>Baixar app da loja</h2>
+        <p data-store-install-copy>Adicione a loja na tela inicial do celular usando o proprio navegador, sem depender de loja de aplicativos.</p>
+    </div>
+    <div class="store-app-panel-grid">
+        <div class="store-app-badge">Atalho rapido no celular</div>
+        <div class="store-app-badge">Abre em tela cheia</div>
+        <div class="store-app-badge">Compra mais direta</div>
+    </div>
+    <div class="store-app-panel-actions">
+        <button type="button" class="store-btn store-btn-primary" data-store-install-action hidden>Baixar app</button>
+        <a href="{{ url_for('public.carrinho_site') }}" class="store-btn store-btn-ghost">Abrir carrinho</a>
+    </div>
+</section>
+
+{% if campanhas_ativas %}
+<section class="store-campaign-grid" aria-label="Campanhas ativas">
+    {% for campanha in campanhas_ativas %}
+    <article class="store-campaign-card">
+        <strong>{{ campanha.nome if campanha.nome else 'Campanha ativa' }}</strong>
+        {% if campanha.texto %}<p>{{ campanha.texto }}</p>{% endif %}
+    </article>
+    {% endfor %}
+</section>
+{% endif %}
+
+<section id="ofertas">
+    <header class="store-section-header">
+        <div>
+            <span class="store-kicker">Destaques</span>
+            <h2>Produtos para pedir agora</h2>
+            <p>Busca rápida, vitrine limpa e adição direta ao carrinho.</p>
         </div>
     </header>
 
-    <main class="market-shell market-content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="flash-stack">
-                {% for category, message in messages %}
-                <div class="flash-item {{ category }}">{{ message }}</div>
-                {% endfor %}
-            </div>
-            {% endif %}
-        {% endwith %}
-
-        <section class="market-shortcuts" aria-label="Atalhos rápidos">
-            <a href="#ofertas"><span aria-hidden="true">&#128176;</span>Ofertas</a>
-            <a href="{{ url_for('public.carrinho_site') }}"><span aria-hidden="true">&#128722;</span>Carrinho</a>
-            <a href="{{ url_for('public.checkout_site') }}"><span aria-hidden="true">&#128179;</span>Checkout</a>
-            <a href="{{ url_for('public.cadastro_cliente_site') }}"><span aria-hidden="true">&#128100;</span>Cadastro</a>
-            <a href="#ofertas"><span aria-hidden="true">&#128293;</span>Destaques</a>
-        </section>
-
-        {% if campanhas_ativas %}
-        <section class="market-campaigns" aria-label="Campanhas ativas">
-            {% for campanha in campanhas_ativas %}
-            <article class="market-campaign-chip">
-                <strong>{{ campanha.nome if campanha.nome else 'Campanha ativa' }}</strong>
-                {% if campanha.texto %}<span>{{ campanha.texto }}</span>{% endif %}
-            </article>
-            {% endfor %}
-        </section>
+    <div class="store-product-grid">
+        {% for produto in produtos_destaque %}
+        {% set imagem_produto = produto.imagem_path %}
+        {% if not imagem_produto or imagem_produto == 'img/placeholders/imgindisponivel.png' %}
+            {% set imagem_produto = produto_imagem_padrao_path %}
         {% endif %}
-<section class="market-shelf" id="ofertas">
-            <header class="section-heading">
-                <p>Recomendados para você</p>
-                <h2>Descubra produtos</h2>
-            </header>
-
-            <div class="product-grid">
-                {% for produto in produtos_destaque %}
-                <article class="product-card">
-                    <div class="product-media">
-                        {% set imagem_produto = produto.imagem_path %}
-                        {% if not imagem_produto or imagem_produto == 'img/placeholders/imgindisponivel.png' %}
-                            {% set imagem_produto = produto_imagem_padrao_path %}
-                        {% endif %}
-                        {% if imagem_produto %}
-                        <img class="product-image" src="{{ url_for('static', filename=imagem_produto) }}" alt="{{ produto.nome }}" loading="lazy">
-                        {% else %}
-                        <div class="product-image product-placeholder">{{ produto.nome[:2]|upper }}</div>
-                        {% endif %}
-                        <span class="product-discount">-{{ ((loop.index * 3) % 45) + 5 }}%</span>
-                    </div>
-
-                    <div class="product-body">
-                        <p class="product-badge">Indicado</p>
-                        <h3>{{ produto.nome }}</h3>
-                        <p class="product-meta">{{ produto.categoria.nome if produto.categoria else 'Destaque' }}</p>
-                        <div class="product-pricing">
-                            <strong>R$ {{ '%.2f'|format(produto.preco_venda or 0)|replace('.', ',') }}</strong>
-                            <span>{{ (loop.index * 37) + 120 }} vendidos</span>
-                        </div>
-                        <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}" class="add-cart-form">
-                            {{ csrf_input|safe }}
-                            <input type="hidden" name="produto_id" value="{{ produto.id }}">
-                            <input type="hidden" name="next" value="{{ url_for('index') }}#ofertas">
-                            <input type="number" name="quantidade" min="1" max="99" value="1" aria-label="Quantidade de {{ produto.nome }}">
-                            <button type="submit">Adicionar</button>
-                        </form>
-                    </div>
-                </article>
+        <article
+            class="store-product-card"
+            data-product-card
+            data-product-search="{{ produto.nome }} {{ produto.categoria.nome if produto.categoria else 'Destaque' }}"
+        >
+            <div class="store-product-media">
+                {% if imagem_produto %}
+                <img src="{{ url_for('static', filename=imagem_produto) }}" alt="{{ produto.nome }}" loading="lazy">
                 {% else %}
-                <p class="empty-state">Nenhum produto disponível para venda no momento.</p>
-                {% endfor %}
+                <div class="store-product-placeholder">{{ produto.nome[:2]|upper }}</div>
+                {% endif %}
+                <span class="store-product-tag">Destaque</span>
             </div>
-        </section>
-    </main>
 
-    <nav class="market-bottom-nav" aria-label="Navegação principal mobile">
-        <a href="{{ url_for('index') }}" class="active"><span aria-hidden="true">&#127968;</span>Início</a>
-        <a href="#ofertas"><span aria-hidden="true">&#127991;</span>Ofertas</a>
-        <a href="{{ url_for('public.carrinho_site') }}"><span aria-hidden="true">&#128722;</span>Carrinho</a>
-        <a href="{{ url_for('public.checkout_site') }}"><span aria-hidden="true">&#128179;</span>Checkout</a>
-        <a href="{{ url_for('public.cadastro_cliente_site') }}"><span aria-hidden="true">&#128100;</span>Cadastro</a>
-    </nav>
-
-    <footer class="retail-footer" style="background: {{ empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#1f2b38' }};">
-        <div class="retail-footer-inner">
-            <div>
-                <p>&copy; {{ ano_atual }} {{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else app_name }}.</p>
-                <p>{{ empresa_config.ecom_footer_texto if empresa_config and empresa_config.ecom_footer_texto else 'Loja oficial com pedidos online.' }}</p>
-                <p>{{ empresa_config.ecom_footer_contato if empresa_config and empresa_config.ecom_footer_contato else 'Contato: suporte@systemlr.com' }}</p>
-                <p>{{ empresa_config.ecom_footer_creditos if empresa_config and empresa_config.ecom_footer_creditos else 'Créditos: SystemLR' }}</p>
+            <div class="store-product-body">
+                <h3>{{ produto.nome }}</h3>
+                <p class="store-product-meta">{{ produto.categoria.nome if produto.categoria else 'Categoria em destaque' }}</p>
+                <div class="store-product-price">
+                    <strong>R$ {{ '%.2f'|format(produto.preco_venda or 0)|replace('.', ',') }}</strong>
+                    <span>Pedido rápido</span>
+                </div>
+                <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}" class="store-product-form">
+                    {{ csrf_input|safe }}
+                    <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                    <input type="hidden" name="next" value="{{ url_for('index') }}#ofertas">
+                    <input type="number" name="quantidade" min="1" max="99" value="1" aria-label="Quantidade de {{ produto.nome }}">
+                    <button type="submit" class="store-btn store-btn-primary">Adicionar</button>
+                </form>
             </div>
-            {% if funcionario_logado %}
-            <a href="{{ url_for('dashboard') }}" class="quiet-login">painel interno</a>
-            {% else %}
-            <a href="{{ url_for('login') }}" class="quiet-login">acesso interno</a>
-            {% endif %}
-        </div>
-    </footer>
-    <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
-    <script>
-        (function () {
-            const carousel = document.getElementById('marketCarousel');
-            if (!carousel) return;
-            const slides = Array.from(carousel.querySelectorAll('.market-slide'));
-            const dots = Array.from(carousel.querySelectorAll('.market-dot'));
-            if (slides.length <= 1) return;
-
-            let current = 0;
-            function render(index) {
-                current = index;
-                slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
-                dots.forEach((dot, i) => dot.classList.toggle('is-active', i === current));
-            }
-
-            dots.forEach((dot, i) => dot.addEventListener('click', () => render(i)));
-            setInterval(() => render((current + 1) % slides.length), 5000);
-        })();
-    </script>
-</body>
-</html>
-
-
+        </article>
+        {% else %}
+        <article class="store-panel">
+            <h3 class="store-card-title">Sem produtos disponíveis</h3>
+            <p class="store-note">Nenhum item está liberado para venda online no momento.</p>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

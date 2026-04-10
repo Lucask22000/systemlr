@@ -104,6 +104,39 @@
         font-size: 1rem;
     }
 
+    .funcionario-access-config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .funcionario-access-card .form-group {
+        margin-bottom: 18px;
+    }
+
+    .funcionario-access-card .form-group small {
+        display: block;
+        margin-top: 8px;
+        color: #6b7280;
+    }
+
+    .funcionario-access-checkbox {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+
+    .funcionario-access-checkbox input {
+        margin-top: 3px;
+    }
+
+    .funcionario-access-multiselect {
+        min-height: 182px;
+    }
+
     .funcionario-access-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

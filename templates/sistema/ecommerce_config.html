@@ -1,10 +1,10 @@
 ﻿{% extends "base.html" %}
 
-{% block title %}Configuração E-commerce - SystemLR{% endblock %}
+{% block title %}Tema e Loja Online - SystemLR{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>Configuração de E-commerce</h1>
+    <h1>Tema e Loja Online</h1>
 </div>
 
 <div class="form-container">
@@ -12,24 +12,34 @@
         {{ csrf_input|safe }}
 
         <div class="section" style="margin: 0 0 16px;">
+            <h2>Escopo desta tela</h2>
+            <p style="margin: 0 0 12px; color: #5b6575;">
+                Esta view concentra identidade visual, banners, campanhas, pagamentos e integrações da loja online.
+            </p>
+            <div class="form-actions" style="margin-top: 0;">
+                <a href="{{ url_for('configurar_ativacao_ecommerce') }}" class="btn btn-secondary">Abrir ativação da loja</a>
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 0 16px;">
             <h2>Tema da vitrine</h2>
             <div class="form-row">
                 <div class="form-group">
-                    <label for="ecom_cor_primária">Cor primária</label>
+                    <label for="ecom_cor_primaria">Cor primária</label>
                     <input
                         type="color"
-                        id="ecom_cor_primária"
-                        name="ecom_cor_primária"
-                        value="{{ empresa.ecom_cor_primária if empresa and empresa.ecom_cor_primária else '#ff7848' }}"
+                        id="ecom_cor_primaria"
+                        name="ecom_cor_primaria"
+                        value="{{ empresa.ecom_cor_primaria if empresa and empresa.ecom_cor_primaria else '#ff7848' }}"
                         class="input-text">
                 </div>
                 <div class="form-group">
-                    <label for="ecom_cor_secundária">Cor secundária</label>
+                    <label for="ecom_cor_secundaria">Cor secundária</label>
                     <input
                         type="color"
-                        id="ecom_cor_secundária"
-                        name="ecom_cor_secundária"
-                        value="{{ empresa.ecom_cor_secundária if empresa and empresa.ecom_cor_secundária else '#ff5a2a' }}"
+                        id="ecom_cor_secundaria"
+                        name="ecom_cor_secundaria"
+                        value="{{ empresa.ecom_cor_secundaria if empresa and empresa.ecom_cor_secundaria else '#ff5a2a' }}"
                         class="input-text">
                 </div>
             </div>
@@ -280,7 +290,7 @@
             <div style="
                 border-radius: 12px;
                 padding: 14px;
-                background: linear-gradient(90deg, {{ empresa.ecom_cor_primária if empresa and empresa.ecom_cor_primária else '#ff7848' }} 0%, {{ empresa.ecom_cor_secundária if empresa and empresa.ecom_cor_secundária else '#ff5a2a' }} 100%);
+                background: linear-gradient(90deg, {{ empresa.ecom_cor_primaria if empresa and empresa.ecom_cor_primaria else '#ff7848' }} 0%, {{ empresa.ecom_cor_secundaria if empresa and empresa.ecom_cor_secundaria else '#ff5a2a' }} 100%);
                 color: #fff;
             ">
                 <strong style="display:block;font-size:1.1rem;">

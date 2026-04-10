@@ -28,6 +28,11 @@
             <span>Instrucoes praticas distribuidas nos guias.</span>
         </article>
         <article class="help-overview-card">
+            <small>Etapas guiadas</small>
+            <strong>{{ resumo_ajuda.etapas }}</strong>
+            <span>Blocos de execucao para facilitar treinamento e consulta rapida.</span>
+        </article>
+        <article class="help-overview-card">
             <small>Fluxogramas</small>
             <strong>{{ resumo_ajuda.fluxogramas }}</strong>
             <span>Operacoes com imagem visual do fluxo.</span>
@@ -65,10 +70,21 @@
                         <p class="help-topic-objective">{{ topico.objetivo }}</p>
                         {% endif %}
                         <div class="help-meta-row">
-                            <span class="help-meta-pill">{{ (topico.passos|length) if topico.passos else 0 }} passos</span>
+                            <span class="help-meta-pill">{{ (topico.passos_tutorial|length) if topico.passos_tutorial else 0 }} passos</span>
+                            {% if topico.etapas %}<span class="help-meta-pill">{{ topico.etapas|length }} etapas</span>{% endif %}
                             {% if topico.checklist %}<span class="help-meta-pill">{{ topico.checklist|length }} itens de checklist</span>{% endif %}
                             {% if topico.fluxograma %}<span class="help-meta-pill">Fluxograma visual</span>{% endif %}
                         </div>
+                        {% if topico.etapas %}
+                        <div class="help-stage-preview">
+                            <strong>Etapas do tutorial</strong>
+                            <ul class="help-stage-preview-list">
+                                {% for etapa in topico.etapas[:3] %}
+                                <li><span>Etapa {{ etapa.ordem }}</span>{{ etapa.titulo }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
                         {% if topico.fluxo_paginas %}
                         <div class="help-flow-inline">
                             <strong>Fluxo deste menu</strong>
@@ -116,6 +132,7 @@
         <h2>Como usar a ajuda no dia a dia</h2>
         <ul class="mb-0">
             <li>Abra o guia do modulo antes de executar um processo novo ou treinar outro colaborador.</li>
+            <li>Comece pela secao de etapas para entender o bloco atual da operacao e depois siga o passo a passo consolidado.</li>
             <li>Use o checklist para validar pre-requisitos e o fluxograma para explicar a ordem da operacao.</li>
             <li>Se algo sair do padrao, consulte a secao de problemas comuns antes de abrir chamado interno.</li>
         </ul>

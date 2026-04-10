@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
     {% set app_install_name = empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' %}
-    {% set app_icon_path = (empresa_config.logo_path if empresa_config and empresa_config.logo_path else (favicon_path or 'uploads/empresa/Loja_do_Lucas_logo.png')) %}
     {% if favicon_path %}
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
     {% endif %}
@@ -23,10 +22,17 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/tokens.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/layout.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/tables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/assistant.css') }}">
     {% block extra_css %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/core/app-theme.css') }}">
 </head>
-<body class="app-body" data-app-install-name="{{ app_install_name }}">
+<body
+    class="app-body"
+    data-app-install-name="{{ app_install_name }}"
+    data-current-endpoint="{{ endpoint_atual or '' }}"
+    data-current-screen="{{ tela_atual_nome or '' }}"
+    data-assistant-enabled="{{ '1' if assistente_local_status and assistente_local_status.enabled else '0' }}"
+>
     <header class="navbar app-navbar">
         <div class="container navbar-container">
             <a href="{{ url_for('boas_vindas') }}" class="navbar-brand brand-link d-flex align-items-center gap-2 me-2">
@@ -45,11 +51,12 @@
                 <div class="nav-dropdown">
                     <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Meu Perfil</button>
                     <div class="nav-submenu">
-                        <a href="{{ url_for('dashboard') }}" class="nav-link nav-sublink">Meu Painel</a>
+                        <a href="{{ url_for('boas_vindas') }}" class="nav-link nav-sublink">Home Operacional</a>
+                        <a href="{{ url_for('dashboard') }}" class="nav-link nav-sublink">Meu Cadastro</a>
                     </div>
                 </div>
 
-                {% if 'gestao_negocio' in paginas_permitidas_usuario %}
+                {% if 'gestao_negocio' in paginas_permitidas_usuario or 'empresa' in paginas_permitidas_usuario %}
                 <div class="nav-dropdown">
                     <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Gestao</button>
                     <div class="nav-submenu">
@@ -58,12 +65,6 @@
                         {% endif %}
                         {% if 'empresa' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('editar_empresa') }}" class="nav-link nav-sublink">Empresa</a>
-                        {% endif %}
-                        {% if 'ecommerce_config' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('configurar_ecommerce') }}" class="nav-link nav-sublink">E-commerce</a>
-                        {% endif %}
-                        {% if 'rh_funcoes' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_perfis_rh') }}" class="nav-link nav-sublink">Cargos e Perfis</a>
                         {% endif %}
                     </div>
                 </div>
@@ -99,19 +100,19 @@
                         {% if atendimento_mesas_ativo and 'garcons' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('listar_garcons') }}" class="nav-link nav-sublink">Garçons</a>
                         {% endif %}
-                        {% if 'empresa' in paginas_permitidas_usuario and atendimento_mesas_ativo %}
-                        <a href="{{ url_for('editar_empresa') }}#config-cardapio" class="nav-link nav-sublink">Cardápio QR</a>
-                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
 
-                {% if 'produtos' in paginas_permitidas_usuario or 'estoques' in paginas_permitidas_usuario or 'categorias' in paginas_permitidas_usuario or 'fornecedores' in paginas_permitidas_usuario or 'movimentacoes' in paginas_permitidas_usuario or 'relatorios' in paginas_permitidas_usuario or 'equipamentos_estoque' in paginas_permitidas_usuario or 'enderecos_inteligentes' in paginas_permitidas_usuario %}
+                {% if 'produtos' in paginas_permitidas_usuario or 'estoques' in paginas_permitidas_usuario or 'categorias' in paginas_permitidas_usuario or 'movimentacoes' in paginas_permitidas_usuario or 'almoxarifado' in paginas_permitidas_usuario or 'relatorios' in paginas_permitidas_usuario or 'equipamentos_estoque' in paginas_permitidas_usuario or 'enderecos_inteligentes' in paginas_permitidas_usuario or 'enderecos_estoque' in paginas_permitidas_usuario %}
                 <div class="nav-dropdown">
                     <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Estoque</button>
                     <div class="nav-submenu">
                         {% if 'produtos' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('listar_produtos') }}" class="nav-link nav-sublink">Produtos</a>
+                        {% if not empresa_config or empresa_config.emissao_etiqueta_loja_ativa != False %}
+                        <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="nav-link nav-sublink">Etiquetas de Loja</a>
+                        {% endif %}
                         {% endif %}
                         {% if 'estoques' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('listar_estoques') }}" class="nav-link nav-sublink">Estoques</a>
@@ -119,9 +120,8 @@
                         {% if 'categorias' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('listar_categorias') }}" class="nav-link nav-sublink">Categorias</a>
                         {% endif %}
-                        {% if 'fornecedores' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_fornecedores') }}" class="nav-link nav-sublink">Fornecedores</a>
-                        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="nav-link nav-sublink">Recebimentos</a>
+                        {% if 'enderecos_estoque' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_enderecos_estoque') }}" class="nav-link nav-sublink">Endereços de Estoque</a>
                         {% endif %}
                         {% if 'equipamentos_estoque' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('listar_equipamentos_movimentacao') }}" class="nav-link nav-sublink">Equipamentos</a>
@@ -129,11 +129,14 @@
                         {% if 'enderecos_inteligentes' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('enderecos_inteligentes') }}" class="nav-link nav-sublink">Enderecos Inteligentes</a>
                         {% endif %}
-                        {% if 'expedicao' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('coletor_estoque') }}" class="nav-link nav-sublink">Coletor Operacional</a>
+                        {% if 'enderecos_estoque' in paginas_permitidas_usuario and (not empresa_config or empresa_config.emissao_etiqueta_endereco_ativa != False) %}
+                        <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="nav-link nav-sublink">Etiquetas de Endereco</a>
                         {% endif %}
                         {% if 'movimentacoes' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_movimentacoes') }}" class="nav-link nav-sublink">Movimentações</a>
+                        <a href="{{ url_for('listar_movimentacoes') }}" class="nav-link nav-sublink">Entradas e Saídas Internas</a>
+                        {% endif %}
+                        {% if 'almoxarifado' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_almoxarifado') }}" class="nav-link nav-sublink">Almoxarifado</a>
                         {% endif %}
                         {% if 'relatorios' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('relatorios') }}" class="nav-link nav-sublink">Relatórios</a>
@@ -142,24 +145,42 @@
                 </div>
                 {% endif %}
 
-                {% if 'expedicao' in paginas_permitidas_usuario %}
+                {% if 'recebimentos' in paginas_permitidas_usuario or 'fornecedores' in paginas_permitidas_usuario %}
                 <div class="nav-dropdown">
-                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Expedicao</button>
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Recebimento</button>
                     <div class="nav-submenu">
-                        <a href="{{ url_for('central_expedicao') }}" class="nav-link nav-sublink">Central de Expedicao</a>
-                        <a href="{{ url_for('listar_separacao_entrega') }}" class="nav-link nav-sublink">Separacao e Entrega</a>
-                        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="nav-link nav-sublink">Roteirizacao</a>
-                        <a href="{{ url_for('painel_expedicao') }}" class="nav-link nav-sublink">Painel em Tempo Real</a>
-                        <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="nav-link nav-sublink">Etiquetas</a>
-                        <a href="{{ url_for('listar_movimentacoes') }}" class="nav-link nav-sublink">Entradas e Saidas</a>
-                        <a href="{{ url_for('nova_movimentacao') }}" class="nav-link nav-sublink">Entrada em Massa</a>
-                        <a href="{{ url_for('transferir_armazenamento') }}" class="nav-link nav-sublink">Transferencias entre Estoques</a>
-                        <a href="{{ url_for('frota_expedicao') }}" class="nav-link nav-sublink">Frota Propria e Terceiros</a>
+                        {% if 'recebimentos' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="nav-link nav-sublink">Central de Recebimentos</a>
+                        <a href="{{ url_for('novo_recebimento_fornecedor') }}" class="nav-link nav-sublink">Novo Recebimento</a>
+                        {% endif %}
+                        {% if 'fornecedores' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_fornecedores') }}" class="nav-link nav-sublink">Fornecedores</a>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
 
-                {% if 'rh_indicadores' in paginas_permitidas_usuario or 'rh_organograma' in paginas_permitidas_usuario or 'funcionarios' in paginas_permitidas_usuario or 'rh_funcoes' in paginas_permitidas_usuario or 'auditoria' in paginas_permitidas_usuario or 'empresa' in paginas_permitidas_usuario %}
+                {% if 'expedicao' in paginas_permitidas_usuario or 'transferencias_estoque' in paginas_permitidas_usuario %}
+                <div class="nav-dropdown">
+                    <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Expedicao</button>
+                    <div class="nav-submenu">
+                        {% if 'expedicao' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('central_expedicao') }}" class="nav-link nav-sublink">Central de Expedicao</a>
+                        <a href="{{ url_for('listar_separacao_entrega') }}" class="nav-link nav-sublink">Separacao e Entrega</a>
+                        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="nav-link nav-sublink">Roteirizacao</a>
+                        <a href="{{ url_for('painel_expedicao') }}" class="nav-link nav-sublink">Painel em Tempo Real</a>
+                        <a href="{{ url_for('coletor_estoque') }}" class="nav-link nav-sublink">Coletor Operacional</a>
+                        <a href="{{ url_for('frota_expedicao') }}" class="nav-link nav-sublink">Frota Propria e Terceiros</a>
+                        {% endif %}
+                        {% if 'transferencias_estoque' in paginas_permitidas_usuario %}
+                        <a href="{{ url_for('listar_transferencias_estoque') }}" class="nav-link nav-sublink">Historico de Transferencias</a>
+                        <a href="{{ url_for('transferir_armazenamento') }}" class="nav-link nav-sublink">Nova Transferencia entre Lojas/CDs</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if 'rh_indicadores' in paginas_permitidas_usuario or 'rh_organograma' in paginas_permitidas_usuario or 'funcionarios' in paginas_permitidas_usuario or 'rh_funcoes' in paginas_permitidas_usuario or 'auditoria' in paginas_permitidas_usuario %}
                 <div class="nav-dropdown">
                     <button type="button" class="nav-dropdown-toggle" aria-expanded="false">Meu RH</button>
                     <div class="nav-submenu">
@@ -173,13 +194,11 @@
                         <a href="{{ url_for('listar_funcionarios') }}" class="nav-link nav-sublink">Funcionarios</a>
                         {% endif %}
                         {% if 'rh_funcoes' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('listar_perfis_rh') }}" class="nav-link nav-sublink">Cargos e Perfis</a>
+                        <a href="{{ url_for('listar_funcoes_rh') }}" class="nav-link nav-sublink">Cargos</a>
+                        <a href="{{ url_for('listar_perfis_rh') }}" class="nav-link nav-sublink">Perfis de Acesso</a>
                         {% endif %}
                         {% if 'auditoria' in paginas_permitidas_usuario %}
                         <a href="{{ url_for('auditoria_sistema') }}" class="nav-link nav-sublink">Auditoria</a>
-                        {% endif %}
-                        {% if 'empresa' in paginas_permitidas_usuario %}
-                        <a href="{{ url_for('editar_empresa') }}" class="nav-link nav-sublink">Empresa</a>
                         {% endif %}
                     </div>
                 </div>
@@ -189,7 +208,8 @@
                 <div class="nav-dropdown">
                     <button type="button" class="nav-dropdown-toggle" aria-expanded="false">E-commerce</button>
                     <div class="nav-submenu">
-                        <a href="{{ url_for('configurar_ecommerce') }}" class="nav-link nav-sublink">Tema, Banner e Promoções</a>
+                        <a href="{{ url_for('configurar_ativacao_ecommerce') }}" class="nav-link nav-sublink">Ativação da Loja</a>
+                        <a href="{{ url_for('configurar_ecommerce') }}" class="nav-link nav-sublink">Tema e Loja Online</a>
                     </div>
                 </div>
                 {% endif %}
@@ -216,12 +236,40 @@
                     </div>
                 </div>
 
+                {% if estoques_contexto_disponiveis %}
+                <form method="POST" action="{{ url_for('atualizar_contexto_filial') }}" class="nav-context-form">
+                    {{ csrf_input|safe }}
+                    <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+                    <div class="nav-context-meta">
+                        <label for="navEstoqueContexto" class="nav-context-label">Filial do estoque</label>
+                        <span class="nav-context-helper">Aplica-se a estoque, recebimento e armazenagem.</span>
+                    </div>
+                    <select id="navEstoqueContexto" name="estoque_contexto_id" class="nav-context-select" data-auto-submit-context>
+                        <option value="all" {% if not estoque_contexto_id %}selected{% endif %}>Todas as filiais</option>
+                        {% for estoque in estoques_contexto_disponiveis %}
+                        <option value="{{ estoque.id }}" {% if estoque_contexto_id == estoque.id %}selected{% endif %}>
+                            {{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% endif %}
+
                 <div class="nav-dropdown nav-dropdown-user">
                     <button type="button" class="nav-dropdown-toggle nav-user-toggle" aria-expanded="false">
                         {% if funcionario_logado.imagem_perfil_path %}
-                        <img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Perfil" style="width:24px;height:24px;border-radius:999px;object-fit:cover;vertical-align:middle;margin-right:6px;">
+                        <span class="nav-user-avatar">
+                            <img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image">
+                        </span>
+                        {% else %}
+                        <span class="nav-user-avatar nav-user-avatar-fallback">
+                            {{ (funcionario_logado.nome or 'U')[:1]|upper }}
+                        </span>
                         {% endif %}
-                        {{ funcionario_logado.nome }}
+                        <span class="nav-user-meta">
+                            <span class="nav-user-name">{{ funcionario_logado.nome }}</span>
+                            <span class="nav-user-matricula">{{ funcionario_logado.matricula or 'Matrícula não definida' }}</span>
+                        </span>
                     </button>
                     <div class="nav-submenu">
                         {% if 'rh_organograma' in paginas_permitidas_usuario %}
@@ -240,6 +288,15 @@
 
     <main class="main-content">
         <div class="container content-shell">
+            {% if funcionario_logado and tela_atual_nome %}
+            <div class="app-context-strip">
+                <div class="app-context-screen">
+                    <span class="app-context-kicker">Tela atual</span>
+                    <strong class="app-context-title">{{ tela_atual_nome }}</strong>
+                    <span class="app-context-section">{{ secao_atual_nome or 'Operação' }}</span>
+                </div>
+            </div>
+            {% endif %}
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -269,6 +326,58 @@
         </div>
     </footer>
 
+    {% if funcionario_logado and assistente_local_status and assistente_local_status.enabled %}
+    <div
+        class="assistant-shell"
+        id="localAssistant"
+        data-assistant-state="{{ assistente_local_status.state or 'idle' }}"
+        data-assistant-mode="{{ assistente_local_status.mode or 'lexical' }}"
+    >
+        <button type="button" class="assistant-fab" id="assistantToggle" aria-expanded="false" aria-controls="assistantPanel">
+            <span class="assistant-fab-title">Marcia</span>
+            <span class="assistant-fab-subtitle">
+                {% if assistente_local_status.mode == 'semantic' %}
+                Offline pronta
+                {% else %}
+                Offline em preparo
+                {% endif %}
+            </span>
+        </button>
+
+        <section class="assistant-panel" id="assistantPanel" hidden>
+            <header class="assistant-panel-header">
+                <div>
+                    <strong>Marcia</strong>
+                    <p id="assistantStatusText">{{ assistente_local_status.message or 'Marcia esta offline e pronta para ajudar.' }}</p>
+                </div>
+                <div class="assistant-header-actions">
+                    <button type="button" class="assistant-header-btn" id="assistantReset" aria-label="Limpar conversa">Nova conversa</button>
+                    <button type="button" class="assistant-header-btn" id="assistantClose" aria-label="Minimizar Marcia">Minimizar</button>
+                </div>
+            </header>
+
+            <div class="assistant-panel-body">
+                <div id="assistantMessages" class="assistant-messages" aria-live="polite"></div>
+
+                <div class="assistant-suggestion-list" id="assistantSuggestions">
+                    <button type="button" class="assistant-chip" data-assistant-question="O que posso fazer nesta tela?">O que posso fazer nesta tela?</button>
+                    <button type="button" class="assistant-chip" data-assistant-question="Onde altero acessos de um colaborador?">Onde altero acessos?</button>
+                    <button type="button" class="assistant-chip" data-assistant-question="Como registrar um recebimento?">Como registrar um recebimento?</button>
+                    <button type="button" class="assistant-chip" data-assistant-question="O que fazer depois de separar um pedido?">Proximo passo do pedido</button>
+                </div>
+
+                <form id="assistantForm" class="assistant-form">
+                    <label for="assistantQuestion" class="visually-hidden">Envie uma pergunta para a Marcia</label>
+                    <textarea id="assistantQuestion" class="assistant-input" rows="2" maxlength="500" data-skip-tooltip="1"></textarea>
+                    <div class="assistant-form-actions">
+                        <button type="submit" class="btn btn-primary btn-sm assistant-send-btn">Enviar</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
     <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -290,7 +399,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/form-enhancements.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/operational-flow.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/local-ai-assistant.js') }}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token }}">
     {% set app_install_name = empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' %}
-    {% set app_icon_path = (empresa_config.logo_path if empresa_config and empresa_config.logo_path else (favicon_path or 'uploads/empresa/Loja_do_Lucas_logo.png')) %}
+    {% if favicon_path %}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
+    {% endif %}
     <meta name="theme-color" content="#0f766e">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -90,7 +92,7 @@
                         {% endfor %}
                     </select>
                     <span class="auth-help">
-                        Perfil de acesso define as paginas liberadas por padrao. Ajustes individuais continuam disponiveis depois.
+                        Perfil de acesso define as paginas liberadas por padrao. Ajustes individuais continuam disponiveis depois. <a href="{{ url_for('listar_perfis_rh') }}">Gerenciar perfis</a>.
                     </span>
                 </div>
                 <div class="auth-field">
@@ -108,13 +110,17 @@
                         {% endfor %}
                     </select>
                     <span class="auth-help">
-                        Não encontrou o cargo? <a href="{{ url_for('listar_perfis_rh') }}">Cadastrar cargo ou perfil de acesso</a>.
+                        Não encontrou o cargo? <a href="{{ url_for('listar_funcoes_rh') }}">Cadastrar cargo</a>.
                     </span>
+                </div>
+                <div class="auth-field">
+                    <label for="numero_cadastro">Numero de cadastro</label>
+                    <input type="text" id="numero_cadastro" name="numero_cadastro" maxlength="12" value="Gerado automaticamente apos salvar" readonly>
                 </div>
                 <div class="auth-field">
                     <label for="matricula">Matricula</label>
                     <input type="text" id="matricula" name="matricula" maxlength="30" value="Gerada automaticamente apos salvar" readonly>
-                    <span class="auth-help">Padrao: codigo da empresa + codigo da filial principal + sequencial.</span>
+                    <span class="auth-help">Padrao: codigo da filial principal + numero de cadastro.</span>
                 </div>
                 <div class="auth-field">
                     <label for="cpf">CPF</label>
@@ -197,6 +203,7 @@
         </form>
     </div>
     <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/form-enhancements.js') }}"></script>
     <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
 </body>
 </html>

@@ -56,7 +56,7 @@
                         name="busca"
                         class="form-control"
                         value="{{ filtros.busca }}"
-                        placeholder="Nome, email, matricula, CPF, cargo"
+                        placeholder="Nome, email, matricula, cadastro, CPF, cargo"
                     >
                 </div>
                 <div class="funcionario-filter-field">
@@ -120,7 +120,7 @@
                 <div class="funcionario-mobile-head">
                     <div>
                         <h3>{{ func.nome }}</h3>
-                        <p class="funcionario-mobile-matricula">Matricula: {{ func.matricula or '-' }}</p>
+                        <p class="funcionario-mobile-matricula">Cadastro: {{ func.numero_cadastro or '-' }} | Matricula: {{ func.matricula or '-' }}</p>
                     </div>
                     <span class="funcionario-pill status-{{ 'ativo' if func.ativo else 'inativo' }}">
                         {{ 'ATIVO' if func.ativo else 'INATIVO' }}
@@ -168,6 +168,7 @@
                 <thead>
                     <tr>
                         <th>Nome</th>
+                        <th>Cadastro</th>
                         <th>Matricula</th>
                         <th>Contato</th>
                         <th>Tipo / Cargo</th>
@@ -181,6 +182,7 @@
                     {% for func in funcionarios %}
                         <tr class="funcionario-table-row">
                             <td data-label="Nome"><strong>{{ func.nome }}</strong></td>
+                            <td data-label="Cadastro">{{ func.numero_cadastro or '-' }}</td>
                             <td data-label="Matricula">{{ func.matricula or '-' }}</td>
                             <td data-label="Contato">
                                 <div class="funcionario-table-stack">
