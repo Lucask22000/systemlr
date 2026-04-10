@@ -322,17 +322,6 @@
         </div>
     </main>
 
-    <footer class="footer">
-        <div class="container footer-inner">
-            <p>
-                &copy; {{ ano_atual }} {{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' }}.
-                {{ empresa_config.ecom_footer_texto if empresa_config and empresa_config.ecom_footer_texto else 'Gestão e operação integrada.' }}
-                {{ empresa_config.ecom_footer_contato if empresa_config and empresa_config.ecom_footer_contato else 'Contato: suporte@systemlr.com' }}
-                {{ empresa_config.ecom_footer_creditos if empresa_config and empresa_config.ecom_footer_creditos else 'Créditos: SystemLR' }}
-            </p>
-        </div>
-    </footer>
-
     {% if funcionario_logado and assistente_local_status and assistente_local_status.enabled %}
     <div
         class="assistant-shell"

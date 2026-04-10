@@ -158,3 +158,161 @@
         white-space: normal;
     }
 }
+
+/* Padrao reutilizavel para tabelas administrativas */
+.table-responsive-admin {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.table-responsive-admin .table-admin {
+    width: 100%;
+    table-layout: auto;
+}
+
+.table-responsive-admin .table-admin th,
+.table-responsive-admin .table-admin td {
+    vertical-align: top;
+}
+
+.table-responsive-admin .table-admin td[data-label],
+.table-responsive-admin .table-admin .table-admin__cell--wrap {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.table-admin__actions {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 170px;
+}
+
+.table-admin__actions > * {
+    min-width: 0;
+}
+
+.table-admin__actions .btn,
+.table-admin__actions .btn-small {
+    white-space: normal;
+    text-wrap: balance;
+}
+
+.table-admin__actions .inline-form {
+    margin: 0;
+}
+
+.table-admin-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--shadow);
+    padding: 12px;
+    display: grid;
+    gap: 8px;
+}
+
+.table-admin-card__row {
+    display: grid;
+    grid-template-columns: minmax(92px, 36%) minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+}
+
+.table-admin-card__label {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.table-admin-card__value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .table-responsive-admin .table.table-admin--cards {
+        min-width: 0;
+        border: 0;
+        box-shadow: none;
+        border-radius: 0;
+        background: transparent;
+    }
+
+    .table-responsive-admin .table.table-admin--cards thead {
+        display: none;
+    }
+
+    .table-responsive-admin .table.table-admin--cards tbody {
+        display: grid;
+        gap: 12px;
+    }
+
+    .table-responsive-admin .table.table-admin--cards tbody tr {
+        display: block;
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: var(--shadow);
+        padding: 12px;
+    }
+
+    .table-responsive-admin .table.table-admin--cards tbody td {
+        display: grid;
+        grid-template-columns: minmax(104px, 37%) minmax(0, 1fr);
+        align-items: start;
+        gap: 10px;
+        border: 0;
+        padding: 6px 0 !important;
+        text-align: left !important;
+        width: 100%;
+    }
+
+    .table-responsive-admin .table.table-admin--cards tbody td::before {
+        content: attr(data-label);
+        color: #64748b;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    .table-responsive-admin .table.table-admin--cards tbody td[data-label="Acoes"],
+    .table-responsive-admin .table.table-admin--cards tbody td[data-label="Acao"] {
+        display: block;
+        margin-top: 8px;
+        padding-top: 10px !important;
+        border-top: 1px solid #e2e8f0;
+    }
+
+    .table-responsive-admin .table.table-admin--cards tbody td[data-label="Acoes"]::before,
+    .table-responsive-admin .table.table-admin--cards tbody td[data-label="Acao"]::before {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .table-responsive-admin .table.table-admin--cards .table-admin__actions {
+        width: 100%;
+        min-width: 0;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .table-responsive-admin .table.table-admin--cards .table-admin__actions > *,
+    .table-responsive-admin .table.table-admin--cards .table-admin__actions .btn,
+    .table-responsive-admin .table.table-admin--cards .table-admin__actions .btn-small,
+    .table-responsive-admin .table.table-admin--cards .table-admin__actions .inline-form,
+    .table-responsive-admin .table.table-admin--cards .table-admin__actions .inline-form .btn,
+    .table-responsive-admin .table.table-admin--cards .table-admin__actions .inline-form .btn-small {
+        width: 100%;
+    }
+}

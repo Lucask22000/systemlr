@@ -37,8 +37,8 @@
     </form>
 </div>
 
-<div class="table-responsive table-scroll-sticky">
-    <table class="table">
+<div class="table-responsive table-responsive-admin table-scroll-sticky">
+    <table class="table table-admin table-admin--cards">
         <thead>
             <tr>
                 <th>Produto</th>
@@ -52,7 +52,7 @@
         <tbody>
             {% for mov in transferencias %}
             <tr>
-                <td data-label="Produto">
+                <td data-label="Produto" class="table-admin__cell--wrap">
                     {% if mov.produto %}
                     {{ mov.produto.codigo }} - {{ mov.produto.nome }}
                     {% else %}
@@ -60,7 +60,7 @@
                     {% endif %}
                 </td>
                 <td data-label="Quantidade">{{ mov.quantidade }}</td>
-                <td data-label="Origem">
+                <td data-label="Origem" class="table-admin__cell--wrap">
                     {% if mov.endereco_origem %}
                     {{ mov.endereco_origem.nome }}
                     {% if mov.endereco_origem.estoque %}
@@ -70,7 +70,7 @@
                     -
                     {% endif %}
                 </td>
-                <td data-label="Destino">
+                <td data-label="Destino" class="table-admin__cell--wrap">
                     {% if mov.endereco_destino %}
                     {{ mov.endereco_destino.nome }}
                     {% if mov.endereco_destino.estoque %}
@@ -80,7 +80,7 @@
                     -
                     {% endif %}
                 </td>
-                <td data-label="Motivo">{{ mov.motivo or '-' }}</td>
+                <td data-label="Motivo" class="table-admin__cell--wrap">{{ mov.motivo or '-' }}</td>
                 <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
             </tr>
             {% else %}

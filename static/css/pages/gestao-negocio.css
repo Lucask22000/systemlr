@@ -78,13 +78,32 @@
 }
 
 .business-hub-table {
-    min-width: 880px;
+    min-width: 760px;
+}
+
+.business-hub-table th,
+.business-hub-table td {
+    vertical-align: top;
+}
+
+.business-hub-table td:nth-child(1) {
+    min-width: 220px;
+}
+
+.business-hub-table td:nth-child(3) {
+    min-width: 280px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .business-hub-table td:last-child,
 .business-hub-table th:last-child {
-    width: 160px;
-    white-space: nowrap;
+    width: 180px;
+}
+
+.business-hub-table .table-admin__actions {
+    justify-content: flex-start;
+    min-width: 150px;
 }
 
 .business-hub-checklist-cards {

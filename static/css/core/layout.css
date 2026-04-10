@@ -1,7 +1,7 @@
 .app-body,
 html,
 body {
-    height: 100%;
+    min-height: 100vh;
 }
 
 html,
@@ -15,10 +15,15 @@ body {
     flex-direction: column;
 }
 
+.app-body {
+    display: flex;
+    flex-direction: column;
+}
+
 .main-content {
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
+    overflow: visible;
 }
 
 .main-content {
@@ -109,6 +114,7 @@ body {
     .main-content-admin {
         padding-top: 18px;
         padding-bottom: 28px;
+        overflow: visible;
     }
 
     .admin-shell {
@@ -121,14 +127,17 @@ body {
     .admin-sidebar {
         position: sticky;
         top: 112px;
-        max-height: calc(100vh - 132px);
+        height: calc(100dvh - 132px);
+        max-height: calc(100dvh - 132px);
         min-height: 0;
         overflow: hidden;
     }
 
     .admin-sidebar-inner {
         height: 100%;
+        max-height: 100%;
         overflow-y: auto;
+        overscroll-behavior: contain;
         padding-right: 4px;
     }
 

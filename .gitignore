@@ -1,21 +1,41 @@
-# Ambiente virtual
+﻿# Ambiente virtual
 .venv/
+venv/
+env/
 
-# Python cache
+# Python cache e compilados
 __pycache__/
 *.py[cod]
+*.pyc
+
+# Variaveis de ambiente
+.env
+.env.*
+!.env.example
 
 # Banco local
+*.db
+*.sqlite3
+instance/
 instance/*.db
+instance/*.sqlite3
 
-# Variáveis de ambiente
-.env
+# Testes e cobertura
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
 
-# VS Code
-.vscode/
-
-# Logs
+# Logs e artefatos locais
 *.log
+logs/
+reports/
+tmp/
+temp/
+
+# IDE
+.vscode/
+.idea/
 
 # Arquivos do sistema
 .DS_Store

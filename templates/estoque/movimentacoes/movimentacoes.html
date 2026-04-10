@@ -44,9 +44,9 @@
     </form>
 </div>
 
-<div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
-    <div class="table-responsive table-scroll-sticky" style="overflow-x: auto; overflow-y: visible; max-height: none;">
-        <table class="table">
+<div class="table-wrapper">
+    <div class="table-responsive table-responsive-admin table-scroll-sticky">
+        <table class="table table-admin table-admin--cards">
         <thead>
             <tr>
                 <th>Codigo</th>
@@ -62,7 +62,7 @@
             {% for mov in movimentacoes %}
             <tr>
                 <td data-label="Codigo"><code>{{ mov.produto.codigo if mov.produto else '-' }}</code></td>
-                <td data-label="Produto">
+                <td data-label="Produto" class="table-admin__cell--wrap">
                     <div class="product-name-cell">
                         {% if mov.produto and mov.produto.imagem_path %}
                         <img src="{{ url_for('static', filename=mov.produto.imagem_path) }}" alt="{{ mov.produto.nome }}" class="product-thumb product-thumb-sm">
@@ -76,13 +76,13 @@
                     </span>
                 </td>
                 <td data-label="Quantidade">{{ mov.quantidade }}</td>
-                <td data-label="Motivo">{{ mov.motivo or '-' }}</td>
-                <td data-label="Documento">{{ mov.info_nota or '-' }}</td>
+                <td data-label="Motivo" class="table-admin__cell--wrap">{{ mov.motivo or '-' }}</td>
+                <td data-label="Documento" class="table-admin__cell--wrap">{{ mov.info_nota or '-' }}</td>
                 <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="6" class="text-center">Nenhuma movimentacao interna encontrada.</td>
+                <td colspan="7" class="text-center">Nenhuma movimentacao interna encontrada.</td>
             </tr>
             {% endfor %}
         </tbody>

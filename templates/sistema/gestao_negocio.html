@@ -48,8 +48,9 @@
         </div>
         <span class="business-hub-summary-pill">{{ checklist_config|length }} itens monitorados</span>
     </div>
-    <div class="table-responsive table-scroll-sticky business-hub-table-wrap d-none d-lg-block">
-        <table class="table table-sm align-middle business-hub-table">
+    <div class="table-wrapper business-hub-table-wrap d-none d-lg-block">
+        <div class="table-responsive table-responsive-admin table-scroll-sticky">
+        <table class="table table-sm align-middle business-hub-table table-admin">
             <thead>
                 <tr>
                     <th>Item</th>
@@ -61,7 +62,7 @@
             <tbody>
                 {% for item in checklist_config %}
                 <tr>
-                    <td data-label="Item">{{ item.titulo }}</td>
+                    <td data-label="Item" class="table-admin__cell--wrap">{{ item.titulo }}</td>
                     <td data-label="Status">
                         {% if item.ok %}
                         <span class="badge text-bg-success">OK</span>
@@ -69,12 +70,13 @@
                         <span class="badge text-bg-warning">Pendente</span>
                         {% endif %}
                     </td>
-                    <td data-label="Detalhe">{{ item.detalhe_ok if item.ok else item.detalhe_pendente }}</td>
-                    <td data-label="Acao"><a href="{{ item.url }}" class="btn btn-sm btn-outline-primary">{{ item.acao }}</a></td>
+                    <td data-label="Detalhe" class="table-admin__cell--wrap">{{ item.detalhe_ok if item.ok else item.detalhe_pendente }}</td>
+                    <td data-label="Acao" class="table-admin__actions"><a href="{{ item.url }}" class="btn btn-sm btn-outline-primary">{{ item.acao }}</a></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+        </div>
     </div>
     <div class="business-hub-checklist-cards d-lg-none">
         {% for item in checklist_config %}

@@ -94,9 +94,9 @@
     </div>
 </div>
 
-<div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
-    <div class="table-responsive table-scroll-sticky" style="overflow-x: auto; overflow-y: visible; max-height: none;">
-        <table class="table">
+<div class="table-wrapper">
+    <div class="table-responsive table-responsive-admin table-scroll-sticky">
+        <table class="table table-admin table-admin--cards">
         <thead>
             <tr>
                 <th>ID</th>
@@ -117,23 +117,23 @@
             <tr>
                 <td data-label="ID">#{{ recebimento.id }}</td>
                 <td data-label="Tipo">{{ tipo_labels.get(recebimento.tipo_recebimento, recebimento.tipo_recebimento or '-') }}</td>
-                <td data-label="Fornecedor">
+                <td data-label="Fornecedor" class="table-admin__cell--wrap">
                     {% if recebimento.fornecedor and recebimento.fornecedor.nome and recebimento.fornecedor.nome != 'Origem interna / fornecedor nao informado' %}
                         {{ recebimento.fornecedor.nome }}
                     {% else %}
                         Nao informado
                     {% endif %}
                 </td>
-                <td data-label="Local">{{ recebimento.local_recebimento.nome if recebimento.local_recebimento else '-' }}</td>
-                <td data-label="Recebedor">
+                <td data-label="Local" class="table-admin__cell--wrap">{{ recebimento.local_recebimento.nome if recebimento.local_recebimento else '-' }}</td>
+                <td data-label="Recebedor" class="table-admin__cell--wrap">
                     {{ recebimento.recebedor_nome or '-' }}
                     {% if recebimento.recebedor_funcionario and recebimento.recebedor_funcionario.matricula %}
                     <div class="small text-muted">{{ recebimento.recebedor_funcionario.matricula }}</div>
                     {% endif %}
                 </td>
-                <td data-label="Nota">{{ recebimento.info_nota or '-' }}</td>
+                <td data-label="Nota" class="table-admin__cell--wrap">{{ recebimento.info_nota or '-' }}</td>
                 <td data-label="Itens">{{ recebimento.itens|length }}</td>
-                <td data-label="Codigos Produtos">
+                <td data-label="Codigos Produtos" class="table-admin__cell--wrap">
                     {% set codigos = [] %}
                     {% for item in recebimento.itens %}
                         {% if item.produto and item.produto.codigo %}
@@ -153,19 +153,21 @@
                     </span>
                 </td>
                 <td data-label="Criado em">{{ recebimento.criado_em.strftime('%d/%m/%Y %H:%M') if recebimento.criado_em else '-' }}</td>
-                <td data-label="Acoes" class="actions-cell">
-                    {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
-                    <a href="{{ url_for('conferir_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-warning">Conferir</a>
-                    {% endif %}
-                    {% if recebimento.status == 'aguardando_armazenagem' %}
-                    <a href="{{ url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-primary">Armazenar</a>
-                    {% endif %}
-                    {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
-                    <form method="POST" action="{{ url_for('cancelar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="inline-form" data-confirm-message="Cancelar recebimento #{{ recebimento.id }}?">
-                        {{ csrf_input|safe }}
-                        <button type="submit" class="btn-small btn-danger">Cancelar</button>
-                    </form>
-                    {% endif %}
+                <td data-label="Acoes">
+                    <div class="table-admin__actions">
+                        {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
+                        <a href="{{ url_for('conferir_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-warning">Conferir</a>
+                        {% endif %}
+                        {% if recebimento.status == 'aguardando_armazenagem' %}
+                        <a href="{{ url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-primary">Armazenar</a>
+                        {% endif %}
+                        {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
+                        <form method="POST" action="{{ url_for('cancelar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="inline-form" data-confirm-message="Cancelar recebimento #{{ recebimento.id }}?">
+                            {{ csrf_input|safe }}
+                            <button type="submit" class="btn-small btn-danger">Cancelar</button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% else %}

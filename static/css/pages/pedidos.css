@@ -217,7 +217,7 @@
     }
 
     .pedido-actions-cell {
-        min-width: 320px;
+        min-width: 190px;
     }
 
     .pedido-actions {
@@ -245,7 +245,7 @@
     }
 
     .pedido-actions .btn {
-        white-space: nowrap;
+        white-space: normal;
     }
 
     @media (max-width: 768px) {
