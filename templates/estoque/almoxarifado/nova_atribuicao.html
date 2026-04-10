@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Atribuicao de Almoxarifado - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Nova Atribuicao de Almoxarifado</h1>
+        <p class="text-muted mb-0">Use este fluxo para entregar materiais de consumo e apoio operacional para funcionarios ou setores.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_almoxarifado') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="produto_id">Produto *</label>
+                <select id="produto_id" name="produto_id" class="input-select" required>
+                    <option value="">Selecione</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}">
+                        {{ produto.codigo }} - {{ produto.nome }} (Estoque atual: {{ produto.quantidade_estoque }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted d-block mt-1">Cadastre o item em Produtos antes de fazer a atribuicao no almoxarifado.</small>
+            </div>
+            <div class="form-group">
+                <label for="quantidade">Quantidade *</label>
+                <input type="number" id="quantidade" name="quantidade" class="input-text" min="1" value="1" required>
+            </div>
+            <div class="form-group">
+                <label for="destino_tipo">Destino *</label>
+                <select id="destino_tipo" name="destino_tipo" class="input-select" required>
+                    {% for destino, label in destino_labels.items() %}
+                    <option value="{{ destino }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row" id="destino-funcionario-row">
+            <div class="form-group">
+                <label for="funcionario_busca">Funcionario por matricula ou nome</label>
+                <input type="hidden" id="funcionario_destino_id" name="funcionario_destino_id">
+                <input type="text" id="funcionario_busca" name="funcionario_busca" class="input-text" list="funcionarios-almoxarifado" placeholder="Digite a matricula ou nome do colaborador">
+                <datalist id="funcionarios-almoxarifado">
+                    {% for funcionario in funcionarios_ativos %}
+                    <option value="{{ funcionario.nome }}" data-funcionario-id="{{ funcionario.id }}" data-nome="{{ funcionario.nome }}" data-matricula="{{ funcionario.matricula or '' }}"></option>
+                    {% if funcionario.matricula %}
+                    <option value="{{ funcionario.matricula }}" data-funcionario-id="{{ funcionario.id }}" data-nome="{{ funcionario.nome }}" data-matricula="{{ funcionario.matricula }}"></option>
+                    {% endif %}
+                    {% endfor %}
+                </datalist>
+                <small class="text-muted d-block mt-1">Selecione pelo nome ou pela matricula do colaborador.</small>
+            </div>
+        </div>
+
+        <div class="form-row" id="destino-setor-row" hidden>
+            <div class="form-group">
+                <label for="setor_destino">Setor</label>
+                <input type="text" id="setor_destino" name="setor_destino" class="input-text" list="setores-almoxarifado" placeholder="Ex.: Limpeza, Loja, Expedição">
+                <datalist id="setores-almoxarifado">
+                    {% for setor in setores_disponiveis %}
+                    <option value="{{ setor }}"></option>
+                    {% endfor %}
+                </datalist>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" class="input-textarea" rows="3" placeholder="Detalhe finalidade, unidade requisitante ou observacoes operacionais"></textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Registrar atribuicao</button>
+            <a href="{{ url_for('listar_almoxarifado') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const destinoTipo = document.getElementById('destino_tipo');
+    const funcionarioRow = document.getElementById('destino-funcionario-row');
+    const setorRow = document.getElementById('destino-setor-row');
+    const funcionarioBusca = document.getElementById('funcionario_busca');
+    const funcionarioDestinoId = document.getElementById('funcionario_destino_id');
+    const setorDestino = document.getElementById('setor_destino');
+    const dataList = document.getElementById('funcionarios-almoxarifado');
+
+    function toggleDestino() {
+        const isFuncionario = destinoTipo.value === 'funcionario';
+        funcionarioRow.hidden = !isFuncionario;
+        setorRow.hidden = isFuncionario;
+        if (!isFuncionario) {
+            funcionarioBusca.value = '';
+            funcionarioDestinoId.value = '';
+        } else {
+            setorDestino.value = '';
+        }
+    }
+
+    function syncFuncionario() {
+        const value = (funcionarioBusca.value || '').trim();
+        const options = Array.from(dataList.options || []);
+        const match = options.find(function (option) {
+            return (option.value || '').trim() === value;
+        });
+        if (!match) {
+            funcionarioDestinoId.value = '';
+            return;
+        }
+        funcionarioDestinoId.value = match.dataset.funcionarioId || '';
+    }
+
+    destinoTipo.addEventListener('change', toggleDestino);
+    funcionarioBusca.addEventListener('change', syncFuncionario);
+    funcionarioBusca.addEventListener('blur', syncFuncionario);
+
+    toggleDestino();
+});
+</script>
+{% endblock %}

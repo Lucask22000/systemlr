@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Etiquetas de Entrega{% endblock %}
+
+{% block content %}
+<div class="receipt-wrap">
+    <div style="display:grid; gap:18px;">
+        {% for pedido in pedidos %}
+        <div class="receipt-card pedido-etiqueta-lote-card">
+            <div class="receipt-header">
+                <h2>ETIQUETA DE ENTREGA</h2>
+            </div>
+
+            <div class="receipt-meta" style="display:grid; gap:6px;">
+                <div><strong>Loja:</strong> {{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'Loja do Lucas' }}</div>
+                <div><strong>Pedido:</strong> #{{ pedido.id }}</div>
+                <div><strong>Cliente:</strong> __________________</div>
+                <div><strong>Celular:</strong> __________________</div>
+                <div><strong>Rota:</strong> __________________</div>
+                <div><strong>Ordem na rota:</strong> __________________</div>
+                <div><strong>Motorista:</strong> __________________</div>
+                <div><strong>Emitida em:</strong> {{ pedido.etiqueta_entrega_emitida_em.strftime('%d/%m/%Y %H:%M:%S') if pedido.etiqueta_entrega_emitida_em else '-' }}</div>
+            </div>
+
+            <h3 style="margin-top:16px;">Itens</h3>
+            <div style="display:grid; gap:4px;">
+                {% for item in pedido.itens %}
+                <div>{{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }} | Qtd: {{ item.quantidade }}</div>
+                {% else %}
+                <div>Sem itens no pedido.</div>
+                {% endfor %}
+            </div>
+
+            <div class="receipt-total" style="margin-top:16px;">Total: R$ {{ '%.2f'|format(pedido.total or 0) }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

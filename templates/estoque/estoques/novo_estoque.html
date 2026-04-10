@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Estoque - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Novo Estoque</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-group">
+            <label for="nome">Nome *</label>
+            <input type="text" id="nome" name="nome" class="input-text" required maxlength="120" placeholder="Ex: CD Principal">
+        </div>
+
+        <div class="form-group">
+            <label for="codigo_filial">Código da Filial</label>
+            <input type="text" id="codigo_filial" name="codigo_filial" class="input-text" maxlength="20" placeholder="Ex: CD01 ou LJ02">
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descricao</label>
+            <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" placeholder="Descricao opcional do estoque">
+        </div>
+
+        <div class="form-group">
+            <label class="checkbox-inline">
+                <input type="checkbox" name="ativo" checked>
+                Estoque ativo
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Estoque</button>
+            <a href="{{ url_for('listar_estoques') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

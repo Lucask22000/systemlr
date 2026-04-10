@@ -1,0 +1,208 @@
+"""Constantes de domínio do SystemLR."""
+
+TIPOS_MOVIMENTACAO_VALIDOS = {'entrada', 'saida'}
+ROLES_PERMITIDOS = {'admin', 'gerente', 'caixa', 'operador', 'garcom'}
+NIVEIS_ORGANOGRAMA = (
+    'Diretoria',
+    'Gerencia',
+    'Coordenacao',
+    'Supervisao',
+    'Especialista',
+    'Operacao',
+)
+
+CARGOS_PERMANENTES = (
+    ('Garcom', 'Atendimento de mesas e acompanhamento de pedidos.'),
+)
+
+PAGINAS_SISTEMA = {
+    'api': 'APIs Administrativas',
+    'inicio': 'Meu Perfil',
+    'gestao_negocio': 'Gestao do Negocio',
+    'financeiro': 'Financeiro',
+    'pdv': 'PDV',
+    'estoques': 'Estoques',
+    'produtos': 'Produtos',
+    'categorias': 'Categorias',
+    'fornecedores': 'Fornecedores',
+    'enderecos_estoque': 'Enderecos de Estoque',
+    'movimentacoes': 'Entradas e Saidas Internas',
+    'almoxarifado': 'Almoxarifado',
+    'recebimentos': 'Recebimentos Operacionais',
+    'relatorios': 'Relatorios',
+    'equipamentos_estoque': 'Equipamentos de Movimentacao',
+    'enderecos_inteligentes': 'Enderecos Inteligentes',
+    'caixas': 'Caixas',
+    'mesas': 'Mesas',
+    'pedidos': 'Pedidos',
+    'expedicao': 'Expedicao',
+    'transferencias_estoque': 'Transferencias entre Lojas e CDs',
+    'funcionarios': 'Funcionarios',
+    'rh_funcoes': 'RH - Cargos e Perfis',
+    'rh_indicadores': 'RH - Indicadores',
+    'rh_organograma': 'RH - Organograma',
+    'auditoria': 'Auditoria',
+    'empresa': 'Empresa',
+    'ecommerce_config': 'E-commerce - Tema e Operacao',
+    'ecommerce_marketing': 'E-commerce - Promocoes e Campanhas',
+    'servicos_tecnicos': 'Servicos Tecnicos',
+    'chamados_internos': 'Chamados Internos',
+    'garcons': 'Garcons',
+    'ajuda': 'Ajuda e Treinamento',
+}
+
+API_FALLBACK_ACCESS_PAGES = (
+    'empresa',
+    'auditoria',
+    'funcionarios',
+    'rh_funcoes',
+)
+
+PAGINAS_SISTEMA_MENU_ORDEM = (
+    ('Dashboard', ('inicio',)),
+    ('Gestao', ('gestao_negocio', 'empresa')),
+    ('Financeiro', ('financeiro',)),
+    ('Vendas', ('pdv', 'pedidos', 'mesas', 'caixas', 'garcons')),
+    ('Estoque', ('estoques', 'produtos', 'categorias', 'enderecos_estoque', 'enderecos_inteligentes', 'equipamentos_estoque', 'movimentacoes', 'almoxarifado', 'relatorios')),
+    ('Recebimento', ('fornecedores', 'recebimentos')),
+    ('Expedicao', ('expedicao', 'transferencias_estoque')),
+    ('Meu RH', ('rh_indicadores', 'rh_organograma', 'funcionarios', 'rh_funcoes', 'auditoria')),
+    ('E-commerce', ('ecommerce_config', 'ecommerce_marketing')),
+    ('Servicos', ('servicos_tecnicos', 'chamados_internos')),
+    ('Ajuda', ('ajuda',)),
+)
+
+PAGINA_ENDPOINTS = {
+    'inicio': {'dashboard', 'boas_vindas'},
+    'gestao_negocio': {'gestao_negocio'},
+    'financeiro': {
+        'financeiro',
+        'dashboard_analytics_api',
+        'financeiro_lancamentos',
+        'financeiro_fundos',
+        'marcar_lancamento_enviado_contador',
+        'exportar_lancamentos_financeiros',
+        'exportar_lancamentos_financeiros_xlsx',
+    },
+    'pdv': {
+        'pdv',
+        'criar_pedido_api',
+        'finalizar_pedido_api',
+        'get_pedido_aberto',
+        'listar_pedidos_em_aberto_pdv',
+        'listar_pedidos_caixa_em_aberto',
+        'detalhes_pedido_api',
+        'adicionar_itens_pedido_api',
+        'sse_pedidos',
+    },
+    'estoques': {'listar_estoques', 'novo_estoque', 'editar_estoque', 'deletar_estoque'},
+    'produtos': {'listar_produtos', 'novo_produto', 'editar_produto', 'visualizar_produto', 'deletar_produto', 'imprimir_etiquetas_loja'},
+    'categorias': {'listar_categorias', 'nova_categoria', 'editar_categoria', 'deletar_categoria'},
+    'fornecedores': {'listar_fornecedores', 'detalhes_fornecedor', 'novo_fornecedor', 'editar_fornecedor', 'deletar_fornecedor'},
+    'enderecos_estoque': {
+        'listar_enderecos_estoque',
+        'novo_endereco_estoque',
+        'editar_endereco_estoque',
+        'deletar_endereco_estoque',
+        'detalhes_endereco_estoque',
+        'imprimir_etiqueta_endereco_estoque',
+        'imprimir_etiquetas_enderecos_estoque',
+    },
+    'enderecos_inteligentes': {
+        'enderecos_inteligentes',
+        'enderecar_produto_inteligente',
+        'marcar_produto_fora_picking',
+        'baixar_produto_para_picking',
+    },
+    'equipamentos_estoque': {
+        'listar_equipamentos_movimentacao',
+        'novo_equipamento_movimentacao',
+        'editar_equipamento_movimentacao',
+    },
+    'movimentacoes': {
+        'listar_movimentacoes',
+        'nova_movimentacao',
+        'movimentacao_rapida',
+    },
+    'almoxarifado': {
+        'listar_almoxarifado',
+        'nova_atribuicao_almoxarifado',
+    },
+    'recebimentos': {
+        'listar_recebimentos_fornecedor',
+        'novo_recebimento_fornecedor',
+        'conferir_recebimento_fornecedor',
+        'armazenar_recebimento_fornecedor',
+        'cancelar_recebimento_fornecedor',
+    },
+    'relatorios': {'relatorios', 'analytics_estoque_api'},
+    'caixas': {'listar_caixas', 'nova_caixa', 'editar_caixa', 'deletar_caixa', 'abrir_caixa', 'fechar_caixa', 'historico_caixa'},
+    'mesas': {'listar_mesas', 'nova_mesa', 'editar_mesa', 'deletar_mesa', 'visualizar_qrcode_mesa', 'download_qrcode_mesa', 'print_qrcode_mesa'},
+    'pedidos': {
+        'listar_pedidos',
+        'listar_pedidos_pendentes',
+        'novo_pedido',
+        'editar_pedido',
+        'deletar_pedido',
+        'visualizar_comprovante_pedido',
+        'detalhes_pedido',
+        'alterar_status_pedido',
+    },
+    'expedicao': {
+        'central_expedicao',
+        'frota_expedicao',
+        'coletor_estoque',
+        'listar_separacao_entrega',
+        'listar_roteirizacao_entrega',
+        'painel_expedicao',
+        'iniciar_processo_expedicao',
+        'api_progresso_expedicao',
+        'otimizar_rota_entrega',
+        'atualizar_despacho_entrega',
+        'atualizar_separacao_entrega_pedido',
+        'imprimir_etiqueta_entrega_pedido',
+    },
+    'transferencias_estoque': {
+        'listar_transferencias_estoque',
+        'transferir_armazenamento',
+    },
+    'funcionarios': {'listar_funcionarios', 'criar_funcionario', 'editar_funcionario', 'deletar_funcionario', 'editar_acessos_funcionario'},
+    'rh_funcoes': {
+        'listar_funcoes_rh',
+        'listar_perfis_rh',
+        'nova_funcao_rh',
+        'editar_funcao_rh',
+        'deletar_funcao_rh',
+        'novo_perfil_acesso_rh',
+        'editar_perfil_acesso_rh',
+        'deletar_perfil_acesso_rh',
+    },
+    'rh_indicadores': {'indicadores_rh', 'analytics_rh_api'},
+    'rh_organograma': {'organograma_rh'},
+    'auditoria': {'auditoria_sistema'},
+    'empresa': {'editar_empresa', 'preview_cardapio_empresa'},
+    'ecommerce_config': {'configurar_ecommerce', 'configurar_ativacao_ecommerce'},
+    'ecommerce_marketing': {'configurar_marketing_ecommerce'},
+    'servicos_tecnicos': {
+        'listar_ordens_servico',
+        'minhas_ordens_servico',
+        'criar_ordem_servico',
+        'editar_ordem_servico',
+        'enviar_ordem_servico',
+        'executar_ordem_servico_tecnico',
+    },
+    'chamados_internos': {
+        'listar_chamados_internos',
+        'criar_chamado_interno',
+        'editar_chamado_interno',
+        'atualizar_status_chamado_interno',
+    },
+    'garcons': {'listar_garcons', 'novo_garcom', 'editar_garcom', 'deletar_garcom', 'configurar_distribuicao_garcons'},
+    'ajuda': {'central_ajuda', 'detalhe_ajuda', 'assistente_local_status', 'assistente_local_perguntar'},
+}
+
+ENDPOINT_TO_PAGINA = {
+    endpoint: pagina
+    for pagina, endpoints in PAGINA_ENDPOINTS.items()
+    for endpoint in endpoints
+}

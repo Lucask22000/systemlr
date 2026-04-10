@@ -1,0 +1,418 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    {% set app_install_name = empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' %}
+    {% if favicon_path %}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=favicon_path) }}">
+    {% endif %}
+    <meta name="theme-color" content="#0f766e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ app_install_name }}">
+    <link rel="manifest" href="{{ url_for('pwa_manifest') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename=app_icon_path) }}">
+    <title>{% block title %}SystemLR - Gestão de Estoque{% endblock %}</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/tokens.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/tables.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/assistant.css') }}">
+    {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/app-theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/core/internal-navbar.css') }}">
+</head>
+<body
+    class="app-body"
+    data-app-install-name="{{ app_install_name }}"
+    data-current-endpoint="{{ endpoint_atual or '' }}"
+    data-current-screen="{{ tela_atual_nome or '' }}"
+    data-assistant-enabled="{{ '1' if assistente_local_status and assistente_local_status.enabled else '0' }}"
+>
+    {% macro nav_icon(name) -%}
+    <span class="nav-icon" aria-hidden="true">
+        {% if name == 'profile' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>
+        {% elif name == 'management' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9"/><path d="M4 17h16"/><path d="M15 7h5"/><path d="M4 12h16"/><circle cx="10" cy="7" r="2"/><circle cx="16" cy="17" r="2"/><circle cx="8" cy="12" r="2"/></svg>
+        {% elif name == 'finance' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/><path d="M8 15h4"/></svg>
+        {% elif name == 'sales' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 8h-11z"/><path d="M6 6 5 3H3"/><circle cx="9" cy="19" r="1.5"/><circle cx="18" cy="19" r="1.5"/></svg>
+        {% elif name == 'inventory' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7l8 4 8-4Z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></svg>
+        {% elif name == 'receiving' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v10H3z"/><path d="M14 10h3l3 3v4h-6"/><path d="M7 17h.01"/><path d="M17 17h.01"/></svg>
+        {% elif name == 'shipping' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h10v8H3z"/><path d="M13 10h4l4 4v1h-8"/><path d="M7 18h.01"/><path d="M18 18h.01"/></svg>
+        {% elif name == 'hr' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="7" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><path d="M15 18a4 4 0 0 1 6 0"/></svg>
+        {% elif name == 'ecommerce' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16"/><path d="M6 10V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/><path d="M5 10h14v9H5z"/></svg>
+        {% elif name == 'services' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m14.7 6.3 3 3"/><path d="m5 19 4.6-1.2L18.8 8.6a2.1 2.1 0 1 0-3-3L6.6 14.8 5 19Z"/></svg>
+        {% elif name == 'help' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 1 1 4.8 2.4c-.9.7-1.4 1.2-1.4 2.6"/><path d="M12 17h.01"/></svg>
+        {% elif name == 'login' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 16l4-4-4-4"/><path d="M14 12H4"/><path d="M20 5v14"/></svg>
+        {% elif name == 'register' %}
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8a3 3 0 1 0-3-3 3 3 0 0 0 3 3Z"/><path d="M6 20a6 6 0 0 1 12 0"/><path d="M19 8v6"/><path d="M16 11h6"/></svg>
+        {% endif %}
+    </span>
+    {%- endmacro %}
+    {% macro render_nav_group(grupo, mode='desktop') -%}
+    {% set button_class = 'desktop-nav-group-toggle' if mode == 'desktop' else 'mobile-nav-group-toggle' %}
+    {% set submenu_class = 'desktop-nav-submenu' if mode == 'desktop' else 'mobile-nav-submenu' %}
+    <div class="nav-group nav-group-{{ mode }} {% if grupo['current'] %}is-current{% endif %}" data-nav-group="{{ grupo['id'] }}">
+        <button type="button" class="{{ button_class }}" aria-expanded="{% if mode == 'mobile' and grupo['current'] %}true{% else %}false{% endif %}" aria-controls="{{ mode }}-submenu-{{ grupo['id'] }}">
+            <span class="nav-toggle-content">{{ nav_icon(grupo['icon']) }}<span class="nav-label">{{ grupo['label'] }}</span></span>
+        </button>
+        <div id="{{ mode }}-submenu-{{ grupo['id'] }}" class="{{ submenu_class }}{% if mode == 'mobile' and grupo['current'] %} is-open{% endif %}"{% if mode == 'mobile' and not grupo['current'] %} hidden{% endif %}>
+            {% for item in grupo['items'] %}
+            <a href="{{ item['url'] }}" class="nav-link nav-sublink {% if item['current'] %}is-current{% endif %}">{{ item['label'] }}</a>
+            {% endfor %}
+        </div>
+    </div>
+    {%- endmacro %}
+    {% macro render_desktop_sidebar_group(grupo) -%}
+    <section class="admin-sidebar-group {% if grupo['current'] %}is-current{% endif %}" aria-labelledby="admin-group-{{ grupo['id'] }}">
+        <header class="admin-sidebar-group-head">
+            <div class="admin-sidebar-group-icon">{{ nav_icon(grupo['icon']) }}</div>
+            <div class="admin-sidebar-group-copy">
+                <h2 id="admin-group-{{ grupo['id'] }}" class="admin-sidebar-group-title">{{ grupo['label'] }}</h2>
+                <span class="admin-sidebar-group-count">{{ grupo['items']|length }} item{% if grupo['items']|length != 1 %}s{% endif %}</span>
+            </div>
+        </header>
+        <div class="admin-sidebar-links">
+            {% for item in grupo['items'] %}
+            <a href="{{ item['url'] }}" class="admin-sidebar-link {% if item['current'] %}is-current{% endif %}">
+                <span class="admin-sidebar-link-label">{{ item['label'] }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {%- endmacro %}
+    <header class="navbar app-navbar">
+        <div class="container navbar-container">
+            {% if funcionario_logado %}
+            <div class="app-navbar-mobile-bar">
+                <div class="app-navbar-mobile-main">
+                    <button class="menu-toggle navbar-toggler" id="menuToggle" type="button" aria-label="Abrir menu" aria-controls="navbarMobileDrawer" aria-expanded="false">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <a href="{{ url_for('boas_vindas') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-mobile">
+                        {% if empresa_config and empresa_config.logo_path %}
+                        <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
+                        {% endif %}
+                        <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                    </a>
+                </div>
+                <a href="{{ url_for('dashboard') }}" class="mobile-quick-action" aria-label="Abrir meu cadastro">
+                    {% if funcionario_logado.imagem_perfil_path %}
+                    <span class="nav-user-avatar"><img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image"></span>
+                    {% else %}
+                    <span class="nav-user-avatar nav-user-avatar-fallback">{{ (funcionario_logado.nome or 'U')[:1]|upper }}</span>
+                    {% endif %}
+                </a>
+            </div>
+
+            <div class="navbar-desktop-shell" aria-label="Cabecalho administrativo desktop">
+                <div class="navbar-desktop-top navbar-desktop-top-admin">
+                    <div class="navbar-desktop-brand-panel">
+                        <a href="{{ url_for('boas_vindas') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-desktop">
+                            {% if empresa_config and empresa_config.logo_path %}
+                            <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
+                            {% endif %}
+                            <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                        </a>
+                        <div class="navbar-desktop-screen">
+                            <span class="navbar-desktop-kicker">Area administrativa</span>
+                            <strong>{{ tela_atual_nome if tela_atual_nome else 'Painel operacional' }}</strong>
+                            <span>{{ secao_atual_nome if secao_atual_nome else 'Navegue pelos modulos liberados para seu perfil.' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="navbar-desktop-tools">
+                        {% if estoques_contexto_disponiveis %}
+                        <form method="POST" action="{{ url_for('atualizar_contexto_filial') }}" class="nav-context-form nav-context-form-desktop">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+                            <label for="navEstoqueContextoDesktop" class="nav-context-label">Filial</label>
+                            <select id="navEstoqueContextoDesktop" name="estoque_contexto_id" class="nav-context-select" data-auto-submit-context>
+                                <option value="all" {% if not estoque_contexto_id %}selected{% endif %}>Todas as filiais</option>
+                                {% for estoque in estoques_contexto_disponiveis %}
+                                <option value="{{ estoque.id }}" {% if estoque_contexto_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        {% endif %}
+
+                        <div class="nav-group nav-group-desktop nav-dropdown-user" data-nav-group="user-menu">
+                            <button type="button" class="desktop-nav-group-toggle nav-user-toggle" aria-expanded="false" aria-controls="desktop-user-submenu">
+                                {% if funcionario_logado.imagem_perfil_path %}
+                                <span class="nav-user-avatar"><img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image"></span>
+                                {% else %}
+                                <span class="nav-user-avatar nav-user-avatar-fallback">{{ (funcionario_logado.nome or 'U')[:1]|upper }}</span>
+                                {% endif %}
+                                <span class="nav-user-meta">
+                                    <span class="nav-user-name">{{ funcionario_logado.nome }}</span>
+                                    <span class="nav-user-matricula">{{ funcionario_logado.matricula or 'Matrícula não definida' }}</span>
+                                </span>
+                            </button>
+                            <div id="desktop-user-submenu" class="desktop-nav-submenu desktop-nav-submenu-user">
+                                <a href="{{ url_for('boas_vindas') }}" class="nav-link nav-sublink {% if endpoint_atual == 'boas_vindas' %}is-current{% endif %}">Home Operacional</a>
+                                <a href="{{ url_for('dashboard') }}" class="nav-link nav-sublink {% if endpoint_atual == 'dashboard' %}is-current{% endif %}">Meu Cadastro</a>
+                                {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                                <a href="{{ url_for('organograma_rh') }}" class="nav-link nav-sublink {% if pagina_atual_menu == 'rh_organograma' %}is-current{% endif %}">Árvore de Hierarquia</a>
+                                {% endif %}
+                                <a href="{{ url_for('logout') }}" class="nav-link nav-sublink">Sair</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="navbar-mobile-drawer" id="navbarMobileDrawer" aria-label="Menu lateral do sistema">
+                <div class="navbar-mobile-head">
+                    <div class="navbar-mobile-head-copy">
+                        <span class="navbar-mobile-kicker">Navegação</span>
+                        <strong>{{ tela_atual_nome if tela_atual_nome else 'Painel interno' }}</strong>
+                    </div>
+                    <button type="button" class="navbar-menu-close" data-close-menu aria-label="Fechar menu">×</button>
+                </div>
+
+                <div class="navbar-mobile-profile">
+                    {% if funcionario_logado.imagem_perfil_path %}
+                    <span class="nav-user-avatar"><img src="{{ url_for('static', filename=funcionario_logado.imagem_perfil_path) }}" alt="Foto de {{ funcionario_logado.nome }}" class="nav-user-avatar-image"></span>
+                    {% else %}
+                    <span class="nav-user-avatar nav-user-avatar-fallback">{{ (funcionario_logado.nome or 'U')[:1]|upper }}</span>
+                    {% endif %}
+                    <div class="nav-user-meta">
+                        <span class="nav-user-name">{{ funcionario_logado.nome }}</span>
+                        <span class="nav-user-matricula">{{ funcionario_logado.matricula or 'Matrícula não definida' }}</span>
+                    </div>
+                </div>
+
+                {% if estoques_contexto_disponiveis %}
+                <form method="POST" action="{{ url_for('atualizar_contexto_filial') }}" class="nav-context-form nav-context-form-mobile">
+                    {{ csrf_input|safe }}
+                    <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+                    <div class="nav-context-meta">
+                        <label for="navEstoqueContextoMobile" class="nav-context-label">Filial do estoque</label>
+                        <span class="nav-context-helper">Filtro separado da navegação principal.</span>
+                    </div>
+                    <select id="navEstoqueContextoMobile" name="estoque_contexto_id" class="nav-context-select" data-auto-submit-context>
+                        <option value="all" {% if not estoque_contexto_id %}selected{% endif %}>Todas as filiais</option>
+                        {% for estoque in estoques_contexto_disponiveis %}
+                        <option value="{{ estoque.id }}" {% if estoque_contexto_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}{% if estoque.codigo_filial %} ({{ estoque.codigo_filial }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% endif %}
+
+                <nav class="navbar-mobile-nav" aria-label="Navegação principal mobile">
+                    {% for grupo in menu_navegacao_principal %}
+                        {{ render_nav_group(grupo, 'mobile') }}
+                    {% endfor %}
+                </nav>
+
+                <div class="navbar-mobile-user">
+                    <a href="{{ url_for('boas_vindas') }}" class="nav-link {% if endpoint_atual == 'boas_vindas' %}is-current{% endif %}">Home Operacional</a>
+                    <a href="{{ url_for('dashboard') }}" class="nav-link {% if endpoint_atual == 'dashboard' %}is-current{% endif %}">Meu Cadastro</a>
+                    {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                    <a href="{{ url_for('organograma_rh') }}" class="nav-link {% if pagina_atual_menu == 'rh_organograma' %}is-current{% endif %}">Árvore de Hierarquia</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="nav-link">Sair</a>
+                </div>
+            </aside>
+            {% else %}
+            <div class="app-navbar-mobile-bar app-navbar-mobile-bar-auth">
+                <a href="{{ url_for('login') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-mobile">
+                    {% if empresa_config and empresa_config.logo_path %}
+                    <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
+                    {% endif %}
+                    <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                </a>
+            </div>
+
+            <div class="navbar-desktop-shell navbar-desktop-shell-auth" aria-label="Acesso ao sistema">
+                <div class="navbar-desktop-top">
+                    <a href="{{ url_for('login') }}" class="navbar-brand brand-link app-navbar-brand app-navbar-brand-desktop">
+                        {% if empresa_config and empresa_config.logo_path %}
+                        <img src="{{ url_for('static', filename=empresa_config.logo_path) }}" alt="Logo" class="brand-logo">
+                        {% endif %}
+                        <span class="brand-name">{{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'Mercado do Lucas' }}</span>
+                    </a>
+                    <div class="navbar-desktop-tools navbar-desktop-tools-auth">
+                        <a href="{{ url_for('login') }}" class="nav-link nav-link-with-icon">{{ nav_icon('login') }}<span>Login</span></a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+    <div class="navbar-backdrop" id="navbarBackdrop" hidden></div>
+
+    <main class="main-content {% if funcionario_logado %}main-content-admin{% endif %}">
+        <div class="container content-shell {% if funcionario_logado %}content-shell-admin{% endif %}">
+            {% if funcionario_logado %}
+            <div class="admin-shell">
+                <aside class="admin-sidebar" aria-label="Menu administrativo desktop">
+                    <div class="admin-sidebar-inner">
+                        <div class="admin-sidebar-summary">
+                            <span class="admin-sidebar-kicker">Painel operacional</span>
+                            <strong>{{ secao_atual_nome if secao_atual_nome else 'Operacao' }}</strong>
+                            <p>{{ tela_atual_nome if tela_atual_nome else 'Acesse os modulos disponiveis para o seu perfil e mantenha o fluxo do dia sob controle.' }}</p>
+                        </div>
+
+                        <nav class="admin-sidebar-nav" aria-label="Navegacao principal desktop">
+                            {% for grupo in menu_navegacao_principal %}
+                                {{ render_desktop_sidebar_group(grupo) }}
+                            {% endfor %}
+                        </nav>
+
+                        <div class="admin-sidebar-utility">
+                            <a href="{{ url_for('boas_vindas') }}" class="admin-sidebar-utility-link {% if endpoint_atual == 'boas_vindas' %}is-current{% endif %}">Home Operacional</a>
+                            <a href="{{ url_for('dashboard') }}" class="admin-sidebar-utility-link {% if endpoint_atual == 'dashboard' %}is-current{% endif %}">Meu Cadastro</a>
+                            {% if 'rh_organograma' in paginas_permitidas_usuario %}
+                            <a href="{{ url_for('organograma_rh') }}" class="admin-sidebar-utility-link {% if pagina_atual_menu == 'rh_organograma' %}is-current{% endif %}">Arvore de Hierarquia</a>
+                            {% endif %}
+                            <a href="{{ url_for('logout') }}" class="admin-sidebar-utility-link">Sair</a>
+                        </div>
+                    </div>
+                </aside>
+
+                <section class="admin-main">
+            {% endif %}
+
+            {% if funcionario_logado and tela_atual_nome %}
+            <div class="app-context-strip">
+                <div class="app-context-screen">
+                    <span class="app-context-kicker">Tela atual</span>
+                    <strong class="app-context-title">{{ tela_atual_nome }}</strong>
+                    <span class="app-context-section">{{ secao_atual_nome or 'Operação' }}</span>
+                </div>
+            </div>
+            {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% set bs_category = 'danger' if category in ['error', 'danger'] else category %}
+                        <div class="alert alert-{{ bs_category }} alert-dismissible fade show shadow-sm" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="{% if funcionario_logado %}page-container page-container-admin{% else %}container page-container{% endif %}">
+                {% block content %}{% endblock %}
+            </div>
+
+            {% if funcionario_logado %}
+                </section>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-inner">
+            <p>
+                &copy; {{ ano_atual }} {{ empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else 'SystemLR' }}.
+                {{ empresa_config.ecom_footer_texto if empresa_config and empresa_config.ecom_footer_texto else 'Gestão e operação integrada.' }}
+                {{ empresa_config.ecom_footer_contato if empresa_config and empresa_config.ecom_footer_contato else 'Contato: suporte@systemlr.com' }}
+                {{ empresa_config.ecom_footer_creditos if empresa_config and empresa_config.ecom_footer_creditos else 'Créditos: SystemLR' }}
+            </p>
+        </div>
+    </footer>
+
+    {% if funcionario_logado and assistente_local_status and assistente_local_status.enabled %}
+    <div
+        class="assistant-shell"
+        id="localAssistant"
+        data-assistant-state="{{ assistente_local_status.state or 'idle' }}"
+        data-assistant-mode="{{ assistente_local_status.mode or 'lexical' }}"
+    >
+        <button type="button" class="assistant-fab" id="assistantToggle" aria-expanded="false" aria-controls="assistantPanel">
+            <span class="assistant-fab-title">Marcia</span>
+            <span class="assistant-fab-subtitle">
+                {% if assistente_local_status.mode == 'semantic' %}
+                Offline pronta
+                {% else %}
+                Offline em preparo
+                {% endif %}
+            </span>
+        </button>
+
+        <section class="assistant-panel" id="assistantPanel" hidden>
+            <header class="assistant-panel-header">
+                <div>
+                    <strong>Marcia</strong>
+                    <p id="assistantStatusText">{{ assistente_local_status.message or 'Marcia esta offline e pronta para ajudar.' }}</p>
+                </div>
+                <div class="assistant-header-actions">
+                    <button type="button" class="assistant-header-btn" id="assistantReset" aria-label="Limpar conversa">Nova conversa</button>
+                    <button type="button" class="assistant-header-btn" id="assistantClose" aria-label="Minimizar Marcia">Minimizar</button>
+                </div>
+            </header>
+
+            <div class="assistant-panel-body">
+                <div id="assistantMessages" class="assistant-messages" aria-live="polite"></div>
+
+                <div class="assistant-suggestion-list" id="assistantSuggestions">
+                    <button type="button" class="assistant-chip" data-assistant-question="O que posso fazer nesta tela?">O que posso fazer nesta tela?</button>
+                    <button type="button" class="assistant-chip" data-assistant-question="Onde altero acessos de um colaborador?">Onde altero acessos?</button>
+                    <button type="button" class="assistant-chip" data-assistant-question="Como registrar um recebimento?">Como registrar um recebimento?</button>
+                    <button type="button" class="assistant-chip" data-assistant-question="O que fazer depois de separar um pedido?">Proximo passo do pedido</button>
+                </div>
+
+                <form id="assistantForm" class="assistant-form">
+                    <label for="assistantQuestion" class="visually-hidden">Envie uma pergunta para a Marcia</label>
+                    <textarea id="assistantQuestion" class="assistant-input" rows="2" maxlength="500" data-skip-tooltip="1"></textarea>
+                    <div class="assistant-form-actions">
+                        <button type="submit" class="btn btn-primary btn-sm assistant-send-btn">Enviar</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+    {% endif %}
+
+    <div class="modal fade" id="confirmActionModal" tabindex="-1" aria-labelledby="confirmActionModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmActionModalTitle">Confirmar ação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body" id="confirmActionModalMessage">
+                    Tem certeza que deseja continuar?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmActionModalOk">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/form-enhancements.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/operational-flow.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa-install.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/local-ai-assistant.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+
+
+

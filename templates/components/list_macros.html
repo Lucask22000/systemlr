@@ -1,0 +1,6 @@
+{% macro post_action_button(action_url, label, btn_class='btn-small btn-danger', confirm_message='') -%}
+<form method="POST" action="{{ action_url }}" class="inline-form"{% if confirm_message %} data-confirm-message="{{ confirm_message }}"{% endif %}>
+    {{ csrf_input|safe }}
+    <button type="submit" class="{{ btn_class }}">{{ label }}</button>
+</form>
+{%- endmacro %}

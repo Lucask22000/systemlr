@@ -1,0 +1,62 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'pedido' %}
+{% set store_nav = 'home' %}
+{% set store_title = 'Pedido confirmado | ' ~ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR') %}
+
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Pedido confirmado</span>
+    <h1>Pedido #{{ pedido.id }} confirmado</h1>
+    <p>Recebemos seu pedido com sucesso. Em breve ele seguirá para as próximas etapas da operação.</p>
+</section>
+
+<section class="store-grid store-grid--commerce">
+    <article class="store-panel">
+        <div class="store-panel-header">
+            <div>
+                <h2 class="store-card-title">Itens do pedido</h2>
+            </div>
+        </div>
+
+        <div class="store-summary-list">
+            {% for item in pedido.itens %}
+            <div class="store-summary-line">
+                <span>{{ item.quantidade }}x {{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</span>
+                <strong>R$ {{ '%.2f'|format((item.quantidade or 0) * (item.preco_unitario or 0))|replace('.', ',') }}</strong>
+            </div>
+            {% endfor %}
+            <div class="store-summary-line total">
+                <span>Total do pedido</span>
+                <strong>R$ {{ '%.2f'|format(pedido.total or 0)|replace('.', ',') }}</strong>
+            </div>
+        </div>
+    </article>
+
+    <aside class="store-panel">
+        <div class="store-panel-header">
+            <div>
+                <h2 class="store-card-title">Entrega e pagamento</h2>
+            </div>
+        </div>
+
+        {% set cliente = detalhes.get('cliente_cadastro', {}) %}
+        <div class="store-summary-list">
+            <div class="store-summary-line"><span>Cliente</span><strong>{{ pedido.cliente_nome or '-' }}</strong></div>
+            <div class="store-summary-line"><span>Celular</span><strong>{{ pedido.cliente_celular or '-' }}</strong></div>
+            <div class="store-summary-line"><span>Endereço</span><strong>{{ cliente.get('endereco', '-') }} {{ cliente.get('numero', '') }}</strong></div>
+            <div class="store-summary-line"><span>Bairro/Cidade</span><strong>{{ cliente.get('bairro', '-') }} - {{ cliente.get('cidade', '-') }}/{{ cliente.get('estado', '-') }}</strong></div>
+            <div class="store-summary-line"><span>Método</span><strong>{{ pedido.metodo_pagamento or '-' }}</strong></div>
+            <div class="store-summary-line"><span>Valor informado</span><strong>R$ {{ '%.2f'|format(pedido.valor_pago or pedido.total or 0)|replace('.', ',') }}</strong></div>
+            {% set troco = detalhes.get('pagamento', {}).get('troco') %}
+            {% if troco is not none and troco > 0 %}
+            <div class="store-summary-line"><span>Troco</span><strong>R$ {{ '%.2f'|format(troco)|replace('.', ',') }}</strong></div>
+            {% endif %}
+        </div>
+
+        <div class="store-grid-actions" style="margin-top: 14px;">
+            <a href="{{ url_for('index') }}" class="store-btn store-btn-primary store-btn-wide">Nova compra</a>
+            <a href="{{ url_for('public.cadastro_cliente_site') }}" class="store-btn store-btn-secondary store-btn-wide">Atualizar cadastro</a>
+        </div>
+    </aside>
+</section>
+{% endblock %}

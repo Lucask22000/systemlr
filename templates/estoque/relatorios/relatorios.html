@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Relatorios de Estoque - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Dashboard de Estoque</h1>
+        <p class="text-muted mb-0">Cobertura, giro, enderecamento e risco de ruptura.</p>
+    </div>
+    <div class="header-actions">
+        <select id="estoquePeriodo" class="input-select">
+            <option value="7">Ultimos 7 dias</option>
+            <option value="30" selected>Ultimos 30 dias</option>
+            <option value="90">Ultimos 90 dias</option>
+        </select>
+    </div>
+</div>
+
+<div class="cards-container analytics-cards">
+    <div class="card card-primary"><div class="card-content"><h3>Giro de estoque</h3><p class="card-value" id="kpiGiro">0,00x</p><p class="card-meta">Vendas / estoque medio</p></div></div>
+    <div class="card card-info"><div class="card-content"><h3>Dias de cobertura</h3><p class="card-value" id="kpiCobertura">0,0</p><p class="card-meta">Baseado no periodo selecionado</p></div></div>
+    <div class="card card-warning"><div class="card-content"><h3>Produtos em ruptura</h3><p class="card-value" id="kpiRuptura">0</p><p class="card-meta">Abaixo do minimo</p></div></div>
+    <div class="card card-secondary"><div class="card-content"><h3>Ocupacao de enderecos</h3><p class="card-value" id="kpiOcupacao">0,0%</p><p class="card-meta" id="metaOcupacao">0 / 0 ocupados</p></div></div>
+    <div class="card card-danger"><div class="card-content"><h3>Recebimentos pendentes</h3><p class="card-value" id="kpiRecebimentosPendentes">0</p><p class="card-meta">Aguardando armazenagem</p></div></div>
+</div>
+
+<section class="section mb-3">
+    <h2>Alertas</h2>
+    <div id="estoqueAlertas" class="d-grid gap-2">
+        <p class="text-muted mb-0">Nenhum alerta carregado.</p>
+    </div>
+</section>
+
+<div class="analytics-grid">
+    <section class="section"><h2>Pareto 80/20</h2><div class="chart-container"><canvas id="chartParetoEstoque"></canvas></div></section>
+    <section class="section"><h2>Ocupacao de Enderecos</h2><div class="chart-container"><canvas id="chartOcupacaoEnderecos"></canvas></div></section>
+</div>
+
+<section class="section"><h2>Movimentacoes Diarias</h2><div class="chart-container"><canvas id="chartMovimentacoesEstoque"></canvas></div></section>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Produtos em risco de ruptura</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>SKU</th><th>Produto</th><th>Atual</th><th>Minimo</th><th>Fornecedor</th></tr></thead>
+                <tbody id="tableRuptura"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<section class="section">
+    <h2>Produtos sem giro (60 dias)</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>SKU</th><th>Produto</th><th>Ultima movimentacao</th></tr></thead>
+            <tbody id="tableSemGiro"></tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/estoque_analytics.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,160 @@
+.table thead th {
+    white-space: nowrap;
+}
+
+.table td[data-label] {
+    vertical-align: middle;
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: none;
+}
+
+.actions-cell {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+
+.table-responsive .actions-cell > * {
+    min-width: 0;
+}
+
+.table-responsive .actions-cell .btn,
+.table-responsive .actions-cell .btn-small {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+}
+
+.table-scroll-sticky .actions-cell {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    width: 100%;
+}
+
+.table-scroll-sticky .actions-cell .inline-form {
+    width: 100%;
+}
+
+.table-scroll-sticky .actions-cell .inline-form .btn,
+.table-scroll-sticky .actions-cell .inline-form .btn-small {
+    width: 100%;
+}
+
+.table-wrapper {
+    overflow-y: auto;
+    max-height: 70vh;
+    min-height: 0;
+}
+
+.table-wrapper .table-responsive {
+    margin: 0;
+    max-height: inherit;
+    overflow-x: auto;
+}
+
+.table-wrapper .table {
+    overflow: visible;
+}
+
+/* Listagens do estoque com cabecalho fixo + rolagem */
+.table-scroll-sticky {
+    max-height: min(62vh, 720px);
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.table-scroll-sticky .table {
+    margin: 0;
+    box-shadow: none;
+    border-radius: 0;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.table-scroll-sticky .table.table-produtos {
+    table-layout: auto;
+    min-width: 1120px;
+}
+
+.table.table-produtos .col-disponibilidade {
+    min-width: 190px;
+}
+
+.table.table-produtos .col-disponibilidade .badge {
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.25;
+}
+
+.table.table-produtos .col-preco-venda {
+    min-width: 110px;
+    white-space: nowrap;
+}
+
+.table-scroll-sticky .table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--dark);
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .table-scroll-sticky {
+        max-height: none;
+        overflow: visible;
+        border: none;
+    }
+
+    .actions-cell {
+        display: grid;
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .actions-cell > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .actions-cell .btn,
+    .actions-cell .btn-small,
+    .actions-cell .inline-form {
+        width: 100%;
+    }
+
+    .actions-cell .inline-form .btn,
+    .actions-cell .inline-form .btn-small {
+        width: 100%;
+    }
+
+    .table-scroll-sticky .table.table-produtos {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 992px) {
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+
+    .table-responsive .table {
+        min-width: 760px;
+    }
+
+    .table-responsive .table td,
+    .table-responsive .table th {
+        white-space: nowrap;
+    }
+
+    .table-responsive .table td[data-label] {
+        white-space: normal;
+    }
+}

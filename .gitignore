@@ -1,0 +1,32 @@
+# Ambiente virtual
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Banco local e artefatos de execucao
+instance/*.db
+*.db
+*.sqlite
+*.sqlite3
+instance/
+logs/
+reports/
+
+# Uploads e arquivos gerados em runtime
+static/uploads/
+
+# Variaveis de ambiente
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# Logs avulsos
+*.log
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Painel de Expedicao - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Painel de Expedicao em Tempo Real</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_separacao_entrega') }}" class="btn btn-outline-secondary">Separacao</a>
+        <a href="{{ url_for('listar_roteirizacao_entrega') }}" class="btn btn-outline-primary">Roteirizacao</a>
+    </div>
+</div>
+
+<section class="section mb-3">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <form method="post" action="{{ url_for('iniciar_processo_expedicao') }}">
+            {{ csrf_input|safe }}
+            <button type="submit" class="btn btn-success">Inicializar processo de expedir</button>
+        </form>
+        <span class="text-muted" id="painel-iniciado">
+            {% if iniciado_em %}
+            Processo iniciado em {{ iniciado_em }}
+            {% else %}
+            Processo ainda nao inicializado hoje.
+            {% endif %}
+        </span>
+        <span class="badge text-bg-info" id="painel-status-live">Conectando...</span>
+    </div>
+</section>
+
+<section class="section mb-3">
+    <h2 style="font-size:1.2rem;margin-bottom:8px;">Indicativo diario</h2>
+    <p class="text-muted mb-0">
+        Total de pedidos em expedição no dia:
+        <strong id="total-dia">{{ progresso.total_dia }}</strong>
+    </p>
+</section>
+
+<section class="section">
+    <div id="painel-etapas" style="display:grid;gap:12px;">
+        {% for etapa in progresso.progresso %}
+        <div class="etapa-item" data-etapa="{{ etapa.chave }}">
+            <div style="display:flex;justify-content:space-between;gap:8px;">
+                <strong>{{ etapa.label }}</strong>
+                <span>
+                    <span class="etapa-qtd">{{ etapa.quantidade }}</span>
+                    (<span class="etapa-pct">{{ '%.1f'|format(etapa.percentual) }}</span>%)
+                </span>
+            </div>
+            <div class="progress" style="height:12px;margin-top:6px;">
+                <div class="progress-bar" role="progressbar" style="width: {{ etapa.percentual }}%;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const statusEl = document.getElementById('painel-status-live');
+    const totalEl = document.getElementById('total-dia');
+    const iniciadoEl = document.getElementById('painel-iniciado');
+    const etapasWrap = document.getElementById('painel-etapas');
+
+    const render = (payload) => {
+        if (!payload) return;
+        if (typeof payload.total_dia === 'number') {
+            totalEl.textContent = payload.total_dia;
+        }
+        if (payload.iniciado_em) {
+            iniciadoEl.textContent = 'Processo iniciado em ' + payload.iniciado_em;
+        }
+        (payload.progresso || []).forEach((etapa) => {
+            const row = etapasWrap.querySelector(`[data-etapa="${etapa.chave}"]`);
+            if (!row) return;
+            const qtd = row.querySelector('.etapa-qtd');
+            const pct = row.querySelector('.etapa-pct');
+            const bar = row.querySelector('.progress-bar');
+            qtd.textContent = etapa.quantidade;
+            pct.textContent = Number(etapa.percentual || 0).toFixed(1);
+            bar.style.width = `${etapa.percentual || 0}%`;
+        });
+    };
+
+    const carregar = async () => {
+        try {
+            const resp = await fetch('{{ url_for("api_progresso_expedicao") }}', { headers: { 'Accept': 'application/json' } });
+            const json = await resp.json();
+            if (json && json.success) {
+                render(json.data);
+                statusEl.textContent = 'Ao vivo';
+                statusEl.className = 'badge text-bg-success';
+            } else {
+                statusEl.textContent = 'Atualizacao indisponivel';
+                statusEl.className = 'badge text-bg-warning';
+            }
+        } catch (_) {
+            statusEl.textContent = 'Falha na conexao';
+            statusEl.className = 'badge text-bg-danger';
+        }
+    };
+
+    carregar();
+    setInterval(carregar, 15000);
+
+    if (window.EventSource) {
+        const es = new EventSource('{{ url_for("sse_pedidos") }}');
+        es.addEventListener('open', () => {
+            statusEl.textContent = 'Ao vivo';
+            statusEl.className = 'badge text-bg-success';
+        });
+        es.addEventListener('pedido', () => carregar());
+        es.addEventListener('error', () => {
+            statusEl.textContent = 'Reconectando...';
+            statusEl.className = 'badge text-bg-warning';
+        });
+    }
+});
+</script>
+{% endblock %}

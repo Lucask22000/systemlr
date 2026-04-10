@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Fornecedor - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Editar Fornecedor</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-group">
+            <label for="nome">Nome / Razao Social *</label>
+            <input type="text" id="nome" name="nome" required class="input-text" value="{{ fornecedor.nome }}">
+        </div>
+
+        <div class="form-group">
+            <label for="documento">CNPJ ou CPF</label>
+            <input type="text" id="documento" name="documento" class="input-text" value="{{ fornecedor.documento or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="contato">Contato</label>
+            <input type="text" id="contato" name="contato" class="input-text" value="{{ fornecedor.contato or '' }}">
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" name="telefone" class="input-text" value="{{ fornecedor.telefone or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="input-text" value="{{ fornecedor.email or '' }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="endereco_rua">Endereco - Rua</label>
+                <input type="text" id="endereco_rua" name="endereco_rua" class="input-text" value="{{ fornecedor.endereco_rua or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="endereco_numero">Numero</label>
+                <input type="text" id="endereco_numero" name="endereco_numero" class="input-text" value="{{ fornecedor.endereco_numero or '' }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="endereco_bairro">Bairro</label>
+                <input type="text" id="endereco_bairro" name="endereco_bairro" class="input-text" value="{{ fornecedor.endereco_bairro or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="endereco_cidade">Cidade</label>
+                <input type="text" id="endereco_cidade" name="endereco_cidade" class="input-text" value="{{ fornecedor.endereco_cidade or '' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="tipo_produtos_fornece">Tipo de produtos que fornece</label>
+            <input type="text" id="tipo_produtos_fornece" name="tipo_produtos_fornece" class="input-text" value="{{ fornecedor.tipo_produtos_fornece or '' }}">
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes_gerais">Observacoes gerais</label>
+            <textarea id="observacoes_gerais" name="observacoes_gerais" class="input-textarea" rows="4">{{ fornecedor.observacoes_gerais or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="ativo" {% if fornecedor.ativo %}checked{% endif %}>
+                Fornecedor ativo
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar alteracoes</button>
+            <a href="{{ url_for('listar_fornecedores') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

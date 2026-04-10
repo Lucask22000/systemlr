@@ -1,0 +1,116 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Entradas e Saídas Internas - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Entradas e Saídas Internas</h1>
+        <p class="text-muted mb-0">Use esta tela para ajustes internos, consumo operacional, perdas e acertos de estoque. Recebimentos e transferências possuem fluxos próprios.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('nova_movimentacao') }}" class="btn btn-primary">Nova Movimentacao</a>
+    </div>
+</div>
+
+<div class="filters-section" data-filter-panel data-filter-title="Filtros das movimentacoes">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <input type="text" name="busca" class="input-search" value="{{ busca or '' }}" placeholder="Buscar por código/nome do produto, motivo, observações ou documento">
+        </div>
+        <div class="filter-group">
+            <select name="produto_id" class="input-select">
+                <option value="">Todos os produtos</option>
+                {% for prod in produtos %}
+                <option value="{{ prod.id }}" {% if produto_selecionado == prod.id %}selected{% endif %}>{{ prod.codigo }} - {{ prod.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="status" class="input-select">
+                <option value="">Todos os status</option>
+                <option value="entrada" {% if status_selecionado == 'entrada' %}selected{% endif %}>Entrada</option>
+                <option value="saida" {% if status_selecionado == 'saida' %}selected{% endif %}>Saida</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <input type="date" name="data_inicio" class="input-search" value="{{ data_inicio or '' }}" title="Data inicial">
+        </div>
+        <div class="filter-group">
+            <input type="date" name="data_fim" class="input-search" value="{{ data_fim or '' }}" title="Data final">
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Limpar</a>
+    </form>
+</div>
+
+<div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
+    <div class="table-responsive table-scroll-sticky" style="overflow-x: auto; overflow-y: visible; max-height: none;">
+        <table class="table">
+        <thead>
+            <tr>
+                <th>Codigo</th>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th>Quantidade</th>
+                <th>Motivo</th>
+                <th>Documento</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mov in movimentacoes %}
+            <tr>
+                <td data-label="Codigo"><code>{{ mov.produto.codigo if mov.produto else '-' }}</code></td>
+                <td data-label="Produto">
+                    <div class="product-name-cell">
+                        {% if mov.produto and mov.produto.imagem_path %}
+                        <img src="{{ url_for('static', filename=mov.produto.imagem_path) }}" alt="{{ mov.produto.nome }}" class="product-thumb product-thumb-sm">
+                        {% endif %}
+                        <a href="{{ url_for('visualizar_produto', produto_id=mov.produto_id) }}">{{ mov.produto.nome if mov.produto else 'Produto removido' }}</a>
+                    </div>
+                </td>
+                <td data-label="Tipo">
+                    <span class="badge {% if mov.tipo == 'entrada' %}badge-success{% else %}badge-danger{% endif %}">
+                        {{ mov.tipo|capitalize }}
+                    </span>
+                </td>
+                <td data-label="Quantidade">{{ mov.quantidade }}</td>
+                <td data-label="Motivo">{{ mov.motivo or '-' }}</td>
+                <td data-label="Documento">{{ mov.info_nota or '-' }}</td>
+                <td data-label="Data">{{ mov.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Nenhuma movimentacao interna encontrada.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_movimentacoes', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_movimentacoes', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+

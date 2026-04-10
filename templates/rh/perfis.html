@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Perfis de Acesso - SystemLR{% endblock %}
+
+{% block extra_css %}
+<style>
+.setor-permissao-grid,
+.rh-summary-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.setor-permissao-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.rh-summary-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    margin-bottom: 18px;
+}
+
+.setor-permissao-card,
+.rh-summary-card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fff;
+    padding: 14px 16px;
+}
+
+.setor-permissao-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.setor-permissao-title {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.setor-permissao-items {
+    display: grid;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.setor-permissao-items.is-collapsed {
+    display: none;
+}
+
+.setor-hint,
+.rh-summary-card small,
+.rh-card-intro {
+    color: #637488;
+}
+
+.rh-summary-card span {
+    display: block;
+    font-size: 0.82rem;
+    color: #637488;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+}
+
+.rh-summary-card strong {
+    display: block;
+    font-size: 1.6rem;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-top: 6px;
+}
+
+.rh-card-intro {
+    margin-bottom: 12px;
+}
+
+.acesso-list {
+    margin: 0;
+    padding-left: 16px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Perfis de Acesso</h1>
+        <p class="text-muted mb-0">Perfis servem apenas para predefinir paginas e acelerar o cadastro dos colaboradores. O ajuste fino continua por usuario.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Cargos da Empresa</a>
+    </div>
+</div>
+
+<section class="rh-summary-grid">
+    <article class="rh-summary-card">
+        <span>Total cadastrado</span>
+        <strong>{{ resumo_perfis.total }}</strong>
+        <small>Perfis disponiveis para montar permissões padrao.</small>
+    </article>
+    <article class="rh-summary-card">
+        <span>Ativos</span>
+        <strong>{{ resumo_perfis.ativos }}</strong>
+        <small>Perfis prontos para uso em novos cadastros.</small>
+    </article>
+    <article class="rh-summary-card">
+        <span>Com paginas</span>
+        <strong>{{ resumo_perfis.com_paginas }}</strong>
+        <small>Perfis que ja possuem um conjunto padrao definido.</small>
+    </article>
+    <article class="rh-summary-card">
+        <span>Sem paginas</span>
+        <strong>{{ resumo_perfis.sem_paginas }}</strong>
+        <small>Perfis que ainda precisam ser configurados.</small>
+    </article>
+</section>
+
+<div class="card">
+    <div class="card-header">Novo perfil de acesso</div>
+    <div class="card-body">
+        <p class="rh-card-intro">Use perfis para definir um ponto de partida de acesso. Se precisar, depois voce adiciona ou remove paginas individualmente em cada colaborador.</p>
+        <form method="POST" action="{{ url_for('novo_perfil_acesso_rh') }}" class="form">
+            {{ csrf_input|safe }}
+            <div class="form-group">
+                <label for="perfil_nome">Nome do perfil *</label>
+                <input type="text" id="perfil_nome" name="nome" class="input-text" maxlength="100" required placeholder="Ex: Loja Operacional, Lider de Estoque, Financeiro">
+            </div>
+            <div class="form-group">
+                <label for="perfil_descricao">Descricao</label>
+                <input type="text" id="perfil_descricao" name="descricao" class="input-text" maxlength="255" placeholder="Breve resumo do conjunto de acessos">
+            </div>
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="ativo" checked>
+                    Perfil ativo
+                </label>
+            </div>
+
+            <div class="section">
+                <h3>Paginas padrao</h3>
+                <p class="setor-hint">Marque acesso total ao setor ou expanda para escolher paginas especificas.</p>
+                <div class="setor-permissao-grid">
+                    {% for secao_nome, itens in paginas_ordenadas_menu %}
+                    <article class="setor-permissao-card" data-permission-block>
+                        <header class="setor-permissao-header">
+                            <h4 class="setor-permissao-title">{{ secao_nome }}</h4>
+                            <button type="button" class="btn-small btn-secondary js-toggle-setor">Expandir</button>
+                        </header>
+                        <label class="checkbox-inline">
+                            <input type="checkbox" name="setores_totais" value="{{ secao_nome }}" class="js-setor-total">
+                            Acesso total ao setor
+                        </label>
+                        <div class="setor-permissao-items is-collapsed">
+                            {% for pagina_key, pagina_label in itens %}
+                            <label class="checkbox-inline">
+                                <input type="checkbox" name="paginas" value="{{ pagina_key }}" class="js-setor-pagina">
+                                {{ pagina_label }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar perfil</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="section">
+    <div class="page-header">
+        <h2>Perfis cadastrados</h2>
+        <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Ir para cargos</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Descricao</th>
+                    <th>Paginas padrao</th>
+                    <th>Colaboradores</th>
+                    <th>Status</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for perfil, acessos in perfis_acesso_permissoes %}
+                <tr>
+                    <td data-label="Nome"><strong>{{ perfil.nome }}</strong></td>
+                    <td data-label="Descricao">{{ perfil.descricao or '-' }}</td>
+                    <td data-label="Paginas padrao">
+                        {% if acessos %}
+                        <ul class="acesso-list">
+                            {% for pagina in acessos|sort %}
+                            <li>{{ paginas_sistema.get(pagina, pagina) }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <span>-</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Colaboradores">{{ funcionarios_por_perfil.get(perfil.id, 0) }}</td>
+                    <td data-label="Status">
+                        {% if perfil.ativo %}
+                        <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                        <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Acoes" class="actions-cell">
+                        <a href="{{ url_for('editar_perfil_acesso_rh', perfil_id=perfil.id) }}" class="btn-small btn-warning">Editar</a>
+                        <form method="POST" action="{{ url_for('deletar_perfil_acesso_rh', perfil_id=perfil.id) }}" class="inline-form" data-confirm-message="Excluir perfil de acesso {{ perfil.nome }}?">
+                            {{ csrf_input|safe }}
+                            <button type="submit" class="btn-small btn-danger">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Nenhum perfil de acesso cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-permission-block]').forEach(function (block) {
+        var toggleBtn = block.querySelector('.js-toggle-setor');
+        var totalCheckbox = block.querySelector('.js-setor-total');
+        var itensWrap = block.querySelector('.setor-permissao-items');
+        var pageCheckboxes = block.querySelectorAll('.js-setor-pagina');
+
+        if (toggleBtn && itensWrap) {
+            toggleBtn.addEventListener('click', function () {
+                itensWrap.classList.toggle('is-collapsed');
+                toggleBtn.textContent = itensWrap.classList.contains('is-collapsed') ? 'Expandir' : 'Recolher';
+            });
+        }
+
+        if (totalCheckbox) {
+            totalCheckbox.addEventListener('change', function () {
+                pageCheckboxes.forEach(function (cb) {
+                    cb.checked = totalCheckbox.checked;
+                });
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

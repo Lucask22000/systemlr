@@ -1,0 +1,246 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'home' %}
+{% set store_nav = 'home' %}
+{% set store_title = ((empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else app_name) ~ ' | Loja online') %}
+
+{% block store_content %}
+<section class="store-search-section">
+    <form class="store-search" data-store-product-search role="search">
+        <label class="store-search-label" for="storeSearchInput">Buscar produtos</label>
+        <div class="store-search-field">
+            <span class="store-search-icon" aria-hidden="true">⌕</span>
+            <input id="storeSearchInput" type="search" placeholder="Buscar produtos" data-store-search-input>
+        </div>
+        <p class="store-search-feedback" data-store-search-feedback></p>
+    </form>
+    <button type="button" class="store-install-chip" data-store-install-shortcut hidden>Instalar app</button>
+</section>
+
+{% if banners_ativos %}
+<section class="store-carousel" data-store-carousel aria-label="Banners da loja">
+    <div class="store-carousel-track">
+        {% for banner in banners_ativos %}
+        <article class="store-carousel-item{% if loop.first %} is-active{% endif %}" data-store-slide>
+            {% if banner.link_url %}
+            <a href="{{ banner.link_url }}" class="store-carousel-link">
+                <img src="{{ url_for('static', filename=banner.image_path) }}" alt="{{ banner.titulo if banner.titulo else store_title }}" loading="lazy">
+                {% if banner.titulo or banner.subtitulo %}
+                <div class="store-carousel-overlay">
+                    {% if banner.titulo %}<strong>{{ banner.titulo }}</strong>{% endif %}
+                    {% if banner.subtitulo %}<span>{{ banner.subtitulo }}</span>{% endif %}
+                </div>
+                {% endif %}
+            </a>
+            {% else %}
+            <img src="{{ url_for('static', filename=banner.image_path) }}" alt="{{ banner.titulo if banner.titulo else store_title }}" loading="lazy">
+            {% if banner.titulo or banner.subtitulo %}
+            <div class="store-carousel-overlay">
+                {% if banner.titulo %}<strong>{{ banner.titulo }}</strong>{% endif %}
+                {% if banner.subtitulo %}<span>{{ banner.subtitulo }}</span>{% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    {% if banners_ativos|length > 1 %}
+    <div class="store-carousel-dots">
+        {% for _ in banners_ativos %}
+        <button type="button" class="{% if loop.first %}is-active{% endif %}" data-store-dot aria-label="Banner {{ loop.index }}"></button>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if categorias_vitrine %}
+<section class="store-categories-row" id="categorias" aria-label="Categorias da loja">
+    <header class="store-section-header">
+        <h2>Categorias</h2>
+    </header>
+    <div class="store-categories-scroll">
+        {% for bloco in categorias_vitrine %}
+        {% if bloco.categoria %}
+        <a href="#{{ bloco.ancora }}" class="store-category-pill">
+            <span class="store-category-pill-media">
+                {% if bloco.categoria_imagem_path %}
+                <img src="{{ url_for('static', filename=bloco.categoria_imagem_path) }}" alt="{{ bloco.categoria.nome }}" loading="lazy">
+                {% else %}
+                <span class="store-category-pill-fallback">{{ bloco.categoria.nome[:2]|upper }}</span>
+                {% endif %}
+            </span>
+            <span class="store-category-pill-name">{{ bloco.categoria.nome }}</span>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if campanha_principal %}
+<section class="store-promo-banner" aria-label="Campanha principal">
+    <div class="store-promo-banner-copy">
+        <span class="store-kicker">Promoção</span>
+        <strong>{{ campanha_principal }}</strong>
+    </div>
+    <a href="#ofertas" class="store-btn store-btn-secondary">Ver produtos</a>
+</section>
+{% endif %}
+
+{% if produtos_destaque %}
+<section class="store-product-section" id="ofertas">
+    <header class="store-section-header">
+        <h2>Produtos em destaque</h2>
+    </header>
+
+    <div class="store-product-grid">
+        {% for produto in produtos_destaque %}
+        {% set imagem_produto = produto.imagem_path %}
+        {% if not imagem_produto or imagem_produto == 'img/placeholders/imgindisponivel.png' %}
+            {% set imagem_produto = produto_imagem_padrao_path %}
+        {% endif %}
+        {% set preco_antigo = none %}
+        {% if produto.preco_antigo is defined and produto.preco_antigo %}
+            {% set preco_antigo = produto.preco_antigo %}
+        {% elif produto.preco_de is defined and produto.preco_de %}
+            {% set preco_antigo = produto.preco_de %}
+        {% elif produto.preco_lista is defined and produto.preco_lista %}
+            {% set preco_antigo = produto.preco_lista %}
+        {% endif %}
+        {% set badge_text = none %}
+        {% if produto.badge is defined and produto.badge %}
+            {% set badge_text = produto.badge %}
+        {% elif produto.selo is defined and produto.selo %}
+            {% set badge_text = produto.selo %}
+        {% endif %}
+        <article
+            class="store-product-card"
+            data-product-card
+            data-product-search="{{ produto.nome }} {{ produto.categoria.nome if produto.categoria else '' }}"
+        >
+            <div class="store-product-media">
+                {% if imagem_produto %}
+                <img src="{{ url_for('static', filename=imagem_produto) }}" alt="{{ produto.nome }}" loading="lazy">
+                {% else %}
+                <div class="store-product-placeholder">{{ produto.nome[:2]|upper }}</div>
+                {% endif %}
+                {% if badge_text %}
+                <span class="store-product-tag">{{ badge_text }}</span>
+                {% endif %}
+            </div>
+
+            <div class="store-product-body">
+                <h3><a href="{{ url_for('public.produto_detalhe_site', produto_id=produto.id) }}">{{ produto.nome }}</a></h3>
+                <p class="store-note">★ {{ '%.1f'|format(produto.avaliacao_media) }} ({{ produto.total_avaliacoes }})</p>
+                <div class="store-product-price">
+                    {% if preco_antigo %}
+                    <span class="store-product-old-price">R$ {{ '%.2f'|format(preco_antigo)|replace('.', ',') }}</span>
+                    {% endif %}
+                    <strong>R$ {{ '%.2f'|format(produto.preco_venda or 0)|replace('.', ',') }}</strong>
+                </div>
+                <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}" class="store-product-form">
+                    {{ csrf_input|safe }}
+                    <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                    <input type="hidden" name="next" value="{{ url_for('index') }}#ofertas">
+                    <input type="number" name="quantidade" min="1" max="99" value="1" aria-label="Quantidade de {{ produto.nome }}">
+                    <button type="submit" class="store-btn store-btn-primary">Adicionar</button>
+                </form>
+                <div class="store-inline-actions" style="margin-top: 10px;">
+                    <a href="{{ url_for('public.produto_detalhe_site', produto_id=produto.id) }}" class="store-btn store-btn-secondary">Ver detalhes</a>
+                    {% if cliente_publico is defined and cliente_publico %}
+                    <form method="POST" action="{{ url_for('public.cliente_favorito_adicionar', produto_id=produto.id) }}">
+                        {{ csrf_input|safe }}
+                        <input type="hidden" name="next" value="{{ url_for('index') }}#ofertas">
+                        <button type="submit" class="store-btn store-btn-secondary">Favoritar</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if categorias_vitrine %}
+<section class="store-shelves" aria-label="Produtos por categoria">
+    {% for bloco in categorias_vitrine %}
+    {% if bloco.categoria and bloco.produtos %}
+    <section id="{{ bloco.ancora }}" class="store-shelf">
+        <header class="store-section-header store-section-header-shelf">
+            <h2>{{ bloco.categoria.nome }}</h2>
+            <a href="#topo">Ver topo</a>
+        </header>
+
+        <div class="store-product-grid">
+            {% for produto in bloco.produtos[:8] %}
+            {% set imagem_produto = produto.imagem_path %}
+            {% if not imagem_produto or imagem_produto == 'img/placeholders/imgindisponivel.png' %}
+                {% set imagem_produto = produto_imagem_padrao_path %}
+            {% endif %}
+            {% set preco_antigo = none %}
+            {% if produto.preco_antigo is defined and produto.preco_antigo %}
+                {% set preco_antigo = produto.preco_antigo %}
+            {% elif produto.preco_de is defined and produto.preco_de %}
+                {% set preco_antigo = produto.preco_de %}
+            {% elif produto.preco_lista is defined and produto.preco_lista %}
+                {% set preco_antigo = produto.preco_lista %}
+            {% endif %}
+            {% set badge_text = none %}
+            {% if produto.badge is defined and produto.badge %}
+                {% set badge_text = produto.badge %}
+            {% elif produto.selo is defined and produto.selo %}
+                {% set badge_text = produto.selo %}
+            {% endif %}
+            <article
+                class="store-product-card"
+                data-product-card
+                data-product-search="{{ produto.nome }} {{ bloco.categoria.nome }}"
+            >
+                <div class="store-product-media">
+                    {% if imagem_produto %}
+                    <img src="{{ url_for('static', filename=imagem_produto) }}" alt="{{ produto.nome }}" loading="lazy">
+                    {% else %}
+                    <div class="store-product-placeholder">{{ produto.nome[:2]|upper }}</div>
+                    {% endif %}
+                    {% if badge_text %}
+                    <span class="store-product-tag">{{ badge_text }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="store-product-body">
+                    <h3><a href="{{ url_for('public.produto_detalhe_site', produto_id=produto.id) }}">{{ produto.nome }}</a></h3>
+                    <p class="store-note">★ {{ '%.1f'|format(produto.avaliacao_media) }} ({{ produto.total_avaliacoes }})</p>
+                    <div class="store-product-price">
+                        {% if preco_antigo %}
+                        <span class="store-product-old-price">R$ {{ '%.2f'|format(preco_antigo)|replace('.', ',') }}</span>
+                        {% endif %}
+                        <strong>R$ {{ '%.2f'|format(produto.preco_venda or 0)|replace('.', ',') }}</strong>
+                    </div>
+                    <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}" class="store-product-form">
+                        {{ csrf_input|safe }}
+                        <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                        <input type="hidden" name="next" value="{{ url_for('index') }}#{{ bloco.ancora }}">
+                        <input type="number" name="quantidade" min="1" max="99" value="1" aria-label="Quantidade de {{ produto.nome }}">
+                        <button type="submit" class="store-btn store-btn-primary">Adicionar</button>
+                    </form>
+                    <div class="store-inline-actions" style="margin-top: 10px;">
+                        <a href="{{ url_for('public.produto_detalhe_site', produto_id=produto.id) }}" class="store-btn store-btn-secondary">Ver detalhes</a>
+                        {% if cliente_publico is defined and cliente_publico %}
+                        <form method="POST" action="{{ url_for('public.cliente_favorito_adicionar', produto_id=produto.id) }}">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="next" value="{{ url_for('index') }}#{{ bloco.ancora }}">
+                            <button type="submit" class="store-btn store-btn-secondary">Favoritar</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

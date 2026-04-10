@@ -1,0 +1,71 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Nova Entrada ou Saída Interna - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Nova Entrada ou Saída Interna</h1>
+        <p class="text-muted mb-0">Este formulário é para ajustes internos do estoque. Recebimentos de fornecedor e transferências entre lojas/CDs ficam em fluxos separados.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-group">
+            <label for="produto_id">Produto *</label>
+            <select id="produto_id" name="produto_id" required class="input-select">
+                <option value="">Selecione um produto</option>
+                {% for prod in produtos %}
+                <option value="{{ prod.id }}">{{ prod.codigo }} - {{ prod.nome }} (Estoque: {{ prod.quantidade_estoque }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="tipo">Tipo de Movimentacao *</label>
+            <select id="tipo" name="tipo" required class="input-select">
+                <option value="">Selecione um tipo</option>
+                <option value="entrada">Entrada</option>
+                <option value="saida">Saida</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="quantidade">Quantidade *</label>
+            <input type="number" id="quantidade" name="quantidade" required min="1" placeholder="0" class="input-text">
+        </div>
+
+        <div class="form-group">
+            <label for="motivo">Motivo</label>
+            <input type="text" id="motivo" name="motivo" list="motivos-movimentacao-interna" placeholder="Ex.: consumo_operacional, perda_validade, acerto_estoque" class="input-text">
+            <datalist id="motivos-movimentacao-interna">
+                {% for motivo in motivos_sugeridos %}
+                <option value="{{ motivo }}"></option>
+                {% endfor %}
+            </datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="info_nota">Documento ou referência interna</label>
+            <input type="text" id="info_nota" name="info_nota" placeholder="OS, checklist, inventário, ajuste manual..." class="input-text">
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" placeholder="Detalhe a perda, consumo, ajuste ou justificativa da movimentação." class="input-textarea" rows="4"></textarea>
+            <small class="text-muted">Perdas com reflexo financeiro, consumo da operação, energia, água, manutenção e outros gastos devem ser lançados também no Financeiro.</small>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar movimentacao</button>
+            <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

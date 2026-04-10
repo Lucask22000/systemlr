@@ -1,0 +1,333 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Novo Endereco de Estoque - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Novo Endereco de Estoque</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+
+        <h3 class="mb-2">Secao 1: Identificacao</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="estoque_id">Estoque *</label>
+                <select id="estoque_id" name="estoque_id" class="input-select" required>
+                    <option value="">Selecione um estoque</option>
+                    {% for estoque in estoques %}
+                    <option value="{{ estoque.id }}">{{ estoque.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="nome">Nome do Endereco *</label>
+                <input type="text" id="nome" name="nome" class="input-text" required maxlength="120" placeholder="Ex: Deposito Secos A">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="loja_cd">Loja/CD *</label>
+                <input type="text" id="loja_cd" name="loja_cd" class="input-text" required maxlength="20" placeholder="Ex: LJ01 ou CD01">
+            </div>
+            <div class="form-group">
+                <label for="setor_zona">Setor/Zona *</label>
+                <select id="setor_zona" name="setor_zona" class="input-select" required>
+                    <option value="">Selecione</option>
+                    {% for item in setores_zona_validos %}
+                    <option value="{{ item }}">{{ item.replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tipo_area">Tipo de Area *</label>
+                <select id="tipo_area" name="tipo_area" class="input-select" required>
+                    <option value="">Selecione</option>
+                    {% for item in tipos_area_validos %}
+                    <option value="{{ item }}">{{ item.replace('_', ' ')|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="status">Status *</label>
+                <select id="status" name="status" class="input-select" required>
+                    <option value="">Selecione</option>
+                    {% for item in status_endereco_validos %}
+                    <option value="{{ item }}">{{ item|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descricao</label>
+            <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" placeholder="Apelido operacional">
+        </div>
+        <div class="form-group">
+            <label for="tipo_produto_reservado_categoria_id">Tipo de produto reservado *</label>
+            <select id="tipo_produto_reservado_categoria_id" name="tipo_produto_reservado_categoria_id" class="input-select" required>
+                <option value="">Selecione uma categoria</option>
+                {% for categoria in categorias %}
+                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" class="input-textarea" rows="3" maxlength="1000" placeholder="Instrucoes operacionais do endereco"></textarea>
+        </div>
+
+        <h3 class="mb-2 mt-3">Secao 2: Tipo de Estrutura</h3>
+        <div class="form-group">
+            <label class="checkbox-inline me-3">
+                <input type="radio" name="tipo_estrutura" value="rack" checked>
+                Rack / Estante
+            </label>
+            <label class="checkbox-inline">
+                <input type="radio" name="tipo_estrutura" value="area_aberta">
+                Area Aberta
+            </label>
+        </div>
+
+        <div id="grupo-rack">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="rua_corredor">Rua/Corredor *</label>
+                    <input type="text" id="rua_corredor" name="rua_corredor" class="input-text" maxlength="20" placeholder="Ex: 03">
+                </div>
+                <div class="form-group">
+                    <label for="rack_estante">Rack/Estante *</label>
+                    <input type="text" id="rack_estante" name="rack_estante" class="input-text" maxlength="10" placeholder="Ex: 02">
+                </div>
+                <div class="form-group">
+                    <label for="nivel_prateleira">Nivel/Prateleira *</label>
+                    <input type="text" id="nivel_prateleira" name="nivel_prateleira" class="input-text" maxlength="10" placeholder="Ex: 01">
+                </div>
+                <div class="form-group">
+                    <label for="posicao_slot">Vao/Slot *</label>
+                    <input type="text" id="posicao_slot" name="posicao_slot" class="input-text" maxlength="10" placeholder="Ex: 08">
+                </div>
+                <div class="form-group">
+                    <label for="lado">Lado *</label>
+                    <select id="lado" name="lado" class="input-select">
+                        <option value="">Selecione</option>
+                        <option value="A">A (LA)</option>
+                        <option value="B">B (LB)</option>
+                        <option value="E">E (LE)</option>
+                        <option value="D">D (LD)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-inline">
+                    <input type="checkbox" id="cadastrar_lote_rack" name="cadastrar_lote_rack">
+                    Cadastrar varios enderecos para este Rack/Estante
+                </label>
+            </div>
+            <div id="grupo-lote-rack" class="is-hidden">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="lote_nivel_inicial">Nivel inicial</label>
+                        <input type="number" id="lote_nivel_inicial" name="lote_nivel_inicial" class="input-text" min="0" max="99" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="lote_nivel_final">Nivel final</label>
+                        <input type="number" id="lote_nivel_final" name="lote_nivel_final" class="input-text" min="0" max="99" placeholder="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="lote_vao_inicial">Vao inicial</label>
+                        <input type="number" id="lote_vao_inicial" name="lote_vao_inicial" class="input-text" min="1" max="99" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="lote_vao_final">Vao final</label>
+                        <input type="number" id="lote_vao_final" name="lote_vao_final" class="input-text" min="1" max="99" placeholder="8">
+                    </div>
+                </div>
+                <small class="text-muted">Serão criados enderecos com nome base + N## V## e código automático para cada combinacao.</small>
+            </div>
+        </div>
+
+        <div id="grupo-area-aberta" class="is-hidden">
+            <div class="form-group">
+                <label for="ponto_local">Ponto/Local *</label>
+                <input type="text" id="ponto_local" name="ponto_local" class="input-text" maxlength="255" placeholder="Ex: Gondola 12 - Prateleira 03">
+            </div>
+        </div>
+
+        <h3 class="mb-2 mt-3">Secao 3: Regras de Armazenagem</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="checkbox-inline"><input type="checkbox" name="permite_fracionado"> Permite fracionado</label>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-inline"><input type="checkbox" name="permite_mistura_sku"> Permite mistura SKU</label>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-inline"><input type="checkbox" name="permite_mistura_lote"> Permite mistura lote</label>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="controle_validade">Controle de validade *</label>
+                <select id="controle_validade" name="controle_validade" class="input-select" required>
+                    {% for item in controle_validade_validos %}
+                    <option value="{{ item }}" {% if item == 'nenhum' %}selected{% endif %}>{{ item|upper }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="temperatura">Temperatura</label>
+                <select id="temperatura" name="temperatura" class="input-select">
+                    <option value="">Selecione</option>
+                    {% for item in temperatura_validos %}
+                    <option value="{{ item }}">{{ item|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sku_produto">SKU principal (opcional)</label>
+                <input type="text" id="sku_produto" name="sku_produto" class="input-text" maxlength="100">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Restricoes</label>
+            <div class="form-row">
+                {% for item in restricoes_validas %}
+                <label class="checkbox-inline me-3"><input type="checkbox" name="restricoes" value="{{ item }}"> {{ item.replace('_', ' ')|title }}</label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <h3 class="mb-2 mt-3">Secao 4: Capacidade</h3>
+        <div class="form-row">
+            <div class="form-group"><label for="capacidade_caixas">Capacidade caixas</label><input type="number" min="0" id="capacidade_caixas" name="capacidade_caixas" class="input-text"></div>
+            <div class="form-group"><label for="capacidade_fardos">Capacidade fardos</label><input type="number" min="0" id="capacidade_fardos" name="capacidade_fardos" class="input-text"></div>
+            <div class="form-group"><label for="capacidade_unidades">Capacidade unidades</label><input type="number" min="0" id="capacidade_unidades" name="capacidade_unidades" class="input-text"></div>
+            <div class="form-group"><label for="capacidade_pallets">Capacidade pallets</label><input type="number" min="0" id="capacidade_pallets" name="capacidade_pallets" class="input-text"></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label for="peso_max_kg">Peso max. (kg)</label><input type="number" min="0" step="0.01" id="peso_max_kg" name="peso_max_kg" class="input-text"></div>
+            <div class="form-group"><label for="volume_max_m3">Volume max. (m3)</label><input type="number" min="0" step="0.001" id="volume_max_m3" name="volume_max_m3" class="input-text"></div>
+            <div class="form-group">
+                <label for="prioridade_picking">Prioridade picking</label>
+                <select id="prioridade_picking" name="prioridade_picking" class="input-select">
+                    <option value="0" selected>Nao</option>
+                    <option value="1">Sim</option>
+                </select>
+            </div>
+        </div>
+
+        <input type="hidden" id="código_localizacao_preview" name="código_localizacao" value="">
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Endereco</button>
+            <a href="{{ url_for('listar_enderecos_estoque') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function semAcento(texto) {
+    return (texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+function token(texto) {
+    return semAcento(texto).toUpperCase().trim().replace(/\s+/g, '').replace(/[^A-Z0-9_]/g, '');
+}
+function slug(texto) {
+    return semAcento(texto).toUpperCase().trim().replace(/[\s_/]+/g, '-').replace(/[^A-Z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+function n2(valor) {
+    const m = String(valor || '').match(/\d+/);
+    if (!m) return '';
+    return String(parseInt(m[0], 10)).padStart(2, '0');
+}
+function ladoNorm(lado) {
+    const mapa = {A: 'LA', B: 'LB', E: 'LE', D: 'LD', LA: 'LA', LB: 'LB', LE: 'LE', LD: 'LD'};
+    return mapa[token(lado)] || '';
+}
+function siglaSetor(setor) {
+    const mapa = {
+        secos: 'SEC', bebidas: 'BEB', hortifruti: 'HOR', frios: 'FRI', congelados: 'CON',
+        acougue: 'ACO', padaria: 'PAD', deposito: 'DEP', frente_loja: 'FL',
+        ecommerce_picking: 'ECP', quarentena: 'QUA', avaria: 'AVA', devolucao: 'DEV'
+    };
+    return mapa[setor] || '';
+}
+function códigoAreaAberta(ponto) {
+    const t = semAcento(ponto || '').toUpperCase();
+    const gm = t.match(/(?:\bGONDOLA\b|\bG\b)\s*0*(\d+)/);
+    const pm = t.match(/(?:\bPRATELEIRA\b|\bP\b)\s*0*(\d+)/);
+    if (gm && pm) return `G${String(parseInt(gm[1], 10)).padStart(2, '0')}-P${String(parseInt(pm[1], 10)).padStart(2, '0')}`;
+    return slug(t).slice(0, 24);
+}
+function estruturaAtual() {
+    const el = document.querySelector('input[name="tipo_estrutura"]:checked');
+    return el ? el.value : 'rack';
+}
+function atualizarGrupos() {
+    const tipo = estruturaAtual();
+    const rack = document.getElementById('grupo-rack');
+    const area = document.getElementById('grupo-area-aberta');
+    const lote = document.getElementById('grupo-lote-rack');
+    const loteAtivo = document.getElementById('cadastrar_lote_rack')?.checked;
+    const reqRackFixos = ['rua_corredor', 'rack_estante', 'lado'];
+    const reqRackVariaveis = ['nivel_prateleira', 'posicao_slot'];
+    rack.classList.toggle('is-hidden', tipo !== 'rack');
+    area.classList.toggle('is-hidden', tipo !== 'area_aberta');
+    if (lote) {
+        lote.classList.toggle('is-hidden', !(tipo === 'rack' && loteAtivo));
+    }
+    reqRackFixos.forEach((id) => {
+        const e = document.getElementById(id);
+        if (e) e.required = tipo === 'rack';
+    });
+    reqRackVariaveis.forEach((id) => {
+        const e = document.getElementById(id);
+        if (!e) return;
+        const bloquear = (tipo === 'rack' && loteAtivo);
+        e.required = (tipo === 'rack' && !loteAtivo);
+        e.disabled = bloquear;
+    });
+    const ponto = document.getElementById('ponto_local');
+    if (ponto) ponto.required = tipo === 'area_aberta';
+
+    const loteCampos = ['lote_nivel_inicial', 'lote_nivel_final', 'lote_vao_inicial', 'lote_vao_final'];
+    loteCampos.forEach((id) => {
+        const e = document.getElementById(id);
+        if (!e) return;
+        const habilitar = (tipo === 'rack' && loteAtivo);
+        e.disabled = !habilitar;
+        e.required = habilitar;
+    });
+    atualizarPreviewCodigo();
+}
+function atualizarPreviewCodigo() {
+    const loja = token(document.getElementById('loja_cd').value);
+    const setor = siglaSetor(document.getElementById('setor_zona').value);
+    const tipo = estruturaAtual();
+    let código = '';
+    if (loja && setor && tipo === 'rack') {
+        const r = n2(document.getElementById('rua_corredor').value);
+        const rk = n2(document.getElementById('rack_estante').value);
+        const n = n2(document.getElementById('nivel_prateleira').value);
+        const v = n2(document.getElementById('posicao_slot').value);
+        const l = ladoNorm(document.getElementById('lado').value);
+        if (r && rk && n && v && l) código = `${loja}-${setor}-R${r}-RK${rk}-N${n}-V${v}-${l}`;
+    }
+    if (loja && setor && tipo === 'area_aberta') {
+        const p = códigoAreaAberta(document.getElementById('ponto_local').value);
+        if (p) código = `${loja}-${setor}-${p}`;
+    }
+    document.getElementById('código_localizacao_preview').value = código;
+}
+document.querySelectorAll('input,select,textarea').forEach((el) => el.addEventListener('input', atualizarPreviewCodigo));
+document.querySelectorAll('input[name="tipo_estrutura"]').forEach((el) => el.addEventListener('change', atualizarGrupos));
+const loteCheck = document.getElementById('cadastrar_lote_rack');
+if (loteCheck) loteCheck.addEventListener('change', atualizarGrupos);
+atualizarGrupos();
+</script>
+{% endblock %}
+

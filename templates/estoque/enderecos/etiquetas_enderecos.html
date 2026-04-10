@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} - SystemLR{% endblock %}
+
+{% block extra_css %}
+<style>
+.warehouse-label-page { display: grid; gap: 1rem; }
+.warehouse-label-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.85rem;
+}
+.warehouse-label-card {
+    border: 1px dashed #94a3b8;
+    border-radius: 14px;
+    background: #fff;
+    padding: 1rem;
+    display: grid;
+    gap: 0.35rem;
+    min-height: 180px;
+}
+.warehouse-label-card h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.02rem;
+}
+.warehouse-label-code {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f766e;
+}
+.warehouse-label-meta {
+    display: grid;
+    gap: 0.2rem;
+    color: #475569;
+    font-size: 0.88rem;
+}
+@media print {
+    .app-navbar,
+    .footer,
+    .alert,
+    .warehouse-label-toolbar {
+        display: none !important;
+    }
+    .main-content {
+        padding: 0;
+    }
+    .warehouse-label-card {
+        break-inside: avoid;
+        box-shadow: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="warehouse-label-page">
+    <div class="page-header">
+        <div>
+            <h1>{{ titulo }}</h1>
+            <p class="text-muted mb-0">Impressao operacional de enderecos para armazenagem, picking, reserva e abastecimento.</p>
+        </div>
+        <div class="header-actions warehouse-label-toolbar">
+            <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+            <a href="{{ url_for('listar_enderecos_estoque') }}" class="btn btn-outline-secondary">Voltar para Enderecos</a>
+        </div>
+    </div>
+
+    <section class="section">
+        {% if enderecos %}
+        <div class="warehouse-label-grid">
+            {% for endereco in enderecos %}
+            <article class="warehouse-label-card">
+                <div>{{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</div>
+                <h3>{{ endereco.nome }}</h3>
+                <div class="warehouse-label-code">{{ endereco.codigo_localizacao or '-' }}</div>
+                <div class="warehouse-label-meta">
+                    <span>Loja/CD: {{ endereco.loja_cd or endereco.codigo_armazem or '-' }}</span>
+                    <span>Setor/Zona: {{ (endereco.setor_zona or '-')|replace('_', ' ')|title }}</span>
+                    <span>Tipo de area: {{ (endereco.tipo_area or '-')|replace('_', ' ')|title }}</span>
+                    <span>Estrutura: {{ (endereco.tipo_estrutura or '-')|replace('_', ' ')|title }}</span>
+                    <span>Status: {{ endereco.status or ('ativo' if endereco.ativo else 'bloqueado') }}</span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="mb-0">Nenhum endereco disponivel para impressao.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

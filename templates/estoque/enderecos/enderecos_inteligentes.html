@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Enderecos Inteligentes - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Enderecos Inteligentes</h1>
+    <div class="header-actions">
+        {% if etiquetas_loja_ativas %}
+        <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="btn btn-secondary" target="_blank">Etiquetas de Loja</a>
+        {% endif %}
+        {% if etiquetas_endereco_ativas %}
+        <a href="{{ url_for('imprimir_etiquetas_enderecos_estoque') }}" class="btn btn-secondary" target="_blank">Etiquetas de Endereco</a>
+        {% endif %}
+        <a href="{{ url_for('listar_enderecos_estoque') }}" class="btn btn-secondary">Enderecos</a>
+    </div>
+</div>
+
+{% if not reposicao_loja_ativa %}
+<section class="section" style="margin-bottom: 16px;">
+    <p class="mb-0">A reposicao da loja fisica esta desativada na configuracao da empresa. O painel continua disponivel para analise, mas o fluxo operacional deve ser reativado antes de usar picking e abastecimento como rotina.</p>
+</section>
+{% endif %}
+
+<section class="filters-section">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <label for="dias">Periodo de vendas</label>
+            <select id="dias" name="dias" class="input-select">
+                <option value="7" {% if dias == 7 %}selected{% endif %}>7 dias</option>
+                <option value="15" {% if dias == 15 %}selected{% endif %}>15 dias</option>
+                <option value="30" {% if dias == 30 %}selected{% endif %}>30 dias</option>
+                <option value="60" {% if dias == 60 %}selected{% endif %}>60 dias</option>
+                <option value="90" {% if dias == 90 %}selected{% endif %}>90 dias</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Atualizar</button>
+    </form>
+</section>
+
+<section class="section">
+    <h2>Produtos mais vendidos e sugestao de picking/box</h2>
+    <div class="table-responsive table-scroll-sticky">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Vendidos</th>
+                    <th>Endereco atual</th>
+                    <th>Movimentacao</th>
+                    <th>Status picking</th>
+                    <th>Direcionar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in ranking %}
+                <tr>
+                    <td>{{ item.produto.nome }}</td>
+                    <td>{{ item.qtd_vendida }}</td>
+                    <td>{{ item.produto.endereco.nome if item.produto.endereco else '-' }}</td>
+                    <td>{{ tipos_movimentacao_produto.get((item.produto.tipo_movimentacao or 'manual'), 'Manual') }}</td>
+                    <td>
+                        {% if item.produto.fora_picking %}
+                        <span class="badge badge-danger">Fora picking</span>
+                        {% elif item.em_area_picking %}
+                        <span class="badge badge-success">Em picking/box</span>
+                        {% else %}
+                        <span class="badge badge-warning">Fora da area sugerida</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('enderecar_produto_inteligente', produto_id=item.produto.id) }}" class="inline-form">
+                            {{ csrf_input|safe }}
+                            <select name="endereco_id" class="input-select" style="min-width:190px;">
+                                <option value="">Endereco inteligente</option>
+                                {% for endereco in enderecos_picking %}
+                                <option value="{{ endereco.id }}">{{ endereco.nome }} ({{ endereco.tipo_area|replace('_', ' ')|title }})</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn-small btn-primary">Aplicar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Sem dados de venda no periodo.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="section" style="margin-top:16px;">
+    <h2>Fila de produtos fora de picking</h2>
+    <div class="table-responsive table-scroll-sticky">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Prioridade</th>
+                    <th>Endereco atual</th>
+                    <th>Ultima baixa</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for produto in fora_picking %}
+                <tr>
+                    <td>{{ produto.nome }}</td>
+                    <td>{{ produto.prioridade_reabastecimento if produto.prioridade_reabastecimento else '-' }}</td>
+                    <td>{{ produto.endereco.nome if produto.endereco else '-' }}</td>
+                    <td>{{ produto.ultima_baixa_picking_em.strftime('%d/%m/%Y %H:%M') if produto.ultima_baixa_picking_em else '-' }}</td>
+                    <td class="actions-cell">
+                        <form method="POST" action="{{ url_for('baixar_produto_para_picking', produto_id=produto.id) }}" class="inline-form">
+                            {{ csrf_input|safe }}
+                            <button type="submit" class="btn-small btn-success">Baixar para fluxo</button>
+                        </form>
+                        <a href="{{ url_for('editar_produto', produto_id=produto.id) }}" class="btn-small btn-warning">Editar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">Nao existem produtos pendentes fora de picking.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

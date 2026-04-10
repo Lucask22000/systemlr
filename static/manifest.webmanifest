@@ -1,0 +1,20 @@
+{
+  "name": "Loja Online",
+  "short_name": "Loja",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ee4d2d",
+  "background_color": "#f5f5f5",
+  "icons": [
+    {
+      "src": "/static/icons/pwa/store-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icons/pwa/store-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

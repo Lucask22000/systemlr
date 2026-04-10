@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Ordens de Servico - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Minhas Ordens de Servico</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_ordens_servico') }}" class="btn btn-outline-secondary">Painel de Servicos</a>
+    </div>
+</div>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Titulo</th>
+                <th>Venda</th>
+                <th>Produto</th>
+                <th>Status</th>
+                <th>Agendada</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ordem in ordens %}
+            <tr>
+                <td>#{{ ordem.id }}</td>
+                <td>{{ ordem.titulo }}</td>
+                <td>{% if ordem.pedido_id %}Pedido #{{ ordem.pedido_id }}{% else %}-{% endif %}</td>
+                <td>{{ ordem.produto.nome if ordem.produto else '-' }}</td>
+                <td>{{ ordem.status|replace('_', ' ')|title }}</td>
+                <td>{{ ordem.data_agendada.strftime('%d/%m/%Y') if ordem.data_agendada else '-' }}</td>
+                <td class="actions-cell">
+                    <a href="{{ url_for('executar_ordem_servico_tecnico', ordem_id=ordem.id) }}" class="btn-small btn-primary">Executar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center">Nenhuma ordem atribuida no momento.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

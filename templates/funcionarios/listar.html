@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Funcionarios - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5 funcionarios-list-page">
+    <div class="page-header">
+        <h1>Funcionarios</h1>
+        {% if funcionario_logado.role == 'admin' %}
+            <a href="{{ url_for('criar_funcionario') }}" class="btn btn-primary">Novo Funcionario</a>
+        {% endif %}
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if funcionarios %}
+        <div class="funcionarios-kpis">
+            <article class="func-kpi-card">
+                <small>Total</small>
+                <strong>{{ resumo_funcionarios.total }}</strong>
+            </article>
+            <article class="func-kpi-card">
+                <small>Ativos</small>
+                <strong>{{ resumo_funcionarios.ativos }}</strong>
+            </article>
+            <article class="func-kpi-card">
+                <small>Inativos</small>
+                <strong>{{ resumo_funcionarios.inativos }}</strong>
+            </article>
+            <article class="func-kpi-card">
+                <small>Resultado atual</small>
+                <strong>{{ resumo_funcionarios.filtrados }}</strong>
+            </article>
+        </div>
+
+        <section class="funcionario-filter-card" data-filter-panel data-filter-title="Filtros da lista">
+            <form method="GET" class="funcionario-filter-form">
+                <div class="funcionario-filter-field funcionario-filter-search">
+                    <label for="busca">Buscar</label>
+                    <input
+                        type="text"
+                        id="busca"
+                        name="busca"
+                        class="form-control"
+                        value="{{ filtros.busca }}"
+                        placeholder="Nome, email, matricula, cadastro, CPF, cargo"
+                    >
+                </div>
+                <div class="funcionario-filter-field">
+                    <label for="role">Tipo</label>
+                    <select id="role" name="role" class="form-control">
+                        <option value="">Todos</option>
+                        {% for role_option in ['admin', 'gerente', 'caixa', 'operador', 'garcom'] %}
+                        <option value="{{ role_option }}" {% if filtros.role == role_option %}selected{% endif %}>{{ role_option|upper }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="funcionario-filter-field">
+                    <label for="status">Status</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="">Todos</option>
+                        <option value="ativos" {% if filtros.status == 'ativos' %}selected{% endif %}>Ativos</option>
+                        <option value="inativos" {% if filtros.status == 'inativos' %}selected{% endif %}>Inativos</option>
+                    </select>
+                </div>
+                <div class="funcionario-filter-field">
+                    <label for="departamento">Departamento</label>
+                    <select id="departamento" name="departamento" class="form-control">
+                        <option value="">Todos</option>
+                        {% for departamento in departamentos_disponiveis %}
+                        <option value="{{ departamento }}" {% if filtros.departamento == departamento %}selected{% endif %}>{{ departamento }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="funcionario-filter-field">
+                    <label for="ordenar">Ordenar</label>
+                    <select id="ordenar" name="ordenar" class="form-control">
+                        <option value="nome_asc" {% if filtros.ordenar == 'nome_asc' %}selected{% endif %}>Nome A-Z</option>
+                        <option value="nome_desc" {% if filtros.ordenar == 'nome_desc' %}selected{% endif %}>Nome Z-A</option>
+                        <option value="recentes" {% if filtros.ordenar == 'recentes' %}selected{% endif %}>Mais recentes</option>
+                        <option value="cargo" {% if filtros.ordenar == 'cargo' %}selected{% endif %}>Cargo</option>
+                        <option value="departamento" {% if filtros.ordenar == 'departamento' %}selected{% endif %}>Departamento</option>
+                        <option value="perfil" {% if filtros.ordenar == 'perfil' %}selected{% endif %}>Tipo</option>
+                    </select>
+                </div>
+                <div class="funcionario-filter-field">
+                    <label for="per_page">Itens por pagina</label>
+                    <select id="per_page" name="per_page" class="form-control">
+                        {% for quantidade in [10, 25, 50, 100] %}
+                        <option value="{{ quantidade }}" {% if filtros.per_page == quantidade %}selected{% endif %}>{{ quantidade }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="funcionario-filter-actions">
+                    <button type="submit" class="btn btn-primary">Aplicar</button>
+                    <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-secondary">Limpar</a>
+                </div>
+            </form>
+            <div class="funcionario-list-meta">
+                Exibindo {{ funcionarios|length }} de {{ paginacao.total }} funcionario(s) nesta visualizacao.
+            </div>
+        </section>
+
+        <div class="funcionarios-mobile-list">
+            {% for func in funcionarios %}
+            <article class="funcionario-mobile-card">
+                <div class="funcionario-mobile-head">
+                    <div>
+                        <h3>{{ func.nome }}</h3>
+                        <p class="funcionario-mobile-matricula">Cadastro: {{ func.numero_cadastro or '-' }} | Matricula: {{ func.matricula or '-' }}</p>
+                    </div>
+                    <span class="funcionario-pill status-{{ 'ativo' if func.ativo else 'inativo' }}">
+                        {{ 'ATIVO' if func.ativo else 'INATIVO' }}
+                    </span>
+                </div>
+
+                <div class="funcionario-mobile-grid">
+                    <div><strong>Tipo:</strong> <span class="funcionario-pill role-{{ func.role }}">{{ func.role.upper() }}</span></div>
+                    <div><strong>Departamento:</strong> {{ func.departamento or '-' }}</div>
+                    <div><strong>Cargo:</strong> {{ func.cargo or '-' }}</div>
+                </div>
+
+                <details class="funcionario-mobile-details">
+                    <summary>Ver mais informacoes</summary>
+                    <div class="funcionario-mobile-grid funcionario-mobile-grid-extra">
+                        <div><strong>Email:</strong> <span class="funcionario-email">{{ func.email }}</span></div>
+                        <div><strong>CPF:</strong> {{ func.cpf or '-' }}</div>
+                        <div><strong>Celular:</strong> {{ func.celular or '-' }}</div>
+                        <div><strong>Time:</strong> {{ func.time_nome or '-' }}</div>
+                        <div><strong>Nivel:</strong> {{ func.nivel_organograma or '-' }}</div>
+                        <div><strong>Superior:</strong> {{ func.superior.nome if func.superior else '-' }}</div>
+                        <div><strong>Perfil de acesso:</strong> {{ func.perfil_acesso.nome if func.perfil_acesso else '-' }}</div>
+                        <div><strong>Pagina inicial:</strong> {{ func.pagina_inicial or '-' }}</div>
+                    </div>
+                </details>
+
+                <div class="funcionario-mobile-actions">
+                    <a href="{{ url_for('editar_funcionario', funcionario_id=func.id) }}" class="btn-small btn-primary">Editar</a>
+                    {% if func.id != primeiro_funcionario_id and funcionario_logado.role in ['admin', 'gerente'] %}
+                        <a href="{{ url_for('editar_acessos_funcionario', funcionario_id=func.id) }}" class="btn-small btn-success">Acessos</a>
+                    {% endif %}
+                    {% if func.id != funcionario_logado.id and funcionario_logado.role == 'admin' %}
+                        <form method="POST" action="{{ url_for('deletar_funcionario', funcionario_id=func.id) }}" class="funcionario-inline-form" data-confirm-message="Tem certeza que deseja deletar {{ func.nome }}?">
+                            {{ csrf_input|safe }}
+                            <button type="submit" class="btn-small btn-danger">Deletar</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+
+        <div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table funcionarios-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Cadastro</th>
+                        <th>Matricula</th>
+                        <th>Contato</th>
+                        <th>Tipo / Cargo</th>
+                        <th>Estrutura</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Mais</th>
+                        <th class="text-center">Acoes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for func in funcionarios %}
+                        <tr class="funcionario-table-row">
+                            <td data-label="Nome"><strong>{{ func.nome }}</strong></td>
+                            <td data-label="Cadastro">{{ func.numero_cadastro or '-' }}</td>
+                            <td data-label="Matricula">{{ func.matricula or '-' }}</td>
+                            <td data-label="Contato">
+                                <div class="funcionario-table-stack">
+                                    <strong class="funcionario-email">{{ func.email }}</strong>
+                                    <span>{{ func.celular or 'Sem celular' }}</span>
+                                </div>
+                            </td>
+                            <td data-label="Tipo / Cargo">
+                                <div class="funcionario-table-stack">
+                                <span class="funcionario-pill role-{{ func.role }}">{{ func.role.upper() }}</span>
+                                    <span>{{ func.cargo or '-' }}</span>
+                                </div>
+                            </td>
+                            <td data-label="Estrutura">
+                                <div class="funcionario-table-stack">
+                                    <span>{{ func.departamento or 'Sem departamento' }}</span>
+                                    <span>{{ func.superior.nome if func.superior else 'Sem superior direto' }}</span>
+                                </div>
+                            </td>
+                            <td data-label="Status" class="text-center">
+                                <span class="funcionario-pill status-{{ 'ativo' if func.ativo else 'inativo' }}">
+                                    {{ 'ATIVO' if func.ativo else 'INATIVO' }}
+                                </span>
+                            </td>
+                            <td data-label="Mais" class="text-center">
+                                <details class="funcionario-row-details">
+                                    <summary>Ver</summary>
+                                    <div class="funcionario-row-details-grid">
+                                        <div><strong>CPF:</strong> {{ func.cpf or '-' }}</div>
+                                        <div><strong>Departamento:</strong> {{ func.departamento or '-' }}</div>
+                                        <div><strong>Time:</strong> {{ func.time_nome or '-' }}</div>
+                                        <div><strong>Nivel:</strong> {{ func.nivel_organograma or '-' }}</div>
+                                        <div><strong>Superior:</strong> {{ func.superior.nome if func.superior else '-' }}</div>
+                                        <div><strong>Perfil de acesso:</strong> {{ func.perfil_acesso.nome if func.perfil_acesso else '-' }}</div>
+                                        <div><strong>Pagina inicial:</strong> {{ func.pagina_inicial or '-' }}</div>
+                                    </div>
+                                </details>
+                            </td>
+                            <td data-label="Acoes" class="actions-cell funcionario-actions">
+                                <a href="{{ url_for('editar_funcionario', funcionario_id=func.id) }}" class="btn-small btn-primary">Editar</a>
+                                {% if func.id != primeiro_funcionario_id and funcionario_logado.role in ['admin', 'gerente'] %}
+                                    <a href="{{ url_for('editar_acessos_funcionario', funcionario_id=func.id) }}" class="btn-small btn-success">Acessos</a>
+                                {% endif %}
+                                {% if func.id != funcionario_logado.id and funcionario_logado.role == 'admin' %}
+                                    <form method="POST" action="{{ url_for('deletar_funcionario', funcionario_id=func.id) }}" class="funcionario-inline-form" data-confirm-message="Tem certeza que deseja deletar {{ func.nome }}?">
+                                        {{ csrf_input|safe }}
+                                        <button type="submit" class="btn-small btn-danger">Deletar</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+        {% if paginacao.pages > 1 %}
+        <nav class="funcionario-pagination" aria-label="Paginacao de funcionarios">
+            <a
+                href="{{ url_for('listar_funcionarios', page=(paginacao.prev_num if paginacao.has_prev else 1), busca=filtros.busca, role=filtros.role, status=filtros.status, departamento=filtros.departamento, ordenar=filtros.ordenar, per_page=filtros.per_page) }}"
+                class="btn btn-secondary {% if not paginacao.has_prev %}disabled{% endif %}"
+            >
+                Anterior
+            </a>
+            <span>Pagina {{ paginacao.page }} de {{ paginacao.pages }}</span>
+            <a
+                href="{{ url_for('listar_funcionarios', page=(paginacao.next_num if paginacao.has_next else paginacao.pages), busca=filtros.busca, role=filtros.role, status=filtros.status, departamento=filtros.departamento, ordenar=filtros.ordenar, per_page=filtros.per_page) }}"
+                class="btn btn-secondary {% if not paginacao.has_next %}disabled{% endif %}"
+            >
+                Proxima
+            </a>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="funcionario-empty">
+            <p>Nenhum funcionario encontrado para os filtros informados.</p>
+            {% if filtros.busca or filtros.role or filtros.status or filtros.departamento %}
+                <a href="{{ url_for('listar_funcionarios') }}">Limpar filtros</a>
+            {% elif funcionario_logado.role == 'admin' %}
+                <a href="{{ url_for('criar_funcionario') }}">Criar o primeiro funcionario</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Pedido - SystemLR{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let itemCount = {{ pedido.itens|length }};
+
+function adicionarItem() {
+    const container = document.getElementById('itensContainer');
+    const row = document.createElement('div');
+    row.className = 'pedido-item-row';
+    row.innerHTML = `
+        <select name="produto_${itemCount}" required class="form-select">
+            <option value="">Selecione um produto</option>
+            {% for p in produtos %}
+            <option value="{{ p.id }}">{{ p.nome }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" name="quantidade_${itemCount}" value="1" min="1" required class="form-control">
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove();">Remover</button>
+    `;
+    container.appendChild(row);
+    itemCount++;
+    document.getElementById('item_count').value = itemCount;
+}
+
+function togglePagamentoFields() {
+    const metodo = document.getElementById('metodo_pagamento').value;
+    const split = document.getElementById('splitPagamentoFields');
+    const crediario = document.getElementById('crediarioFields');
+    const valor = document.getElementById('valorPagoField');
+
+    if (metodo === 'dividido') {
+        split.style.display = 'grid';
+        crediario.style.display = 'none';
+        valor.style.display = 'none';
+    } else if (metodo === 'crediario') {
+        split.style.display = 'none';
+        crediario.style.display = 'block';
+        valor.style.display = 'block';
+    } else if (metodo) {
+        split.style.display = 'none';
+        crediario.style.display = 'none';
+        valor.style.display = 'block';
+    } else {
+        split.style.display = 'none';
+        crediario.style.display = 'none';
+        valor.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', togglePagamentoFields);
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="pedido-form-wrap">
+    <div class="page-header">
+        <h1>Editar Pedido #{{ pedido.id }}</h1>
+        <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" id="formPedidoEdit" class="form" onsubmit="return validarFormulario('formPedidoEdit')">
+            <div class="form-row">
+                {% if atendimento_mesas_ativo %}
+                <div class="form-group">
+                    <label for="mesa_id">Mesa (opcional)</label>
+                    <select name="mesa_id" id="mesa_id" class="form-select">
+                        <option value="">Nenhuma</option>
+                        {% for m in mesas %}
+                        <option value="{{ m.id }}" {% if pedido.mesa_id==m.id %}selected{% endif %}>{{ m.numero }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="caixa_id">Caixa</label>
+                    <select name="caixa_id" id="caixa_id" class="form-select" required>
+                        <option value="">Selecione</option>
+                        {% for c in caixas %}
+                        <option value="{{ c.id }}" {% if pedido.caixa_id==c.id %}selected{% endif %}>{{ c.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="metodo_pagamento">Metodo de pagamento</label>
+                    <select name="metodo_pagamento" id="metodo_pagamento" class="form-select" onchange="togglePagamentoFields()">
+                        <option value="" {% if not pedido.metodo_pagamento %}selected{% endif %}>Nao informado</option>
+                        {% for payment in metodos_pagamento_pdv %}
+                        <option value="{{ payment.id }}" {% if metodo_pagamento_atual_id == payment.id %}selected{% endif %}>{{ payment.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" id="valorPagoField">
+                    <label for="valor_pago">Valor pago</label>
+                    <input type="number" step="0.01" name="valor_pago" id="valor_pago" class="form-control" value="{% if pedido.valor_pago is not none %}{{ '%.2f'|format(pedido.valor_pago) }}{% endif %}">
+                </div>
+            </div>
+
+            <div class="form-group" id="crediarioFields" style="display:none;">
+                <label for="cliente_crediario">Cliente crediario (opcional)</label>
+                <input type="text" name="cliente_crediario" id="cliente_crediario" class="form-control" placeholder="Nome do cliente">
+            </div>
+
+            <div class="form-row" id="splitPagamentoFields" style="display:none;">
+                <div class="form-group">
+                    <label for="valor_dinheiro">Valor em dinheiro</label>
+                    <input type="number" step="0.01" name="valor_dinheiro" id="valor_dinheiro" class="form-control" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="valor_cartao">Valor em cartao</label>
+                    <input type="number" step="0.01" name="valor_cartao" id="valor_cartao" class="form-control" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select name="status" id="status" class="form-select" required>
+                        <option value="aberto" {% if pedido.status=='aberto' %}selected{% endif %}>Aberto</option>
+                        <option value="em_preparo" {% if pedido.status=='em_preparo' %}selected{% endif %}>Em preparo</option>
+                        <option value="entregue" {% if pedido.status=='entregue' %}selected{% endif %}>Entregue</option>
+                        <option value="fechado" {% if pedido.status=='fechado' %}selected{% endif %}>Fechado</option>
+                        <option value="cancelado" {% if pedido.status=='cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="observacoes">Observacoes</label>
+                <textarea name="observacoes" id="observacoes" class="form-control" rows="3">{{ pedido.observacoes }}</textarea>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h3 class="m-0">Itens</h3>
+                <button type="button" class="btn btn-outline-primary" onclick="adicionarItem()">Adicionar Item</button>
+            </div>
+
+            <div id="itensContainer" class="mt-2">
+                {% for item in pedido.itens %}
+                <div class="pedido-item-row">
+                    <select name="produto_{{ loop.index0 }}" required class="form-select">
+                        <option value="">Selecione um produto</option>
+                        {% for p in produtos %}
+                        <option value="{{ p.id }}" {% if p.id==item.produto_id %}selected{% endif %}>{{ p.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="number" name="quantidade_{{ loop.index0 }}" value="{{ item.quantidade }}" min="1" required class="form-control">
+                    <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove();">Remover</button>
+                </div>
+                {% endfor %}
+            </div>
+
+            <input type="hidden" name="item_count" id="item_count" value="{{ pedido.itens|length }}">
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar Pedido</button>
+                <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

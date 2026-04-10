@@ -1,0 +1,80 @@
+.dashboard-page {
+    min-width: 0;
+}
+
+.dashboard-page .section,
+.dashboard-page .chart-container,
+.dashboard-page .table-responsive,
+.dashboard-page .cards-container,
+.dashboard-page .analytics-grid {
+    min-width: 0;
+}
+
+.dashboard-page .card-value,
+.dashboard-page .card-meta,
+.dashboard-page h1,
+.dashboard-page h2,
+.dashboard-page h3 {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.dashboard-page .dashboard-filter-form {
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.dashboard-page .dashboard-filter-select {
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .dashboard-page .analytics-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .dashboard-page .trend-row {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-page .dashboard-filter-form {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .dashboard-page .dashboard-filter-label,
+    .dashboard-page .dashboard-filter-select,
+    .dashboard-page .dashboard-filter-button {
+        width: 100%;
+    }
+
+    .dashboard-page .chart-container {
+        height: 240px;
+    }
+
+    .dashboard-page .performance-chart-container {
+        min-height: 220px;
+    }
+}
+
+@media (max-width: 430px) {
+    .dashboard-page .page-header h1 {
+        font-size: 1.15rem;
+        line-height: 1.25;
+    }
+
+    .dashboard-page .card-value {
+        font-size: 1.25rem;
+    }
+
+    .dashboard-page .section {
+        padding: 12px;
+    }
+
+    .dashboard-page .chart-container {
+        height: 220px;
+    }
+}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Fechar Caixa - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="caixa-close-page">
+    <h1>Fechar Caixa: {{ caixa.nome }}</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <section class="caixa-card">
+        <h3>Informacoes da Caixa</h3>
+        <div class="caixa-info-grid">
+            <div class="caixa-info-item">
+                <small>Funcionario</small>
+                <strong>{{ caixa.funcionario.nome if caixa.funcionario else '-' }}</strong>
+            </div>
+            <div class="caixa-info-item">
+                <small>Saldo Inicial</small>
+                <strong>R$ {{ '%.2f'|format(caixa.saldo_inicial) }}</strong>
+            </div>
+            <div class="caixa-info-item">
+                <small>Saldo Atual</small>
+                <strong>R$ {{ '%.2f'|format(caixa.saldo_atual) }}</strong>
+            </div>
+            <div class="caixa-info-item">
+                <small>Aberto em</small>
+                <strong>{{ caixa.aberto_em.strftime('%d/%m/%Y %H:%M') if caixa.aberto_em else '-' }}</strong>
+            </div>
+        </div>
+    </section>
+
+    <section class="caixa-card">
+        <form method="POST" action="{{ url_for('fechar_caixa', caixa_id=caixa.id) }}">
+            <div class="caixa-field">
+                <label for="saldo_fechamento">Saldo de Fechamento <span class="required">*</span></label>
+                <input type="number" id="saldo_fechamento" name="saldo_fechamento" step="0.01" min="0" value="{{ caixa.saldo_atual }}" required class="caixa-input">
+                <small>Valor total contado no caixa fisico.</small>
+            </div>
+
+            <div id="diferenca-info" class="diferenca-info">
+                <div class="diferenca-head">
+                    <strong>Diferenca:</strong>
+                    <strong id="diferenca-valor">R$ 0,00</strong>
+                </div>
+                <small id="diferenca-texto"></small>
+            </div>
+
+            <div class="caixa-field">
+                <label for="observacoes">Observacoes (opcional)</label>
+                <textarea id="observacoes" name="observacoes" rows="3" class="caixa-input"></textarea>
+            </div>
+
+            <div class="caixa-actions">
+                <button type="submit" class="btn btn-danger">Fechar Caixa</button>
+                <a href="{{ url_for('listar_caixas') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script>
+document.getElementById('saldo_fechamento').addEventListener('input', function () {
+    const saldoFechamento = parseFloat(this.value) || 0;
+    const saldoAtual = {{ caixa.saldo_atual }};
+    const diferenca = saldoFechamento - saldoAtual;
+
+    const infoDiv = document.getElementById('diferenca-info');
+    const valorDiv = document.getElementById('diferenca-valor');
+    const textoDiv = document.getElementById('diferenca-texto');
+
+    infoDiv.style.display = 'block';
+    valorDiv.textContent = 'R$ ' + Math.abs(diferenca).toFixed(2).replace('.', ',');
+
+    if (diferenca > 0) {
+        infoDiv.style.backgroundColor = '#d4edda';
+        textoDiv.textContent = 'Sobra no caixa de R$ ' + Math.abs(diferenca).toFixed(2).replace('.', ',');
+        textoDiv.style.color = '#155724';
+    } else if (diferenca < 0) {
+        infoDiv.style.backgroundColor = '#f8d7da';
+        textoDiv.textContent = 'Falta no caixa de R$ ' + Math.abs(diferenca).toFixed(2).replace('.', ',');
+        textoDiv.style.color = '#721c24';
+    } else {
+        infoDiv.style.backgroundColor = '#fff3cd';
+        textoDiv.textContent = 'Caixa fechado sem diferenca';
+        textoDiv.style.color = '#856404';
+    }
+});
+
+document.getElementById('saldo_fechamento').dispatchEvent(new Event('input'));
+</script>
+
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% block title %}Frota e Terceiros - Expedicao{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1>Frota Propria e Terceiros</h1>
+    <a href="{{ url_for('central_expedicao') }}" class="btn btn-outline-secondary">Voltar para Expedicao</a>
+</div>
+
+<form method="post" class="card mt-3">
+    {{ csrf_input|safe }}
+    <input type="hidden" name="acao" value="salvar_configuracao">
+    <h2>Configuracao operacional</h2>
+    <div class="row g-3">
+        <div class="col-12 col-md-4">
+            <label for="entrega_local_saida_padrao" class="form-label">Local de saida padrao</label>
+            <input
+                type="text"
+                class="form-control"
+                id="entrega_local_saida_padrao"
+                name="entrega_local_saida_padrao"
+                value="{{ empresa.entrega_local_saida_padrao or '' }}"
+                placeholder="Ex.: CD Principal / Doca 2">
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="entrega_motorista_padrao" class="form-label">Motorista responsavel padrao</label>
+            <input
+                type="text"
+                class="form-control"
+                id="entrega_motorista_padrao"
+                name="entrega_motorista_padrao"
+                value="{{ empresa.entrega_motorista_padrao or '' }}"
+                placeholder="Nome do motorista padrao">
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="entrega_veiculo_padrao" class="form-label">Veiculo padrao</label>
+            <input
+                type="text"
+                class="form-control"
+                id="entrega_veiculo_padrao"
+                name="entrega_veiculo_padrao"
+                value="{{ empresa.entrega_veiculo_padrao or '' }}"
+                placeholder="Ex.: Van, Caminhao, Moto">
+        </div>
+        <div class="col-12 col-md-4">
+            <label for="entrega_horario_fechamento_roteirizacao" class="form-label">Fechamento da roteirizacao</label>
+            <input
+                type="time"
+                class="form-control"
+                id="entrega_horario_fechamento_roteirizacao"
+                name="entrega_horario_fechamento_roteirizacao"
+                value="{{ empresa.entrega_horario_fechamento_roteirizacao or '' }}"
+                step="60">
+            <small class="text-muted">Pedidos separados apos esse horario entram no proximo ciclo.</small>
+        </div>
+        <div class="col-12 col-lg-8">
+            <label for="entrega_terceirizadas_cadastro" class="form-label">Terceiros (1 por linha)</label>
+            <textarea
+                id="entrega_terceirizadas_cadastro"
+                name="entrega_terceirizadas_cadastro"
+                class="form-control"
+                rows="6"
+                placeholder="Ex.: Correios&#10;Freelancer Joao Silva&#10;Transportadora XPTO">{{ terceirizadas_texto }}</textarea>
+            <small class="text-muted">Exemplos: Correios, transportadoras e freelancers.</small>
+        </div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Salvar configuracao</button>
+        <a href="{{ url_for('central_expedicao') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+<div class="row g-3 mt-1">
+    <div class="col-12 col-xl-5">
+        <form method="post" class="card h-100">
+            {{ csrf_input|safe }}
+            <input type="hidden" name="acao" value="salvar_veiculo">
+            <input type="hidden" name="veiculo_id" value="{{ veiculo_em_edicao.id if veiculo_em_edicao else '' }}">
+            <h2>{{ 'Editar veiculo' if veiculo_em_edicao else 'Novo veiculo' }}</h2>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label for="nome" class="form-label">Nome</label>
+                    <input type="text" id="nome" name="nome" class="form-control" value="{{ veiculo_em_edicao.nome if veiculo_em_edicao else '' }}" placeholder="Ex.: Moto Centro" required>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="placa" class="form-label">Placa</label>
+                    <input type="text" id="placa" name="placa" class="form-control" value="{{ veiculo_em_edicao.placa if veiculo_em_edicao else '' }}" placeholder="ABC1D23">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="tipo" class="form-label">Tipo</label>
+                    {% set tipo_atual = (veiculo_em_edicao.tipo if veiculo_em_edicao else 'carro') %}
+                    <select id="tipo" name="tipo" class="form-select">
+                        <option value="moto" {% if tipo_atual == 'moto' %}selected{% endif %}>Moto</option>
+                        <option value="carro" {% if tipo_atual == 'carro' %}selected{% endif %}>Carro</option>
+                        <option value="caminhao" {% if tipo_atual == 'caminhao' %}selected{% endif %}>Caminhao</option>
+                        <option value="utilitario" {% if tipo_atual == 'utilitario' %}selected{% endif %}>Utilitario</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="tipo_entrega" class="form-label">Tipo de entrega</label>
+                    {% set entrega_atual = (veiculo_em_edicao.tipo_entrega if veiculo_em_edicao else 'todos') %}
+                    <select id="tipo_entrega" name="tipo_entrega" class="form-select">
+                        <option value="todos" {% if entrega_atual == 'todos' %}selected{% endif %}>Todos</option>
+                        <option value="site" {% if entrega_atual == 'site' %}selected{% endif %}>Site</option>
+                        <option value="interno" {% if entrega_atual == 'interno' %}selected{% endif %}>Interno</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="capacidade_pedidos" class="form-label">Capacidade de pedidos</label>
+                    <input type="number" id="capacidade_pedidos" name="capacidade_pedidos" class="form-control" min="0" value="{{ veiculo_em_edicao.capacidade_pedidos if veiculo_em_edicao else '' }}">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="capacidade_kg" class="form-label">Capacidade em kg</label>
+                    <input type="number" id="capacidade_kg" name="capacidade_kg" class="form-control" min="0" step="0.01" value="{{ veiculo_em_edicao.capacidade_kg if veiculo_em_edicao and veiculo_em_edicao.capacidade_kg is not none else '' }}">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="capacidade_volume" class="form-label">Capacidade em m3</label>
+                    <input type="number" id="capacidade_volume" name="capacidade_volume" class="form-control" min="0" step="0.01" value="{{ veiculo_em_edicao.capacidade_volume if veiculo_em_edicao and veiculo_em_edicao.capacidade_volume is not none else '' }}">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="motorista_padrao" class="form-label">Motorista padrao</label>
+                    <input type="text" id="motorista_padrao" name="motorista_padrao" class="form-control" value="{{ veiculo_em_edicao.motorista_padrao if veiculo_em_edicao else '' }}">
+                </div>
+                <div class="col-12">
+                    <label for="empresa_terceirizada" class="form-label">Empresa terceirizada</label>
+                    <input type="text" id="empresa_terceirizada" name="empresa_terceirizada" class="form-control" value="{{ veiculo_em_edicao.empresa_terceirizada if veiculo_em_edicao else '' }}" placeholder="Opcional para parceiros logísticos">
+                </div>
+                <div class="col-12">
+                    <label class="form-check-label">
+                        <input type="checkbox" name="ativo" class="form-check-input" {% if not veiculo_em_edicao or veiculo_em_edicao.ativo %}checked{% endif %}>
+                        Veiculo ativo para roteirizacao
+                    </label>
+                </div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary">{{ 'Salvar alteracoes' if veiculo_em_edicao else 'Cadastrar veiculo' }}</button>
+                {% if veiculo_em_edicao %}
+                <a href="{{ url_for('frota_expedicao') }}" class="btn btn-outline-secondary">Cancelar edicao</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <div class="col-12 col-xl-7">
+        <div class="card h-100">
+            <h2>Veiculos cadastrados</h2>
+            {% if veiculos_frota %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Tipo</th>
+                            <th>Entrega</th>
+                            <th>Capacidade</th>
+                            <th>Motorista</th>
+                            <th>Status</th>
+                            <th class="text-end">Acoes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for veiculo in veiculos_frota %}
+                        <tr>
+                            <td>
+                                <strong>{{ veiculo.nome }}</strong>
+                                <div class="small text-muted">
+                                    {% if veiculo.placa %}{{ veiculo.placa }}{% else %}Sem placa{% endif %}
+                                    {% if veiculo.empresa %} | {{ veiculo.empresa }}{% endif %}
+                                </div>
+                            </td>
+                            <td>{{ veiculo.tipo or veiculo.categoria or '-' }}</td>
+                            <td>{{ veiculo.tipo_entrega or 'todos' }}</td>
+                            <td>
+                                {{ veiculo.capacidade_pedidos or 0 }} pedidos
+                                <div class="small text-muted">
+                                    {{ veiculo.capacidade_kg or '-' }} kg / {{ veiculo.capacidade_volume or '-' }} m3
+                                </div>
+                            </td>
+                            <td>{{ veiculo.motorista_padrao or '-' }}</td>
+                            <td>
+                                {% if veiculo.ativo %}
+                                <span class="badge text-bg-success">Ativo</span>
+                                {% else %}
+                                <span class="badge text-bg-secondary">Inativo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{{ url_for('frota_expedicao', veiculo_id=veiculo.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                                    <form method="post">
+                                        {{ csrf_input|safe }}
+                                        <input type="hidden" name="acao" value="excluir_veiculo">
+                                        <input type="hidden" name="veiculo_id" value="{{ veiculo.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover este veiculo da frota?')">Excluir</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-light border mb-0">
+                Nenhum veiculo cadastrado ainda. Use o formulario ao lado para montar a frota que sera usada na roteirizacao.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

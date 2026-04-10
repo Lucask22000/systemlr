@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Almoxarifado - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Central de Almoxarifado</h1>
+        <p class="text-muted mb-0">Controle atribuicoes simples de produtos para funcionarios ou setores, com baixa direta no estoque.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Entradas e Saidas Internas</a>
+        <a href="{{ url_for('nova_atribuicao_almoxarifado') }}" class="btn btn-primary">Nova Atribuicao</a>
+    </div>
+</div>
+
+<div class="filters-section" data-filter-panel data-filter-title="Filtros do almoxarifado">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <label for="busca">Busca</label>
+            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="Produto, funcionario, matricula ou setor">
+        </div>
+        <div class="filter-group">
+            <label for="destino_tipo">Destino</label>
+            <select id="destino_tipo" name="destino_tipo" class="input-select">
+                <option value="">Todos</option>
+                {% for destino, label in destino_labels.items() %}
+                <option value="{{ destino }}" {% if filtros and filtros.destino_tipo == destino %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="funcionario_id">Funcionario</label>
+            <select id="funcionario_id" name="funcionario_id" class="input-select">
+                <option value="">Todos</option>
+                {% for funcionario in funcionarios_ativos %}
+                <option value="{{ funcionario.id }}" {% if filtros and filtros.funcionario_id == funcionario.id %}selected{% endif %}>
+                    {{ funcionario.nome }}{% if funcionario.matricula %} - {{ funcionario.matricula }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="setor">Setor</label>
+            <select id="setor" name="setor" class="input-select">
+                <option value="">Todos</option>
+                {% for setor_item in setores_disponiveis %}
+                <option value="{{ setor_item }}" {% if filtros and filtros.setor == setor_item %}selected{% endif %}>{{ setor_item }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('listar_almoxarifado') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="table-responsive table-scroll-sticky d-none d-lg-block">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Destino</th>
+                <th>Setor</th>
+                <th>Matricula</th>
+                <th>Registrado por</th>
+                <th>Data</th>
+                <th>Observacoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for atribuicao in atribuicoes %}
+            <tr>
+                <td data-label="Produto">
+                    {{ atribuicao.produto.nome if atribuicao.produto else '-' }}
+                    {% if atribuicao.produto and atribuicao.produto.codigo %}
+                    <div class="small text-muted">{{ atribuicao.produto.codigo }}</div>
+                    {% endif %}
+                </td>
+                <td data-label="Qtd">{{ atribuicao.quantidade }}</td>
+                <td data-label="Destino">{{ destino_labels.get(atribuicao.destino_tipo, atribuicao.destino_tipo|title) }} - {{ atribuicao.nome_destino }}</td>
+                <td data-label="Setor">{{ atribuicao.setor_destino or '-' }}</td>
+                <td data-label="Matricula">{{ atribuicao.matricula_referencia or '-' }}</td>
+                <td data-label="Registrado por">{{ atribuicao.registrado_por.nome if atribuicao.registrado_por else '-' }}</td>
+                <td data-label="Data">{{ atribuicao.criado_em.strftime('%d/%m/%Y %H:%M') if atribuicao.criado_em else '-' }}</td>
+                <td data-label="Observacoes">{{ atribuicao.observacoes or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">Nenhuma atribuicao registrada no almoxarifado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="d-grid gap-3 d-lg-none">
+    {% for atribuicao in atribuicoes %}
+    <article class="card">
+        <div class="card-body">
+            <h3 class="h5 mb-2">{{ atribuicao.produto.nome if atribuicao.produto else 'Produto removido' }}</h3>
+            <div><strong>Quantidade:</strong> {{ atribuicao.quantidade }}</div>
+            <div><strong>Destino:</strong> {{ destino_labels.get(atribuicao.destino_tipo, atribuicao.destino_tipo|title) }} - {{ atribuicao.nome_destino }}</div>
+            <div><strong>Setor:</strong> {{ atribuicao.setor_destino or '-' }}</div>
+            <div><strong>Matricula:</strong> {{ atribuicao.matricula_referencia or '-' }}</div>
+            <div><strong>Registrado por:</strong> {{ atribuicao.registrado_por.nome if atribuicao.registrado_por else '-' }}</div>
+            <div><strong>Data:</strong> {{ atribuicao.criado_em.strftime('%d/%m/%Y %H:%M') if atribuicao.criado_em else '-' }}</div>
+            <div><strong>Observacoes:</strong> {{ atribuicao.observacoes or '-' }}</div>
+        </div>
+    </article>
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center">Nenhuma atribuicao registrada no almoxarifado.</div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_almoxarifado', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_almoxarifado', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

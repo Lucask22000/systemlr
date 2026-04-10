@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Auditoria do Sistema - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header auditoria-page">
+    <h1>Auditoria do Sistema</h1>
+</div>
+
+<section class="section auditoria-page" data-filter-panel data-filter-title="Filtros da auditoria">
+    <form method="GET" class="filters-form auditoria-filters-form">
+        <div class="filter-group">
+            <label for="funcionario_id">Usuario</label>
+            <select id="funcionario_id" name="funcionario_id" class="input-select">
+                <option value="">Todos</option>
+                {% for funcionario in funcionarios %}
+                <option value="{{ funcionario.id }}" {% if filtros.funcionario_id == funcionario.id %}selected{% endif %}>
+                    {{ funcionario.nome }} ({{ funcionario.role }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="metodo">Metodo</label>
+            <select id="metodo" name="metodo" class="input-select">
+                <option value="">Todos</option>
+                {% for metodo in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] %}
+                <option value="{{ metodo }}" {% if filtros.metodo == metodo %}selected{% endif %}>{{ metodo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="entidade">Entidade</label>
+            <input type="text" id="entidade" name="entidade" class="input-text" value="{{ filtros.entidade }}">
+        </div>
+        <div class="filter-group">
+            <label for="acao">Acao</label>
+            <input type="text" id="acao" name="acao" class="input-text" value="{{ filtros.acao }}">
+        </div>
+        <div class="filter-group">
+            <label for="per_page">Itens por pagina</label>
+            <select id="per_page" name="per_page" class="input-select">
+                {% for quantidade in [10, 30, 50, 100] %}
+                <option value="{{ quantidade }}" {% if filtros.per_page == quantidade %}selected{% endif %}>{{ quantidade }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('auditoria_sistema') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</section>
+
+<section class="section auditoria-page">
+    <div class="funcionario-list-meta">
+        Exibindo {{ eventos|length }} de {{ paginacao.total }} evento(s) de auditoria.
+    </div>
+
+    <div class="table-responsive">
+        <table class="table auditoria-table">
+            <thead>
+                <tr>
+                    <th>Data/Hora</th>
+                    <th>Usuario</th>
+                    <th>Acao</th>
+                    <th>Status</th>
+                    <th class="text-center">Mais</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for evento in eventos %}
+                <tr>
+                    <td data-label="Data/Hora">{{ evento.criado_em.strftime('%d/%m/%Y %H:%M:%S') if evento.criado_em else '-' }}</td>
+                    <td data-label="Usuario">
+                        {{ evento.funcionario_nome or 'Nao identificado' }}
+                        {% if evento.funcionario_role %}<br><small>{{ evento.funcionario_role }}</small>{% endif %}
+                    </td>
+                    <td data-label="Acao">{{ evento.acao }}</td>
+                    <td data-label="Status">{{ evento.status_code or '-' }}</td>
+                    <td data-label="Mais" class="text-center">
+                        <details class="funcionario-row-details auditoria-row-details">
+                            <summary>Ver</summary>
+                            <div class="funcionario-row-details-grid">
+                                <div><strong>Metodo:</strong> {{ evento.metodo or '-' }}</div>
+                                <div><strong>Entidade:</strong> {{ evento.entidade or '-' }}</div>
+                                <div><strong>Endpoint:</strong> {{ evento.endpoint or '-' }}</div>
+                                <div><strong>Rota:</strong> <span class="funcionario-email">{{ evento.rota or '-' }}</span></div>
+                                <div class="auditoria-detail-wide"><strong>Detalhes:</strong> {{ evento.detalhes or '-' }}</div>
+                            </div>
+                        </details>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center">Nenhum evento de auditoria encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if paginacao.pages > 1 %}
+    <nav class="funcionario-pagination" aria-label="Paginacao da auditoria">
+        <a
+            href="{{ url_for('auditoria_sistema', page=(paginacao.prev_num if paginacao.has_prev else 1), funcionario_id=filtros.funcionario_id, acao=filtros.acao, entidade=filtros.entidade, metodo=filtros.metodo, per_page=filtros.per_page) }}"
+            class="btn btn-secondary {% if not paginacao.has_prev %}disabled{% endif %}"
+        >
+            Anterior
+        </a>
+        <span>Pagina {{ paginacao.page }} de {{ paginacao.pages }}</span>
+        <a
+            href="{{ url_for('auditoria_sistema', page=(paginacao.next_num if paginacao.has_next else paginacao.pages), funcionario_id=filtros.funcionario_id, acao=filtros.acao, entidade=filtros.entidade, metodo=filtros.metodo, per_page=filtros.per_page) }}"
+            class="btn btn-secondary {% if not paginacao.has_next %}disabled{% endif %}"
+        >
+            Proxima
+        </a>
+    </nav>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,1079 @@
+﻿{% extends "base.html" %}
+
+{% block title %}PDV - Ponto de Venda - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/pdv.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>PDV</h1>
+    <div class="text-muted">Fluxo rápido de vendas e pagamento</div>
+</div>
+
+<div class="pdv-container">
+    <section class="pdv-panel">
+        <div class="pdv-panel-head">Produtos</div>
+        <div class="pdv-panel-body">
+            <div class="pdv-toolbar">
+                <input type="text" id="filtroNome" class="form-control" placeholder="Filtrar produtos...">
+                <button type="button" class="btn btn-outline-secondary js-open-barcode-scanner" data-barcode-target="barcodeInput" data-barcode-mode="continuous" title="Ler código de barras">
+                    Scanner
+                </button>
+                <input type="text" id="barcodeInput" class="d-none">
+            </div>
+
+            <div class="pdv-produtos" id="produtosGrid">
+                {% for produto in produtos %}
+                <div class="produto-card {% if produto.quantidade_estoque < produto.quantidade_minima %}low-stock{% endif %}"
+                    data-id="{{ produto.id }}" data-código="{{ produto.código }}" data-preco="{{ produto.preco_venda }}" data-nome="{{ produto.nome }}" data-categoria="{{ produto.categoria.nome if produto.categoria else '' }}" data-detalhe-url="{{ url_for('visualizar_produto', produto_id=produto.id) }}" data-estoque="{{ produto.quantidade_estoque }}">
+                    {% if produto.imagem_path %}
+                    <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" class="produto-imagem">
+                    {% endif %}
+                    <div class="produto-nome">{{ produto.nome }}</div>
+                    <div class="produto-preco">R$ {{ '%.2f'|format(produto.preco_venda) }}</div>
+                    <div class="produto-estoque">
+                        {% if produto.quantidade_estoque < produto.quantidade_minima %}
+                            Estoque baixo: {{ produto.quantidade_estoque }}
+                        {% else %}
+                            Estoque: {{ produto.quantidade_estoque }}
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn-add-produto" aria-label="Adicionar {{ produto.nome }} ao pedido" onclick="adicionarAoCarrinho({{ produto.id }}, '{{ produto.nome }}', {{ produto.preco_venda }})" {% if produto.quantidade_estoque <= 0 %}disabled title="Sem estoque"{% endif %}>
+                        {% if produto.quantidade_estoque <= 0 %}Indisponível{% else %}Adicionar{% endif %}
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="pdv-panel pedido-panel">
+        <div class="pdv-panel-head">Pedido</div>
+        <div class="pdv-panel-body">
+            <div id="alertas"></div>
+
+            <div class="pedido-header">
+                <div class="w-100">
+                    <label for="caixaSelect" class="field-label">Caixa</label>
+                    <select id="caixaSelect" class="pedido-select" required onchange="atualizarCaixa()">
+                        <option value="">Selecione a caixa</option>
+                        {% for caixa in caixas_abertas %}
+                        <option value="{{ caixa.id }}">{{ caixa.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if atendimento_mesas_ativo %}
+            <div class="mb-2">
+                <label for="mesaSelect" class="field-label">Mesa (opcional)</label>
+                <select id="mesaSelect" class="pedido-select">
+                    <option value="">Sem mesa</option>
+                    {% for mesa in mesas %}
+                    <option value="{{ mesa.id }}">Mesa {{ mesa.numero }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <label class="field-label">Pedidos em andamento (todas as caixas)</label>
+            <div class="pedido-filtros">
+                {% if atendimento_mesas_ativo %}
+                <select id="filtroPedidoMesa" class="pedido-select" onchange="carregarPedidosEmAberto()">
+                    <option value="">Todas as mesas</option>
+                    {% for mesa in mesas %}
+                    <option value="{{ mesa.id }}">Mesa {{ mesa.numero }}</option>
+                    {% endfor %}
+                </select>
+                <select id="filtroPedidoGarcom" class="pedido-select" onchange="carregarPedidosEmAberto()">
+                    <option value="">Todos os garcons</option>
+                    {% for garcom in garcons %}
+                    <option value="{{ garcom.id }}">{{ garcom.nome }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                <select id="filtroPedidoStatus" class="pedido-select" onchange="carregarPedidosEmAberto()">
+                    <option value="">Todos os status</option>
+                    <option value="aberto">Aberto</option>
+                    <option value="em_preparo">Em preparo</option>
+                    <option value="entregue">Entregue</option>
+                </select>
+            </div>
+
+            <div class="open-orders-panel">
+                <div class="open-orders-header">
+                    <span class="open-orders-title">Clique para abrir o pagamento</span>
+                    <span id="openOrdersCount" class="open-orders-count">0 pedidos</span>
+                </div>
+                <div id="pedidoAbertoLista" class="open-orders-list">
+                    <div class="vazio">Carregando pedidos em andamento...</div>
+                </div>
+            </div>
+
+            <select id="pedidoAbertoSelect" class="pedido-select pedido-select-hidden" onchange="onChangePedidoAberto()">
+                <option value="">Selecione um pedido aberto</option>
+            </select>
+
+            <label class="field-label" for="itensPedido">Itens do pedido</label>
+            <div class="itens-lista" id="itensPedido">
+                <div class="vazio">Nenhum item adicionado</div>
+            </div>
+
+            <div class="pedido-resumo">
+                <div class="resumo-linha">
+                    <span>Subtotal:</span>
+                    <span id="subtotal">R$ 0.00</span>
+                </div>
+                <div class="resumo-total">
+                    <span>Total:</span>
+                    <span id="total">R$ 0.00</span>
+                </div>
+                <div class="resumo-itens" id="itemCount">0 itens</div>
+            </div>
+
+            <div class="pedido-acoes">
+                <button type="button" class="btn-pedido btn-nova-venda" onclick="novaVenda()" id="btnNovaVenda" disabled>
+                    + Adicionar Produtos
+                </button>
+                <button type="button" class="btn-pedido btn-finalizar" onclick="finalizarVenda()" id="btnFinalizar" disabled>
+                    Finalizar
+                </button>
+            </div>
+        </div>
+    </section>
+</div>
+
+<div class="payment-modal" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
+    <div class="payment-modal-content" tabindex="-1">
+        <h3 class="payment-title" id="paymentModalTitle">Finalizar pagamento</h3>
+        <p class="payment-subtitle">Total do pedido: <strong id="paymentTotalLabel">R$ 0.00</strong></p>
+
+        <div class="payment-grid">
+            {% for payment in metodos_pagamento_pdv %}
+            <label class="payment-option {% if payment.supports_split %}payment-option-row{% endif %}">
+                <input type="radio" name="metodo_pagamento_pdv" value="{{ payment.id }}" {% if payment.id == metodo_pagamento_pdv_padrao %}checked{% endif %}>
+                {{ payment.label }}
+            </label>
+            {% endfor %}
+        </div>
+
+        <div class="payment-fields" id="paymentDefaultFields">
+            <div>
+                <label for="paymentValor" class="field-label">Valor recebido</label>
+                <input type="number" step="0.01" id="paymentValor" class="pedido-select" placeholder="Ex.: 100.00">
+            </div>
+            <small id="trocoInfo" class="text-muted">Troco: R$ 0.00</small>
+        </div>
+
+        <div class="payment-fields is-hidden" id="paymentSplitFields">
+            <div class="payment-row">
+                <div>
+                    <label for="paymentDinheiro" class="field-label">Dinheiro</label>
+                    <input type="number" step="0.01" id="paymentDinheiro" class="pedido-select" placeholder="0.00">
+                </div>
+                <div>
+                    <label for="paymentCartao" class="field-label">Cartao</label>
+                    <input type="number" step="0.01" id="paymentCartao" class="pedido-select" placeholder="0.00">
+                </div>
+            </div>
+            <small id="splitTotalInfo" class="text-muted">Total informado: R$ 0.00</small>
+        </div>
+
+        <div class="payment-fields is-hidden" id="paymentCrediarioFields">
+            <div>
+                <label for="paymentClienteCrediario" class="field-label">Cliente (opcional)</label>
+                <input type="text" id="paymentClienteCrediario" class="pedido-select" placeholder="Nome do cliente">
+            </div>
+        </div>
+
+        <div class="payment-receipt-option">
+            <label class="checkbox-inline">
+                <input type="checkbox" id="paymentEmitirComprovante" checked>
+                Emitir comprovante do cliente apos finalizar
+            </label>
+        </div>
+
+        <div class="payment-actions">
+            <button type="button" class="btn btn-outline-secondary" onclick="fecharModalPagamento()">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="btnConfirmarPagamento" onclick="confirmarFinalizacaoPagamento()">Confirmar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let carrinho = {};
+let carrinhoOriginal = {};
+let pedidoAtual = null;
+let pedidoStatusAtual = null;
+let caixaSelecionada = null;
+let ultimoElementoComFoco = null;
+const METODO_PAGAMENTO_PADRAO = {{ metodo_pagamento_pdv_padrao|tojson }};
+
+function setButtonLoading(buttonEl, isLoading, loadingText, idleText) {
+    if (!buttonEl) return;
+    if (isLoading) {
+        if (!buttonEl.dataset.idleText) {
+            buttonEl.dataset.idleText = idleText || buttonEl.textContent.trim();
+        }
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>${loadingText || 'Processando...'}`;
+        return;
+    }
+    const textoPadrao = buttonEl.dataset.idleText || idleText || buttonEl.textContent.trim();
+    buttonEl.textContent = textoPadrao;
+    delete buttonEl.dataset.idleText;
+}
+
+function adicionarAoCarrinho(produtoId, nome, preco) {
+    if (!document.getElementById('caixaSelect').value && !pedidoAtual) {
+        mostrarAlerta('Selecione uma caixa para iniciar nova venda.', 'error');
+        return;
+    }
+    const card = document.querySelector(`.produto-card[data-id="${produtoId}"]`);
+    if (card) {
+        const estoque = parseInt(card.dataset.estoque || '0', 10);
+        if (estoque <= 0) {
+            mostrarAlerta('Produto sem estoque disponível.', 'warning');
+            return;
+        }
+    }
+
+    const isNew = !carrinho[produtoId];
+    if (!carrinho[produtoId]) {
+        carrinho[produtoId] = { nome, preco, quantidade: 0 };
+    }
+    carrinho[produtoId].quantidade++;
+    
+    // highlight produto card briefly
+    if (card) {
+        card.classList.add('added');
+        setTimeout(() => card.classList.remove('added'), 900);
+    }
+
+    atualizarCarrinho(isNew ? produtoId : null);
+}
+
+function removerDoCarrinho(produtoId) {
+    delete carrinho[produtoId];
+    atualizarCarrinho();
+}
+
+function atualizarCarrinho(highlightId) {
+    const itensList = document.getElementById('itensPedido');
+    const itens = Object.entries(carrinho);
+
+    if (itens.length === 0) {
+        itensList.innerHTML = '<div class="vazio">Nenhum item adicionado</div>';
+        document.getElementById('subtotal').textContent = 'R$ 0.00';
+        document.getElementById('total').textContent = 'R$ 0.00';
+        document.getElementById('itemCount').textContent = '0 itens';
+        atualizarEstadoAcoes();
+        return;
+    }
+
+    let total = 0;
+    let totalItens = 0;
+    itensList.innerHTML = itens.map(([id, item]) => {
+        const subtotal = item.quantidade * item.preco;
+        total += subtotal;
+        totalItens += item.quantidade;
+        return `
+            <div class="item-pedido" data-id="${id}">
+                <div class="item-info">
+                    <div class="item-produto">${item.nome}</div>
+                    <div class="item-qty">${item.quantidade}x R$ ${item.preco.toFixed(2)}</div>
+                </div>
+                <div class="item-preco">R$ ${subtotal.toFixed(2)}</div>
+                <button type="button" class="btn-remove-item" onclick="removerDoCarrinho(${id})">Remover</button>
+            </div>
+        `;
+    }).join('');
+
+    if (highlightId) {
+        const elem = itensList.querySelector(`.item-pedido[data-id="${highlightId}"]`);
+        if (elem) {
+            elem.classList.add('highlight');
+            setTimeout(() => elem.classList.remove('highlight'), 1000);
+        }
+    }
+
+    document.getElementById('subtotal').textContent = `R$ ${total.toFixed(2)}`;
+    document.getElementById('total').textContent = `R$ ${total.toFixed(2)}`;
+    document.getElementById('itemCount').textContent = `${totalItens} ${totalItens === 1 ? 'item' : 'itens'}`;
+    atualizarEstadoAcoes();
+}
+
+function formatStatusPedido(status) {
+    const mapa = {
+        aberto: 'Aberto',
+        em_preparo: 'Em preparo',
+        entregue: 'Entregue',
+        fechado: 'Fechado',
+        cancelado: 'Cancelado'
+    };
+    return mapa[status] || status || 'Sem status';
+}
+
+function limparPedidoAtual() {
+    pedidoAtual = null;
+    pedidoStatusAtual = null;
+    carrinho = {};
+    carrinhoOriginal = {};
+    atualizarCarrinho();
+    atualizarListaSelecaoAtiva();
+}
+
+function atualizarEstadoAcoes() {
+    const possuiItens = Object.keys(carrinho).length > 0;
+    const btnFinalizar = document.getElementById('btnFinalizar');
+    const btnNovaVenda = document.getElementById('btnNovaVenda');
+
+    btnFinalizar.disabled = !pedidoAtual;
+
+    if (!possuiItens) {
+        btnNovaVenda.disabled = true;
+    } else if (!pedidoAtual) {
+        btnNovaVenda.disabled = false;
+    } else {
+        btnNovaVenda.disabled = pedidoStatusAtual !== 'aberto';
+    }
+
+    atualizarBotaoNovaVenda();
+}
+
+function popularSelectPedidos(pedidos) {
+    const select = document.getElementById('pedidoAbertoSelect');
+    const valorAtual = pedidoAtual ? String(pedidoAtual) : '';
+    select.innerHTML = '<option value="">Selecione um pedido aberto</option>';
+
+    pedidos.forEach((pedido) => {
+        const option = document.createElement('option');
+        option.value = pedido.id;
+        const mesaTxt = pedido.mesa_numero ? `Mesa ${pedido.mesa_numero}` : 'Sem mesa';
+        const garcomTxt = pedido.garcom_nome || 'Sem garcom';
+        option.textContent = `#${pedido.id} | ${mesaTxt} | ${garcomTxt} | ${formatStatusPedido(pedido.status)} | R$ ${(pedido.total || 0).toFixed(2)}`;
+        select.appendChild(option);
+    });
+
+    if (valorAtual && pedidos.some((p) => String(p.id) === valorAtual)) {
+        select.value = valorAtual;
+    } else {
+        select.value = '';
+    }
+
+    renderPedidosEmAberto(pedidos);
+}
+
+function carregarPedidosEmAberto() {
+    const caixaId = document.getElementById('caixaSelect').value;
+    const pedidoSelect = document.getElementById('pedidoAbertoSelect');
+    const pedidoLista = document.getElementById('pedidoAbertoLista');
+    const openOrdersCount = document.getElementById('openOrdersCount');
+    const filtroMesaEl = document.getElementById('filtroPedidoMesa');
+    const filtroGarcomEl = document.getElementById('filtroPedidoGarcom');
+
+    const mesaId = filtroMesaEl ? (filtroMesaEl.value || '') : '';
+    const garcomId = filtroGarcomEl ? (filtroGarcomEl.value || '') : '';
+    const status = document.getElementById('filtroPedidoStatus').value || '';
+    const params = new URLSearchParams();
+    if (caixaId) params.append('caixa_id', caixaId);
+    if (mesaId) params.append('mesa_id', mesaId);
+    if (garcomId) params.append('garcom_id', garcomId);
+    if (status) params.append('status', status);
+
+    fetch(`/api/pedidos/em-aberto?${params.toString()}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                mostrarAlerta('Erro ao carregar pedidos em aberto.', 'error');
+                return;
+            }
+            const pedidos = data.pedidos || [];
+            popularSelectPedidos(pedidos);
+
+            if (pedidoAtual && !pedidos.some((p) => p.id === pedidoAtual)) {
+                limparPedidoAtual();
+            }
+        })
+        .catch((e) => {
+            console.error('Erro ao carregar pedidos em aberto', e);
+            mostrarAlerta('Erro ao consultar pedidos em aberto.', 'error');
+        });
+}
+
+function carregarPedidoPorId(pedidoId) {
+    if (!pedidoId) {
+        limparPedidoAtual();
+        return;
+    }
+
+    fetch(`/api/pedidos/${pedidoId}/detalhes-json`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.pedido) {
+                mostrarAlerta('Pedido não encontrado.', 'error');
+                return;
+            }
+            const pedido = data.pedido;
+            pedidoAtual = pedido.id;
+            pedidoStatusAtual = pedido.status;
+            carrinho = {};
+            (pedido.itens || []).forEach((item) => {
+                carrinho[item.produto_id] = {
+                    nome: item.nome,
+                    preco: item.preco,
+                    quantidade: item.quantidade
+                };
+            });
+            carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
+            const mesaSelect = document.getElementById('mesaSelect');
+            if (mesaSelect && pedido.mesa_id) {
+                mesaSelect.value = String(pedido.mesa_id);
+            }
+            document.getElementById('pedidoAbertoSelect').value = String(pedido.id);
+            atualizarListaSelecaoAtiva();
+            atualizarCarrinho();
+            mostrarAlerta(`Pedido #${pedido.id} carregado para pagamento.`, 'success');
+        })
+        .catch((e) => {
+            console.error('Erro ao carregar pedido', e);
+            mostrarAlerta('Erro ao carregar pedido selecionado.', 'error');
+        });
+}
+
+function onChangePedidoAberto() {
+    const pedidoId = parseInt(document.getElementById('pedidoAbertoSelect').value, 10);
+    if (!pedidoId) {
+        limparPedidoAtual();
+        return;
+    }
+    carregarPedidoPorId(pedidoId);
+}
+
+function renderPedidosEmAberto(pedidos) {
+    const pedidoLista = document.getElementById('pedidoAbertoLista');
+    const openOrdersCount = document.getElementById('openOrdersCount');
+
+    if (!pedidos.length) {
+        openOrdersCount.textContent = '0 pedidos';
+        pedidoLista.innerHTML = '<div class="vazio">Nenhum pedido em aberto com os filtros aplicados</div>';
+        return;
+    }
+
+    openOrdersCount.textContent = `${pedidos.length} pedido${pedidos.length > 1 ? 's' : ''}`;
+    pedidoLista.innerHTML = pedidos.map((pedido) => {
+        const mesaTxt = pedido.mesa_numero ? `Mesa ${pedido.mesa_numero}` : 'Sem mesa';
+        const garcomTxt = pedido.garcom_nome || 'Sem garcom';
+        const caixaTxt = pedido.caixa_nome || 'Sem caixa';
+        const clienteTxt = pedido.cliente_nome || 'Cliente não informado';
+        const statusTxt = formatStatusPedido(pedido.status);
+        const activeClass = pedidoAtual === pedido.id ? 'active' : '';
+        return `
+            <button type="button" class="open-order-item ${activeClass}" data-pedido-id="${pedido.id}">
+                <div class="open-order-top">
+                    <span>Pedido #${pedido.id}</span>
+                    <span>R$ ${(pedido.total || 0).toFixed(2)}</span>
+                </div>
+                <div class="open-order-meta">
+                    <span>${mesaTxt}</span>
+                    <span>${garcomTxt}</span>
+                </div>
+                <div class="open-order-meta">
+                    <span>${caixaTxt}</span>
+                    <span>${clienteTxt}</span>
+                </div>
+                <div class="open-order-meta">
+                    <span>Status: ${statusTxt}</span>
+                </div>
+            </button>
+        `;
+    }).join('');
+
+    pedidoLista.querySelectorAll('.open-order-item').forEach((item) => {
+        item.addEventListener('click', () => {
+            const pedidoId = parseInt(item.dataset.pedidoId, 10);
+            const select = document.getElementById('pedidoAbertoSelect');
+            select.value = String(pedidoId);
+            onChangePedidoAberto();
+        });
+    });
+}
+
+function atualizarListaSelecaoAtiva() {
+    const itens = document.querySelectorAll('.open-order-item');
+    itens.forEach((item) => {
+        const pedidoId = parseInt(item.dataset.pedidoId, 10);
+        item.classList.toggle('active', pedidoId === pedidoAtual);
+    });
+}
+
+function atualizarCaixa() {
+    caixaSelecionada = document.getElementById('caixaSelect').value;
+    if (!caixaSelecionada) {
+        if (Object.keys(carrinho).length > 0) {
+            mostrarAlerta('Selecione uma caixa para continuar', 'error');
+        }
+        limparPedidoAtual();
+        document.getElementById('pedidoAbertoSelect').value = '';
+        carregarPedidosEmAberto();
+        return;
+    }
+
+    limparPedidoAtual();
+    carregarPedidosEmAberto();
+}
+
+function novaVenda() {
+    const btnNovaVenda = document.getElementById('btnNovaVenda');
+    if (btnNovaVenda && btnNovaVenda.dataset.loading === '1') {
+        return;
+    }
+    if (btnNovaVenda) {
+        btnNovaVenda.dataset.loading = '1';
+        setButtonLoading(btnNovaVenda, true, 'Processando...', '+ Adicionar Produtos');
+    }
+
+    const caixaId = document.getElementById('caixaSelect').value;
+    const mesaSelect = document.getElementById('mesaSelect');
+    const mesaId = mesaSelect ? (mesaSelect.value || null) : null;
+
+    const itensTodos = Object.entries(carrinho).map(([id, item]) => ({
+        produto_id: parseInt(id),
+        quantidade: item.quantidade
+    }));
+
+    if (pedidoAtual) {
+        if (pedidoStatusAtual !== 'aberto') {
+            mostrarAlerta('Somente pedidos com status "aberto" podem receber novos itens.', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+            return;
+        }
+        // calcular apenas diferenca em relacao ao carrinhoOriginal
+        const delta = [];
+        Object.entries(carrinho).forEach(([id, item]) => {
+            const origQty = carrinhoOriginal[id] ? carrinhoOriginal[id].quantidade : 0;
+            if (item.quantidade > origQty) {
+                delta.push({ produto_id: parseInt(id), quantidade: item.quantidade - origQty });
+            }
+        });
+        if (delta.length === 0) {
+            mostrarAlerta('Nenhum item novo para adicionar.', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+            return;
+        }
+        fetch(`/api/pedidos/${pedidoAtual}/adicionar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itens: delta })
+        })
+        .then(r => r.json())
+        .then(data => {
+            const payload = data.data || {};
+            if (data.success) {
+                mostrarAlerta(`${data.message}`, 'success');
+                carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
+                if (payload.total !== undefined) {
+                    document.getElementById('total').textContent = `R$ ${parseFloat(payload.total || 0).toFixed(2)}`;
+                }
+                carregarPedidosEmAberto();
+            } else {
+                mostrarAlerta(`${data.message}`, 'error');
+            }
+        })
+        .catch(e => mostrarAlerta('Erro ao atualizar pedido: ' + e, 'error'))
+        .finally(() => {
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+        });
+    } else {
+        if (!caixaId) {
+            mostrarAlerta('Selecione uma caixa para iniciar nova venda.', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+            return;
+        }
+        if (Object.keys(carrinho).length === 0) {
+            mostrarAlerta('Adicione produtos ao carrinho!', 'error');
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+            return;
+        }
+        fetch('{{ url_for("criar_pedido_api") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ caixa_id: parseInt(caixaId), mesa_id: mesaId, itens: itensTodos })
+        })
+        .then(r => r.json())
+        .then(data => {
+            const payload = data.data || {};
+            if (data.success) {
+                pedidoAtual = data.pedido_id || payload.pedido_id;
+                pedidoStatusAtual = 'aberto';
+                mostrarAlerta(`${data.message}`, 'success');
+                // manter os itens no carrinho ate o operador finalizar
+                atualizarBotaoNovaVenda();
+                carrinhoOriginal = JSON.parse(JSON.stringify(carrinho));
+                carregarPedidosEmAberto();
+                document.getElementById('pedidoAbertoSelect').value = String(pedidoAtual);
+                atualizarEstadoAcoes();
+            } else {
+                mostrarAlerta(`${data.message}`, 'error');
+            }
+        })
+        .catch(e => mostrarAlerta('Erro ao criar pedido: ' + e, 'error'))
+        .finally(() => {
+            if (btnNovaVenda) {
+                btnNovaVenda.dataset.loading = '0';
+                setButtonLoading(btnNovaVenda, false, '', '+ Adicionar Produtos');
+                atualizarEstadoAcoes();
+            }
+        });
+    }
+}
+
+function finalizarVenda() {
+    if (!pedidoAtual) {
+        mostrarAlerta('Nenhum pedido aberto!', 'error');
+        return;
+    }
+    abrirModalPagamento();
+}
+
+function obterTotalCarrinho() {
+    return Object.values(carrinho).reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+}
+
+function abrirModalPagamento() {
+    ultimoElementoComFoco = document.activeElement;
+    const total = obterTotalCarrinho();
+    document.getElementById('paymentTotalLabel').textContent = `R$ ${total.toFixed(2)}`;
+    document.getElementById('paymentValor').value = total.toFixed(2);
+    document.getElementById('paymentDinheiro').value = '';
+    document.getElementById('paymentCartao').value = '';
+    document.getElementById('paymentClienteCrediario').value = '';
+    document.getElementById('paymentEmitirComprovante').checked = true;
+    const defaultPaymentRadio = document.querySelector(`input[name="metodo_pagamento_pdv"][value="${METODO_PAGAMENTO_PADRAO}"]`)
+        || document.querySelector('input[name="metodo_pagamento_pdv"]');
+    if (defaultPaymentRadio) {
+        defaultPaymentRadio.checked = true;
+    }
+    atualizarCamposPagamento();
+    atualizarInfoDividido();
+    const modal = document.getElementById('paymentModal');
+    modal.classList.add('open');
+    const focusTarget = document.getElementById('btnConfirmarPagamento');
+    if (focusTarget) {
+        focusTarget.focus();
+    }
+}
+
+function fecharModalPagamento() {
+    const modal = document.getElementById('paymentModal');
+    modal.classList.remove('open');
+    if (ultimoElementoComFoco && typeof ultimoElementoComFoco.focus === 'function') {
+        ultimoElementoComFoco.focus();
+    }
+}
+
+function atualizarInfoDividido() {
+    const dinheiro = parseFloat((document.getElementById('paymentDinheiro').value || '0').replace(',', '.')) || 0;
+    const cartao = parseFloat((document.getElementById('paymentCartao').value || '0').replace(',', '.')) || 0;
+    const total = obterTotalCarrinho();
+    const totalInformado = dinheiro + cartao;
+    const diferenca = totalInformado - total;
+    if (diferenca >= 0) {
+        document.getElementById('splitTotalInfo').textContent = `Total informado: R$ ${totalInformado.toFixed(2)} | Troco: R$ ${diferenca.toFixed(2)}`;
+    } else {
+        document.getElementById('splitTotalInfo').textContent = `Total informado: R$ ${totalInformado.toFixed(2)} | Falta: R$ ${Math.abs(diferenca).toFixed(2)}`;
+    }
+}
+
+function atualizarInfoTroco() {
+    const metodo = document.querySelector('input[name="metodo_pagamento_pdv"]:checked').value;
+    const trocoInfo = document.getElementById('trocoInfo');
+    if (!trocoInfo) return;
+
+    const total = obterTotalCarrinho();
+    const valorPago = parseFloat((document.getElementById('paymentValor').value || '0').replace(',', '.')) || 0;
+    const diferenca = valorPago - total;
+
+    if (metodo === 'dinheiro') {
+        if (diferenca >= 0) {
+            trocoInfo.textContent = `Troco: R$ ${diferenca.toFixed(2)}`;
+        } else {
+            trocoInfo.textContent = `Falta: R$ ${Math.abs(diferenca).toFixed(2)}`;
+        }
+        return;
+    }
+
+    if (metodo === 'pix' || metodo === 'cartao') {
+        trocoInfo.textContent = `Valor informado: R$ ${valorPago.toFixed(2)}`;
+        return;
+    }
+
+    trocoInfo.textContent = 'Troco: R$ 0.00';
+}
+
+function atualizarCamposPagamento() {
+    const metodo = document.querySelector('input[name="metodo_pagamento_pdv"]:checked').value;
+    const splitFields = document.getElementById('paymentSplitFields');
+    const crediarioFields = document.getElementById('paymentCrediarioFields');
+    const defaultFields = document.getElementById('paymentDefaultFields');
+
+    if (metodo === 'dividido') {
+        splitFields.style.display = 'grid';
+        crediarioFields.style.display = 'none';
+        defaultFields.style.display = 'none';
+    } else if (metodo === 'crediario') {
+        splitFields.style.display = 'none';
+        crediarioFields.style.display = 'grid';
+        defaultFields.style.display = 'grid';
+        document.getElementById('paymentValor').value = '0.00';
+    } else {
+        splitFields.style.display = 'none';
+        crediarioFields.style.display = 'none';
+        defaultFields.style.display = 'grid';
+    }
+    atualizarInfoTroco();
+    atualizarInfoDividido();
+}
+
+function confirmarFinalizacaoPagamento() {
+    const btnConfirmar = document.getElementById('btnConfirmarPagamento');
+    if (btnConfirmar && btnConfirmar.dataset.loading === '1') {
+        return;
+    }
+    if (btnConfirmar) {
+        btnConfirmar.dataset.loading = '1';
+        setButtonLoading(btnConfirmar, true, 'Processando...', 'Confirmar');
+    }
+
+    const metodo = document.querySelector('input[name="metodo_pagamento_pdv"]:checked').value;
+    const emitirComprovante = document.getElementById('paymentEmitirComprovante').checked;
+    let janelaComprovante = null;
+    if (emitirComprovante) {
+        janelaComprovante = window.open('', '_blank');
+    }
+
+    const payload = { metodo_pagamento: metodo };
+
+    if (metodo === 'dividido') {
+        const dinheiro = parseFloat((document.getElementById('paymentDinheiro').value || '0').replace(',', '.')) || 0;
+        const cartao = parseFloat((document.getElementById('paymentCartao').value || '0').replace(',', '.')) || 0;
+        const totalPedido = obterTotalCarrinho();
+        if ((dinheiro + cartao) < totalPedido) {
+            mostrarAlerta(`Valor informado insuficiente. Falta R$ ${(totalPedido - (dinheiro + cartao)).toFixed(2)}.`, 'error');
+            if (btnConfirmar) {
+                btnConfirmar.dataset.loading = '0';
+                setButtonLoading(btnConfirmar, false, '', 'Confirmar');
+            }
+            return;
+        }
+        payload.split_pagamento = { dinheiro, cartao };
+    } else {
+        const valorPago = parseFloat((document.getElementById('paymentValor').value || '').replace(',', '.'));
+        if (!Number.isNaN(valorPago)) {
+            if (metodo === 'dinheiro') {
+                const totalPedido = obterTotalCarrinho();
+                if (valorPago < totalPedido) {
+                    mostrarAlerta(`Valor recebido insuficiente. Falta R$ ${(totalPedido - valorPago).toFixed(2)}.`, 'error');
+                    if (btnConfirmar) {
+                        btnConfirmar.dataset.loading = '0';
+                        setButtonLoading(btnConfirmar, false, '', 'Confirmar');
+                    }
+                    return;
+                }
+            }
+            payload.valor_pago = valorPago;
+        }
+        if (metodo === 'crediario') {
+            payload.cliente_crediario = document.getElementById('paymentClienteCrediario').value || '';
+        }
+    }
+
+    fetch(`/api/pedidos/${pedidoAtual}/finalizar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        const payload = data.data || {};
+        if (data.success) {
+            const pedidoIdComprovante = payload.pedido_id || pedidoAtual;
+            let msg = data.message;
+            const metodoPagamento = data.metodo_pagamento || payload.metodo_pagamento;
+            const valorPago = (data.valor_pago !== undefined ? data.valor_pago : payload.valor_pago);
+            if (metodoPagamento) {
+                msg += ' (pagamento: ' + metodoPagamento;
+                if (valorPago !== null && valorPago !== undefined) {
+                    msg += ' R$ ' + parseFloat(valorPago).toFixed(2);
+                }
+                msg += ')';
+            }
+            mostrarAlerta(`OK ${msg}`, 'success');
+            fecharModalPagamento();
+            if (emitirComprovante && pedidoIdComprovante) {
+                const comprovanteUrl = `/pedidos/${pedidoIdComprovante}/comprovante`;
+                if (janelaComprovante) {
+                    janelaComprovante.location.href = comprovanteUrl;
+                } else {
+                    window.open(comprovanteUrl, '_blank');
+                }
+            } else if (janelaComprovante) {
+                janelaComprovante.close();
+            }
+            limparPedidoAtual();
+            carregarPedidosEmAberto();
+        } else {
+            if (janelaComprovante) janelaComprovante.close();
+            mostrarAlerta(`Erro: ${data.message}`, 'error');
+        }
+    })
+    .catch(e => {
+        if (janelaComprovante) janelaComprovante.close();
+        mostrarAlerta('Erro ao finalizar: ' + e, 'error');
+    })
+    .finally(() => {
+        if (btnConfirmar) {
+            btnConfirmar.dataset.loading = '0';
+            setButtonLoading(btnConfirmar, false, '', 'Confirmar');
+        }
+    });
+}
+function mostrarAlerta(msg, tipo) {
+    const alertas = document.getElementById('alertas');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${tipo}`;
+    alert.textContent = msg;
+    alertas.appendChild(alert);
+    setTimeout(() => alert.remove(), 3000);
+}
+
+function mostrarAlertaTemporario(msg, tipo, duracaoMs) {
+    const alertas = document.getElementById('alertas');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${tipo}`;
+    alert.textContent = msg;
+    alertas.appendChild(alert);
+    setTimeout(() => alert.remove(), duracaoMs || 1800);
+}
+
+function atualizarBotaoNovaVenda() {
+    const btn = document.getElementById('btnNovaVenda');
+    if (pedidoAtual && pedidoStatusAtual === 'aberto') {
+        btn.textContent = '+ Adicionar Produtos';
+    } else if (pedidoAtual) {
+        btn.textContent = 'Pedido bloqueado';
+    } else {
+        btn.textContent = '+ Nova Venda';
+    }
+}
+
+// Filtro de produtos
+function normalizeSearchText(text) {
+    return (text || '').toString().trim().toLowerCase();
+}
+
+function normalizeCode(text) {
+    return normalizeSearchText(text).replace(/[^a-z0-9]/g, '');
+}
+
+function getProductCards() {
+    return Array.from(document.querySelectorAll('.produto-card'));
+}
+
+function initProdutoDetalhesNoPdv() {
+    getProductCards().forEach((card) => {
+        card.addEventListener('click', (event) => {
+            if (event.target.closest('.btn-add-produto')) {
+                return;
+            }
+
+            const detalheUrl = card.dataset.detalheUrl;
+            if (!detalheUrl) return;
+            window.location.href = detalheUrl;
+        });
+    });
+}
+
+function findProductCardByCodeExact(codeValue) {
+    const normalizedCode = normalizeCode(codeValue);
+    if (!normalizedCode) return null;
+    return getProductCards().find((card) => normalizeCode(card.dataset.código) === normalizedCode) || null;
+}
+
+function addProductFromCard(card) {
+    if (!card) return false;
+    const estoque = parseInt(card.dataset.estoque || '0', 10);
+    if (estoque <= 0) {
+        mostrarAlerta('Produto sem estoque disponível.', 'warning');
+        return false;
+    }
+    adicionarAoCarrinho(parseInt(card.dataset.id, 10), card.dataset.nome, parseFloat(card.dataset.preco));
+    return true;
+}
+
+function applyProductFilter(queryText) {
+    const query = normalizeSearchText(queryText);
+    const queryCode = normalizeCode(queryText);
+
+    getProductCards().forEach((card) => {
+        if (!query) {
+            card.style.display = '';
+            return;
+        }
+
+        const nome = normalizeSearchText(card.dataset.nome);
+        const código = normalizeSearchText(card.dataset.código);
+        const códigoNormalizado = normalizeCode(card.dataset.código);
+        const categoria = normalizeSearchText(card.dataset.categoria);
+
+        const matchNome = nome.includes(query);
+        const matchCategoria = categoria.includes(query);
+        const matchCodigo = código.includes(query) || (queryCode && códigoNormalizado.includes(queryCode));
+
+        card.style.display = (matchNome || matchCategoria || matchCodigo) ? '' : 'none';
+    });
+}
+
+// quando scanner preencher o campo escondido, procurar e adicionar
+const barcodeInput = document.getElementById('barcodeInput');
+if (barcodeInput) {
+    barcodeInput.addEventListener('change', function (e) {
+        const code = e.target.value.trim();
+        if (code) {
+            const card = findProductCardByCodeExact(code);
+            if (addProductFromCard(card)) {
+                mostrarAlertaTemporario(`Produto "${card.dataset.nome}" adicionado pelo código ${code}.`, 'success', 1700);
+                const filtroInput = document.getElementById('filtroNome');
+                if (filtroInput) filtroInput.value = '';
+                applyProductFilter('');
+            } else {
+                mostrarAlerta('Produto não encontrado para o código: ' + code, 'error');
+            }
+            e.target.value = '';
+        }
+    });
+}
+
+document.getElementById('filtroNome').addEventListener('input', (e) => {
+    const valorDigitado = e.target.value || '';
+    const cardCodigoExato = findProductCardByCodeExact(valorDigitado);
+
+    if (cardCodigoExato) {
+        addProductFromCard(cardCodigoExato);
+        mostrarAlertaTemporario(`Produto "${cardCodigoExato.dataset.nome}" adicionado pelo código ${valorDigitado}.`, 'success', 1700);
+        e.target.value = '';
+        applyProductFilter('');
+        return;
+    }
+
+    applyProductFilter(valorDigitado);
+});
+
+document.getElementById('filtroNome').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const cardDisponivel = getProductCards().find((card) => {
+        const estoque = parseInt(card.dataset.estoque || '0', 10);
+        return card.style.display !== 'none' && estoque > 0;
+    });
+    if (cardDisponivel) {
+        addProductFromCard(cardDisponivel);
+    } else {
+        mostrarAlerta('Nenhum produto disponível para adicionar.', 'warning');
+    }
+});
+
+document.querySelectorAll('input[name="metodo_pagamento_pdv"]').forEach((radio) => {
+    radio.addEventListener('change', atualizarCamposPagamento);
+});
+document.getElementById('paymentValor').addEventListener('input', atualizarInfoTroco);
+document.getElementById('paymentDinheiro').addEventListener('input', atualizarInfoDividido);
+document.getElementById('paymentCartao').addEventListener('input', atualizarInfoDividido);
+document.getElementById('paymentModal').addEventListener('click', (event) => {
+    if (event.target.id === 'paymentModal') {
+        fecharModalPagamento();
+    }
+});
+document.addEventListener('keydown', (event) => {
+    const modal = document.getElementById('paymentModal');
+    if (!modal.classList.contains('open')) return;
+    if (event.key === 'Escape') {
+        fecharModalPagamento();
+        return;
+    }
+    if (event.key !== 'Tab') return;
+    const focaveis = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex=\"-1\"])'))
+        .filter((el) => !el.disabled && el.offsetParent !== null);
+    if (!focaveis.length) return;
+    const primeiro = focaveis[0];
+    const ultimo = focaveis[focaveis.length - 1];
+    if (event.shiftKey && document.activeElement === primeiro) {
+        event.preventDefault();
+        ultimo.focus();
+    } else if (!event.shiftKey && document.activeElement === ultimo) {
+        event.preventDefault();
+        primeiro.focus();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    const filtroInput = document.getElementById('filtroNome');
+    if (event.ctrlKey && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        if (filtroInput) {
+            filtroInput.focus();
+            filtroInput.select();
+        }
+        return;
+    }
+    if (event.key === 'F4') {
+        const btnNova = document.getElementById('btnNovaVenda');
+        if (btnNova && !btnNova.disabled) {
+            event.preventDefault();
+            novaVenda();
+        }
+        return;
+    }
+    if (event.key === 'F2') {
+        const btnFin = document.getElementById('btnFinalizar');
+        if (btnFin && !btnFin.disabled) {
+            event.preventDefault();
+            finalizarVenda();
+        }
+    }
+});
+// ajustar texto inicial do botao de venda
+atualizarEstadoAcoes();
+carregarPedidosEmAberto();
+initProdutoDetalhesNoPdv();
+</script>
+{% endblock %}
+
+
+
+
+
+
+

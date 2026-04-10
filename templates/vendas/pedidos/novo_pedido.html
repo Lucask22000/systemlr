@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Pedido - SystemLR{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let itemCount = 0;
+
+function adicionarItem() {
+    const container = document.getElementById('itensContainer');
+    const row = document.createElement('div');
+    row.className = 'pedido-item-row';
+    row.innerHTML = `
+        <select name="produto_${itemCount}" required class="form-select">
+            <option value="">Selecione um produto</option>
+            {% for p in produtos %}
+            <option value="{{ p.id }}">{{ p.nome }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" name="quantidade_${itemCount}" value="1" min="1" required class="form-control">
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove();">Remover</button>
+    `;
+    container.appendChild(row);
+    itemCount++;
+    document.getElementById('item_count').value = itemCount;
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="pedido-form-wrap">
+    <div class="page-header">
+        <h1>Novo Pedido</h1>
+        <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" id="formPedido" class="form" onsubmit="return validarFormulario('formPedido')">
+            <div class="form-row">
+                {% if atendimento_mesas_ativo %}
+                <div class="form-group">
+                    <label for="mesa_id">Mesa (opcional)</label>
+                    <select name="mesa_id" id="mesa_id" class="form-select">
+                        <option value="">Nenhuma</option>
+                        {% for m in mesas %}
+                        <option value="{{ m.id }}">{{ m.numero }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="caixa_id">Caixa</label>
+                    <select name="caixa_id" id="caixa_id" class="form-select" required>
+                        <option value="">Selecione</option>
+                        {% for c in caixas %}
+                        <option value="{{ c.id }}">{{ c.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="observacoes">Observacoes</label>
+                <textarea name="observacoes" id="observacoes" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h3 class="m-0">Itens</h3>
+                <button type="button" class="btn btn-outline-primary" onclick="adicionarItem()">Adicionar Item</button>
+            </div>
+
+            <div id="itensContainer" class="mt-2"></div>
+            <input type="hidden" name="item_count" id="item_count" value="0">
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar Pedido</button>
+                <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

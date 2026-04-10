@@ -1,0 +1,227 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Lancamentos Financeiros - SystemLR{% endblock %}
+{% block extra_css %}
+<style>
+.lancamentos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.lancamentos-grid > div {
+    min-width: 0;
+}
+
+.lancamentos-grid .input-text,
+.lancamentos-grid select {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Lancamentos Financeiros e Contabeis</h1>
+</div>
+
+<div class="cards-container analytics-cards mb-3">
+    <div class="card card-success">
+        <div class="card-content">
+            <h3>Receitas</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(total_receitas) }}</p>
+        </div>
+    </div>
+    <div class="card card-warning">
+        <div class="card-content">
+            <h3>Despesas + Consumo proprio</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(total_despesas) }}</p>
+        </div>
+    </div>
+    <div class="card card-info">
+        <div class="card-content">
+            <h3>Ajustes</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(total_ajustes) }}</p>
+        </div>
+    </div>
+    <div class="card card-primary">
+        <div class="card-content">
+            <h3>Saldo do periodo</h3>
+            <p class="card-value">R$ {{ '%.2f'|format(saldo_periodo) }}</p>
+        </div>
+    </div>
+</div>
+
+<section class="section mb-3">
+    <h2>Novo lancamento</h2>
+    <p class="text-muted">Use esta tela para perdas, consumo operacional, utilidades da loja, manutencoes e demais gastos que nao fazem parte da venda direta ao cliente.</p>
+    <form method="post" class="lancamentos-grid">
+        {{ csrf_input|safe }}
+        <div>
+            <label for="tipo">Tipo</label>
+            <select id="tipo" name="tipo" class="input-text" required>
+                <option value="">Selecione</option>
+                <option value="receita">Receita</option>
+                <option value="despesa">Despesa</option>
+                <option value="consumo_proprio">Consumo proprio (produto interno)</option>
+                <option value="ajuste">Ajuste (+/-)</option>
+            </select>
+        </div>
+        <div>
+            <label for="data_competencia">Data competencia</label>
+            <input type="date" id="data_competencia" name="data_competencia" class="input-text" value="{{ (data_final if data_final else '') }}">
+        </div>
+        <div>
+            <label for="categoria">Categoria</label>
+            <input type="text" id="categoria" name="categoria" list="categorias-financeiras" class="input-text" maxlength="80" placeholder="Ex.: energia, perda_avaria, consumo_interno_operacao">
+        </div>
+        <div>
+            <label for="valor">Valor (R$)</label>
+            <input type="text" id="valor" name="valor" class="input-text" placeholder="0,00">
+        </div>
+        <div>
+            <label for="produto_id">Produto (consumo proprio)</label>
+            <select id="produto_id" name="produto_id" class="input-text">
+                <option value="">Sem produto</option>
+                {% for produto in produtos %}
+                <option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="quantidade">Quantidade (consumo proprio)</label>
+            <input type="number" id="quantidade" name="quantidade" class="input-text" step="0.001" min="0">
+        </div>
+        <div>
+            <label for="referencia_documento">Referencia documento</label>
+            <input type="text" id="referencia_documento" name="referencia_documento" class="input-text" maxlength="120" placeholder="NF, recibo, contrato">
+        </div>
+        <div>
+            <label for="centro_custo">Centro de custo</label>
+            <input type="text" id="centro_custo" name="centro_custo" list="centros-custo" class="input-text" maxlength="120" placeholder="Ex.: Operacao de Loja">
+        </div>
+        <div style="grid-column: 1 / -1;">
+            <label for="descricao">Descricao</label>
+            <input type="text" id="descricao" name="descricao" class="input-text" maxlength="255" required placeholder="Detalhe do lancamento para auditoria/contador">
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; gap:10px; align-items:center;">
+            <label style="display:flex; gap:8px; align-items:center; margin:0;">
+                <input type="checkbox" name="incluir_contabilidade" checked>
+                Incluir na exportacao para contador
+            </label>
+            <button type="submit" class="btn btn-primary">Salvar lancamento</button>
+        </div>
+    </form>
+    <datalist id="categorias-financeiras">
+        <option value="energia"></option>
+        <option value="agua"></option>
+        <option value="gas"></option>
+        <option value="internet"></option>
+        <option value="telefone"></option>
+        <option value="material_limpeza"></option>
+        <option value="embalagens"></option>
+        <option value="material_escritorio"></option>
+        <option value="epi_uniforme"></option>
+        <option value="manutencao_predial"></option>
+        <option value="manutencao_equipamentos"></option>
+        <option value="frete_operacional"></option>
+        <option value="combustivel"></option>
+        <option value="taxas_bancarias"></option>
+        <option value="perda_avaria"></option>
+        <option value="perda_validade"></option>
+        <option value="quebra_operacional"></option>
+        <option value="consumo_interno_operacao"></option>
+        <option value="degustacao_amostra"></option>
+        <option value="marketing"></option>
+    </datalist>
+    <datalist id="centros-custo">
+        <option value="Operacao de Loja"></option>
+        <option value="Estoque"></option>
+        <option value="Centro de Distribuicao"></option>
+        <option value="Expedicao"></option>
+        <option value="Administrativo"></option>
+        <option value="Financeiro"></option>
+        <option value="Manutencao"></option>
+    </datalist>
+</section>
+
+<section class="section mb-3" data-filter-panel data-filter-title="Filtros financeiros">
+    <h2>Filtro e exportacao</h2>
+    <form method="get" class="dashboard-filter-form" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="date" name="data_inicial" value="{{ data_inicial }}" class="input-text">
+        <input type="date" name="data_final" value="{{ data_final }}" class="input-text">
+        <select name="tipo" class="input-text">
+            <option value="">Todos os tipos</option>
+            {% for tipo in tipos_lancamento %}
+            <option value="{{ tipo }}" {% if tipo_filtro == tipo %}selected{% endif %}>{{ tipo }}</option>
+            {% endfor %}
+        </select>
+        <label style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" name="somente_contabilidade" value="1" {% if somente_contabilidade %}checked{% endif %}>
+            Somente p/ contador
+        </label>
+        <button class="btn btn-primary" type="submit">Filtrar</button>
+        <a class="btn btn-info" href="{{ url_for('exportar_lancamentos_financeiros', data_inicial=data_inicial, data_final=data_final, tipo=tipo_filtro, somente_contabilidade=1 if somente_contabilidade else 0) }}">Exportar CSV</a>
+        <a class="btn btn-secondary" href="{{ url_for('exportar_lancamentos_financeiros_xlsx', data_inicial=data_inicial, data_final=data_final, tipo=tipo_filtro, somente_contabilidade=1 if somente_contabilidade else 0) }}">Exportar XLSX</a>
+    </form>
+</section>
+
+<section class="section">
+    <h2>Lancamentos</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Descricao</th>
+                    <th>Categoria</th>
+                    <th>Valor</th>
+                    <th>Produto</th>
+                    <th>Contador</th>
+                    <th>Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in lancamentos %}
+                <tr>
+                    <td data-label="Data">{{ item.data_competencia.strftime('%d/%m/%Y') if item.data_competencia else '-' }}</td>
+                    <td data-label="Tipo">{{ item.tipo }}</td>
+                    <td data-label="Descricao">{{ item.descricao }}</td>
+                    <td data-label="Categoria">{{ item.categoria or '-' }}</td>
+                    <td data-label="Valor">R$ {{ '%.2f'|format(item.valor or 0) }}</td>
+                    <td data-label="Produto">{% if item.produto %}{{ item.produto.codigo }} - {{ item.produto.nome }}{% else %}-{% endif %}</td>
+                    <td data-label="Contador">
+                        {% if item.incluir_contabilidade %}
+                            {% if item.enviado_contador %}
+                            Enviado em {{ item.enviado_em.strftime('%d/%m/%Y %H:%M') if item.enviado_em else '-' }}
+                            {% else %}
+                            Pendente
+                            {% endif %}
+                        {% else %}
+                        Fora da exportacao
+                        {% endif %}
+                    </td>
+                    <td data-label="Acoes">
+                        {% if item.incluir_contabilidade and not item.enviado_contador and funcionario_logado and funcionario_logado.role in ['admin', 'gerente'] %}
+                        <form method="post" action="{{ url_for('marcar_lancamento_enviado_contador', lancamento_id=item.id) }}">
+                            {{ csrf_input|safe }}
+                            <button class="btn btn-sm btn-outline-primary" type="submit">Marcar enviado</button>
+                        </form>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center">Nenhum lancamento encontrado para o filtro informado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

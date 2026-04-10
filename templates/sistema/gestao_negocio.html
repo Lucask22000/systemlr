@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Gestao do Negocio - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/gestao-negocio.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header business-hub-header">
+    <h1>Gestao do Negocio</h1>
+    <p class="text-muted mb-0">Central com os ajustes mais importantes para o dono/gestor manter a operacao pronta.</p>
+</div>
+
+<div class="business-hub-metrics">
+    <article class="metric-card">
+        <h3>Equipe ativa</h3>
+        <p class="card-value">{{ funcionarios_ativos }}</p>
+        <p class="card-meta">de {{ total_funcionarios }} cadastrados</p>
+    </article>
+    <article class="metric-card">
+        <h3>Produtos ativos</h3>
+        <p class="card-value">{{ produtos_ativos }}</p>
+        <p class="card-meta">{{ categorias_total }} categorias</p>
+    </article>
+    <article class="metric-card">
+        <h3>Caixas abertos</h3>
+        <p class="card-value">{{ caixas_abertas }}</p>
+        <p class="card-meta">status atual da operacao</p>
+    </article>
+    <article class="metric-card">
+        <h3>Pedidos em andamento</h3>
+        <p class="card-value">{{ pedidos_abertos }}</p>
+        <p class="card-meta">aberto, em preparo e entregue</p>
+    </article>
+    <article class="metric-card {% if pendencias_armazenagem %}metric-card-attention{% endif %}">
+        <h3>Pendencias de armazenagem</h3>
+        <p class="card-value">{{ pendencias_armazenagem }}</p>
+        <p class="card-meta">{{ detalhe_pendencia_armazenagem }}</p>
+    </article>
+</div>
+
+<section class="section business-hub-section">
+    <div class="business-hub-section-head">
+        <div>
+            <h2>Checklist critico de configuracao</h2>
+            <p class="text-muted mb-0">Acompanhe o que ja esta pronto e o que ainda exige acao imediata.</p>
+        </div>
+        <span class="business-hub-summary-pill">{{ checklist_config|length }} itens monitorados</span>
+    </div>
+    <div class="table-responsive table-scroll-sticky business-hub-table-wrap d-none d-lg-block">
+        <table class="table table-sm align-middle business-hub-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Status</th>
+                    <th>Detalhe</th>
+                    <th>Acao</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in checklist_config %}
+                <tr>
+                    <td data-label="Item">{{ item.titulo }}</td>
+                    <td data-label="Status">
+                        {% if item.ok %}
+                        <span class="badge text-bg-success">OK</span>
+                        {% else %}
+                        <span class="badge text-bg-warning">Pendente</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Detalhe">{{ item.detalhe_ok if item.ok else item.detalhe_pendente }}</td>
+                    <td data-label="Acao"><a href="{{ item.url }}" class="btn btn-sm btn-outline-primary">{{ item.acao }}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="business-hub-checklist-cards d-lg-none">
+        {% for item in checklist_config %}
+        <article class="business-hub-checklist-card">
+            <div class="business-hub-checklist-card-head">
+                <h3>{{ item.titulo }}</h3>
+                {% if item.ok %}
+                <span class="badge text-bg-success">OK</span>
+                {% else %}
+                <span class="badge text-bg-warning">Pendente</span>
+                {% endif %}
+            </div>
+            <p>{{ item.detalhe_ok if item.ok else item.detalhe_pendente }}</p>
+            <a href="{{ item.url }}" class="btn btn-outline-primary">{{ item.acao }}</a>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section business-hub-section">
+    <h2>Pendencias prioritarias</h2>
+    {% if pendencias_criticas %}
+    <ul class="business-hub-pending-list mb-0">
+        {% for item in pendencias_criticas %}
+        <li><strong>{{ item.titulo }}:</strong> {{ item.detalhe_pendente }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="business-hub-empty-state">
+        Nenhuma pendencia critica encontrada. Ambiente principal esta pronto para operar.
+    </div>
+    {% endif %}
+</section>
+
+<section class="section business-hub-section">
+    <h2>Atalhos estrategicos do dono</h2>
+    <div class="business-hub-shortcuts">
+        {% for item in atalhos_dono %}
+        <article class="card h-100 business-hub-shortcut-card">
+            <div class="card-body">
+                <h3 class="h5">{{ item.titulo }}</h3>
+                <p class="text-muted">{{ item.descricao }}</p>
+                <a href="{{ item.url }}" class="btn btn-primary btn-sm">Abrir</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

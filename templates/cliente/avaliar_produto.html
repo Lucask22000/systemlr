@@ -1,0 +1,41 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'cliente' %}
+{% set store_nav = 'cliente' %}
+{% set store_title = 'Avaliar produto | SystemLR' %}
+
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Avaliação</span>
+    <h1>Avaliar {{ produto.nome }}</h1>
+    <p>Compartilhe sua experiência para ajudar outros clientes na escolha.</p>
+</section>
+
+<article class="store-panel">
+    <form method="POST" action="{{ url_for('public.produto_avaliar_site', produto_id=produto.id) }}">
+        {{ csrf_input|safe }}
+        <div class="store-form-grid">
+            <div class="store-field">
+                <label for="nota">Nota</label>
+                <select id="nota" name="nota" required>
+                    <option value="">Selecione</option>
+                    {% for nota in [5,4,3,2,1] %}
+                    <option value="{{ nota }}" {% if avaliacao and avaliacao.nota == nota %}selected{% endif %}>{{ nota }} estrela(s)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="store-field store-field--full">
+                <label for="titulo">Título</label>
+                <input id="titulo" name="titulo" type="text" value="{{ avaliacao.titulo if avaliacao else '' }}">
+            </div>
+            <div class="store-field store-field--full">
+                <label for="comentario">Comentário</label>
+                <textarea id="comentario" name="comentario" rows="5">{{ avaliacao.comentario if avaliacao else '' }}</textarea>
+            </div>
+        </div>
+        <div class="store-grid-actions" style="margin-top: 14px;">
+            <button type="submit" class="store-btn store-btn-primary">Salvar avaliação</button>
+            <a href="{{ url_for('public.produto_detalhe_site', produto_id=produto.id) }}" class="store-btn store-btn-secondary">Voltar ao produto</a>
+        </div>
+    </form>
+</article>
+{% endblock %}

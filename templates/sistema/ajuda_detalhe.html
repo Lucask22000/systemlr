@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topico.titulo }} - Ajuda - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/ajuda.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="help-page">
+    <div class="page-header">
+        <div>
+            <h1>{{ topico.titulo }}</h1>
+            <p class="text-muted mb-0">{{ topico.resumo }}</p>
+            {% if topico.menu_secao %}
+            <p class="text-muted mb-0">Menu superior: {{ topico.menu_secao }}</p>
+            {% endif %}
+            {% if topico.objetivo %}
+            <p class="mb-0"><strong>{{ topico.objetivo }}</strong></p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="help-detail-grid">
+        <div class="help-detail-main">
+            {% if topico.fluxograma %}
+            <div class="section">
+                <h2>Fluxograma da operacao</h2>
+                <figure class="help-flow-figure">
+                    <img src="{{ url_for('static', filename=topico.fluxograma.imagem) }}" alt="{{ topico.fluxograma.alt }}" class="help-flow-image">
+                    {% if topico.fluxograma.legenda %}
+                    <figcaption class="text-muted">{{ topico.fluxograma.legenda }}</figcaption>
+                    {% endif %}
+                </figure>
+            </div>
+            {% endif %}
+
+            {% if topico.etapas %}
+            <div class="section">
+                <h2>Etapas do tutorial</h2>
+                <div class="help-stage-grid">
+                    {% for etapa in topico.etapas %}
+                    <article class="help-stage-card">
+                        <div class="help-stage-label">Etapa {{ etapa.ordem }}</div>
+                        <h3>{{ etapa.titulo }}</h3>
+                        {% if etapa.descricao %}
+                        <p class="text-muted mb-0">{{ etapa.descricao }}</p>
+                        {% endif %}
+                        {% if etapa.passos %}
+                        <ol class="mb-0">
+                            {% for passo in etapa.passos %}
+                            <li>{{ passo }}</li>
+                            {% endfor %}
+                        </ol>
+                        {% endif %}
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if topico.passos_tutorial %}
+            <div class="section">
+                <h2>Passo a passo consolidado</h2>
+                <ol class="mb-0">
+                    {% for passo in topico.passos_tutorial %}
+                    <li>{{ passo }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+            {% endif %}
+
+            {% if topico.fluxo_paginas %}
+            <div class="section">
+                <h2>Fluxo das operacoes deste menu</h2>
+                <div class="help-flow-inline help-flow-inline-detail">
+                    <strong>Sequencia recomendada</strong>
+                    <p class="mb-0">{{ topico.fluxo_paginas|join(' -> ') }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if topico.duvidas %}
+            <div class="section">
+                <h2>Duvidas frequentes</h2>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Pergunta</th>
+                                <th>Resposta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in topico.duvidas %}
+                            <tr>
+                                <td>{{ item.pergunta }}</td>
+                                <td>{{ item.resposta }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if topico.problemas %}
+            <div class="section">
+                <h2>Problemas comuns e como resolver</h2>
+                <ul class="mb-0">
+                    {% for item in topico.problemas %}
+                    <li>
+                        <strong>{{ item.situacao }}</strong><br>
+                        {{ item.acao }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+
+        <aside class="help-detail-side">
+            {% if topico.checklist %}
+            <div class="help-summary-box">
+                <h2>Checklist antes de executar</h2>
+                <ul class="help-checklist-list">
+                    {% for item in topico.checklist %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if topico.etapas %}
+            <div class="help-summary-box">
+                <h3>Mapa rapido do guia</h3>
+                <ul class="help-stage-summary-list">
+                    {% for etapa in topico.etapas %}
+                    <li>
+                        <strong>Etapa {{ etapa.ordem }}</strong>
+                        <span>{{ etapa.titulo }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if topico.alertas %}
+            <div class="help-summary-box">
+                <h3>Alertas operacionais</h3>
+                <ul class="help-alert-list">
+                    {% for item in topico.alertas %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="help-summary-box">
+                <h3>{% if grupo_menu_atual %}Outros guias do fluxo de {{ grupo_menu_atual }}{% else %}Outros guias{% endif %}</h3>
+                {% if topicos_relacionados %}
+                <ul class="help-related-list">
+                    {% for item in topicos_relacionados %}
+                    <li>
+                        <a href="{{ url_for('detalhe_ajuda', topico_slug=item.slug) }}">{{ item.titulo }}</a>
+                        {% if item.menu_secao %}
+                        <span class="help-related-tag">{{ item.menu_secao }}</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">Nao ha outros guias disponiveis para o seu perfil.</p>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+
+    <div class="form-actions">
+        <a href="{{ url_for('central_ajuda') }}" class="btn btn-secondary">Voltar para Central de Ajuda</a>
+    </div>
+</div>
+{% endblock %}

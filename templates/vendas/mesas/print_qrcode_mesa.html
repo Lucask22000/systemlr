@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Imprimir QR Code - Mesa {{ mesa.numero }} - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="print-controls no-print">
+    <button onclick="window.print()" class="btn btn-primary">🖨️ Imprimir</button>
+    <button onclick="window.history.back()" class="btn btn-secondary">← Voltar</button>
+</div>
+
+<div class="print-qrcode-container">
+    <div class="print-content">
+        <div class="mesa-info">
+            Mesa {{ mesa.numero }}
+        </div>
+        
+        <div id="qrcode" style="display: inline-block;"></div>
+        
+        <div class="url-info">
+            {{ qr_url }}
+        </div>
+        
+        <div class="print-options">
+            <p>Capacidade: {{ mesa.capacidade }} pessoas</p>
+        </div>
+    </div>
+</div>
+
+<!-- Script QRCode.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gera o QR code dinamicamente
+    var qrcodeElement = document.getElementById('qrcode');
+    qrcodeElement.innerHTML = '';
+    
+    new QRCode(qrcodeElement, {
+        text: "{{ qr_url }}",
+        width: 400,
+        height: 400,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+});
+</script>
+{% endblock %}

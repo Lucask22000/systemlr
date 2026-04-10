@@ -1,0 +1,79 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Armazenar Recebimento #{{ recebimento.id }} - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Armazenagem (Put-away) - Recebimento #{{ recebimento.id }}</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('conferir_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn btn-secondary">Voltar para conferencia</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <p><strong>Tipo:</strong> {{ tipo_labels.get(recebimento.tipo_recebimento, recebimento.tipo_recebimento or '-') }}</p>
+        <p><strong>Fornecedor:</strong> {{ recebimento.fornecedor.nome if recebimento.fornecedor and recebimento.fornecedor.nome != 'Origem interna / fornecedor nao informado' else 'Nao informado' }}</p>
+        <p><strong>Local do recebimento:</strong> {{ recebimento.local_recebimento.nome if recebimento.local_recebimento else '-' }}</p>
+        <p><strong>Recebedor:</strong> {{ recebimento.recebedor_nome or '-' }}{% if recebimento.recebedor_funcionario and recebimento.recebedor_funcionario.matricula %} ({{ recebimento.recebedor_funcionario.matricula }}){% endif %}</p>
+        <p><strong>Status:</strong> {{ status_labels.get(recebimento.status, recebimento.status|title) }}</p>
+        <p><strong>Nota:</strong> {{ recebimento.info_nota or '-' }}</p>
+        <p><strong>Regra:</strong> Estoque so sera atualizado ao confirmar esta armazenagem.</p>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Codigo</th>
+                        <th>Qtd recebida</th>
+                        <th>Qtd avaria</th>
+                        <th>Qtd liquida</th>
+                        <th>Lote</th>
+                        <th>Validade</th>
+                        <th>Endereco destino (ativo)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recebimento.itens %}
+                    <tr>
+                        <td data-label="Produto">{{ item.produto.nome if item.produto else '-' }}</td>
+                        <td data-label="Codigo"><code>{{ item.produto.codigo if item.produto else '-' }}</code></td>
+                        <td data-label="Qtd recebida">{{ item.qtd_recebida or 0 }}</td>
+                        <td data-label="Qtd avaria">{{ item.qtd_avaria or 0 }}</td>
+                        <td data-label="Qtd liquida">{{ item.qtd_liquida }}</td>
+                        <td data-label="Lote">{{ item.lote or '-' }}</td>
+                        <td data-label="Validade">{{ item.validade.strftime('%d/%m/%Y') if item.validade else '-' }}</td>
+                        <td data-label="Endereco destino">
+                            <select name="endereco_destino_{{ item.id }}" class="input-select" required>
+                                <option value="">Selecione</option>
+                                {% for endereco in enderecos_ativos %}
+                                <option value="{{ endereco.id }}" {% if item.endereco_destino_id == endereco.id %}selected{% endif %}>
+                                    {{ endereco.nome }} - {{ endereco.codigo_localizacao or '-' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center">Nenhum item para armazenar.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Confirmar armazenagem</button>
+            <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,204 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Recebimentos Operacionais - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Recebimentos Operacionais</h1>
+        <p class="text-muted mb-0">Controle compras de revenda, consumo interno, bonificações, consignados e outros tipos de recebimento.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Entradas e Saídas Internas</a>
+        <a href="{{ url_for('novo_recebimento_fornecedor') }}" class="btn btn-primary">Novo Recebimento</a>
+    </div>
+</div>
+
+{% if pendencias_armazenagem %}
+<div class="alert alert-warning d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3 shadow-sm">
+    <div>
+        <strong>{{ pendencias_armazenagem }} recebimento(s) aguardando armazenagem.</strong>
+        <div class="small mt-1">
+            Priorize o put-away da fila operacional.
+            {% if recebimento_armazenagem_mais_antigo %}
+                Mais antigo desde {{ (recebimento_armazenagem_mais_antigo.conferido_em or recebimento_armazenagem_mais_antigo.criado_em).strftime('%d/%m/%Y %H:%M') }}.
+            {% endif %}
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('listar_recebimentos_fornecedor', status='aguardando_armazenagem') }}" class="btn btn-warning">Ver pendencias de armazenagem</a>
+        {% if filtros and filtros.status == 'aguardando_armazenagem' %}
+        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="btn btn-outline-secondary">Voltar para todos</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="filters-section" data-filter-panel data-filter-title="Filtros dos recebimentos">
+    <form method="GET" class="filters-form">
+        <input type="hidden" name="page" value="1">
+        <div class="filter-group">
+            <label for="busca">Busca</label>
+            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="ID, nota, fornecedor, recebedor, codigo ou nome do produto">
+        </div>
+        <div class="filter-group">
+            <label for="fornecedor_id">Fornecedor</label>
+            <select id="fornecedor_id" name="fornecedor_id" class="input-select">
+                <option value="">Todos</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id }}" {% if filtros and filtros.fornecedor_id == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="input-select">
+                <option value="">Todos</option>
+                {% for st in status_labels.keys() %}
+                <option value="{{ st }}" {% if filtros and filtros.status == st %}selected{% endif %}>{{ status_labels[st] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="tipo_recebimento">Tipo</label>
+            <select id="tipo_recebimento" name="tipo_recebimento" class="input-select">
+                <option value="">Todos</option>
+                {% for tipo, label in tipo_labels.items() %}
+                <option value="{{ tipo }}" {% if filtros and filtros.tipo_recebimento == tipo %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="data_inicio">De</label>
+            <input type="date" id="data_inicio" name="data_inicio" class="input-search" value="{{ filtros.data_inicio if filtros else '' }}">
+        </div>
+        <div class="filter-group">
+            <label for="data_fim">Ate</label>
+            <input type="date" id="data_fim" name="data_fim" class="input-search" value="{{ filtros.data_fim if filtros else '' }}">
+        </div>
+        <div class="filter-group">
+            <label for="per_page">Itens por pagina</label>
+            <select id="per_page" name="per_page" class="input-select">
+                {% for quantidade in [20, 50, 100] %}
+                <option value="{{ quantidade }}" {% if per_page == quantidade %}selected{% endif %}>{{ quantidade }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+    <div class="text-muted small mt-2">
+        Exibindo {{ recebimentos|length }} de {{ pagination.total if pagination else recebimentos|length }} recebimento(s) na visao atual.
+    </div>
+</div>
+
+<div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
+    <div class="table-responsive table-scroll-sticky" style="overflow-x: auto; overflow-y: visible; max-height: none;">
+        <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Fornecedor</th>
+                <th>Local</th>
+                <th>Recebedor</th>
+                <th>Nota</th>
+                <th>Itens</th>
+                <th>Codigos Produtos</th>
+                <th>Status</th>
+                <th>Criado em</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for recebimento in recebimentos %}
+            <tr>
+                <td data-label="ID">#{{ recebimento.id }}</td>
+                <td data-label="Tipo">{{ tipo_labels.get(recebimento.tipo_recebimento, recebimento.tipo_recebimento or '-') }}</td>
+                <td data-label="Fornecedor">
+                    {% if recebimento.fornecedor and recebimento.fornecedor.nome and recebimento.fornecedor.nome != 'Origem interna / fornecedor nao informado' %}
+                        {{ recebimento.fornecedor.nome }}
+                    {% else %}
+                        Nao informado
+                    {% endif %}
+                </td>
+                <td data-label="Local">{{ recebimento.local_recebimento.nome if recebimento.local_recebimento else '-' }}</td>
+                <td data-label="Recebedor">
+                    {{ recebimento.recebedor_nome or '-' }}
+                    {% if recebimento.recebedor_funcionario and recebimento.recebedor_funcionario.matricula %}
+                    <div class="small text-muted">{{ recebimento.recebedor_funcionario.matricula }}</div>
+                    {% endif %}
+                </td>
+                <td data-label="Nota">{{ recebimento.info_nota or '-' }}</td>
+                <td data-label="Itens">{{ recebimento.itens|length }}</td>
+                <td data-label="Codigos Produtos">
+                    {% set codigos = [] %}
+                    {% for item in recebimento.itens %}
+                        {% if item.produto and item.produto.codigo %}
+                            {% set _ = codigos.append(item.produto.codigo) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if codigos %}
+                        {{ codigos|join(', ') }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td data-label="Status">
+                    {% set st = recebimento.status %}
+                    <span class="badge {% if st == 'concluido' %}badge-success{% elif st == 'cancelado' %}badge-danger{% elif st == 'aguardando_armazenagem' %}badge-warning{% else %}badge-info{% endif %}">
+                        {{ status_labels.get(st, st|title) }}
+                    </span>
+                </td>
+                <td data-label="Criado em">{{ recebimento.criado_em.strftime('%d/%m/%Y %H:%M') if recebimento.criado_em else '-' }}</td>
+                <td data-label="Acoes" class="actions-cell">
+                    {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
+                    <a href="{{ url_for('conferir_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-warning">Conferir</a>
+                    {% endif %}
+                    {% if recebimento.status == 'aguardando_armazenagem' %}
+                    <a href="{{ url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn-small btn-primary">Armazenar</a>
+                    {% endif %}
+                    {% if recebimento.status != 'cancelado' and recebimento.status != 'concluido' %}
+                    <form method="POST" action="{{ url_for('cancelar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="inline-form" data-confirm-message="Cancelar recebimento #{{ recebimento.id }}?">
+                        {{ csrf_input|safe }}
+                        <button type="submit" class="btn-small btn-danger">Cancelar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="11" class="text-center">Nenhum recebimento encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_recebimentos_fornecedor', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_recebimentos_fornecedor', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+

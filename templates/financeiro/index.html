@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Financeiro - SystemLR{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/dashboard-mobile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-page">
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h1>Painel Financeiro</h1>
+            <p class="text-muted mb-0">KPIs, margens, mix de pagamento e alertas acionaveis.</p>
+        </div>
+        <form method="get" class="dashboard-filter-form d-flex flex-wrap gap-2 align-items-end">
+            <div>
+                <label for="periodoPreset" class="dashboard-filter-label">Periodo</label>
+                <select id="periodoPreset" class="input-text dashboard-filter-select">
+                    <option value="hoje">Hoje</option>
+                    <option value="ontem">Ontem</option>
+                    <option value="semana" selected>Semana</option>
+                    <option value="mes">Mes</option>
+                    <option value="personalizado">Personalizado</option>
+                </select>
+            </div>
+            <div>
+                <label for="data_inicial" class="dashboard-filter-label">De</label>
+                <input type="date" id="data_inicial" name="data_inicial" value="{{ data_inicial }}" class="input-text dashboard-filter-select">
+            </div>
+            <div>
+                <label for="data_final" class="dashboard-filter-label">Ate</label>
+                <input type="date" id="data_final" name="data_final" value="{{ data_final }}" class="input-text dashboard-filter-select">
+            </div>
+            <div class="form-check mb-1">
+                <input class="form-check-input" type="checkbox" id="compararPeriodo">
+                <label class="form-check-label" for="compararPeriodo">Comparar</label>
+            </div>
+            <button type="submit" class="btn btn-primary dashboard-filter-button">Atualizar</button>
+        </form>
+    </div>
+
+    <div class="cards-container analytics-cards">
+        <div class="card card-primary"><div class="card-content"><h3>Faturamento</h3><p class="card-value" id="kpiFaturamento">R$ 0,00</p><p class="card-meta" id="metaFaturamento">0,0%</p></div></div>
+        <div class="card card-secondary"><div class="card-content"><h3>Ticket Medio</h3><p class="card-value" id="kpiTicket">R$ 0,00</p><p class="card-meta" id="metaTicket">0,0%</p></div></div>
+        <div class="card card-success"><div class="card-content"><h3>Margem Bruta</h3><p class="card-value" id="kpiMargemBruta">0,0%</p><p class="card-meta" id="metaMargemBruta">vs. anterior</p></div></div>
+        <div class="card card-info"><div class="card-content"><h3>Margem Operacional</h3><p class="card-value" id="kpiMargemOperacional">0,0%</p><p class="card-meta" id="metaMargemOperacional">vs. anterior</p></div></div>
+        <div class="card card-warning"><div class="card-content"><h3>Despesas Operacionais</h3><p class="card-value" id="kpiDespesas">R$ 0,00</p><p class="card-meta" id="metaDespesas">0,0% do faturamento</p></div></div>
+        <div class="card card-danger"><div class="card-content"><h3>Taxa de Cancelamento</h3><p class="card-value" id="kpiCancelamento">0,0%</p><p class="card-meta" id="metaCancelamento">0 pedidos</p></div></div>
+    </div>
+
+    <section class="section mb-3">
+        <h2>Alertas</h2>
+        <div id="financeiroAlertas" class="d-grid gap-2">
+            <p class="text-muted mb-0">Nenhum alerta carregado.</p>
+        </div>
+    </section>
+
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Receita vs. Despesas</h2>
+            <div class="chart-container"><canvas id="chartReceitaDespesas"></canvas></div>
+        </section>
+        <section class="section">
+            <h2>Margens</h2>
+            <div class="chart-container"><canvas id="chartMargens"></canvas></div>
+        </section>
+    </div>
+
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>CMV vs. Despesas por Categoria</h2>
+            <div class="chart-container"><canvas id="chartCmvCategorias"></canvas></div>
+        </section>
+        <section class="section">
+            <h2>Metodos de Pagamento</h2>
+            <div class="chart-container"><canvas id="chartPagamento"></canvas></div>
+        </section>
+    </div>
+
+    <div class="analytics-grid">
+        <section class="section">
+            <h2>Top 5 Produtos</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>SKU</th><th>Produto</th><th>Qtd</th><th>Receita</th><th>Margem</th></tr></thead>
+                    <tbody id="tableTopProdutos"></tbody>
+                </table>
+            </div>
+        </section>
+        <section class="section">
+            <h2>Top 5 Clientes</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Cliente</th><th>Pedidos</th><th>Faturamento</th></tr></thead>
+                    <tbody id="tableTopClientes"></tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <section class="section">
+        <h2>Desempenho por Garcom/Caixa</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Tipo</th><th>Nome</th><th>Pedidos</th><th>Faturamento</th><th>Ticket medio</th></tr></thead>
+                <tbody id="tableDesempenho"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('financeiro_lancamentos') }}" class="btn btn-secondary">Lancamentos contabeis</a>
+        <a href="{{ url_for('financeiro_fundos') }}" class="btn btn-warning">Gestao monetaria e fundos</a>
+        <a href="{{ url_for('exportar_lancamentos_financeiros') }}" class="btn btn-info">Exportar CSV contador</a>
+        <a href="{{ url_for('exportar_lancamentos_financeiros_xlsx') }}" class="btn btn-secondary">Exportar XLSX contador</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/dashboard_analytics.js') }}"></script>
+{% endblock %}

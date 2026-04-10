@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Erro 400 - SystemLR{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-code">400</div>
+    <h1>Requisição inválida</h1>
+    <p>{{ error_message if error_message else 'Os dados enviados não puderam ser processados.' }}</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Voltar para Home</a>
+</div>
+{% endblock %}

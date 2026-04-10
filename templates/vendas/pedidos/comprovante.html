@@ -1,0 +1,87 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Comprovante Pedido #{{ pedido.id }}{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="receipt-wrap">
+    <div class="page-header">
+        <h1>Comprovante #{{ pedido.id }}</h1>
+    </div>
+
+    <div class="receipt-card">
+        <div class="receipt-header">
+            {% if empresa and empresa.logo_path %}
+            <div class="receipt-logo-wrap">
+                <img src="{{ url_for('static', filename=empresa.logo_path) }}" alt="Logo da empresa" class="receipt-logo">
+            </div>
+            {% endif %}
+            <h2>{{ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else (empresa.razao_social if empresa and empresa.razao_social else 'Empresa não cadastrada')) }}</h2>
+            {% if empresa and empresa.razao_social and empresa.nome_fantasia and empresa.razao_social != empresa.nome_fantasia %}
+            <div class="receipt-muted">{{ empresa.razao_social }}</div>
+            {% endif %}
+            {% if empresa and empresa.cnpj %}
+            <div class="receipt-muted">CNPJ: {{ empresa.cnpj }}</div>
+            {% endif %}
+            {% if empresa and empresa.endereco %}
+            <div class="receipt-muted">
+                {{ empresa.endereco }}{% if empresa.cidade %} - {{ empresa.cidade }}{% endif %}{% if empresa.estado %}/{{ empresa.estado }}{% endif %}
+            </div>
+            {% endif %}
+            {% if empresa and empresa.telefone %}
+            <div class="receipt-muted">Telefone: {{ empresa.telefone }}</div>
+            {% endif %}
+        </div>
+
+        <div class="receipt-meta">
+            <div><strong>Pedido:</strong> #{{ pedido.id }}</div>
+            <div><strong>Mesa:</strong> {{ pedido.mesa.numero if pedido.mesa else '-' }}</div>
+            <div><strong>Caixa:</strong> {{ pedido.caixa.nome if pedido.caixa else '-' }}</div>
+            <div><strong>Criado em:</strong> {{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</div>
+            <div><strong>Fechado em:</strong> {{ pedido.fechado_em.strftime('%d/%m/%Y %H:%M') if pedido.fechado_em else '-' }}</div>
+            <div><strong>Pagamento:</strong> {{ pedido.metodo_pagamento or '-' }}</div>
+            <div><strong>Valor pago:</strong> {% if pedido.valor_pago is not none %}R$ {{ '%.2f'|format(pedido.valor_pago) }}{% else %}-{% endif %}</div>
+            <div><strong>Troco repassado:</strong> {% if troco_repassado is not none %}R$ {{ '%.2f'|format(troco_repassado) }}{% else %}-{% endif %}</div>
+        </div>
+
+        <table class="receipt-items">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qtd</th>
+                    <th>Unitario</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pedido.itens %}
+                <tr>
+                    <td data-label="Item">{{ item.produto.nome if item.produto else ('Produto #' ~ item.produto_id) }}</td>
+                    <td data-label="Qtd">{{ item.quantidade }}</td>
+                    <td data-label="Unitario">R$ {{ '%.2f'|format(item.preco_unitario) }}</td>
+                    <td data-label="Total">R$ {{ '%.2f'|format(item.quantidade * item.preco_unitario) }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4">Sem itens no pedido.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="receipt-total">Total: R$ {{ '%.2f'|format(pedido.total or 0) }}</div>
+
+        {% if empresa and empresa.mensagem_comprovante %}
+        <p class="receipt-muted text-center mt-3">{{ empresa.mensagem_comprovante }}</p>
+        {% endif %}
+    </div>
+
+    <div class="receipt-actions">
+        <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+        <a href="{{ url_for('listar_pedidos') }}" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+</div>
+{% endblock %}
+

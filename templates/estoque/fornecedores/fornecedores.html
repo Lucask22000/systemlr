@@ -1,0 +1,96 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Fornecedores - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Fornecedores</h1>
+    <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-primary">Novo Fornecedor</a>
+</div>
+
+<div class="filters-section" data-filter-panel data-filter-title="Filtros dos fornecedores">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <label for="busca">Busca</label>
+            <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca if filtros else '' }}" placeholder="Nome, CNPJ/CPF, contato, telefone ou email">
+        </div>
+        <div class="filter-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="input-select">
+                <option value="" {% if not filtros or not filtros.status %}selected{% endif %}>Todos</option>
+                <option value="ativo" {% if filtros and filtros.status == 'ativo' %}selected{% endif %}>Ativos</option>
+                <option value="inativo" {% if filtros and filtros.status == 'inativo' %}selected{% endif %}>Inativos</option>
+            </select>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a href="{{ url_for('listar_fornecedores') }}" class="btn btn-secondary">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="table-wrapper" style="overflow-y: auto; max-height: 70vh;">
+    <div class="table-responsive table-scroll-sticky" style="overflow-x: auto; overflow-y: visible; max-height: none;">
+        <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>CNPJ/CPF</th>
+                <th>Contato</th>
+                <th>Status</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fornecedor in fornecedores %}
+            <tr>
+                <td data-label="Nome">{{ fornecedor.nome }}</td>
+                <td data-label="CNPJ/CPF">{{ fornecedor.documento or '-' }}</td>
+                <td data-label="Contato">
+                    {{ fornecedor.contato or fornecedor.telefone or fornecedor.email or '-' }}
+                </td>
+                <td data-label="Status">
+                    {% if fornecedor.ativo %}
+                    <span class="badge badge-success">Ativo</span>
+                    {% else %}
+                    <span class="badge badge-danger">Inativo</span>
+                    {% endif %}
+                </td>
+                <td data-label="Acoes" class="actions-cell">
+                    <a href="{{ url_for('detalhes_fornecedor', fornecedor_id=fornecedor.id) }}" class="btn-small btn-secondary">Visualizar</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">Nenhum fornecedor cadastrado</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+    {% set params = query_params.copy() if query_params else {} %}
+    {% if pagination.has_prev %}
+        {% set params_prev = params.copy() %}
+        {% set _ = params_prev.update({'page': pagination.prev_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_fornecedores', **params_prev) }}">Anterior</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Anterior</span>
+    {% endif %}
+
+    <span class="pagination-info">Pagina {{ pagination.page }} de {{ pagination.pages }}</span>
+
+    {% if pagination.has_next %}
+        {% set params_next = params.copy() %}
+        {% set _ = params_next.update({'page': pagination.next_num, 'per_page': per_page}) %}
+        <a class="btn btn-outline-secondary" href="{{ url_for('listar_fornecedores', **params_next) }}">Proxima</a>
+    {% else %}
+        <span class="btn btn-outline-secondary disabled">Proxima</span>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+

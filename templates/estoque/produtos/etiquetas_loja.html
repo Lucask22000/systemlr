@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Etiquetas de Loja - SystemLR{% endblock %}
+
+{% block extra_css %}
+<style>
+.store-label-page { display: grid; gap: 1rem; }
+.store-label-filters { display: grid; gap: 1rem; }
+.store-label-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.85rem;
+}
+.store-label-card {
+    border: 1px dashed #94a3b8;
+    border-radius: 14px;
+    background: #fff;
+    padding: 1rem;
+    display: grid;
+    gap: 0.45rem;
+    min-height: 180px;
+}
+.store-label-card strong {
+    font-size: 1.05rem;
+    color: #0f172a;
+}
+.store-label-brand {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.store-label-price {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f766e;
+    line-height: 1;
+}
+.store-label-meta {
+    display: grid;
+    gap: 0.2rem;
+    color: #475569;
+    font-size: 0.88rem;
+}
+@media print {
+    .app-navbar,
+    .footer,
+    .alert,
+    .store-label-toolbar,
+    .store-label-filters {
+        display: none !important;
+    }
+    .main-content {
+        padding: 0;
+    }
+    .store-label-card {
+        break-inside: avoid;
+        box-shadow: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="store-label-page">
+    <div class="page-header">
+        <div>
+            <h1>Etiquetas de Loja</h1>
+            <p class="text-muted mb-0">Impressao de etiquetas para gondola, loja fisica e exposicao de produtos em venda.</p>
+        </div>
+        <div class="header-actions store-label-toolbar">
+            <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+            <a href="{{ url_for('listar_produtos') }}" class="btn btn-outline-secondary">Voltar para Produtos</a>
+        </div>
+    </div>
+
+    <section class="filters-section store-label-filters">
+        <form method="GET" class="filters-form">
+            <div class="filter-group">
+                <label for="busca">Busca</label>
+                <input type="text" id="busca" name="busca" class="input-search" value="{{ filtros.busca or '' }}" placeholder="Nome, codigo ou descricao">
+            </div>
+            <div class="filter-group">
+                <label for="categoria_id">Categoria</label>
+                <select id="categoria_id" name="categoria_id" class="input-select">
+                    <option value="">Todas as categorias</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if filtros.categoria_id == categoria.id %}selected{% endif %}>{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="estoque_id">Estoque</label>
+                <select id="estoque_id" name="estoque_id" class="input-select">
+                    <option value="">Todos os estoques</option>
+                    {% for estoque in estoques %}
+                    <option value="{{ estoque.id }}" {% if filtros.estoque_id == estoque.id %}selected{% endif %}>{{ estoque.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="somente_em_venda">Produtos em venda</label>
+                <select id="somente_em_venda" name="somente_em_venda" class="input-select">
+                    <option value="sim" {% if filtros.somente_em_venda == 'sim' %}selected{% endif %}>Somente com saldo</option>
+                    <option value="nao" {% if filtros.somente_em_venda == 'nao' %}selected{% endif %}>Todos os ativos</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Aplicar</button>
+                <a href="{{ url_for('imprimir_etiquetas_loja') }}" class="btn btn-secondary">Limpar</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="section">
+        <div class="page-header">
+            <h2>{{ produtos|length }} etiqueta(s) preparadas</h2>
+            <div class="header-actions store-label-toolbar">
+                <button type="button" class="btn btn-outline-primary" onclick="window.print()">Imprimir lote</button>
+            </div>
+        </div>
+
+        {% if produtos %}
+        <div class="store-label-grid">
+            {% for produto in produtos %}
+            <article class="store-label-card">
+                <div class="store-label-brand">{{ empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR' }}</div>
+                <strong>{{ produto.nome }}</strong>
+                <div class="store-label-price">R$ {{ '%.2f'|format(produto.preco_venda or 0) }}</div>
+                <div class="store-label-meta">
+                    <span>Codigo: {{ produto.codigo or '-' }}</span>
+                    <span>Categoria: {{ produto.categoria.nome if produto.categoria else '-' }}</span>
+                    <span>Endereco: {{ produto.endereco.nome if produto.endereco else '-' }}</span>
+                    <span>Saldo: {{ produto.quantidade_estoque or 0 }}</span>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="mb-0">Nenhum produto encontrado para a impressao das etiquetas de loja com os filtros atuais.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

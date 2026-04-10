@@ -1,0 +1,77 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Conferir Recebimento #{{ recebimento.id }} - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Conferir Recebimento #{{ recebimento.id }}</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_recebimentos_fornecedor') }}" class="btn btn-secondary">Voltar</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <p><strong>Tipo:</strong> {{ tipo_labels.get(recebimento.tipo_recebimento, recebimento.tipo_recebimento or '-') }}</p>
+        <p><strong>Fornecedor:</strong> {{ recebimento.fornecedor.nome if recebimento.fornecedor and recebimento.fornecedor.nome != 'Origem interna / fornecedor nao informado' else 'Nao informado' }}</p>
+        <p><strong>Local do recebimento:</strong> {{ recebimento.local_recebimento.nome if recebimento.local_recebimento else '-' }}</p>
+        <p><strong>Recebedor:</strong> {{ recebimento.recebedor_nome or '-' }}{% if recebimento.recebedor_funcionario and recebimento.recebedor_funcionario.matricula %} ({{ recebimento.recebedor_funcionario.matricula }}){% endif %}</p>
+        <p><strong>Status:</strong> {{ status_labels.get(recebimento.status, recebimento.status|title) }}</p>
+        <p><strong>Nota:</strong> {{ recebimento.info_nota or '-' }}</p>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Codigo</th>
+                        <th>Qtd recebida</th>
+                        <th>Qtd avaria</th>
+                        <th>Lote</th>
+                        <th>Validade</th>
+                        <th>Qtd liquida</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recebimento.itens %}
+                    <tr>
+                        <td data-label="Produto">{{ item.produto.nome if item.produto else '-' }}</td>
+                        <td data-label="Codigo"><code>{{ item.produto.codigo if item.produto else '-' }}</code></td>
+                        <td data-label="Qtd recebida">
+                            <input type="number" min="0" class="input-text" name="item_{{ item.id }}_qtd_recebida" value="{{ item.qtd_recebida or 0 }}" required>
+                        </td>
+                        <td data-label="Qtd avaria">
+                            <input type="number" min="0" class="input-text" name="item_{{ item.id }}_qtd_avaria" value="{{ item.qtd_avaria or 0 }}" required>
+                        </td>
+                        <td data-label="Lote">
+                            <input type="text" class="input-text" name="item_{{ item.id }}_lote" value="{{ item.lote or '' }}" maxlength="80">
+                        </td>
+                        <td data-label="Validade">
+                            <input type="date" class="input-text" name="item_{{ item.id }}_validade" value="{{ item.validade.strftime('%Y-%m-%d') if item.validade else '' }}">
+                        </td>
+                        <td data-label="Qtd liquida">{{ item.qtd_liquida }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">Nenhum item no recebimento.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar conferencia</button>
+            {% if recebimento.status == 'aguardando_armazenagem' %}
+            <a href="{{ url_for('armazenar_recebimento_fornecedor', recebimento_id=recebimento.id) }}" class="btn btn-warning">Ir para armazenagem</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}
+

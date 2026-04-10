@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Equipamento - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Novo Equipamento</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="codigo">Codigo *</label>
+                <input type="text" id="codigo" name="codigo" class="input-text" required placeholder="EX: EMP-01">
+            </div>
+            <div class="form-group">
+                <label for="nome">Nome *</label>
+                <input type="text" id="nome" name="nome" class="input-text" required placeholder="Ex: Empilhadeira principal">
+            </div>
+            <div class="form-group">
+                <label for="tipo">Tipo *</label>
+                <select id="tipo" name="tipo" class="input-select">
+                    {% for item in tipos_validos %}
+                    <option value="{{ item }}">{{ item|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="placa">Placa/Identificacao</label>
+                <input type="text" id="placa" name="placa" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="capacidade_kg">Capacidade (kg)</label>
+                <input type="number" id="capacidade_kg" name="capacidade_kg" step="0.01" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" class="input-select">
+                    {% for item in status_validos %}
+                    <option value="{{ item }}">{{ item|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="bateria_codigo">Codigo da bateria</label>
+                <input type="text" id="bateria_codigo" name="bateria_codigo" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="bateria_nivel">Nivel da bateria (%)</label>
+                <input type="number" id="bateria_nivel" name="bateria_nivel" min="0" max="100" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="proxima_manutencao_em">Proxima manutencao</label>
+                <input type="date" id="proxima_manutencao_em" name="proxima_manutencao_em" class="input-text">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" rows="4" class="input-textarea"></textarea>
+        </div>
+
+        <label class="checkbox-inline">
+            <input type="checkbox" name="ativo" checked>
+            Equipamento ativo
+        </label>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <a href="{{ url_for('listar_equipamentos_movimentacao') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

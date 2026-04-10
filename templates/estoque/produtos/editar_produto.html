@@ -1,0 +1,164 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Editar Produto - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Editar Produto</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" enctype="multipart/form-data" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-group">
+            <label for="codigo">Codigo de barras (EAN-13)</label>
+            <input type="text" id="codigo" value="{{ produto.codigo }}" disabled class="input-text">
+        </div>
+
+        <div class="form-group">
+            <label for="nome">Nome do Produto *</label>
+            <input type="text" id="nome" name="nome" required value="{{ produto.nome }}" class="input-text">
+        </div>
+
+        <div class="form-group">
+            <label for="descricao">Descricao</label>
+            <textarea id="descricao" name="descricao" class="input-textarea" rows="4">{{ produto.descricao or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="imagem">Imagem do Produto</label>
+            <input type="file" id="imagem" name="imagem" accept=".png,.jpg,.jpeg,.webp,.gif" class="input-text">
+            {% if produto.imagem_path %}
+            <div class="product-image-preview">
+                <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="remover_imagem">
+                    Remover imagem atual
+                </label>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="categoria_id">Categoria *</label>
+            <select id="categoria_id" name="categoria_id" required class="input-select">
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if produto.categoria_id == cat.id %}selected{% endif %}>
+                    {{ cat.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="fornecedor_id">Fornecedor *</label>
+            <select id="fornecedor_id" name="fornecedor_id" required class="input-select">
+                <option value="">Selecione um fornecedor</option>
+                {% for fornecedor in fornecedores %}
+                <option value="{{ fornecedor.id }}" {% if produto.fornecedor_id == fornecedor.id %}selected{% endif %}>
+                    {{ fornecedor.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="endereco_id">Endereco de Estoque</label>
+            <select id="endereco_id" name="endereco_id" class="input-select">
+                <option value="">Nao definido</option>
+                {% for endereco in enderecos %}
+                <option value="{{ endereco.id }}" {% if produto.endereco_id == endereco.id %}selected{% endif %}>
+                    {{ endereco.nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="preco_custo">Preco de Custo *</label>
+                <input type="number" id="preco_custo" name="preco_custo" step="0.01" required value="{{ produto.preco_custo }}" class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="preco_venda">Preco de Venda *</label>
+                <input type="number" id="preco_venda" name="preco_venda" step="0.01" required value="{{ produto.preco_venda }}" class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="status_disponibilidade">Disponibilidade operacional</label>
+                <select id="status_disponibilidade" name="status_disponibilidade" class="input-select">
+                    {% set status_atual_normalizado = produto.status_disponibilidade_label|lower %}
+                    {% for chave, label in status_disponibilidade_labels.items() %}
+                    <option value="{{ chave }}" {% if status_atual_normalizado == chave %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo_movimentacao">Tipo de movimentacao no estoque</label>
+                <select id="tipo_movimentacao" name="tipo_movimentacao" class="input-select">
+                    {% for chave, label in tipos_movimentacao_produto.items() %}
+                    <option value="{{ chave }}" {% if (produto.tipo_movimentacao or 'manual') == chave %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prioridade_reabastecimento">Prioridade de reabastecimento</label>
+                <input type="number" id="prioridade_reabastecimento" name="prioridade_reabastecimento" class="input-text" min="1" max="999" value="{{ produto.prioridade_reabastecimento or '' }}">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="fora_picking" {% if produto.fora_picking %}checked{% endif %}>
+                    Produto fora de picking
+                </label>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servico_montagem_disponivel" {% if produto.servico_montagem_disponivel %}checked{% endif %}>
+                    Permitir servico de montagem
+                </label>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;">
+                <label class="checkbox-inline">
+                    <input type="checkbox" name="servico_instalacao_disponivel" {% if produto.servico_instalacao_disponivel %}checked{% endif %}>
+                    Permitir servico de instalacao
+                </label>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="quantidade_estoque">Quantidade Atual</label>
+                <input type="number" id="quantidade_estoque" value="{{ produto.quantidade_estoque }}" disabled class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="quantidade_minima">Quantidade Minima</label>
+                <input type="number" id="quantidade_minima" name="quantidade_minima" value="{{ produto.quantidade_minima }}" class="input-text">
+            </div>
+
+            <div class="form-group">
+                <label for="validade">Validade</label>
+                <input type="date" id="validade" name="validade" value="{{ produto.validade.isoformat() if produto.validade else '' }}" class="input-text">
+            </div>
+        </div>
+
+        <div class="info-box">
+            <p><strong>Lucro Unitario:</strong> R$ {{ "%.2f"|format(produto.lucro_unitario) }}</p>
+            <p><strong>Margem de Lucro:</strong> {{ "%.2f"|format(produto.margem_lucro) }}%</p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Alteracoes</button>
+            <a href="{{ url_for('visualizar_produto', produto_id=produto.id) }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

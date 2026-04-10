@@ -1,0 +1,86 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Movimentacao Rapida Interna - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Movimentacao Rapida Interna</h1>
+        <p class="text-muted mb-0">Use para acertos e consumos imediatos no estoque atual. Recebimentos e transferencias entre lojas/CDs devem usar as telas dedicadas.</p>
+    </div>
+    <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="section">
+    <h2>{{ produto.nome }}</h2>
+
+    <div class="info-cards-row">
+        <div class="info-card">
+            <h3>Codigo</h3>
+            <p class="value">{{ produto.codigo }}</p>
+        </div>
+        <div class="info-card">
+            <h3>Categoria</h3>
+            <p class="value">{{ produto.categoria.nome }}</p>
+        </div>
+        <div class="info-card">
+            <h3>Preco Venda</h3>
+            <p class="value">R$ {{ "%.2f"|format(produto.preco_venda) }}</p>
+        </div>
+        <div class="info-card">
+            <h3>Estoque Atual</h3>
+            <p class="value">{{ produto.quantidade_estoque }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h2>Registrar Movimentacao</h2>
+
+    <form method="POST" class="form">
+        <input type="hidden" name="produto_id" value="{{ produto.id }}">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo">Tipo de Movimentacao *</label>
+                <select id="tipo" name="tipo" required class="input-select">
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saida</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="quantidade">Quantidade *</label>
+                <input type="number" id="quantidade" name="quantidade" required min="1" placeholder="0" class="input-text" autofocus>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="motivo">Motivo</label>
+            <input type="text" id="motivo" name="motivo" list="motivos-movimentacao-rapida" placeholder="Ex.: consumo_operacional, avaria_quebra, acerto_estoque" class="input-text">
+            <datalist id="motivos-movimentacao-rapida">
+                {% for motivo in motivos_sugeridos %}
+                <option value="{{ motivo }}"></option>
+                {% endfor %}
+            </datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="info_nota">Documento ou referência interna</label>
+            <input type="text" id="info_nota" name="info_nota" placeholder="Checklist, inventário, OS ou justificativa" class="input-text">
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" placeholder="Observacoes adicionais..." class="input-textarea" rows="3"></textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Registrar movimentacao</button>
+            <a href="{{ url_for('nova_movimentacao') }}" class="btn btn-success">Nova movimentacao</a>
+            <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,202 @@
+.business-hub-header {
+    margin-bottom: 1.5rem;
+}
+
+.business-hub-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.metric-card {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 1.1rem 1.15rem;
+}
+
+.metric-card h3 {
+    margin: 0 0 0.45rem;
+    color: #334155;
+    font-size: 0.98rem;
+    font-weight: 700;
+}
+
+.metric-card .card-value {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(1.75rem, 3vw, 2.2rem);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.metric-card .card-meta {
+    margin: 0.45rem 0 0;
+    color: #64748b;
+    font-size: 0.92rem;
+}
+
+.metric-card-attention {
+    background: linear-gradient(180deg, #fff8e8 0%, #ffffff 100%);
+    border-color: #f4c76c;
+}
+
+.business-hub-section + .business-hub-section {
+    margin-top: 1.5rem;
+}
+
+.business-hub-section-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.business-hub-section-head h2 {
+    margin: 0 0 0.2rem;
+}
+
+.business-hub-summary-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: #0d47a1;
+    font-size: 0.9rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.business-hub-table-wrap {
+    margin-top: 1rem;
+}
+
+.business-hub-table {
+    min-width: 880px;
+}
+
+.business-hub-table td:last-child,
+.business-hub-table th:last-child {
+    width: 160px;
+    white-space: nowrap;
+}
+
+.business-hub-checklist-cards {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 1rem;
+}
+
+.business-hub-checklist-card {
+    border: 1px solid #dbe2ea;
+    border-radius: 14px;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.business-hub-checklist-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.business-hub-checklist-card h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.business-hub-checklist-card p {
+    margin: 0 0 0.9rem;
+    color: #475569;
+}
+
+.business-hub-checklist-card .btn {
+    width: 100%;
+}
+
+.business-hub-pending-list {
+    display: grid;
+    gap: 0.75rem;
+    padding-left: 1.25rem;
+}
+
+.business-hub-pending-list li {
+    color: #334155;
+}
+
+.business-hub-empty-state {
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.business-hub-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.business-hub-shortcut-card {
+    min-height: 100%;
+}
+
+.business-hub-shortcut-card .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.business-hub-shortcut-card .card-body p {
+    margin: 0;
+    flex: 1 1 auto;
+}
+
+.business-hub-shortcut-card .btn {
+    width: 100%;
+}
+
+@media (max-width: 991.98px) {
+    .business-hub-section-head {
+        flex-direction: column;
+    }
+
+    .business-hub-summary-pill {
+        white-space: normal;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .business-hub-metrics {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .metric-card {
+        padding: 1rem;
+    }
+
+    .business-hub-shortcuts {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .business-hub-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .business-hub-checklist-card-head {
+        flex-direction: column;
+    }
+}

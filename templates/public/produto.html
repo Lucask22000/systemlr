@@ -1,0 +1,86 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'product' %}
+{% set store_nav = 'home' %}
+{% set store_title = produto.nome ~ ' | ' ~ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR') %}
+
+{% block store_content %}
+<section class="store-grid store-grid--commerce">
+    <article class="store-panel">
+        <div class="store-product-media" style="margin-bottom: 18px;">
+            {% if produto.imagem_path %}
+            <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" loading="lazy">
+            {% else %}
+            <div class="store-product-placeholder">{{ produto.nome[:2]|upper }}</div>
+            {% endif %}
+        </div>
+        <h1>{{ produto.nome }}</h1>
+        <p class="store-note">{{ produto.categoria.nome if produto.categoria else 'Sem categoria' }}{% if produto.fornecedor %} • {{ produto.fornecedor.nome }}{% endif %}</p>
+        <p class="store-note">★ {{ '%.1f'|format(produto.avaliacao_media) }} ({{ produto.total_avaliacoes }} avaliações)</p>
+        <div class="store-product-price" style="margin: 12px 0;">
+            <strong>R$ {{ '%.2f'|format(produto.preco_venda or 0)|replace('.', ',') }}</strong>
+        </div>
+        {% if produto.descricao %}
+        <p class="store-note">{{ produto.descricao }}</p>
+        {% endif %}
+        <div class="store-inline-actions" style="margin-top: 14px;">
+            <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                <input type="number" name="quantidade" min="1" max="99" value="1">
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="store-btn store-btn-primary">Adicionar ao carrinho</button>
+            </form>
+            {% if cliente_publico %}
+            <form method="POST" action="{{ url_for('public.cliente_favorito_adicionar', produto_id=produto.id) }}">
+                {{ csrf_input|safe }}
+                <input type="hidden" name="next" value="{{ request.path }}">
+                <button type="submit" class="store-btn store-btn-secondary">Favoritar</button>
+            </form>
+            {% else %}
+            <a href="{{ url_for('public.cliente_login_site', next=request.path) }}" class="store-btn store-btn-secondary">Entrar para favoritar</a>
+            {% endif %}
+        </div>
+    </article>
+
+    <aside class="store-panel">
+        <h2 class="store-card-title">Avaliações</h2>
+        {% for avaliacao in avaliacoes[:5] %}
+        <div class="store-note-box" style="margin-bottom: 12px;">
+            <p class="store-item-title">{{ avaliacao.titulo or 'Avaliação do cliente' }}</p>
+            <p class="store-note">Nota {{ avaliacao.nota }}/5 • {{ avaliacao.cliente.nome if avaliacao.cliente else 'Cliente' }}</p>
+            {% if avaliacao.comentario %}
+            <p class="store-note">{{ avaliacao.comentario }}</p>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="store-note">Este produto ainda não recebeu avaliações.</p>
+        {% endfor %}
+
+        <div class="store-grid-actions" style="margin-top: 14px;">
+            <a href="{{ url_for('public.produto_avaliacoes_site', produto_id=produto.id) }}" class="store-btn store-btn-secondary">Ver todas</a>
+            {% if cliente_publico %}
+            <a href="{{ url_for('public.produto_avaliar_site', produto_id=produto.id) }}" class="store-btn store-btn-primary">{{ 'Editar minha avaliação' if avaliacao_cliente else 'Avaliar produto' }}</a>
+            {% endif %}
+        </div>
+    </aside>
+</section>
+
+{% if relacionados %}
+<section class="store-product-section" style="margin-top: 24px;">
+    <header class="store-section-header">
+        <h2>Produtos relacionados</h2>
+    </header>
+    <div class="store-product-grid">
+        {% for item in relacionados %}
+        <article class="store-product-card">
+            <div class="store-product-body">
+                <h3><a href="{{ url_for('public.produto_detalhe_site', produto_id=item.id) }}">{{ item.nome }}</a></h3>
+                <p class="store-note">★ {{ '%.1f'|format(item.avaliacao_media) }} ({{ item.total_avaliacoes }})</p>
+                <strong>R$ {{ '%.2f'|format(item.preco_venda or 0)|replace('.', ',') }}</strong>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

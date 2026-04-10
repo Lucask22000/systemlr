@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Equipamento - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Editar Equipamento</h1>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <div class="form-row">
+            <div class="form-group">
+                <label for="codigo">Codigo *</label>
+                <input type="text" id="codigo" name="codigo" class="input-text" required value="{{ equipamento.codigo }}">
+            </div>
+            <div class="form-group">
+                <label for="nome">Nome *</label>
+                <input type="text" id="nome" name="nome" class="input-text" required value="{{ equipamento.nome }}">
+            </div>
+            <div class="form-group">
+                <label for="tipo">Tipo *</label>
+                <select id="tipo" name="tipo" class="input-select">
+                    {% for item in tipos_validos %}
+                    <option value="{{ item }}" {% if equipamento.tipo == item %}selected{% endif %}>{{ item|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="placa">Placa/Identificacao</label>
+                <input type="text" id="placa" name="placa" class="input-text" value="{{ equipamento.placa or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="capacidade_kg">Capacidade (kg)</label>
+                <input type="number" id="capacidade_kg" name="capacidade_kg" step="0.01" class="input-text" value="{{ equipamento.capacidade_kg if equipamento.capacidade_kg is not none else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status" name="status" class="input-select">
+                    {% for item in status_validos %}
+                    <option value="{{ item }}" {% if equipamento.status == item %}selected{% endif %}>{{ item|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="bateria_codigo">Codigo da bateria</label>
+                <input type="text" id="bateria_codigo" name="bateria_codigo" class="input-text" value="{{ equipamento.bateria_codigo or '' }}">
+            </div>
+            <div class="form-group">
+                <label for="bateria_nivel">Nivel da bateria (%)</label>
+                <input type="number" id="bateria_nivel" name="bateria_nivel" min="0" max="100" class="input-text" value="{{ equipamento.bateria_nivel if equipamento.bateria_nivel is not none else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="proxima_manutencao_em">Proxima manutencao</label>
+                <input type="date" id="proxima_manutencao_em" name="proxima_manutencao_em" class="input-text" value="{{ equipamento.proxima_manutencao_em.strftime('%Y-%m-%d') if equipamento.proxima_manutencao_em else '' }}">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" rows="4" class="input-textarea">{{ equipamento.observacoes or '' }}</textarea>
+        </div>
+
+        <label class="checkbox-inline">
+            <input type="checkbox" name="ativo" {% if equipamento.ativo %}checked{% endif %}>
+            Equipamento ativo
+        </label>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar alteracoes</button>
+            <a href="{{ url_for('listar_equipamentos_movimentacao') }}" class="btn btn-secondary">Voltar</a>
+        </div>
+    </form>
+</div>
+
+<div class="section" style="margin-top:16px;">
+    <h2>Registrar manutencao</h2>
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+        <input type="hidden" name="acao" value="nova_manutencao">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="tipo_manutencao">Tipo</label>
+                <select id="tipo_manutencao" name="tipo_manutencao" class="input-select">
+                    <option value="preventiva">Preventiva</option>
+                    <option value="corretiva">Corretiva</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="descricao_manutencao">Descricao *</label>
+                <input type="text" id="descricao_manutencao" name="descricao_manutencao" class="input-text" required>
+            </div>
+            <div class="form-group">
+                <label for="custo_manutencao">Custo</label>
+                <input type="number" id="custo_manutencao" name="custo_manutencao" step="0.01" class="input-text">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="realizado_em">Realizado em</label>
+                <input type="date" id="realizado_em" name="realizado_em" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="proxima_em">Proxima manutencao</label>
+                <input type="date" id="proxima_em" name="proxima_em" class="input-text">
+            </div>
+            <div class="form-group">
+                <label for="responsavel_manutencao">Responsavel</label>
+                <input type="text" id="responsavel_manutencao" name="responsavel_manutencao" class="input-text">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-warning">Adicionar manutencao</button>
+        </div>
+    </form>
+</div>
+
+<div class="section" style="margin-top:16px;">
+    <h2>Historico de manutencoes</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tipo</th>
+                    <th>Descricao</th>
+                    <th>Custo</th>
+                    <th>Realizado</th>
+                    <th>Proxima</th>
+                    <th>Responsavel</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in manutencoes %}
+                <tr>
+                    <td>{{ item.tipo|capitalize }}</td>
+                    <td>{{ item.descricao }}</td>
+                    <td>{% if item.custo is not none %}R$ {{ '%.2f'|format(item.custo) }}{% else %}-{% endif %}</td>
+                    <td>{{ item.realizado_em.strftime('%d/%m/%Y') if item.realizado_em else '-' }}</td>
+                    <td>{{ item.proxima_em.strftime('%d/%m/%Y') if item.proxima_em else '-' }}</td>
+                    <td>{{ item.responsavel or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Nenhuma manutencao registrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

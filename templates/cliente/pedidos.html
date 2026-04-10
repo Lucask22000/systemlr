@@ -1,0 +1,41 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'cliente' %}
+{% set store_nav = 'cliente' %}
+{% set store_title = 'Meus pedidos | SystemLR' %}
+
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Pedidos</span>
+    <h1>Histórico de pedidos</h1>
+    <p>Veja o status de cada compra feita com sua conta.</p>
+</section>
+
+<article class="store-panel">
+    {% for pedido in pedidos %}
+    <div class="store-note-box" style="margin-bottom: 14px;">
+        <p class="store-item-title">Pedido #{{ pedido.id }} • {{ pedido.status }}</p>
+        <p class="store-note">Criado em {{ pedido.criado_em.strftime('%d/%m/%Y %H:%M') if pedido.criado_em else '-' }}</p>
+        <div class="store-summary-list">
+            {% for item in pedido.itens %}
+            <div class="store-summary-line">
+                <span>{{ item.quantidade }}x {{ item.produto.nome if item.produto else 'Produto removido' }}</span>
+                <strong>R$ {{ '%.2f'|format((item.quantidade or 0) * (item.preco_unitario or 0))|replace('.', ',') }}</strong>
+            </div>
+            {% endfor %}
+            <div class="store-summary-line total">
+                <span>Total</span>
+                <strong>R$ {{ '%.2f'|format(pedido.total or 0)|replace('.', ',') }}</strong>
+            </div>
+            {% if pedido.codigo_rastreio %}
+            <div class="store-summary-line">
+                <span>Rastreio</span>
+                <strong>{{ pedido.codigo_rastreio }}</strong>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <p class="store-note">Você ainda não possui pedidos vinculados à sua conta.</p>
+    {% endfor %}
+</article>
+{% endblock %}

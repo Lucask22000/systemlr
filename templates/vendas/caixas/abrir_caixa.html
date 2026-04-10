@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Abrir Caixa - SystemLR{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/custom-pages.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="caixa-form-page">
+    <h1>Abrir Caixa: {{ caixa.nome }}</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="caixa-card">
+        <form method="POST" action="{{ url_for('abrir_caixa', caixa_id=caixa.id) }}">
+            <div class="caixa-field">
+                <label for="funcionario_id">Funcionario <span class="required">*</span></label>
+                <select id="funcionario_id" name="funcionario_id" required class="caixa-input">
+                    <option value="">Selecione um funcionario</option>
+                    {% for func in funcionarios %}
+                        <option value="{{ func.id }}">{{ func.nome }} ({{ func.role.upper() }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="caixa-field">
+                <label for="saldo_inicial">Saldo Inicial <span class="required">*</span></label>
+                <input type="number" id="saldo_inicial" name="saldo_inicial" step="0.01" min="0" value="0" required class="caixa-input">
+                <small>Valor inicial que sera colocado na caixa.</small>
+            </div>
+
+            <div class="caixa-field">
+                <label for="observacoes">Observacoes (opcional)</label>
+                <textarea id="observacoes" name="observacoes" rows="3" class="caixa-input"></textarea>
+            </div>
+
+            <div class="caixa-actions">
+                <button type="submit" class="btn btn-primary">Abrir Caixa</button>
+                <a href="{{ url_for('listar_caixas') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

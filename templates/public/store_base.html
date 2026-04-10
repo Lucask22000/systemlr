@@ -1,0 +1,161 @@
+{% set store_brand = (empresa.nome_fantasia if empresa is defined and empresa and empresa.nome_fantasia else (empresa_config.nome_fantasia if empresa_config and empresa_config.nome_fantasia else (app_name if app_name is defined else 'Loja'))) %}
+{% set store_logo_path = (empresa.logo_path if empresa is defined and empresa and empresa.logo_path else (empresa_config.logo_path if empresa_config and empresa_config.logo_path else None)) %}
+{% set store_icon_path = (app_icon_path or store_logo_path or store_favicon_path or 'icons/pwa/store-512.png') %}
+{% set store_footer_bg = (empresa_config.ecom_footer_bg if empresa_config and empresa_config.ecom_footer_bg else '#ffffff') %}
+{% set store_primary = (empresa_config.ecom_cor_primaria if empresa_config and empresa_config.ecom_cor_primaria else '#ee4d2d') %}
+{% set store_secondary = (empresa_config.ecom_cor_secundaria if empresa_config and empresa_config.ecom_cor_secundaria else '#ff7337') %}
+{% set store_card_bg = (empresa_config.ecom_card_bg if empresa_config and empresa_config.ecom_card_bg else '#ffffff') %}
+{% set store_cart_qty = (resumo_carrinho.quantidade_itens if resumo_carrinho is defined else (carrinho_site.quantidade_itens if carrinho_site is defined and carrinho_site else 0)) %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="theme-color" content="{{ store_primary }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="{{ store_brand }}">
+    {% if store_favicon_path %}
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename=store_favicon_path) }}">
+    {% endif %}
+    <link rel="manifest" href="{{ url_for('store_pwa_manifest') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/pwa/store-192.png') }}">
+    <title>{{ store_title if store_title is defined else (store_brand ~ ' | Loja online') }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public/storefront.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body
+    class="storefront-app storefront-page-{{ store_page if store_page is defined else 'generic' }}"
+    data-app-install-name="{{ store_brand }}"
+    style="--store-primary: {{ store_primary }}; --store-secondary: {{ store_secondary }}; --store-footer-bg: {{ store_footer_bg }}; --store-card-bg: {{ store_card_bg }};"
+>
+    <div class="store-loading-overlay" data-store-loading-overlay>
+        <div class="store-loading-card">
+            <span class="store-kicker">Carregando</span>
+            <strong data-store-loading-title>{{ store_brand }}</strong>
+            <p data-store-loading-copy>Preparando a vitrine da loja.</p>
+            <div class="store-loading-progress">
+                <div class="store-loading-progress-bar" data-store-loading-bar></div>
+            </div>
+            <div class="store-loading-meta">
+                <span data-store-loading-percent>0%</span>
+                <span data-store-loading-status>Inicializando...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="store-site-shell" id="topo">
+        <header class="store-header">
+            <div class="store-header-shell">
+                <a class="store-brand" href="{{ url_for('index') }}" aria-label="Ir para a página inicial da loja">
+                    {% if store_logo_path %}
+                    <img src="{{ url_for('static', filename=store_logo_path) }}" alt="{{ store_brand }}">
+                    {% else %}
+                    <span class="store-brand-mark">{{ store_brand[:1]|upper }}</span>
+                    {% endif %}
+                    <div class="store-brand-copy">
+                        <strong>{{ store_brand }}</strong>
+                    </div>
+                </a>
+
+                <div class="store-header-actions" aria-label="Atalhos da loja">
+                    <button type="button" class="store-header-icon" aria-label="Notificações">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 3a4 4 0 0 0-4 4v2.4c0 .9-.3 1.8-.9 2.5L6 13h12l-1.1-1.1a3.7 3.7 0 0 1-.9-2.5V7a4 4 0 0 0-4-4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M10 17a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="store-header-icon" aria-label="Chat">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M5 6.5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H11l-4 3v-3H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <a
+                        href="{{ url_for('public.carrinho_site') }}"
+                        class="store-header-cart {% if (store_nav if store_nav is defined else '') == 'cart' %}is-active{% endif %}"
+                        aria-label="Abrir carrinho"
+                    >
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M4 5h2l1.1 7.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L19 8H7.3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            <circle cx="10" cy="18.5" r="1.5" fill="currentColor"/>
+                            <circle cx="17" cy="18.5" r="1.5" fill="currentColor"/>
+                        </svg>
+                        {% if store_cart_qty %}
+                        <span class="store-cart-badge">{{ store_cart_qty }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <section class="store-install-banner" data-store-install-banner hidden>
+            <div class="store-install-banner-copy">
+                <strong data-store-install-title>Instalar app</strong>
+                <p data-store-install-copy>Adicione a loja na tela inicial.</p>
+            </div>
+            <div class="store-install-banner-actions">
+                <button type="button" class="store-btn store-btn-primary" data-store-install-action>Instalar app</button>
+                <button type="button" class="store-btn store-btn-ghost" data-store-install-dismiss>Agora não</button>
+            </div>
+        </section>
+
+        <main class="store-main">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="store-flash-stack">
+                    {% for category, message in messages %}
+                    <div class="store-flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block store_content %}{% endblock %}
+        </main>
+
+        <footer class="store-footer">
+            <div class="store-footer-shell">
+                <div class="store-footer-copy">
+                    <p>&copy; {{ ano_atual }} {{ store_brand }}</p>
+                    {% if empresa_config and empresa_config.ecom_footer_texto %}
+                    <p>{{ empresa_config.ecom_footer_texto }}</p>
+                    {% endif %}
+                    {% if empresa_config and empresa_config.ecom_footer_contato %}
+                    <p>{{ empresa_config.ecom_footer_contato }}</p>
+                    {% endif %}
+                    {% if empresa_config and empresa_config.ecom_footer_creditos %}
+                    <p>{{ empresa_config.ecom_footer_creditos }}</p>
+                    {% endif %}
+                </div>
+                <div class="store-footer-actions">
+                    {% if cliente_publico is defined and cliente_publico %}
+                    <a href="{{ url_for('public.cliente_dashboard') }}" class="store-internal-link">Minha conta</a>
+                    {% endif %}
+                    {% if funcionario_logado %}
+                    <a href="{{ url_for('dashboard') }}" class="store-internal-link">Painel interno</a>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="store-internal-link">Acesso interno</a>
+                    {% endif %}
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <nav class="store-mobile-dock" aria-label="Navegação principal">
+        <a href="{{ url_for('index') }}" class="{% if (store_nav if store_nav is defined else '') == 'home' %}is-active{% endif %}">Início</a>
+        <a href="{{ url_for('index') }}#categorias">Categorias</a>
+        <a href="{{ url_for('public.carrinho_site') }}" class="{% if (store_nav if store_nav is defined else '') == 'cart' %}is-active{% endif %}">Carrinho</a>
+        <a href="{{ url_for('public.cliente_dashboard' if cliente_publico is defined and cliente_publico else 'public.cliente_login_site') }}" class="{% if (store_nav if store_nav is defined else '') in ['cadastro', 'cliente'] %}is-active{% endif %}">Conta</a>
+    </nav>
+
+    <script src="{{ url_for('static', filename='js/csrf.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/public/storefront.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/public/storefront-pwa.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

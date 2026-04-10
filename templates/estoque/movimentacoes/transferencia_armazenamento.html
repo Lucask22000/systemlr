@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Transferencia entre Lojas e CDs - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Nova Transferencia entre Lojas e CDs</h1>
+        <p class="text-muted mb-0">Use esta tela apenas para movimentacoes entre estoques, lojas ou centros de distribuicao diferentes.</p>
+    </div>
+    <div class="header-actions">
+        <a href="{{ url_for('listar_transferencias_estoque') }}" class="btn btn-secondary">Historico</a>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <strong>Regra operacional:</strong> ajustes e consumo interno ficam em Entradas e Saidas Internas. Recebimentos de fornecedor ficam no menu Recebimento.
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" class="form">
+        {{ csrf_input|safe }}
+
+        <div class="form-group">
+            <label for="produto_id">Produto *</label>
+            <select id="produto_id" name="produto_id" required class="input-select">
+                <option value="">Selecione um produto</option>
+                {% for produto in produtos %}
+                <option
+                    value="{{ produto.id }}"
+                    data-endereco-origem="{{ produto.endereco.nome if produto.endereco else '' }}"
+                    data-estoque-origem="{{ produto.endereco.estoque.nome if produto.endereco and produto.endereco.estoque else '' }}"
+                    data-estoque-origem-id="{{ produto.endereco.estoque_id if produto.endereco else '' }}"
+                    data-saldo="{{ produto.quantidade_estoque or 0 }}"
+                >
+                    {{ produto.codigo }} - {{ produto.nome }} (Saldo: {{ produto.quantidade_estoque or 0 }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="info-cards-row">
+            <div class="info-card">
+                <h3>Endereco de origem</h3>
+                <p class="value" id="transferencia-origem">Selecione um produto</p>
+            </div>
+            <div class="info-card">
+                <h3>Estoque/Loja de origem</h3>
+                <p class="value" id="transferencia-estoque-origem">-</p>
+            </div>
+            <div class="info-card">
+                <h3>Saldo atual</h3>
+                <p class="value" id="transferencia-saldo">-</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="endereco_destino_id">Endereco de destino *</label>
+            <select id="endereco_destino_id" name="endereco_destino_id" required class="input-select">
+                <option value="">Selecione o destino</option>
+                {% for endereco in enderecos %}
+                <option
+                    value="{{ endereco.id }}"
+                    data-estoque-id="{{ endereco.estoque_id or '' }}"
+                >
+                    {{ endereco.nome }}{% if endereco.estoque %} - {{ endereco.estoque.nome }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+            <small class="text-muted">Destinos do mesmo estoque de origem sao bloqueados para evitar confusao com movimentacao interna.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="motivo">Motivo</label>
+            <input type="text" id="motivo" name="motivo" list="motivos-transferencia" placeholder="Ex.: reposicao_loja, abastecimento_filial" class="input-text">
+            <datalist id="motivos-transferencia">
+                {% for motivo in motivos_sugeridos %}
+                <option value="{{ motivo }}"></option>
+                {% endfor %}
+            </datalist>
+        </div>
+
+        <div class="form-group">
+            <label for="observacoes">Observacoes</label>
+            <textarea id="observacoes" name="observacoes" rows="4" class="input-textarea" placeholder="Descreva a justificativa da transferencia, rota ou solicitacao interna."></textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Concluir transferencia</button>
+            <a href="{{ url_for('listar_transferencias_estoque') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const produtoSelect = document.getElementById('produto_id');
+    const destinoSelect = document.getElementById('endereco_destino_id');
+    const origemEl = document.getElementById('transferencia-origem');
+    const estoqueOrigemEl = document.getElementById('transferencia-estoque-origem');
+    const saldoEl = document.getElementById('transferencia-saldo');
+
+    function atualizarDestinoPorOrigem() {
+        const option = produtoSelect.options[produtoSelect.selectedIndex];
+        const estoqueOrigemId = option ? (option.dataset.estoqueOrigemId || '') : '';
+
+        Array.from(destinoSelect.options).forEach(function (destinoOption, index) {
+            if (index === 0) {
+                destinoOption.hidden = false;
+                destinoOption.disabled = false;
+                return;
+            }
+            const mesmoEstoque = estoqueOrigemId && destinoOption.dataset.estoqueId && destinoOption.dataset.estoqueId === estoqueOrigemId;
+            destinoOption.hidden = !!mesmoEstoque;
+            destinoOption.disabled = !!mesmoEstoque;
+            if (mesmoEstoque && destinoOption.selected) {
+                destinoSelect.value = '';
+            }
+        });
+    }
+
+    function atualizarResumo() {
+        const option = produtoSelect.options[produtoSelect.selectedIndex];
+        origemEl.textContent = option ? (option.dataset.enderecoOrigem || '-') : 'Selecione um produto';
+        estoqueOrigemEl.textContent = option ? (option.dataset.estoqueOrigem || '-') : '-';
+        saldoEl.textContent = option ? (option.dataset.saldo || '0') : '-';
+        atualizarDestinoPorOrigem();
+    }
+
+    produtoSelect.addEventListener('change', atualizarResumo);
+    atualizarResumo();
+});
+</script>
+{% endblock %}

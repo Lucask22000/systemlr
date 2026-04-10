@@ -1,0 +1,128 @@
+{% extends 'public/store_base.html' %}
+{% set store_page = 'products' %}
+{% set store_nav = 'home' %}
+{% set store_title = 'Produtos | ' ~ (empresa.nome_fantasia if empresa and empresa.nome_fantasia else 'SystemLR') %}
+
+{% block store_content %}
+<section class="store-page-intro">
+    <span class="store-kicker">Vitrine</span>
+    <h1>Produtos</h1>
+    <p>Filtre por categoria, faixa de preço, marca, avaliação e ordenação.</p>
+</section>
+
+<section class="store-grid store-grid--commerce">
+    <aside class="store-panel">
+        <form method="GET" action="{{ url_for('public.listar_produtos_site') }}">
+            <div class="store-form-grid">
+                <div class="store-field store-field--full">
+                    <label for="busca">Busca</label>
+                    <input id="busca" name="busca" type="search" value="{{ request.args.get('busca', '') }}">
+                </div>
+                <div class="store-field">
+                    <label for="categoria_id">Categoria</label>
+                    <select id="categoria_id" name="categoria_id">
+                        <option value="">Todas</option>
+                        {% for categoria in categorias %}
+                        <option value="{{ categoria.id }}" {% if request.args.get('categoria_id', type=int) == categoria.id %}selected{% endif %}>{{ categoria.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="store-field">
+                    <label for="fornecedor_id">Marca</label>
+                    <select id="fornecedor_id" name="fornecedor_id">
+                        <option value="">Todas</option>
+                        {% for fornecedor in fornecedores %}
+                        <option value="{{ fornecedor.id }}" {% if request.args.get('fornecedor_id', type=int) == fornecedor.id %}selected{% endif %}>{{ fornecedor.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="store-field">
+                    <label for="preco_min">Preço mínimo</label>
+                    <input id="preco_min" name="preco_min" type="number" step="0.01" value="{{ request.args.get('preco_min', '') }}">
+                </div>
+                <div class="store-field">
+                    <label for="preco_max">Preço máximo</label>
+                    <input id="preco_max" name="preco_max" type="number" step="0.01" value="{{ request.args.get('preco_max', '') }}">
+                </div>
+                <div class="store-field">
+                    <label for="avaliacao_min">Avaliação mínima</label>
+                    <select id="avaliacao_min" name="avaliacao_min">
+                        <option value="">Qualquer</option>
+                        {% for nota in [4,3,2,1] %}
+                        <option value="{{ nota }}" {% if request.args.get('avaliacao_min', type=int) == nota %}selected{% endif %}>{{ nota }}+ estrelas</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="store-field">
+                    <label for="ordenar">Ordenar por</label>
+                    <select id="ordenar" name="ordenar">
+                        {% set ordenar = request.args.get('ordenar', 'recentes') %}
+                        <option value="recentes" {% if ordenar == 'recentes' %}selected{% endif %}>Mais recentes</option>
+                        <option value="preco_asc" {% if ordenar == 'preco_asc' %}selected{% endif %}>Preço crescente</option>
+                        <option value="preco_desc" {% if ordenar == 'preco_desc' %}selected{% endif %}>Preço decrescente</option>
+                        <option value="melhor_avaliacao" {% if ordenar == 'melhor_avaliacao' %}selected{% endif %}>Melhor avaliação</option>
+                    </select>
+                </div>
+            </div>
+            <div class="store-grid-actions" style="margin-top: 14px;">
+                <button type="submit" class="store-btn store-btn-primary">Aplicar filtros</button>
+                <a href="{{ url_for('public.listar_produtos_site') }}" class="store-btn store-btn-secondary">Limpar</a>
+            </div>
+        </form>
+    </aside>
+
+    <article class="store-panel">
+        <div class="store-product-grid">
+            {% for produto in produtos %}
+            <article class="store-product-card">
+                <div class="store-product-media">
+                    {% if produto.imagem_path %}
+                    <img src="{{ url_for('static', filename=produto.imagem_path) }}" alt="{{ produto.nome }}" loading="lazy">
+                    {% else %}
+                    <div class="store-product-placeholder">{{ produto.nome[:2]|upper }}</div>
+                    {% endif %}
+                </div>
+                <div class="store-product-body">
+                    <h3><a href="{{ url_for('public.produto_detalhe_site', produto_id=produto.id) }}">{{ produto.nome }}</a></h3>
+                    <p class="store-note">{{ produto.categoria.nome if produto.categoria else 'Sem categoria' }}{% if produto.fornecedor %} • {{ produto.fornecedor.nome }}{% endif %}</p>
+                    <p class="store-note">★ {{ '%.1f'|format(produto.avaliacao_media) }} ({{ produto.total_avaliacoes }})</p>
+                    <div class="store-product-price">
+                        <strong>R$ {{ '%.2f'|format(produto.preco_venda or 0)|replace('.', ',') }}</strong>
+                    </div>
+                    <div class="store-inline-actions">
+                        <form method="POST" action="{{ url_for('public.adicionar_item_carrinho_site') }}" class="store-product-form">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="produto_id" value="{{ produto.id }}">
+                            <input type="hidden" name="quantidade" value="1">
+                            <input type="hidden" name="next" value="{{ request.full_path }}">
+                            <button type="submit" class="store-btn store-btn-primary">Adicionar</button>
+                        </form>
+                        {% if session.get('site_cliente_id') %}
+                        <form method="POST" action="{{ url_for('public.cliente_favorito_adicionar', produto_id=produto.id) }}">
+                            {{ csrf_input|safe }}
+                            <input type="hidden" name="next" value="{{ request.full_path }}">
+                            <button type="submit" class="store-btn store-btn-secondary">{{ 'Favoritado' if produto.id in favoritos_ids else 'Favoritar' }}</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+            {% else %}
+            <p class="store-note">Nenhum produto encontrado com os filtros informados.</p>
+            {% endfor %}
+        </div>
+
+        {% if paginacao.pages > 1 %}
+        <div class="store-inline-actions" style="margin-top: 18px;">
+            {% if prev_url %}
+            <a class="store-btn store-btn-secondary" href="{{ prev_url }}">Anterior</a>
+            {% endif %}
+            <span class="store-note">Página {{ paginacao.page }} de {{ paginacao.pages }}</span>
+            {% if next_url %}
+            <a class="store-btn store-btn-secondary" href="{{ next_url }}">Próxima</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

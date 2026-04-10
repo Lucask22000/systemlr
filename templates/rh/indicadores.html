@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Indicadores RH - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1>Dashboard de RH</h1>
+        <p class="text-muted mb-0">Quadro ativo, produtividade e cobertura operacional.</p>
+    </div>
+    <div class="header-actions">
+        <select id="rhPeriodo" class="input-select">
+            <option value="30" selected>Ultimos 30 dias</option>
+            <option value="90">Ultimos 90 dias</option>
+            <option value="365">Ultimos 365 dias</option>
+        </select>
+    </div>
+</div>
+
+<div class="cards-container analytics-cards">
+    <div class="card card-primary"><div class="card-content"><h3>Total de funcionarios</h3><p class="card-value" id="kpiFuncionarios">0</p><p class="card-meta" id="metaFuncionarios">0 ativos / 0 inativos</p></div></div>
+    <div class="card card-info"><div class="card-content"><h3>Acessos controlados</h3><p class="card-value" id="kpiAcessos">0</p><p class="card-meta">Perfil ativo e acesso customizado</p></div></div>
+    <div class="card card-success"><div class="card-content"><h3>Produtividade media</h3><p class="card-value" id="kpiProdutividade">0,00</p><p class="card-meta">Pedidos por colaborador ativo</p></div></div>
+    <div class="card card-secondary"><div class="card-content"><h3>Equipe operacional ativa</h3><p class="card-value" id="kpiEquipe">0</p><p class="card-meta">Caixa, operador, garcom e gerente</p></div></div>
+    <div class="card card-danger"><div class="card-content"><h3>Deficit de equipe</h3><p class="card-value" id="kpiDeficit">0</p><p class="card-meta">Baseado na fila atual</p></div></div>
+</div>
+
+<section class="section mb-3">
+    <h2>Alertas</h2>
+    <div id="rhAlertas" class="d-grid gap-2">
+        <p class="text-muted mb-0">Nenhum alerta carregado.</p>
+    </div>
+</section>
+
+<div class="analytics-grid">
+    <section class="section"><h2>Distribuicao por cargo</h2><div class="chart-container"><canvas id="chartRhCargos"></canvas></div></section>
+    <section class="section"><h2>Evolucao de admissoes</h2><div class="chart-container"><canvas id="chartRhAdmissoes"></canvas></div></section>
+</div>
+
+<div class="analytics-grid">
+    <section class="section"><h2>Produtividade por colaborador</h2><div class="chart-container"><canvas id="chartRhProdutividadeScatter"></canvas></div></section>
+    <section class="section"><h2>Distribuicao por perfil de acesso</h2><div class="chart-container"><canvas id="chartRhPerfis"></canvas></div></section>
+</div>
+
+<div class="analytics-grid">
+    <section class="section">
+        <h2>Top produtividade</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Nome</th><th>Cargo</th><th>Pedidos</th><th>Faturamento</th><th>Ticket medio</th></tr></thead>
+                <tbody id="tableTopProdutividade"></tbody>
+            </table>
+        </div>
+    </section>
+    <section class="section">
+        <h2>Funcionarios recentes</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Nome</th><th>Cargo</th><th>Data de admissao</th></tr></thead>
+                <tbody id="tableFuncionariosRecentes"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<section class="section">
+    <h2>Cargos sem cobertura</h2>
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>Cargo</th><th>Quantidade de ativos</th></tr></thead>
+            <tbody id="tableCargosSemCobertura"></tbody>
+        </table>
+    </div>
+</section>
+
+<div class="action-buttons">
+    <a href="{{ url_for('listar_funcionarios') }}" class="btn btn-primary">Funcionarios</a>
+    <a href="{{ url_for('organograma_rh') }}" class="btn btn-info">Organograma</a>
+    <a href="{{ url_for('listar_funcoes_rh') }}" class="btn btn-secondary">Cargos RH</a>
+    <a href="{{ url_for('listar_perfis_rh') }}" class="btn btn-secondary">Perfis de Acesso</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/pages/rh_analytics.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Chamados Internos - SystemLR{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Chamados Internos</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('criar_chamado_interno') }}" class="btn btn-primary">Novo Chamado</a>
+    </div>
+</div>
+
+<section class="filters-section" data-filter-panel data-filter-title="Filtros dos chamados">
+    <form method="GET" class="filters-form">
+        <div class="filter-group">
+            <input type="text" name="busca" class="input-search" placeholder="Buscar por titulo, descricao, responsavel ou ID" value="{{ filtros.busca if filtros else '' }}">
+        </div>
+        <div class="filter-group">
+            <select name="categoria" class="input-select">
+                <option value="">Todas as categorias</option>
+                {% for categoria in categorias_validas %}
+                <option value="{{ categoria }}" {% if filtros and filtros.categoria == categoria %}selected{% endif %}>{{ categoria|replace('_', ' ')|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <select name="status" class="input-select">
+                <option value="">Todos os status</option>
+                {% for status in status_validos %}
+                <option value="{{ status }}" {% if filtros and filtros.status == status %}selected{% endif %}>{{ status|replace('_', ' ')|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+    </form>
+</section>
+
+<div class="table-responsive table-scroll-sticky">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Titulo</th>
+                <th>Categoria</th>
+                <th>Prioridade</th>
+                <th>Solicitante</th>
+                <th>Responsavel</th>
+                <th>Status</th>
+                <th>Abertura</th>
+                <th>Acoes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for chamado in chamados %}
+            <tr>
+                <td>#{{ chamado.id }}</td>
+                <td>
+                    <div>{{ chamado.titulo }}</div>
+                    <small class="text-muted">{{ chamado.setor_origem or 'Sem setor' }}</small>
+                </td>
+                <td>{{ chamado.categoria|replace('_', ' ')|title }}</td>
+                <td>{{ chamado.prioridade|title }}</td>
+                <td>{{ chamado.solicitante.nome if chamado.solicitante else '-' }}</td>
+                <td>{{ chamado.responsavel.nome if chamado.responsavel else '-' }}</td>
+                <td>
+                    <span class="badge {% if chamado.status == 'concluido' %}badge-success{% elif chamado.status == 'cancelado' %}badge-danger{% elif chamado.status == 'em_andamento' %}badge-info{% else %}badge-warning{% endif %}">
+                        {{ chamado.status|replace('_', ' ')|title }}
+                    </span>
+                </td>
+                <td>{{ chamado.aberto_em.strftime('%d/%m/%Y %H:%M') if chamado.aberto_em else '-' }}</td>
+                <td class="actions-cell">
+                    <a href="{{ url_for('editar_chamado_interno', chamado_id=chamado.id) }}" class="btn-small btn-warning">Abrir</a>
+                    {% if chamado.status not in ['concluido', 'cancelado'] %}
+                    <form method="POST" action="{{ url_for('atualizar_status_chamado_interno', chamado_id=chamado.id) }}" class="inline-form">
+                        {{ csrf_input|safe }}
+                        <input type="hidden" name="status" value="{% if chamado.status in ['aberto', 'triagem', 'aguardando'] %}em_andamento{% else %}concluido{% endif %}">
+                        <button type="submit" class="btn-small {% if chamado.status in ['aberto', 'triagem', 'aguardando'] %}btn-primary{% else %}btn-success{% endif %}">
+                            {% if chamado.status in ['aberto', 'triagem', 'aguardando'] %}Assumir{% else %}Concluir{% endif %}
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="text-center">Nenhum chamado encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
