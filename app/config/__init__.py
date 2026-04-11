@@ -1,1 +1,0 @@
-﻿"""Application config package scaffold."""

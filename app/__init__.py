@@ -15,39 +15,17 @@ from sqlalchemy.orm import selectinload
 from werkzeug.utils import secure_filename
 
 from models import Categoria, ClientePublico, EnderecoEstoque, Estoque, Fornecedor, Funcionario, FuncaoRH, PerfilAcesso, LancamentoFinanceiro, Mesa, Movimentacao, ProcessoEvento, Produto, PermissaoAcesso, Caixa, MovimentacaoCaixa, Pedido, ItemPedido, Garcom, EmpresaConfig, AuditoriaEvento, AssistenteLocalFeedback, EquipamentoMovimentacao, ManutencaoEquipamento, OrdemServico, ChamadoInterno, FundoSolicitacao, RecebimentoFornecedor, AlmoxarifadoAtribuicao, funcionario_estoques, db
-from routes.public_routes import obter_resumo_carrinho_site
+from routes.estoque_routes import register_estoque_routes
+from routes.vendas_routes import register_vendas_routes
+from routes.public_routes import obter_resumo_carrinho_site, register_public_routes
 from security import csrf_input_tag, csrf_protect_request, ensure_csrf_token, is_json_request, json_response
+from app.api_routes import register_routes as register_api_routes
 from app import extensions
+from app.auth_routes import register_routes as register_auth_routes
 from app.cli import register_cli
 from app.decorators import _limit, login_required, require_role
 from app.exceptions import AppError, BusinessRuleError, NotFound, PermissionDenied, ValidationError
 from app.factory import create_app as create_base_app
-from app.bootstrap import bootstrap_app
-from app.blueprints_registry import register_api_module, register_auth_module, register_domain_modules
-from app.core.context_processors import register_context_processors
-from app.core.menu import (
-    menu_agrupado_para_paginas as core_menu_agrupado_para_paginas,
-    menu_navegacao_principal as core_menu_navegacao_principal,
-    paginas_ordenadas_menu as core_paginas_ordenadas_menu,
-    registrar_debug_menu as core_registrar_debug_menu,
-)
-from app.core.permissions import (
-    carregar_paginas_json as core_carregar_paginas_json,
-    expandir_paginas_relacionadas as core_expandir_paginas_relacionadas,
-    mapa_permissoes_personalizadas_funcionario as core_mapa_permissoes_personalizadas_funcionario,
-    paginas_efetivas_funcionario as core_paginas_efetivas_funcionario,
-    paginas_perfil_acesso as core_paginas_perfil_acesso,
-    paginas_permitidas_para_funcionario as core_paginas_permitidas_para_funcionario,
-    salvar_permissoes_funcionario as core_salvar_permissoes_funcionario,
-    serializar_paginas_json as core_serializar_paginas_json,
-)
-from app.core.runtime_patches import apply_runtime_schema_patches, runtime_schema_patches_enabled
-from app.core.startup import (
-    bootstrap_admin_configurado as startup_bootstrap_admin_configurado,
-    garantir_admin_primeiro_acesso as startup_garantir_admin_primeiro_acesso,
-    garantir_cargos_permanentes as startup_garantir_cargos_permanentes,
-    migrar_funcoes_legadas_para_perfis as startup_migrar_funcoes_legadas_para_perfis,
-)
 from app.helpers import (
     _client_ip,
     _coletar_dashboard_analytics,
@@ -71,6 +49,7 @@ from app.services.rh_service import sincronizar_garcom_funcionario
 from app.services.traceability import build_timeline
 from app.constants import (
     API_FALLBACK_ACCESS_PAGES,
+    CARGOS_PERMANENTES,
     ENDPOINT_TO_PAGINA,
     NIVEIS_ORGANOGRAMA,
     PAGINA_ENDPOINTS,
@@ -137,101 +116,537 @@ app = create_base_app()
 local_ai_assistant = None
 
 # Inicializar banco de dados
-bootstrap_app(app, db=db, extensions_module=extensions, register_cli_fn=register_cli)
+db.init_app(app)
+extensions.init_extensions(app, db)
+register_cli(app)
 
 
 def _garantir_cargos_permanentes():
-    # Extraido para app/core/startup.py
-    startup_garantir_cargos_permanentes()
+    try:
+        nomes_existentes = {(f.nome or '').strip().lower() for f in FuncaoRH.query.all()}
+        mudou = False
+        for nome_cargo, descricao_cargo in CARGOS_PERMANENTES:
+            if nome_cargo.lower() not in nomes_existentes:
+                db.session.add(FuncaoRH(nome=nome_cargo, descricao=descricao_cargo, ativo=True))
+                mudou = True
+        if mudou:
+            db.session.commit()
+    except OperationalError:
+        db.session.rollback()
 
 
 def _carregar_paginas_json(valor_json):
-    # Extraido para app/core/permissions.py
-    return core_carregar_paginas_json(valor_json)
+    if not valor_json:
+        return set()
+    try:
+        dados = json.loads(valor_json)
+    except Exception:
+        return set()
+    if not isinstance(dados, list):
+        return set()
+    return {
+        str(item)
+        for item in dados
+        if isinstance(item, str) and item in PAGINAS_SISTEMA
+    }
 
 
 def _serializar_paginas_json(paginas):
-    # Extraido para app/core/permissions.py
-    return core_serializar_paginas_json(paginas)
+    return json.dumps(sorted(set(paginas)))
 
 
 def _expandir_paginas_relacionadas(paginas, bloqueadas=None):
-    # Extraido para app/core/permissions.py
-    return core_expandir_paginas_relacionadas(paginas, bloqueadas=bloqueadas)
+    paginas_normalizadas = set(paginas or [])
+    bloqueadas = set(bloqueadas or [])
+    if 'movimentacoes' in paginas_normalizadas and 'recebimentos' not in bloqueadas:
+        paginas_normalizadas.add('recebimentos')
+    if 'movimentacoes' in paginas_normalizadas and 'almoxarifado' not in bloqueadas:
+        paginas_normalizadas.add('almoxarifado')
+    if 'expedicao' in paginas_normalizadas and 'transferencias_estoque' not in bloqueadas:
+        paginas_normalizadas.add('transferencias_estoque')
+    return paginas_normalizadas
 
 
 def _paginas_perfil_acesso(perfil_acesso):
-    # Extraido para app/core/permissions.py
-    return core_paginas_perfil_acesso(perfil_acesso)
+    if not perfil_acesso:
+        return set()
+    return _expandir_paginas_relacionadas(_carregar_paginas_json(perfil_acesso.permissoes_padrao))
 
 
 def _mapa_permissoes_personalizadas_funcionario(funcionario):
-    # Extraido para app/core/permissions.py
-    return core_mapa_permissoes_personalizadas_funcionario(funcionario)
+    if not funcionario:
+        return {}
+    return {
+        permissao.pagina: bool(permissao.permitido)
+        for permissao in PermissaoAcesso.query.filter_by(funcionario_id=funcionario.id).all()
+        if permissao.pagina in PAGINAS_SISTEMA
+    }
 
 
 def _paginas_efetivas_funcionario(funcionario):
-    # Extraido para app/core/permissions.py
-    return core_paginas_efetivas_funcionario(funcionario)
+    if not funcionario:
+        return set()
+
+    if funcionario.role == 'admin' or not funcionario.controle_acesso_ativo:
+        permitidas = set(PAGINAS_SISTEMA.keys())
+    else:
+        mapa_personalizado = _mapa_permissoes_personalizadas_funcionario(funcionario)
+        paginas_base = _paginas_perfil_acesso(funcionario.perfil_acesso)
+        bloqueadas = {
+            pagina
+            for pagina, permitido in mapa_personalizado.items()
+            if not permitido
+        }
+        permitidas = set(paginas_base)
+        permitidas.update(
+            pagina
+            for pagina, permitido in mapa_personalizado.items()
+            if permitido
+        )
+        permitidas.difference_update(bloqueadas)
+        permitidas = _expandir_paginas_relacionadas(permitidas, bloqueadas=bloqueadas)
+        if not permitidas and has_request_context():
+            app.logger.warning(
+                'menu_debug_empty funcionario_id=%s role=%s controle=%s perfil_acesso_id=%s endpoint=%s mapa_personalizado=%s paginas_base=%s',
+                getattr(funcionario, 'id', None),
+                getattr(funcionario, 'role', None),
+                getattr(funcionario, 'controle_acesso_ativo', None),
+                getattr(funcionario, 'perfil_acesso_id', None),
+                request.endpoint,
+                mapa_personalizado,
+                sorted(paginas_base),
+            )
+
+    permitidas.add('ajuda')
+    return permitidas
 
 
 def _salvar_permissoes_funcionario(funcionario, paginas_selecionadas):
-    # Extraido para app/core/permissions.py
-    return core_salvar_permissoes_funcionario(funcionario, paginas_selecionadas)
+    paginas_validas = set(PAGINAS_SISTEMA.keys())
+    paginas_salvas = set(paginas_selecionadas).intersection(paginas_validas)
+    paginas_base = _paginas_perfil_acesso(funcionario.perfil_acesso)
+
+    PermissaoAcesso.query.filter_by(funcionario_id=funcionario.id).delete()
+
+    if funcionario.perfil_acesso_id:
+        for pagina in sorted(paginas_validas):
+            presente_na_base = pagina in paginas_base
+            presente_no_resultado = pagina in paginas_salvas
+            if presente_na_base == presente_no_resultado:
+                continue
+            db.session.add(
+                PermissaoAcesso(
+                    funcionario_id=funcionario.id,
+                    pagina=pagina,
+                    permitido=presente_no_resultado,
+                )
+            )
+    else:
+        for pagina in sorted(paginas_salvas):
+            db.session.add(
+                PermissaoAcesso(
+                    funcionario_id=funcionario.id,
+                    pagina=pagina,
+                    permitido=True,
+                )
+            )
+
+    funcionario.controle_acesso_ativo = True
 
 
 def _migrar_funcoes_legadas_para_perfis():
-    # Extraido para app/core/startup.py
-    startup_migrar_funcoes_legadas_para_perfis(
-        carregar_paginas_json=_carregar_paginas_json,
-        serializar_paginas_json=_serializar_paginas_json,
-    )
+    try:
+        perfis_existentes = {
+            (perfil.nome or '').strip().lower(): perfil
+            for perfil in PerfilAcesso.query.all()
+        }
+        perfis_criados = {}
+        mudou = False
+
+        for funcao in FuncaoRH.query.all():
+            paginas = _carregar_paginas_json(funcao.permissoes_padrao)
+            if not paginas:
+                continue
+
+            nome_base = (funcao.nome or '').strip()
+            if not nome_base:
+                continue
+
+            chave_nome = nome_base.lower()
+            perfil = perfis_existentes.get(chave_nome)
+            if not perfil:
+                perfil = PerfilAcesso(
+                    nome=nome_base,
+                    descricao=funcao.descricao,
+                    permissoes_padrao=_serializar_paginas_json(paginas),
+                    ativo=funcao.ativo,
+                )
+                db.session.add(perfil)
+                db.session.flush()
+                perfis_existentes[chave_nome] = perfil
+                mudou = True
+            elif not perfil.permissoes_padrao:
+                perfil.permissoes_padrao = _serializar_paginas_json(paginas)
+                if not perfil.descricao and funcao.descricao:
+                    perfil.descricao = funcao.descricao
+                mudou = True
+
+            perfis_criados[chave_nome] = perfil
+
+        if perfis_criados:
+            funcionarios_sem_perfil = Funcionario.query.filter(
+                Funcionario.perfil_acesso_id.is_(None),
+                Funcionario.cargo.isnot(None)
+            ).all()
+            for funcionario in funcionarios_sem_perfil:
+                chave_cargo = (funcionario.cargo or '').strip().lower()
+                perfil = perfis_criados.get(chave_cargo)
+                if not perfil:
+                    continue
+                funcionario.perfil_acesso_id = perfil.id
+                if funcionario.role != 'admin':
+                    funcionario.controle_acesso_ativo = True
+                mudou = True
+
+        if mudou:
+            db.session.commit()
+    except OperationalError:
+        db.session.rollback()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def _bootstrap_admin_configurado():
-    # Extraido para app/core/startup.py
-    return startup_bootstrap_admin_configurado(
-        email=PRIMEIRO_ACESSO_EMAIL,
-        senha=PRIMEIRO_ACESSO_SENHA,
-    )
+    return bool(PRIMEIRO_ACESSO_EMAIL and PRIMEIRO_ACESSO_SENHA)
 
 
 def _garantir_admin_primeiro_acesso():
-    # Extraido para app/core/startup.py
-    startup_garantir_admin_primeiro_acesso(
-        app=app,
-        email=PRIMEIRO_ACESSO_EMAIL,
-        senha=PRIMEIRO_ACESSO_SENHA,
-        nome=PRIMEIRO_ACESSO_NOME,
-        gerar_numero_cadastro_unico=_gerar_numero_cadastro_unico,
-        gerar_matricula_unica=_gerar_matricula_unica,
-    )
+    try:
+        if Funcionario.query.count() > 0:
+            return
+        if not _bootstrap_admin_configurado():
+            app.logger.warning(
+                'Nenhum usuario encontrado e bootstrap admin nao configurado. '
+                'Defina SYSTEMLR_BOOTSTRAP_ADMIN_PASSWORD para criar o primeiro acesso.'
+            )
+            return
+        administrador = Funcionario(
+            nome=PRIMEIRO_ACESSO_NOME,
+            email=PRIMEIRO_ACESSO_EMAIL,
+            role='admin',
+            cargo='Administrador',
+            departamento='Diretoria',
+            time_nome='Gestao',
+            nivel_organograma='Diretoria',
+            ativo=True,
+            controle_acesso_ativo=False,
+            permitir_editar_imagem_perfil=True,
+            senha_provisoria=True,
+        )
+        administrador.set_password(PRIMEIRO_ACESSO_SENHA)
+        db.session.add(administrador)
+        db.session.flush()
+        administrador.numero_cadastro = _gerar_numero_cadastro_unico(administrador)
+        administrador.matricula = _gerar_matricula_unica(administrador)
+        db.session.commit()
+    except OperationalError:
+        db.session.rollback()
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def _runtime_schema_patches_enabled():
-    # Extraido para app/core/runtime_patches.py
-    return runtime_schema_patches_enabled(app=app)
+    configurado = os.environ.get('SYSTEMLR_ENABLE_RUNTIME_SCHEMA_PATCHES')
+    if configurado is None:
+        return app.config.get('ENV_NAME') == 'testing'
+    return configurado.strip().lower() in {'1', 'true', 'yes', 'on'}
 
-
-# ============ STARTUP / RUNTIME PATCHES ============
-apply_runtime_schema_patches(
-    app=app,
-    db=db,
-    perfil_acesso_model=PerfilAcesso,
-    processo_evento_model=ProcessoEvento,
-    cliente_publico_model=ClientePublico,
-    lancamento_financeiro_model=LancamentoFinanceiro,
-    fundo_solicitacao_model=FundoSolicitacao,
-    equipamento_movimentacao_model=EquipamentoMovimentacao,
-    manutencao_equipamento_model=ManutencaoEquipamento,
-    ordem_servico_model=OrdemServico,
-    chamado_interno_model=ChamadoInterno,
-    almoxarifado_atribuicao_model=AlmoxarifadoAtribuicao,
-    assistente_local_feedback_model=AssistenteLocalFeedback,
-    funcionario_estoques_table=funcionario_estoques,
-)
 
 with app.app_context():
+    inspector = inspect(db.engine)
+    if _runtime_schema_patches_enabled():
+        app.logger.warning(
+            'Runtime schema patches habilitados. Use apenas como contingencia temporaria e aplique '
+            '`flask db upgrade` para manter o schema via migrations formais.'
+        )
+        if inspector.has_table('funcoes_rh'):
+            colunas_funcoes = {col['name'] for col in inspector.get_columns('funcoes_rh')}
+            if 'permissoes_padrao' not in colunas_funcoes:
+                try:
+                    db.session.execute(text('ALTER TABLE funcoes_rh ADD COLUMN permissoes_padrao TEXT'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('perfis_acesso'):
+            PerfilAcesso.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('processo_eventos'):
+            ProcessoEvento.__table__.create(bind=db.engine, checkfirst=True)
+        if inspector.has_table('funcionarios'):
+            colunas_funcionarios = {col['name'] for col in inspector.get_columns('funcionarios')}
+            if 'superior_id' not in colunas_funcionarios:
+                try:
+                    db.session.execute(text('ALTER TABLE funcionarios ADD COLUMN superior_id INTEGER'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            colunas_novas_funcionarios = {
+                'numero_cadastro': 'INTEGER',
+                'matricula': 'VARCHAR(30)',
+                'cpf': 'VARCHAR(14)',
+                'rg': 'VARCHAR(20)',
+                'data_nascimento': 'DATE',
+                'celular': 'VARCHAR(30)',
+                'cep': 'VARCHAR(12)',
+                'endereco': 'VARCHAR(180)',
+                'bairro': 'VARCHAR(100)',
+                'cidade': 'VARCHAR(100)',
+                'estado': 'VARCHAR(2)',
+                'imagem_perfil_path': 'VARCHAR(255)',
+                'permitir_editar_imagem_perfil': 'INTEGER DEFAULT 0',
+                'senha_provisoria': 'INTEGER DEFAULT 0',
+                'departamento': 'VARCHAR(80)',
+                'time_nome': 'VARCHAR(80)',
+                'nivel_organograma': 'VARCHAR(40)',
+                'pagina_inicial': "VARCHAR(30) DEFAULT 'dashboard'",
+                'receber_alertas': 'INTEGER DEFAULT 1',
+                'restricao_estoques_ativa': 'INTEGER DEFAULT 0',
+                'estoque_principal_id': 'INTEGER',
+                'perfil_acesso_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_funcionarios.items():
+                if coluna_nome in colunas_funcionarios:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE funcionarios ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('permissoes_acesso'):
+            colunas_permissoes_acesso = {col['name'] for col in inspector.get_columns('permissoes_acesso')}
+            if 'permitido' not in colunas_permissoes_acesso:
+                try:
+                    db.session.execute(text('ALTER TABLE permissoes_acesso ADD COLUMN permitido INTEGER DEFAULT 1'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('estoques'):
+            colunas_estoques = {col['name'] for col in inspector.get_columns('estoques')}
+            colunas_novas_estoques = {
+                'codigo_filial': 'VARCHAR(20)',
+            }
+            for coluna_nome, definicao in colunas_novas_estoques.items():
+                if coluna_nome in colunas_estoques:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE estoques ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('movimentacoes'):
+            colunas_movimentacoes = {col['name'] for col in inspector.get_columns('movimentacoes')}
+            colunas_novas_movimentacoes = {
+                'pedido_id': 'INTEGER',
+                'recebimento_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_movimentacoes.items():
+                if coluna_nome in colunas_movimentacoes:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE movimentacoes ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('lancamentos_financeiros'):
+            colunas_lancamentos = {col['name'] for col in inspector.get_columns('lancamentos_financeiros')}
+            colunas_novas_lancamentos = {
+                'pedido_id': 'INTEGER',
+                'recebimento_id': 'INTEGER',
+            }
+            for coluna_nome, definicao in colunas_novas_lancamentos.items():
+                if coluna_nome in colunas_lancamentos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE lancamentos_financeiros ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('empresa_config'):
+            colunas_empresa = {col['name'] for col in inspector.get_columns('empresa_config')}
+            colunas_novas_empresa = {
+                'codigo_empresa': 'VARCHAR(20)',
+                'favicon_path': 'VARCHAR(255)',
+                'app_icon_path': 'VARCHAR(255)',
+                'separacao_entrega_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_entrega_ativa': 'INTEGER DEFAULT 1',
+                'separacao_entrega_unir_vendas_off': 'INTEGER DEFAULT 0',
+                'roteirizacao_entrega_ativa': 'INTEGER DEFAULT 1',
+                'emissao_nota_entrega_ativa': 'INTEGER DEFAULT 1',
+                'entrega_local_saida_padrao': 'VARCHAR(160)',
+                'entrega_veiculo_padrao': 'VARCHAR(80)',
+                'entrega_motorista_padrao': 'VARCHAR(120)',
+                'entrega_horario_fechamento_roteirizacao': 'VARCHAR(5)',
+                'entrega_veiculos_json': 'TEXT',
+                'entrega_terceirizadas_json': 'TEXT',
+                'entrega_regras_roteirizacao_json': 'TEXT',
+                'servicos_tecnicos_ativos': 'INTEGER DEFAULT 0',
+                'servico_montagem_instalacao_ativo': 'INTEGER DEFAULT 0',
+                'tipo_negocio': "VARCHAR(30) DEFAULT 'conveniencia'",
+                'canal_operacao': "VARCHAR(30) DEFAULT 'hibrido'",
+                'ecommerce_ativo': 'INTEGER DEFAULT 1',
+                'ecom_cor_primaria': "VARCHAR(20) DEFAULT '#ff7848'",
+                'ecom_cor_secundaria': "VARCHAR(20) DEFAULT '#ff5a2a'",
+                'ecom_card_bg': "VARCHAR(20) DEFAULT '#ffffff'",
+                'ecom_titulo_banner': 'VARCHAR(140)',
+                'ecom_subtitulo_banner': 'VARCHAR(255)',
+                'ecom_texto_promocao': 'VARCHAR(255)',
+                'ecom_banner_path': 'VARCHAR(255)',
+                'ecom_favicon_path': 'VARCHAR(255)',
+                'ecom_produto_placeholder_path': 'VARCHAR(255)',
+                'ecom_banners_json': 'TEXT',
+                'ecom_campanhas_json': 'TEXT',
+                'ecom_cupons_json': 'TEXT',
+                'ecom_footer_bg': "VARCHAR(20) DEFAULT '#1f2b38'",
+                'ecom_footer_texto': 'VARCHAR(255)',
+                'ecom_footer_contato': 'VARCHAR(255)',
+                'ecom_footer_creditos': 'VARCHAR(255)',
+                'pagamentos_pdv_json': 'TEXT',
+                'pagamentos_ecommerce_json': 'TEXT',
+                'integracoes_pdv_json': 'TEXT',
+                'integracoes_ecommerce_json': 'TEXT',
+                'reposicao_loja_fisica_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_loja_ativa': 'INTEGER DEFAULT 1',
+                'emissao_etiqueta_endereco_ativa': 'INTEGER DEFAULT 1',
+            }
+            for coluna_nome, definicao in colunas_novas_empresa.items():
+                if coluna_nome in colunas_empresa:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE empresa_config ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('funcionario_estoques'):
+            funcionario_estoques.create(bind=db.engine, checkfirst=True)
+        if inspector.has_table('pedidos'):
+            colunas_pedidos = {col['name'] for col in inspector.get_columns('pedidos')}
+            colunas_novas_pedidos = {
+                'cliente_publico_id': 'INTEGER',
+                'codigo_rastreio': 'VARCHAR(100)',
+                'transportadora': 'VARCHAR(100)',
+                'data_estimada_entrega': 'DATE',
+                'separacao_entrega_concluida': 'INTEGER DEFAULT 0',
+                'separacao_entrega_em': 'DATETIME',
+                'etiqueta_entrega_emitida_em': 'DATETIME',
+                'rota_entrega': 'VARCHAR(120)',
+                'ordem_rota': 'INTEGER',
+                'local_saida': 'VARCHAR(160)',
+                'veiculo_tipo': 'VARCHAR(80)',
+                'veiculo_placa': 'VARCHAR(20)',
+                'motorista_nome': 'VARCHAR(120)',
+                'empresa_terceirizada': 'VARCHAR(150)',
+                'nota_fiscal_numero': 'VARCHAR(60)',
+                'nota_fiscal_chave': 'VARCHAR(120)',
+                'nota_fiscal_emitida_em': 'DATETIME',
+                'saiu_para_entrega_em': 'DATETIME',
+                'entrega_concluida_em': 'DATETIME',
+            }
+            for coluna_nome, definicao in colunas_novas_pedidos.items():
+                if coluna_nome in colunas_pedidos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE pedidos ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('produtos'):
+            colunas_produtos = {col['name'] for col in inspector.get_columns('produtos')}
+            colunas_novas_produtos = {
+                'tipo_movimentacao': "VARCHAR(20) DEFAULT 'manual'",
+                'fora_picking': 'INTEGER DEFAULT 0',
+                'prioridade_reabastecimento': 'INTEGER',
+                'ultima_baixa_picking_em': 'DATETIME',
+                'servico_montagem_disponivel': 'INTEGER DEFAULT 0',
+                'servico_instalacao_disponivel': 'INTEGER DEFAULT 0',
+            }
+            for coluna_nome, definicao in colunas_novas_produtos.items():
+                if coluna_nome in colunas_produtos:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE produtos ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if inspector.has_table('recebimentos_fornecedor'):
+            colunas_recebimentos = {col['name'] for col in inspector.get_columns('recebimentos_fornecedor')}
+            if 'tipo_recebimento' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN tipo_recebimento VARCHAR(40) DEFAULT 'compra_revenda'"
+                        )
+                    )
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            if 'local_recebimento_id' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN local_recebimento_id INTEGER"
+                        )
+                    )
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+            if 'recebedor_funcionario_id' not in colunas_recebimentos:
+                try:
+                    db.session.execute(
+                        text(
+                            "ALTER TABLE recebimentos_fornecedor "
+                            "ADD COLUMN recebedor_funcionario_id INTEGER"
+                        )
+                    )
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('clientes_publicos'):
+            ClientePublico.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('lancamentos_financeiros'):
+            LancamentoFinanceiro.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('fundos_solicitacoes'):
+            FundoSolicitacao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('equipamentos_movimentacao'):
+            EquipamentoMovimentacao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('manutencoes_equipamento'):
+            ManutencaoEquipamento.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('ordens_servico'):
+            OrdemServico.__table__.create(bind=db.engine, checkfirst=True)
+        else:
+            colunas_ordens_servico = {col['name'] for col in inspector.get_columns('ordens_servico')}
+            colunas_novas_ordens_servico = {
+                'pedido_id': 'INTEGER',
+                'iniciado_em': 'DATETIME',
+                'retorno_tecnico': 'TEXT',
+            }
+            for coluna_nome, definicao in colunas_novas_ordens_servico.items():
+                if coluna_nome in colunas_ordens_servico:
+                    continue
+                try:
+                    db.session.execute(text(f'ALTER TABLE ordens_servico ADD COLUMN {coluna_nome} {definicao}'))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+        if not inspector.has_table('chamados_internos'):
+            ChamadoInterno.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('almoxarifado_atribuicoes'):
+            AlmoxarifadoAtribuicao.__table__.create(bind=db.engine, checkfirst=True)
+        if not inspector.has_table('assistente_local_feedback'):
+            AssistenteLocalFeedback.__table__.create(bind=db.engine, checkfirst=True)
+
     _garantir_cargos_permanentes()
     _migrar_funcoes_legadas_para_perfis()
     try:
@@ -244,6 +659,7 @@ with app.app_context():
         db.session.commit()
     except Exception:
         db.session.rollback()
+    _garantir_admin_primeiro_acesso()
 
 
 def _destino_interno_seguro(destino):
@@ -390,7 +806,6 @@ def _garantir_matriculas_funcionarios():
 
 with app.app_context():
     try:
-        _garantir_admin_primeiro_acesso()
         _garantir_matriculas_funcionarios()
     except Exception:
         db.session.rollback()
@@ -529,56 +944,218 @@ def _estoque_contexto_selecionado_id(funcionario):
 
 
 def _paginas_permitidas_para_funcionario(funcionario):
-    # Extraido para app/core/permissions.py
-    return core_paginas_permitidas_para_funcionario(funcionario)
+    return _paginas_efetivas_funcionario(funcionario)
 
 
 def _paginas_ordenadas_menu():
-    # Extraido para app/core/menu.py
-    return core_paginas_ordenadas_menu()
+    paginas_ordenadas_menu = []
+    for secao_nome, secao_paginas in PAGINAS_SISTEMA_MENU_ORDEM:
+        itens_secao = [
+            (pagina_key, PAGINAS_SISTEMA[pagina_key])
+            for pagina_key in secao_paginas
+            if pagina_key in PAGINAS_SISTEMA
+        ]
+        if itens_secao:
+            paginas_ordenadas_menu.append((secao_nome, itens_secao))
+    return paginas_ordenadas_menu
 
 
 def _menu_agrupado_para_paginas(paginas_permitidas):
-    # Extraido para app/core/menu.py
-    return core_menu_agrupado_para_paginas(paginas_permitidas)
+    paginas_permitidas = set(paginas_permitidas or [])
+    menu_agrupado = []
+    for secao_nome, secao_paginas in PAGINAS_SISTEMA_MENU_ORDEM:
+        itens_secao = [
+            {
+                'key': pagina_key,
+                'label': PAGINAS_SISTEMA[pagina_key],
+            }
+            for pagina_key in secao_paginas
+            if pagina_key in paginas_permitidas and pagina_key in PAGINAS_SISTEMA
+        ]
+        if itens_secao:
+            menu_agrupado.append({
+                'secao': secao_nome,
+                'paginas': itens_secao,
+            })
+    return menu_agrupado
 
 
 def _url_for_safe(endpoint, **values):
-    # Mantido por compatibilidade; delega para app/core/menu.py
-    from app.core.menu import url_for_safe as core_url_for_safe
-    return core_url_for_safe(endpoint, **values)
+    try:
+        return url_for(endpoint, **values)
+    except Exception:
+        return '#'
 
 
 def _item_menu_interno(*, label, endpoint, page_keys, current_page_key=None, visible=True):
-    # Mantido por compatibilidade; delega para app/core/menu.py
-    from app.core.menu import item_menu_interno as core_item_menu_interno
-    return core_item_menu_interno(
-        label=label,
-        endpoint=endpoint,
-        page_keys=page_keys,
-        current_page_key=current_page_key,
-        visible=visible,
-    )
+    if not visible:
+        return None
+    page_keys = tuple(page_keys or ())
+    current = bool(current_page_key and current_page_key in page_keys)
+    return {
+        'label': label,
+        'url': _url_for_safe(endpoint),
+        'current': current,
+        'page_keys': page_keys,
+    }
 
 
 def _menu_navegacao_principal(funcionario, empresa_config=None, atendimento_mesas_ativo=True, current_page_key=None):
-    # Extraido para app/core/menu.py
-    return core_menu_navegacao_principal(
-        funcionario,
-        resolver_paginas_permitidas=_paginas_permitidas_para_funcionario,
-        empresa_config=empresa_config,
-        atendimento_mesas_ativo=atendimento_mesas_ativo,
-        current_page_key=current_page_key,
-    )
+    paginas_permitidas = _paginas_permitidas_para_funcionario(funcionario)
+    menu = []
+
+    definicoes = [
+        {
+            'id': 'gestao',
+            'label': 'Gestão',
+            'icon': 'management',
+            'items': [
+                _item_menu_interno(label='Central do Negócio', endpoint='gestao_negocio', page_keys=('gestao_negocio',), current_page_key=current_page_key, visible='gestao_negocio' in paginas_permitidas),
+                _item_menu_interno(label='Empresa', endpoint='editar_empresa', page_keys=('empresa',), current_page_key=current_page_key, visible='empresa' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'financeiro',
+            'label': 'Financeiro',
+            'icon': 'finance',
+            'items': [
+                _item_menu_interno(label='Visão Financeira', endpoint='financeiro', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+                _item_menu_interno(label='Lançamentos Contábeis', endpoint='financeiro_lancamentos', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+                _item_menu_interno(label='Gestão Monetária e Fundos', endpoint='financeiro_fundos', page_keys=('financeiro',), current_page_key=current_page_key, visible='financeiro' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'vendas',
+            'label': 'Vendas',
+            'icon': 'sales',
+            'items': [
+                _item_menu_interno(label='PDV', endpoint='pdv', page_keys=('pdv',), current_page_key=current_page_key, visible='pdv' in paginas_permitidas),
+                _item_menu_interno(label='Pedidos', endpoint='listar_pedidos', page_keys=('pedidos',), current_page_key=current_page_key, visible='pedidos' in paginas_permitidas),
+                _item_menu_interno(label='Mesas', endpoint='listar_mesas', page_keys=('mesas',), current_page_key=current_page_key, visible=atendimento_mesas_ativo and 'mesas' in paginas_permitidas),
+                _item_menu_interno(label='Caixas', endpoint='listar_caixas', page_keys=('caixas',), current_page_key=current_page_key, visible='caixas' in paginas_permitidas),
+                _item_menu_interno(label='Garçons', endpoint='listar_garcons', page_keys=('garcons',), current_page_key=current_page_key, visible=atendimento_mesas_ativo and 'garcons' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'estoque',
+            'label': 'Estoque',
+            'icon': 'inventory',
+            'items': [
+                _item_menu_interno(label='Produtos', endpoint='listar_produtos', page_keys=('produtos',), current_page_key=current_page_key, visible='produtos' in paginas_permitidas),
+                _item_menu_interno(label='Etiquetas de Loja', endpoint='imprimir_etiquetas_loja', page_keys=('produtos',), current_page_key=current_page_key, visible='produtos' in paginas_permitidas and (not empresa_config or empresa_config.emissao_etiqueta_loja_ativa is not False)),
+                _item_menu_interno(label='Estoques', endpoint='listar_estoques', page_keys=('estoques',), current_page_key=current_page_key, visible='estoques' in paginas_permitidas),
+                _item_menu_interno(label='Categorias', endpoint='listar_categorias', page_keys=('categorias',), current_page_key=current_page_key, visible='categorias' in paginas_permitidas),
+                _item_menu_interno(label='Endereços de Estoque', endpoint='listar_enderecos_estoque', page_keys=('enderecos_estoque',), current_page_key=current_page_key, visible='enderecos_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Equipamentos', endpoint='listar_equipamentos_movimentacao', page_keys=('equipamentos_estoque',), current_page_key=current_page_key, visible='equipamentos_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Endereços Inteligentes', endpoint='enderecos_inteligentes', page_keys=('enderecos_inteligentes',), current_page_key=current_page_key, visible='enderecos_inteligentes' in paginas_permitidas),
+                _item_menu_interno(label='Etiquetas de Endereço', endpoint='imprimir_etiquetas_enderecos_estoque', page_keys=('enderecos_estoque',), current_page_key=current_page_key, visible='enderecos_estoque' in paginas_permitidas and (not empresa_config or empresa_config.emissao_etiqueta_endereco_ativa is not False)),
+                _item_menu_interno(label='Entradas e Saídas Internas', endpoint='listar_movimentacoes', page_keys=('movimentacoes',), current_page_key=current_page_key, visible='movimentacoes' in paginas_permitidas),
+                _item_menu_interno(label='Almoxarifado', endpoint='listar_almoxarifado', page_keys=('almoxarifado',), current_page_key=current_page_key, visible='almoxarifado' in paginas_permitidas),
+                _item_menu_interno(label='Relatórios', endpoint='relatorios', page_keys=('relatorios',), current_page_key=current_page_key, visible='relatorios' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'recebimento',
+            'label': 'Recebimento',
+            'icon': 'receiving',
+            'items': [
+                _item_menu_interno(label='Central de Recebimentos', endpoint='listar_recebimentos_fornecedor', page_keys=('recebimentos',), current_page_key=current_page_key, visible='recebimentos' in paginas_permitidas),
+                _item_menu_interno(label='Novo Recebimento', endpoint='novo_recebimento_fornecedor', page_keys=('recebimentos',), current_page_key=current_page_key, visible='recebimentos' in paginas_permitidas),
+                _item_menu_interno(label='Fornecedores', endpoint='listar_fornecedores', page_keys=('fornecedores',), current_page_key=current_page_key, visible='fornecedores' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'expedicao',
+            'label': 'Expedição',
+            'icon': 'shipping',
+            'items': [
+                _item_menu_interno(label='Central de Expedição', endpoint='central_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Separação e Entrega', endpoint='listar_separacao_entrega', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Roteirização', endpoint='listar_roteirizacao_entrega', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Painel em Tempo Real', endpoint='painel_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Coletor Operacional', endpoint='coletor_estoque', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Frota Própria e Terceiros', endpoint='frota_expedicao', page_keys=('expedicao',), current_page_key=current_page_key, visible='expedicao' in paginas_permitidas),
+                _item_menu_interno(label='Histórico de Transferências', endpoint='listar_transferencias_estoque', page_keys=('transferencias_estoque',), current_page_key=current_page_key, visible='transferencias_estoque' in paginas_permitidas),
+                _item_menu_interno(label='Nova Transferência entre Lojas/CDs', endpoint='transferir_armazenamento', page_keys=('transferencias_estoque',), current_page_key=current_page_key, visible='transferencias_estoque' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'meu-rh',
+            'label': 'Meu RH',
+            'icon': 'hr',
+            'items': [
+                _item_menu_interno(label='Indicadores RH', endpoint='indicadores_rh', page_keys=('rh_indicadores',), current_page_key=current_page_key, visible='rh_indicadores' in paginas_permitidas),
+                _item_menu_interno(label='Organograma', endpoint='organograma_rh', page_keys=('rh_organograma',), current_page_key=current_page_key, visible='rh_organograma' in paginas_permitidas),
+                _item_menu_interno(label='Funcionários', endpoint='listar_funcionarios', page_keys=('funcionarios',), current_page_key=current_page_key, visible='funcionarios' in paginas_permitidas),
+                _item_menu_interno(label='Cargos', endpoint='listar_funcoes_rh', page_keys=('rh_funcoes',), current_page_key=current_page_key, visible='rh_funcoes' in paginas_permitidas),
+                _item_menu_interno(label='Perfis de Acesso', endpoint='listar_perfis_rh', page_keys=('rh_funcoes',), current_page_key=current_page_key, visible='rh_funcoes' in paginas_permitidas),
+                _item_menu_interno(label='Auditoria', endpoint='auditoria_sistema', page_keys=('auditoria',), current_page_key=current_page_key, visible='auditoria' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'ecommerce',
+            'label': 'E-commerce',
+            'icon': 'ecommerce',
+            'items': [
+                _item_menu_interno(label='Ativação da Loja', endpoint='configurar_ativacao_ecommerce', page_keys=('ecommerce_config',), current_page_key=current_page_key, visible='ecommerce_config' in paginas_permitidas),
+                _item_menu_interno(label='Tema e Loja Online', endpoint='configurar_ecommerce', page_keys=('ecommerce_config',), current_page_key=current_page_key, visible='ecommerce_config' in paginas_permitidas),
+                _item_menu_interno(label='Marketing, Campanhas e Cupons', endpoint='configurar_marketing_ecommerce', page_keys=('ecommerce_marketing',), current_page_key=current_page_key, visible='ecommerce_marketing' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'servicos',
+            'label': 'Serviços',
+            'icon': 'services',
+            'items': [
+                _item_menu_interno(label='Chamados Internos', endpoint='listar_chamados_internos', page_keys=('chamados_internos',), current_page_key=current_page_key, visible='chamados_internos' in paginas_permitidas),
+                _item_menu_interno(label='Minhas Ordens', endpoint='minhas_ordens_servico', page_keys=('servicos_tecnicos',), current_page_key=current_page_key, visible='servicos_tecnicos' in paginas_permitidas),
+                _item_menu_interno(label='Ordens de Serviço', endpoint='listar_ordens_servico', page_keys=('servicos_tecnicos',), current_page_key=current_page_key, visible='servicos_tecnicos' in paginas_permitidas),
+            ],
+        },
+        {
+            'id': 'ajuda',
+            'label': 'Ajuda',
+            'icon': 'help',
+            'items': [
+                _item_menu_interno(label='Guia do Sistema', endpoint='central_ajuda', page_keys=('ajuda',), current_page_key=current_page_key, visible='ajuda' in paginas_permitidas),
+            ],
+        },
+    ]
+
+    for grupo in definicoes:
+        itens = [item for item in grupo['items'] if item]
+        if not itens:
+            continue
+        menu.append({
+            'id': grupo['id'],
+            'label': grupo['label'],
+            'icon': grupo['icon'],
+            'items': itens,
+            'current': any(item['current'] for item in itens),
+        })
+    return menu
 
 
 def _registrar_debug_menu(funcionario, paginas_permitidas, menu_agrupado=None):
-    # Extraido para app/core/menu.py
-    return core_registrar_debug_menu(
-        funcionario,
-        paginas_permitidas,
-        menu_agrupado,
-        resolver_menu_agrupado=_menu_agrupado_para_paginas,
+    if not funcionario or not app.config.get('MENU_DEBUG_ENABLED'):
+        return
+    if not has_request_context():
+        return
+
+    menu_agrupado = menu_agrupado if menu_agrupado is not None else _menu_agrupado_para_paginas(paginas_permitidas)
+    secoes_resumo = {
+        item['secao']: [pagina['key'] for pagina in item['paginas']]
+        for item in menu_agrupado
+    }
+    app.logger.info(
+        'menu_debug funcionario_id=%s role=%s controle=%s perfil_acesso_id=%s endpoint=%s paginas=%s secoes=%s',
+        getattr(funcionario, 'id', None),
+        getattr(funcionario, 'role', None),
+        getattr(funcionario, 'controle_acesso_ativo', None),
+        getattr(funcionario, 'perfil_acesso_id', None),
+        request.endpoint,
+        sorted(set(paginas_permitidas or [])),
+        secoes_resumo,
     )
 
 
@@ -989,7 +1566,7 @@ def _aplicar_preset_negocio(empresa):
 
 # ============ ROTAS - AUTENTICACAO ============
 
-register_auth_module(app, {
+register_auth_routes(app, {
     'login_required': login_required,
     '_limit': _limit,
     '_client_ip': _client_ip,
@@ -6614,13 +7191,9 @@ def executar_ordem_servico_tecnico(ordem_id):
 
 
 # ============ REGISTRO DE MODULOS DE DOMINIO ============
-register_domain_modules(
-    app,
-    login_required=login_required,
-    require_role=require_role,
-    aplicar_movimentacao_estoque=aplicar_movimentacao_estoque,
-    sincronizar_matriculas_funcionarios=_garantir_matriculas_funcionarios,
-)
+register_estoque_routes(app, login_required, require_role, aplicar_movimentacao_estoque, _garantir_matriculas_funcionarios)
+register_vendas_routes(app, login_required, require_role)
+register_public_routes(app)
 
 
 def _normalizar_historico_assistente(payload_historico):
@@ -6675,7 +7248,7 @@ local_ai_assistant = LocalAIAssistant(app, _construir_documentos_assistente_loca
 if app.config.get('LOCAL_AI_ENABLED'):
     local_ai_assistant.start_background_prepare()
 
-register_api_module(app, {
+register_api_routes(app, {
     'login_required': login_required,
     '_limit': _limit,
     '_parse_date_range': _parse_date_range,
@@ -6898,26 +7471,93 @@ def pwa_service_worker():
 
 
 # ============ CONTEXT PROCESSORS ============
-register_context_processors(
-    app,
-    dependencies={
-        'get_funcionario_logado': get_funcionario_logado,
-        'empresa_config_model': EmpresaConfig,
-        'produto_model': Produto,
-        'endpoint_to_pagina': ENDPOINT_TO_PAGINA,
-        'titulo_tela_atual': _titulo_tela_atual,
-        'estoques_contexto_disponiveis_fn': _estoques_contexto_disponiveis,
-        'estoque_contexto_selecionado_id_fn': _estoque_contexto_selecionado_id,
-        'ensure_csrf_token_fn': ensure_csrf_token,
-        'csrf_input_tag_fn': csrf_input_tag,
-        'paginas_permitidas_para_funcionario_fn': _paginas_permitidas_para_funcionario,
-        'menu_agrupado_para_paginas_fn': _menu_agrupado_para_paginas,
-        'menu_navegacao_principal_fn': _menu_navegacao_principal,
-        'montar_indicadores_contexto_usuario_fn': _montar_indicadores_contexto_usuario,
-        'registrar_debug_menu_fn': _registrar_debug_menu,
-        'local_ai_assistant_getter': lambda: local_ai_assistant,
-    },
-)
+
+@app.context_processor
+def inject_user():
+    funcionario_logado = get_funcionario_logado()
+    empresa_config = EmpresaConfig.query.first()
+    atendimento_mesas_ativo = not empresa_config or empresa_config.atendimento_mesas_ativo is not False
+    secao_atual_nome, tela_atual_nome = _titulo_tela_atual()
+    endpoint_atual = request.endpoint or ''
+    pagina_atual_menu = ENDPOINT_TO_PAGINA.get(endpoint_atual)
+    estoques_contexto_disponiveis = _estoques_contexto_disponiveis(funcionario_logado) if funcionario_logado else []
+    estoque_contexto_id = _estoque_contexto_selecionado_id(funcionario_logado) if funcionario_logado else None
+    produto_imagem_padrao_path = (
+        (empresa_config.ecom_produto_placeholder_path if empresa_config else None)
+        or 'img/placeholders/imgindisponivel.png'
+    )
+    favicon_path = (
+        (empresa_config.favicon_path if empresa_config else None)
+        or (empresa_config.ecom_favicon_path if empresa_config else None)
+    )
+    store_favicon_path = (
+        (empresa_config.ecom_favicon_path if empresa_config else None)
+        or favicon_path
+    )
+    app_icon_path = (
+        (empresa_config.app_icon_path if empresa_config else None)
+        or (empresa_config.logo_path if empresa_config else None)
+        or favicon_path
+        or 'uploads/empresa/Loja_do_Lucas_logo.png'
+    )
+    csrf_token_value = ensure_csrf_token()
+    paginas_permitidas_usuario = _paginas_permitidas_para_funcionario(funcionario_logado) if funcionario_logado else set()
+    menu_paginas_usuario = _menu_agrupado_para_paginas(paginas_permitidas_usuario) if funcionario_logado else []
+    menu_navegacao_principal = _menu_navegacao_principal(
+        funcionario_logado,
+        empresa_config=empresa_config,
+        atendimento_mesas_ativo=atendimento_mesas_ativo,
+        current_page_key=pagina_atual_menu,
+    ) if funcionario_logado else []
+    user_agent_texto = (request.user_agent.string or '').lower()
+    acesso_mobile_web = any(token in user_agent_texto for token in ['android', 'iphone', 'ipad', 'ipod', 'mobile'])
+    apk_download_url = None
+    for candidato in ['downloads/app-release.apk', 'downloads/systemlr.apk', 'downloads/app-latest.apk']:
+        caminho = os.path.join(app.static_folder, candidato)
+        if os.path.exists(caminho):
+            apk_download_url = url_for('static', filename=candidato)
+            break
+
+    assistente_status = (
+        local_ai_assistant.status()
+        if funcionario_logado and app.config.get('LOCAL_AI_ENABLED') and local_ai_assistant
+        else {'enabled': False}
+    )
+    indicadores_contexto_usuario = (
+        _montar_indicadores_contexto_usuario(funcionario_logado, paginas_permitidas_usuario)
+        if funcionario_logado else []
+    )
+    if funcionario_logado:
+        _registrar_debug_menu(funcionario_logado, paginas_permitidas_usuario, menu_paginas_usuario)
+    return {
+        'ano_atual': datetime.utcnow().year,
+        'total_alertas': Produto.query.filter(
+            Produto.quantidade_estoque < Produto.quantidade_minima,
+            Produto.ativo == True
+        ).count(),
+        'funcionario_logado': funcionario_logado,
+        'empresa_config': empresa_config,
+        'atendimento_mesas_ativo': atendimento_mesas_ativo,
+        'produto_imagem_padrao_path': produto_imagem_padrao_path,
+        'favicon_path': favicon_path,
+        'store_favicon_path': store_favicon_path,
+        'app_icon_path': app_icon_path,
+        'paginas_permitidas_usuario': paginas_permitidas_usuario,
+        'menu_paginas_usuario': menu_paginas_usuario,
+        'menu_navegacao_principal': menu_navegacao_principal,
+        'pagina_atual_menu': pagina_atual_menu,
+        'secao_atual_nome': secao_atual_nome,
+        'tela_atual_nome': tela_atual_nome,
+        'endpoint_atual': endpoint_atual,
+        'estoques_contexto_disponiveis': estoques_contexto_disponiveis,
+        'estoque_contexto_id': estoque_contexto_id,
+        'assistente_local_status': assistente_status,
+        'indicadores_contexto_usuario': indicadores_contexto_usuario,
+        'apk_download_url': apk_download_url,
+        'show_apk_download_mobile_web': bool(apk_download_url and acesso_mobile_web),
+        'csrf_token': csrf_token_value,
+        'csrf_input': csrf_input_tag()
+    }
 
 
 # ============ ERROR HANDLERS ============

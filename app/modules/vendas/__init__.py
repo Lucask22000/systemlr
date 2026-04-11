@@ -1,1 +1,0 @@
-﻿"""vendas domain module."""

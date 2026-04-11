@@ -1,1 +1,0 @@
-﻿"""financeiro domain module."""
