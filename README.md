@@ -245,6 +245,4 @@ config.py
 
 Lucas Ramalho
 Especialista em automação, sistemas e desenvolvimento Python
-Facebook: https://www.facebook.com/lucas.ramalho.12
-whatsapp: +55 67 98102-9292
 ---
